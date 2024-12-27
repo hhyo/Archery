@@ -398,6 +398,33 @@ class TestRedis(TestCase):
         mock_config_get.assert_called_once_with("databases")
         mock_info.assert_called_once_with("Keyspace")
 
+    @patch(
+        "redis.Redis.scan_iter", return_value=["table1", "table2", "table3", "table4"]
+    )
+    def test_get_all_tables_success(self, _scan_iter):
+        # 创建 RedisEngine 实例
+        new_engine = RedisEngine(instance=self.ins)
+
+        # 调用 get_all_tables 方法
+        db_name = "4"
+        result = new_engine.get_all_tables(db_name)
+        mask_result_rows = ["table1", "table2", "table3", "table4"]
+        # 验证返回的表格信息
+        self.assertEqual(result.rows, mask_result_rows)
+
+    @patch("redis.Redis.scan_iter", side_effect=Exception("Test Exception"))
+    def test_get_all_tables_exception(self, _scan_iter):
+        # 创建 RedisEngine 实例
+        new_engine = RedisEngine(instance=self.ins)
+
+        # 调用 get_all_tables 方法并模拟异常
+        db_name = "4"
+        result = new_engine.get_all_tables(db_name)
+
+        # 验证返回的异常信息
+        self.assertEqual(result.rows, [])
+        self.assertIn(result.message, "Test Exception")
+
     def test_query_check_safe_cmd(self):
         safe_cmd = "keys 1*"
         new_engine = RedisEngine(instance=self.ins)
