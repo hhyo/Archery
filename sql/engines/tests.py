@@ -2061,7 +2061,6 @@ class MongoTest(TestCase):
             ("a12", ""),
             ("a13", None),
             ("a14", "18888888889"),
-           
         )
         masking_result = new_engine.query_masking(
             db_name="archery", sql="db.test_collection.find()", resultset=query_result
