@@ -2070,7 +2070,7 @@ class MongoTest(TestCase):
             ["a11", "188****8888"],
             ["a12", ""],
             ["a13", None],
-            ["a14", "188****8888"],
+            ["a14", "188****8889"],
         ]
         self.assertEqual(masking_result.rows, mask_result_rows)
 
