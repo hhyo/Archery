@@ -4,6 +4,7 @@
     <!-- 自定义操作按钮-->
     <div id="sqladvisor-toolbar" class="btn-group right" style="display:none;">
         <button id=sqladvisor class="btn btn-default" style="" type="button">获取优化建议</button>
+        <button id=sqlreview class="btn btn-default" style="" type="button">编辑优化详情</button>
     </div>
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
@@ -269,6 +270,25 @@
                 }
             });
         });
+
+        //点击编辑按钮编辑优化详情
+        $(function () {
+            $("#sqlreview").click(function () {
+                if ($("#slowsqlinfo-list").bootstrapTable('getSelections')[0]) {
+                    var review_sql_content = $("#slowsqlinfo-list").bootstrapTable('getSelections')[0]['SQLText'] + ';';
+                    var review_db_name = $("#slowsqlinfo-list").bootstrapTable('getSelections')[0]['DBName'];
+                    var review_instance_name = $("#instance_name").val();
+                    var review_checksum = $("#slowsqlinfo-list").bootstrapTable('getSelections')[0]['SQLChecksum']
+                    sessionStorage.setItem('review_sql_content ', review_sql_content );
+                    sessionStorage.setItem('review_db_name', review_db_name);
+                    sessionStorage.setItem('review_instance_name', review_instance_name);
+                    sessionStorage.setItem('review_checksum', review_checksum);
+                    location.href = '/sqlreview/';
+                } else {
+                    alert("请先选择需要优化的sql")
+                }
+            });
+        });
     </script>
     <!-- 获取列表数据 -->
     <script>
@@ -426,6 +446,31 @@
                     }, {
                         title: '平均返回行数',
                         field: 'ReturnRowAvg',
+                        sortable:true
+                    }, {
+                        title: '优化内容',
+                        field: 'Comments',
+                        formatter: function (value, row, index) {
+                            if (value != null) {
+                                if (value.length > 20) {
+                                    var sql = value.substr(0, 20) + '...';
+                                    return sql;
+                                } else {
+                                    return value
+                                }
+                            }
+                        }
+                    }, {
+                        title: '优化状态',
+                        field: 'ReviewedStatus',
+                        sortable:true	
+                    }, {
+                        title: '提交人',
+                        field: 'ReviewedBy',
+                        sortable:true
+                    }, {
+                        title: '提交日期',
+                        field: 'ReviewedOn',
                         sortable:true
                     }],
                     locale: 'zh-CN',
