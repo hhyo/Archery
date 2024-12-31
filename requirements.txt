@@ -46,4 +46,7 @@ httpx
 OpenAI
 elasticsearch==8.14.0
 opensearch_py==2.6.0
+celery==5.2.7
+django-celery-results==2.5.1
+django-celery-beat==2.7.0
 
