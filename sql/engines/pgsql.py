@@ -165,7 +165,7 @@ class PgSQLEngine(EngineBase):
         except IndexError:
             result["bad_query"] = True
             result["msg"] = "没有有效的SQL语句"
-        if re.match(r"^select|^explain", sql, re.I) is None:
+        if re.match(r"^select|^explain|^with", sql, re.I) is None:
             result["bad_query"] = True
             result["msg"] = "不支持的查询语法类型!"
         if "*" in sql:
