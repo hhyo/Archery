@@ -4,7 +4,7 @@ import re
 from django.db import transaction
 
 from sql.engines.models import ReviewResult
-from sql.models import SqlWorkflow,Instance
+from sql.models import SqlWorkflow, Instance
 from common.config import SysConfig
 from sql.utils.resource_group import user_groups
 from sql.utils.sql_utils import remove_comments
