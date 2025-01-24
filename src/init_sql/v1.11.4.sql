@@ -1,0 +1,1 @@
+ALTER TABLE sql_instance ADD COLUMN peak_time_period VARCHAR(255);

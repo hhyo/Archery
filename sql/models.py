@@ -184,6 +184,9 @@ def validate_peak_time_period(value):
     验证 peak_time_period 格式是否正确。
     格式示例: "14:00-14:50,15:00-16:00"
     """
+    if value is None or value == "":
+        return
+
     time_period_regex = r"^(\d{2}:\d{2}-\d{2}:\d{2})(,\d{2}:\d{2}-\d{2}:\d{2})*$"
     if not re.match(time_period_regex, value):
         raise ValidationError(
