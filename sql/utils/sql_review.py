@@ -40,6 +40,7 @@ def can_execute(user, workflow_id):
         result = True
     return result
 
+
 def on_query_low_peak_time_ddl(workflow_id, run_date=None):
     """
     判断是否是DDL，DDL必须在业务低峰期执行，包括人工执行和定时执行
@@ -55,8 +56,7 @@ def on_query_low_peak_time_ddl(workflow_id, run_date=None):
     # 解析 peak_time_period 字符串为时间段列表
     if peak_time_period:
         time_periods = [
-            tuple(map(int, period.split('-')))
-            for period in peak_time_period.split(',')
+            tuple(map(int, period.split("-"))) for period in peak_time_period.split(",")
         ]
     else:
         time_periods = []
@@ -68,9 +68,9 @@ def on_query_low_peak_time_ddl(workflow_id, run_date=None):
     # 如果是DDL操作，检查当前时间是否在低峰期
     if syntax_type == 1:
         if not any(start <= current_hour < end for start, end in time_periods):
-            return False,time_periods
+            return False, time_periods
 
-    return True,None
+    return True, None
 
 
 def on_correct_time_period(workflow_id, run_date=None):

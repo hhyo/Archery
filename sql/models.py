@@ -178,16 +178,18 @@ class Tunnel(models.Model):
         verbose_name = "隧道配置"
         verbose_name_plural = "隧道配置"
 
+
 def validate_peak_time_period(value):
     """
     验证 peak_time_period 格式是否正确。
     格式示例: "14:00-14:50,15:00-16:00"
     """
-    time_period_regex = r'^(\d{2}:\d{2}-\d{2}:\d{2})(,\d{2}:\d{2}-\d{2}:\d{2})*$'
+    time_period_regex = r"^(\d{2}:\d{2}-\d{2}:\d{2})(,\d{2}:\d{2}-\d{2}:\d{2})*$"
     if not re.match(time_period_regex, value):
         raise ValidationError(
             '时间段格式不正确，正确格式为 "HH:MM-HH:MM" 或 "HH:MM-HH:MM,HH:MM-HH:MM"'
         )
+
 
 class Instance(models.Model):
     """
@@ -240,7 +242,7 @@ class Instance(models.Model):
         max_length=255,
         default="",
         blank=True,
-        validators=[validate_peak_time_period]
+        validators=[validate_peak_time_period],
     )
     create_time = models.DateTimeField("创建时间", auto_now_add=True)
     update_time = models.DateTimeField("更新时间", auto_now=True)
