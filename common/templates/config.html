@@ -161,26 +161,6 @@
                         <h5 style="color: darkgrey"><b>SQL上线</b></h5>
                         <hr/>
                         <div class="form-horizontal">
-                                                        <div class="form-group">
-                                <label for="query_low_peak_start"
-                                       class="col-sm-4 control-label">QUERY_LOW_PEAK_START</label>
-                                <div class="col-sm-5">
-                                    <input type="number" class="form-control" id="query_low_peak_start"
-                                           key="query_low_peak_start"
-                                           value="{{ config.query_low_peak_start }}"
-                                           placeholder="每天业务低峰开始时间，单位小时，默认为空" />
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="query_low_peak_end"
-                                       class="col-sm-4 control-label">QUERY_LOW_PEAK_END</label>
-                                <div class="col-sm-5">
-                                    <input type="number" class="form-control" id="query_low_peak_end"
-                                           key="query_low_peak_end"
-                                           value="{{ config.query_low_peak_end }}"
-                                           placeholder="每天业务低峰结束时间，单位小时，默认为空" />
-                                </div>
-                            </div>
                             <div class="form-group">
                                 <label for="critical_ddl_regex"
                                        class="col-sm-4 control-label">CRITICAL_DDL_REGEX</label>
@@ -322,6 +302,18 @@
                                             是否禁止DDL和DML在SQL上线同时提交(MySQL)
                                         </label>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="query_low_peak_query"
+                                       class="col-sm-4 control-label">QUERY_LOW_PEAK_QUERY</label>
+                                <div class="col-sm-5">
+                                    <select id="query_low_peak_query" key="query_low_peak_query"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="必须在低峰期执行操作操作？默认DDL"
+                                            multiple required>
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1203,6 +1195,11 @@
             $("#notify_phase_control").selectpicker('render');
             $("#notify_phase_control").selectpicker('refresh');
 
+            // query_low_peak_query参数处理
+            let queryConfig = "{{ config.query_low_peak_query }}";
+            let queryPhases = ['DML', 'DDL'];
+            setupSelectPicker("#query_low_peak_query", queryConfig, queryPhases);
+
             // api_user_whitelist参数处理
             let api_config = "{{ config.api_user_whitelist }}";
             $.ajax({
@@ -1338,13 +1335,6 @@
                     alert("当开启钉钉通知到个人时，企业id和secret等必须填写!");
                     return;
                 }
-            }
-            // 业务低峰期时间设置，开始时间和结束时间必须同时填写
-            var start = $("#query_low_peak_start").val();
-            var end = $("#query_low_peak_end").val();
-            if ((start === "" && end !== "") || (start !== "" && end === "")) {
-                alert('业务低峰开始时间和结束时间必须同时填写！');
-                return;
             }
             var sys_config = $("#div-system-config");
             var configs = [];

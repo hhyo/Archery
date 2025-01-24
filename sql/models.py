@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import re
 from typing import Optional
 
 from django.db import models
@@ -6,6 +7,7 @@ from django.contrib.auth.models import AbstractUser
 from mirage import fields
 from django.utils.translation import gettext as _
 from mirage.crypto import Crypto
+from django.core.exceptions import ValidationError
 
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 
@@ -176,6 +178,16 @@ class Tunnel(models.Model):
         verbose_name = "隧道配置"
         verbose_name_plural = "隧道配置"
 
+def validate_peak_time_period(value):
+    """
+    验证 peak_time_period 格式是否正确。
+    格式示例: "14:00-14:50,15:00-16:00"
+    """
+    time_period_regex = r'^(\d{2}:\d{2}-\d{2}:\d{2})(,\d{2}:\d{2}-\d{2}:\d{2})*$'
+    if not re.match(time_period_regex, value):
+        raise ValidationError(
+            '时间段格式不正确，正确格式为 "HH:MM-HH:MM" 或 "HH:MM-HH:MM,HH:MM-HH:MM"'
+        )
 
 class Instance(models.Model):
     """
@@ -222,6 +234,13 @@ class Instance(models.Model):
         null=True,
         on_delete=models.CASCADE,
         default=None,
+    )
+    peak_time_period = models.CharField(
+        "业务低峰时间段",
+        max_length=255,
+        default="",
+        blank=True,
+        validators=[validate_peak_time_period]
     )
     create_time = models.DateTimeField("创建时间", auto_now_add=True)
     update_time = models.DateTimeField("更新时间", auto_now=True)

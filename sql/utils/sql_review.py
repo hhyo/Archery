@@ -4,7 +4,7 @@ import re
 from django.db import transaction
 
 from sql.engines.models import ReviewResult
-from sql.models import SqlWorkflow
+from sql.models import SqlWorkflow,Instance
 from common.config import SysConfig
 from sql.utils.resource_group import user_groups
 from sql.utils.sql_utils import remove_comments
@@ -42,23 +42,35 @@ def can_execute(user, workflow_id):
 
 def on_query_low_peak_time_ddl(workflow_id, run_date=None):
     """
-    判断是否是ddl，ddl必须在业务低峰期执行，包括人工执行和定时执行
+    判断是否是DDL，DDL必须在业务低峰期执行，包括人工执行和定时执行
     :param workflow_id:
     :param run_date:
-    :return:
+    :return: bool
     """
-    config = SysConfig()
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    start = int(config.get("query_low_peak_start", ""))
-    end = int(config.get("query_low_peak_end", ""))
-    result = True
-    ctime = run_date or datetime.datetime.now()
-    hour = ctime.hour
+    instance_id = workflow_detail.instance_id  # 假设 SqlWorkflow 有 instance_id 字段
+    instance = Instance.objects.get(id=instance_id)
+    peak_time_period = instance.peak_time_period
+
+    # 解析 peak_time_period 字符串为时间段列表
+    if peak_time_period:
+        time_periods = [
+            tuple(map(int, period.split('-')))
+            for period in peak_time_period.split(',')
+        ]
+    else:
+        time_periods = []
+
+    ctime = run_date or datetime.now()
+    current_hour = ctime.hour
     syntax_type = workflow_detail.syntax_type
+
+    # 如果是DDL操作，检查当前时间是否在低峰期
     if syntax_type == 1:
-        if (start and hour < start) or (end and hour > end):
-            result = False
-    return result
+        if not any(start <= current_hour < end for start, end in time_periods):
+            return False,time_periods
+
+    return True,None
 
 
 def on_correct_time_period(workflow_id, run_date=None):

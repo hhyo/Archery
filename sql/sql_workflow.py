@@ -307,14 +307,17 @@ def execute(request):
             "errMsg": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
         }
         return render(request, "error.html", context)
-    sys_config = SysConfig()
-    if not request.user.is_superuser and on_query_low_peak_time_ddl(workflow_id) is False:
-        start = sys_config.get("query_low_peak_start", 0)
-        end = sys_config.get("query_low_peak_end", 24)
-        context = {
-            "errMsg": "管理员设置了业务低峰期时间范围:每天%s:00至%s,你只能在业务低峰时间范围执行DDL工单操作!" % (start, end)
-        }
+    if not request.user.is_superuser:
+        sys_config = SysConfig()
+        is_allowed, time_periods = on_query_low_peak_time_ddl(workflow_id)
+        if not is_allowed:
+            peak_action = sys_config.get("query_low_peak_query", "")
+            context = {
+                "errMsg": "管理员设置了实例业务低峰时间范围:%s,你只能在业务低峰时间范围执行%s工单操作!"
+                          % (time_periods, peak_action)
+            }
         return render(request, "error.html", context)
+
     # 获取审核信息
     audit_id = Audit.detail_by_workflow_id(
         workflow_id=workflow_id, workflow_type=WorkflowType.SQL_REVIEW
