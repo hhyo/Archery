@@ -61,7 +61,7 @@ def on_query_low_peak_time_ddl(workflow_id, run_date=None):
     else:
         time_periods = []
 
-    ctime = run_date or datetime.now()
+    ctime = run_date or datetime.datetime.now()
     current_hour = ctime.hour
     syntax_type = workflow_detail.syntax_type
 
