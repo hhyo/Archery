@@ -17,12 +17,13 @@ logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+# 定义 Redis 基本连接字符串
 env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ["*"]),
     SECRET_KEY=(str, "hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6"),
     DATABASE_URL=(str, "mysql://root:@127.0.0.1:3306/archery"),
-    CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
+    CACHE_URL=(str, 'redis://127.0.0.1:6379/0'),  # 使用 Redis 数据库 0 作为缓存
     # 系统外部认证目前支持LDAP、OIDC、DINGDING三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC
     ENABLE_LDAP=(bool, False),
     ENABLE_OIDC=(bool, False),
@@ -121,6 +122,8 @@ INSTALLED_APPS = (
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django_celery_results',
+    'django_celery_beat',
     "django_q",
     "sql",
     "sql_api",
@@ -221,7 +224,9 @@ DATABASES = {
         **env.db(),
         **{
             "DEFAULT_CHARSET": "utf8mb4",
-            "CONN_MAX_AGE": 50,
+            # CONN_MAX_AGE设置为0，可以避免celery 报错mysql has gone  away 问题
+            # https://github.com/celery/celery/pull/4292
+            "CONN_MAX_AGE": 0,
             "OPTIONS": {
                 "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
                 "charset": "utf8mb4",
@@ -256,6 +261,33 @@ CACHES = {
 
 # https://docs.djangoproject.com/en/3.2/ref/settings/#std-setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+# Celery Configuration
+'''
+Celery 默认已支持 Redis、RabbitMQ、MongoDB、Django ORM、SQLAlchemy 等方式,
+Redis：没有相应的机制保证消息的消费，当消费者消费失败的时候，消息体丢失，需要手动处理
+RabbitMQ：具有消息消费确认，即使消费者消费失败，也会自动使消息体返回原队列，同时可全程持久化，保证消息体被正确消费
+'''
+CELERY_RESULT_BACKEND = 'django-db' #必须要存储任务结果,代码中有一些需要判断任务状态
+#CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/1'
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/2'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERYD_CONCURRENCY = 4
+CELERY_TIMEZONE = 'UTC'
+CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERYD_MAX_TASKS_PER_CHILD = 10
+CELERYD_FORCE_EXECV = True
+
+# 设置默认不存结果
+# CELERY_IGNORE_RESULT = True
+CELERY_CREATE_MISSING_QUEUES = True
+CELERY_DISABLE_RATE_LIMITS = True
+CELERYD_TASK_SOFT_TIME_LIMIT = 600
+
+CELERY_TASK_RESULT_EXPIRES = 600
+CELERY_ENABLE_UTC = False
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 # API Framework
 REST_FRAMEWORK = {

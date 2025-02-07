@@ -2,6 +2,7 @@
 import datetime
 import logging
 import traceback
+import time
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
@@ -31,6 +32,7 @@ from sql.utils.sql_review import (
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
 from .models import SqlWorkflow
+from sql.utils.execute_sql import execute  as execute_sql_excute,execute_callback
 
 logger = logging.getLogger("default")
 
@@ -269,12 +271,14 @@ def passed(request):
         else True
     )
     if is_notified:
-        async_task(
-            notify_for_audit,
-            workflow_audit=auditor.audit,
-            workflow_audit_detail=workflow_audit_detail,
-            timeout=60,
-            task_name=f"sqlreview-pass-{workflow_id}",
+        # 异步调用 Celery 任务
+        notify_for_audit.apply_async(
+            args=[
+                auditor.audit.audit_id,
+                workflow_audit_detail.audit_detail_id,
+            ],
+            time_limit=60,  # 设置此次任务的超时时间为60秒
+            task_id=f"sqlreview-pass-{workflow_id}"  # 可选，自定义任务ID
         )
 
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
@@ -319,16 +323,17 @@ def execute(request):
             update_fields=["status"]
         )
         # 删除定时执行任务
-        schedule_name = f"sqlreview-timing-{workflow_id}"
+        workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+        schedule_name = workflow_detail.timing_task_id
         del_schedule(schedule_name)
         # 加入执行队列
-        async_task(
-            "sql.utils.execute_sql.execute",
-            workflow_id,
-            request.user,
-            hook="sql.utils.execute_sql.execute_callback",
-            timeout=-1,
-            task_name=f"sqlreview-execute-{workflow_id}",
+        execute_sql_excute.apply_async(
+            args=[
+                workflow_id,
+                request.user.username,
+            ],
+            task_id=f"sqlreview-excute-{workflow_id}",  # 可选，自定义任务ID
+            link=execute_callback.s(workflow_id)
         )
         # 增加工单日志
         Audit.add_log(
@@ -396,7 +401,11 @@ def timing_task(request):
         return render(request, "error.html", context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
-    schedule_name = f"sqlreview-timing-{workflow_id}"
+    timing_task_id = workflow_detail.timing_task_id
+    if timing_task_id != '':
+        del_schedule(timing_task_id)
+    task_time = time.time()
+    schedule_name = f"sqlreview-timing-{workflow_id}-{task_time}"
 
     if on_correct_time_period(workflow_id, run_date) is False:
         context = {
@@ -409,6 +418,7 @@ def timing_task(request):
         with transaction.atomic():
             # 将流程状态修改为定时执行
             workflow_detail.status = "workflow_timingtask"
+            workflow_detail.timing_task_id = schedule_name
             workflow_detail.save()
             # 调用添加定时任务
             add_sql_schedule(schedule_name, run_date, workflow_id)
@@ -471,8 +481,8 @@ def cancel(request):
         sql_workflow.status = "workflow_abort"
         sql_workflow.save()
     # 删除定时执行task
-    if sql_workflow.status == "workflow_timingtask":
-        del_schedule(f"sqlreview-timing-{workflow_id}")
+    if sql_workflow.timing_task_id != '':
+        del_schedule(sql_workflow.timing_task_id)
     # 发送取消、驳回通知，开启了Cancel阶段通知参数才发送消息通知
     sys_config = SysConfig()
     is_notified = (
@@ -481,12 +491,14 @@ def cancel(request):
         else True
     )
     if is_notified:
-        async_task(
-            notify_for_audit,
-            workflow_audit=auditor.audit,
-            workflow_audit_detail=workflow_audit_detail,
-            timeout=60,
-            task_name=f"sqlreview-cancel-{workflow_id}",
+        # 异步调用 Celery 任务
+        notify_for_audit.apply_async(
+            args=[
+                auditor.audit.audit_id,
+                workflow_audit_detail.audit_detail_id,
+            ],
+            time_limit=60,  # 设置此次任务的超时时间为60秒
+            task_id=f"sqlreview-cancel-{workflow_id}",  # 可选，自定义任务ID
         )
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
