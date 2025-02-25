@@ -150,6 +150,20 @@ class OracleEngine(EngineBase):
             "DIP",
             "OJVMSYS",
             "LBACSYS",
+            "AUDSYS",
+            "DBSFWUSER",
+            "DVF",
+            "DVSYS",
+            "GGSYS",
+            "GSMADMIN_INTERNAL",
+            "GSMCATUSER",
+            "GSMUSER",
+            "REMOTE_SCHEDULER_AGENT",
+            "SYS$UMF",
+            "SYSBACKUP",
+            "SYSDG",
+            "SYSKM",
+            "SYSRAC",
         )
         schema_list = [row[0] for row in result.rows if row[0] not in sysschema]
         result.rows = schema_list
