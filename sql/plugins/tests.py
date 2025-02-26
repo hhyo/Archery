@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-""" 
+"""
 @author: hhyo
 @license: Apache Licence
 @file: tests.py
@@ -340,14 +340,16 @@ class TestSoar(TestCase):
 
 def test_password_mixin(mocker: MockerFixture):
     from sql.plugins.password import requests
+
     class MockReponse(Mock):
         def json(self):
             return {"data": {"username": "test", "password": "test", "ttl": 360}}
+
     mocker.patch.object(requests, "get", return_value=MockReponse())
-    
+
     class DummyInstance:
         instance_name = "dummy"
-    
+
     class CompondInstance(DummyInstance, VaultMixin):
         pass
 
