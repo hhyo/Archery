@@ -24,8 +24,7 @@ class EngineBase:
             self.instance_name = instance.instance_name
             self.host = instance.host
             self.port = int(instance.port)
-            self.user = instance.user
-            self.password = instance.password
+            self.user, self.password = self.instance.get_username_password()
             self.db_name = instance.db_name
             self.mode = instance.mode
 

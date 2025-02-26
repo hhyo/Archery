@@ -1,13 +1,32 @@
 # -*- coding: UTF-8 -*-
+import importlib
+import logging
 from typing import Optional
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from mirage import fields
 from django.utils.translation import gettext as _
+from django.conf import settings
 from mirage.crypto import Crypto
 
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
+
+
+logger = logging.getLogger("default")
+file, _class = settings.PASSWORD_MIXIN_PATH.split(":")
+
+try:
+    password_module = importlib.import_module(file)
+    PasswordMixin = getattr(password_module, _class)
+except (ImportError, AttributeError) as e:
+    logger.error(
+        f"failed to import password minxin {settings.PASSWORD_MIXIN_PATH}, {str(e)}"
+    )
+    logger.error(f"falling back to dummy mixin")
+    from sql.plugins.password import DummyMixin
+
+    PasswordMixin = DummyMixin
 
 
 class ResourceGroup(models.Model):
@@ -179,7 +198,7 @@ class Tunnel(models.Model):
         verbose_name_plural = "隧道配置"
 
 
-class Instance(models.Model):
+class Instance(models.Model, PasswordMixin):
     """
     各个线上实例配置
     """
