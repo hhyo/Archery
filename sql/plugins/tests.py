@@ -7,7 +7,8 @@
 """
 import json
 from django.test import Client, TestCase
-from unittest.mock import patch, ANY
+from unittest.mock import patch, ANY, Mock
+from pytest_mock import MockerFixture
 from django.contrib.auth import get_user_model
 
 from sql.plugins.my2sql import My2SQL
@@ -15,6 +16,7 @@ from sql.plugins.schemasync import SchemaSync
 from sql.plugins.soar import Soar
 from sql.plugins.sqladvisor import SQLAdvisor
 from sql.plugins.pt_archiver import PtArchiver
+from sql.plugins.password import VaultMixin
 
 from common.config import SysConfig
 
@@ -334,3 +336,23 @@ class TestSoar(TestCase):
         # 异常测试
         with self.assertRaises(RuntimeError):
             self.soar.rewrite(sql, "unknown")
+
+
+def test_password_mixin(mocker: MockerFixture):
+    from sql.plugins.password import requests
+    class MockReponse(Mock):
+        def json(self):
+            return {"data": {"username": "test", "password": "test", "ttl": 360}}
+    mocker.patch.object(requests, "get", return_value=MockReponse())
+    
+    class DummyInstance:
+        instance_name = "dummy"
+    
+    class CompondInstance(DummyInstance, VaultMixin):
+        pass
+
+    instance = CompondInstance()
+    username, password = instance.get_username_password()
+    assert username == "test"
+    assert password == "test"
+    assert requests.get.call_count == 1
