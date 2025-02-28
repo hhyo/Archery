@@ -18,7 +18,13 @@ from sql.engines.oracle import OracleEngine
 from sql.engines.mongo import MongoEngine
 from sql.engines.clickhouse import ClickHouseEngine
 from sql.engines.odps import ODPSEngine
-from sql.models import DataMaskingColumns, Instance, SqlWorkflow, SqlWorkflowContent, Tunnel
+from sql.models import (
+    DataMaskingColumns,
+    Instance,
+    SqlWorkflow,
+    SqlWorkflowContent,
+    Tunnel,
+)
 
 
 User = get_user_model()
@@ -2506,19 +2512,19 @@ class ODPSTest(TestCase):
 
 
 def test_ssh(db_instance, mocker: MockerFixture):
-    tunnel = Tunnel.objects.create(
-        tunnel_name="test",
-        host="test",
-        port=22
-    )
+    tunnel = Tunnel.objects.create(tunnel_name="test", host="test", port=22)
     db_instance.tunnel = tunnel
     db_instance.save()
+
     class FakeTunnel:
         def get_ssh(self):
             return "remote_host", "remote_password"
-    mocker.patch('sql.engines.SSHConnection', return_value=FakeTunnel())
-    from sql.engines import EngineBase
-    engine = EngineBase(instance=db_instance)
-    remote_host, remote_password, _, _ = engine.remote_instance_conn(instance=engine.instance)
-    assert (remote_host, remote_password) == ("remote_host", "remote_password")
 
+    mocker.patch("sql.engines.SSHConnection", return_value=FakeTunnel())
+    from sql.engines import EngineBase
+
+    engine = EngineBase(instance=db_instance)
+    remote_host, remote_password, _, _ = engine.remote_instance_conn(
+        instance=engine.instance
+    )
+    assert (remote_host, remote_password) == ("remote_host", "remote_password")
