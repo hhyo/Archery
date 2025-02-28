@@ -238,14 +238,18 @@ def schemasync(request):
     tag = int(time.time())
     output_directory = os.path.join(settings.BASE_DIR, "downloads/schemasync/")
     os.makedirs(output_directory, exist_ok=True)
+
+    username, password = instance.get_username_password()
+    target_username, target_password = target_instance.get_username_password()
+
     args = {
         "sync-auto-inc": sync_auto_inc,
         "sync-comments": sync_comments,
         "charset": "utf8mb4",
         "tag": tag,
         "output-directory": output_directory,
-        "source": f"mysql://{instance.user}:{instance.password}@{instance.host}:{instance.port}/{db_name}",
-        "target": f"mysql://{target_instance.user}:{target_instance.password}@{target_instance.host}:{target_instance.port}/{target_db_name}",
+        "source": f"mysql://{username}:{password}@{instance.host}:{instance.port}/{db_name}",
+        "target": f"mysql://{target_username}:{target_password}@{target_instance.host}:{target_instance.port}/{target_db_name}",
     }
     # 参数检查
     args_check_result = schema_sync.check_args(args)
