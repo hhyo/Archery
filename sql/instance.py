@@ -240,7 +240,7 @@ def schemasync(request):
     os.makedirs(output_directory, exist_ok=True)
 
     username, password = instance.get_username_password()
-    target_username, target_password = instance.get_username_password()
+    target_username, target_password = target_instance.get_username_password()
 
     args = {
         "sync-auto-inc": sync_auto_inc,
