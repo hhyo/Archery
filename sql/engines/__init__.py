@@ -62,13 +62,13 @@ class EngineBase:
                 instance.tunnel.pkey_password,
             )
             self.remote_host, self.remote_port = self.remotessh.get_ssh()
-            self.remote_user = instance.user
-            self.remote_password = instance.password
+            self.remote_user = self.user
+            self.remote_password = self.password
         elif not instance.tunnel:
             self.remote_host = instance.host
             self.remote_port = instance.port
-            self.remote_user = instance.user
-            self.remote_password = instance.password
+            self.remote_user = self.user
+            self.remote_password = self.password
         return (
             self.remote_host,
             self.remote_port,
