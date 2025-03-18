@@ -122,6 +122,9 @@
         <li id="logs_tab">
             <a href="#logs" role="tab" data-toggle="tab">工单日志</a>
         </li>
+        <li id="ai_tab">
+            <a href="#ai-audit" role="tab" data-toggle="tab">AI审核结果</a>
+        </li>
     </ul>
     <!-- Tab panes -->
     <div id="tab-content" class="tab-content">
@@ -161,6 +164,14 @@
             <table id="tb-logs" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
+        </div>
+
+        <!-- AI审核结果 -->
+        <div id="ai-audit" role="tabpanel" class="tab-pane fade table-responsive">
+            <div id="ai-audit-content" style="margin-top: 60px; margin-bottom: 60px;">
+                <!-- 这里是AI审核结果的内容 -->
+                <!-- <p id="ai-audit-result">正在加载审核结果...</p> -->
+            </div>
         </div>
     </div>
 
@@ -360,6 +371,7 @@
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'marked/js/marked.min.js' %}"></script>
     <!--初始化时间控件 -->
     <script>
         var date = new Date();
@@ -738,7 +750,36 @@
                 }
             })
         }
-
+        
+         // 获取ai审核结果
+         function get_ai_result() {
+            $.ajax({
+                type: "post",
+                url: "/workflow/ai_result/",
+                dataType: "json",
+                data: {
+                    workflow_id: "{{ workflow_detail.id }}"
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    // 渲染审核结果
+                    if (data.data) {
+                        // 渲染为 HTML
+                        var html = marked.parse(data.data);
+                        console.log("渲染为 HTML", html);
+                        // 输出到展示区
+                        $("#ai-audit-content").html(html);
+                    } else {
+                        $("#ai-audit-content").text("暂无审核结果。");
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            })
+        }
+        
         //获取osc执行进度信息
         function get_osc_percent(obj) {
             $('#osc_percent_list').bootstrapTable('destroy').bootstrapTable({
@@ -960,6 +1001,8 @@
                     get_detail();
                 } else if (active_li_id === 'logs_tab') {
                     get_logs();
+                } else if (active_li_id === 'ai_tab') {
+                    get_ai_result();    
                 }
             });
         });

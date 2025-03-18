@@ -27,6 +27,7 @@ from sql.notify import notify_for_audit, notify_for_execute
 from sql.query_privileges import _query_apply_audit_call_back
 from sql.utils.resource_group import user_groups
 from sql.utils.sql_review import can_cancel, can_execute, on_correct_time_period
+from sql_api.tasks import send_ai
 from sql.utils.tasks import del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
 from .filters import WorkflowFilter, WorkflowAuditFilter
@@ -155,6 +156,10 @@ class WorkflowList(generics.ListAPIView):
                 timeout=60,
                 task_name=f"sqlreview-submit-{workflow_content.workflow.id}",
             )
+        # 添加AI审核异步任务
+        db_name = workflow_content.workflow.db_name
+        instance = workflow_content.workflow.instance
+        async_task(send_ai, workflow_content.workflow.id, db_name, instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

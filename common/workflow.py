@@ -4,7 +4,7 @@ from django.http import HttpResponse
 
 from common.utils.const import WorkflowStatus
 from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderFTime
-from sql.models import WorkflowAudit, WorkflowLog
+from sql.models import WorkflowAudit, WorkflowLog, SqlWorkflowAIResult
 from sql.utils.resource_group import user_groups
 
 
@@ -90,6 +90,23 @@ def log(request):
     rows = [row for row in workflow_logs]
     result = {"total": count, "rows": rows}
     # 返回查询结果
+    return HttpResponse(
+        json.dumps(result, cls=ExtendJSONEncoderFTime, bigint_as_string=True),
+        content_type="application/json",
+    )
+
+
+# 获取AI审核结果
+def ai_result(request):
+    workflow_id = request.POST.get("workflow_id")
+    try:
+        result = {
+            "data": SqlWorkflowAIResult.objects.get(workflow_id=workflow_id).data
+        }
+    except SqlWorkflowAIResult.DoesNotExist:
+        result = {
+            "data": "AI审核中..."
+        }
     return HttpResponse(
         json.dumps(result, cls=ExtendJSONEncoderFTime, bigint_as_string=True),
         content_type="application/json",

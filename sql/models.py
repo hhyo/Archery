@@ -382,6 +382,24 @@ class SqlWorkflowContent(models.Model):
         verbose_name_plural = "SQL工单内容"
 
 
+class SqlWorkflowAIResult(models.Model):
+    """
+    存放各个工单sql语句的AI审核内容
+    """
+
+    workflow = models.OneToOneField(SqlWorkflow, on_delete=models.CASCADE)
+    data = models.TextField("审核结果的JSON格式", default="")
+
+    def __str__(self):
+        return self.workflow.workflow_name
+
+    class Meta:
+        managed = True
+        db_table = "sql_workflow_ai_result"
+        verbose_name = "SQL工单AI审核结果"
+        verbose_name_plural = "SQL工单AI审核结果"
+
+
 class WorkflowAudit(models.Model):
     """
     工作流审核状态表

@@ -89,6 +89,7 @@ urlpatterns = [
     path("sql_analyze/analyze/", sql_analyze.analyze),
     path("workflow/list/", workflow.lists),
     path("workflow/log/", workflow.log),
+    path("workflow/ai_result/", workflow.ai_result),
     path("config/change/", config.change_config),
     path("check/go_inception/", check.go_inception),
     path("check/email/", check.email),
