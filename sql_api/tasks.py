@@ -1,5 +1,3 @@
-import json
-
 import sqlglot
 
 from sql.engines import get_engine

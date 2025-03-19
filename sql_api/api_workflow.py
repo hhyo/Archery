@@ -42,6 +42,7 @@ from .serializers import (
     WorkflowLogListSerializer,
     AuditWorkflowSerializer,
     ExecuteWorkflowSerializer,
+    AttachmentSerializer,
 )
 
 logger = logging.getLogger("default")
@@ -454,3 +455,28 @@ class WorkflowLogList(generics.ListAPIView):
         serializer_obj = self.get_serializer(page_log, many=True)
         data = {"data": serializer_obj.data}
         return self.get_paginated_response(data)
+
+
+class AddAttachment(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="添加附件",
+        request=AttachmentSerializer,
+        responses={200: AttachmentSerializer},
+        description="对添加的附件进行检查",
+    )
+    @method_decorator(permission_required("sql.sql_submit", raise_exception=True))
+    def post(self, request, workflow_id):
+        try:
+            # 获取 Workflow 对象
+            workflow = SqlWorkflow.objects.get(id=workflow_id)
+        except SqlWorkflow.DoesNotExist:
+            return Response({"error": "SqlWorkflow not found"}, status=status.HTTP_404_NOT_FOUND)
+        # 反序列化文件数据
+        serializer = AttachmentSerializer(data=request.data)
+        if serializer.is_valid():
+            # 保存文件并关联到 Workflow
+            serializer.save(workflow=workflow)
+            return Response({"messages": "添加附件成功"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

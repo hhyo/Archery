@@ -10,6 +10,8 @@ from django.http import HttpResponseRedirect, FileResponse, Http404
 from django.urls import reverse
 
 from django.conf import settings
+
+from archery.settings import MEDIA_URL
 from common.config import SysConfig
 from sql.engines import get_engine, engine_map
 from common.utils.permission import superuser_required
@@ -30,6 +32,7 @@ from .models import (
     ArchiveConfig,
     AuditEntry,
     TwoFactorAuthConfig,
+    SqlWorkflowAttach,
 )
 from sql.utils.workflow_audit import Audit, AuditV2, AuditException
 from sql.utils.sql_review import (
@@ -236,6 +239,12 @@ def detail(request, workflow_id):
     # 获取是否开启手工执行确认
     manual = SysConfig().get("manual")
 
+    # 获取附件
+    try:
+        attach = SqlWorkflowAttach.objects.get(workflow=workflow_id).file
+    except SqlWorkflowAttach.DoesNotExist:
+        attach = ""
+
     context = {
         "workflow_detail": workflow_detail,
         "last_operation_info": last_operation_info,
@@ -247,6 +256,7 @@ def detail(request, workflow_id):
         "review_info": review_info,
         "manual": manual,
         "run_date": run_date,
+        "attach": f"{MEDIA_URL}{attach}",
     }
     return render(request, "detail.html", context)
 
