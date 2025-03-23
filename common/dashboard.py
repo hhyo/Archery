@@ -3,6 +3,7 @@ import logging
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.core.exceptions import ValidationError
 
 from sql.models import SqlWorkflow, QueryPrivilegesApply, Users, Instance
 
@@ -52,13 +53,25 @@ def pyecharts(request):
 
 @permission_required("sql.menu_dashboard", raise_exception=True)
 def DashboardApi(request):
+    start_date_str = request.GET.get("start_date")
+    end_date_str = request.GET.get("end_date")
 
-    start_date = request.GET.get("start_date")
-    end_date = request.GET.get("end_date")
-    
+    try:
+        start_date = validate_date(start_date_str)
+        end_date = validate_date(end_date_str)
+    except ValidationError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
     dashboard_chart = get_chart_data(start_date, end_date)
-    
+
     return JsonResponse({"chart": dashboard_chart})
+
+def validate_date(date_str):
+    try:
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        return date_obj.strftime("%Y-%m-%d")
+    except ValueError:
+        raise ValidationError(f"Invalid date format: {date_str}. Expected format: YYYY-MM-DD.")
 
 def get_chart_data(start_date, end_date):
     logging.info("Dashboard: start_date: %s, end_date: %s", start_date, end_date)
