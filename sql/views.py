@@ -15,6 +15,7 @@ from sql.engines import get_engine, engine_map
 from common.utils.permission import superuser_required
 from common.utils.convert import Convert
 from sql.utils.tasks import task_info
+from sql.utils.resource_group import user_groups
 
 from .models import (
     Users,
@@ -233,11 +234,22 @@ def detail(request, workflow_id):
     else:
         run_date = ""
 
+    # 添加当前审核人信息
+    current_reviewers = []
+    for node in review_info.nodes:
+        if node.is_current_node == False: continue
+        for user in node.group.user_set.filter(is_active=1):
+            # 确保 group_name 和 group.name 类型一致
+            group_names = [group.group_name for group in user_groups(user)]
+            if workflow_detail.group_name in group_names:
+                current_reviewers.append(user)
+
     # 获取是否开启手工执行确认
     manual = SysConfig().get("manual")
 
     context = {
         "workflow_detail": workflow_detail,
+        "current_reviewers": current_reviewers,
         "last_operation_info": last_operation_info,
         "is_can_review": is_can_review,
         "is_can_execute": is_can_execute,
@@ -363,8 +375,19 @@ def queryapplydetail(request, apply_id):
     else:
         last_operation_info = ""
 
+    # 添加当前审核人信息
+    current_reviewers = []
+    for node in review_info.nodes:
+        if node.is_current_node == False: continue
+        for user in node.group.user_set.filter(is_active=1):
+            # 确保 group_name 和 group.name 类型一致
+            group_names = [group.group_name for group in user_groups(user)]
+            if workflow_detail.group_name in group_names:
+                current_reviewers.append(user)
+
     context = {
         "workflow_detail": workflow_detail,
+        "current_reviewers": current_reviewers,
         "review_info": review_info,
         "last_operation_info": last_operation_info,
         "is_can_review": is_can_review,
@@ -488,8 +511,19 @@ def archive_detail(request, id):
     else:
         last_operation_info = ""
 
+    # 添加当前审核人信息
+    current_reviewers = []
+    for node in review_info.nodes:
+        if node.is_current_node == False: continue
+        for user in node.group.user_set.filter(is_active=1):
+            # 确保 group_name 和 group.name 类型一致
+            group_names = [group.group_name for group in user_groups(user)]
+            if archive_config.resource_group.group_name in group_names:
+                current_reviewers.append(user)
+
     context = {
         "archive_config": archive_config,
+        "current_reviewers": current_reviewers,
         "review_info": review_info,
         "last_operation_info": last_operation_info,
         "can_review": can_review,
