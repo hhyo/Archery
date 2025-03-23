@@ -138,7 +138,8 @@ def sqlworkflow(request):
     else:
         filter_dict["engineer"] = user.username
     instance_id = (
-        SqlWorkflow.objects.filter(**filter_dict).values("instance_id").distinct()
+        SqlWorkflow.objects.filter(
+            **filter_dict).values("instance_id").distinct()
     )
     instance = Instance.objects.filter(pk__in=instance_id).order_by(
         Convert("instance_name", "gbk").asc()
@@ -146,7 +147,8 @@ def sqlworkflow(request):
     resource_group_id = (
         SqlWorkflow.objects.filter(**filter_dict).values("group_id").distinct()
     )
-    resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
+    resource_group = ResourceGroup.objects.filter(
+        group_id__in=resource_group_id)
 
     return render(
         request,
@@ -237,7 +239,8 @@ def detail(request, workflow_id):
     # 添加当前审核人信息
     current_reviewers = []
     for node in review_info.nodes:
-        if node.is_current_node == False: continue
+        if node.is_current_node == False:
+            continue
         for user in node.group.user_set.filter(is_active=1):
             # 确保 group_name 和 group.name 类型一致
             group_names = [group.group_name for group in user_groups(user)]
@@ -328,7 +331,8 @@ def sqlquery(request):
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values(
         "id", "alias"
     )
-    can_download = 1 if user.has_perm("sql.query_download") or user.is_superuser else 0
+    can_download = 1 if user.has_perm(
+        "sql.query_download") or user.is_superuser else 0
     return render(
         request,
         "sqlquery.html",
@@ -378,7 +382,8 @@ def queryapplydetail(request, apply_id):
     # 添加当前审核人信息
     current_reviewers = []
     for node in review_info.nodes:
-        if node.is_current_node == False: continue
+        if node.is_current_node == False:
+            continue
         for user in node.group.user_set.filter(is_active=1):
             # 确保 group_name 和 group.name 类型一致
             group_names = [group.group_name for group in user_groups(user)]
@@ -399,7 +404,8 @@ def queryuserprivileges(request):
     """查询权限管理页面"""
     # 获取所有用户
     user_list = (
-        QueryPrivileges.objects.filter(is_deleted=0).values("user_display").distinct()
+        QueryPrivileges.objects.filter(
+            is_deleted=0).values("user_display").distinct()
     )
     context = {"user_list": user_list}
     return render(request, "queryuserprivileges.html", context)
@@ -479,7 +485,8 @@ def archive(request):
         Convert("instance_name", "gbk").asc()
     )
     return render(
-        request, "archive.html", {"group_list": group_list, "ins_list": ins_list}
+        request, "archive.html", {
+            "group_list": group_list, "ins_list": ins_list}
     )
 
 
@@ -514,7 +521,8 @@ def archive_detail(request, id):
     # 添加当前审核人信息
     current_reviewers = []
     for node in review_info.nodes:
-        if node.is_current_node == False: continue
+        if node.is_current_node == False:
+            continue
         for user in node.group.user_set.filter(is_active=1):
             # 确保 group_name 和 group.name 类型一致
             group_names = [group.group_name for group in user_groups(user)]
@@ -653,13 +661,15 @@ def audit_sqlworkflow(request):
     else:
         filter_dict["engineer"] = user.username
     instance_id = (
-        SqlWorkflow.objects.filter(**filter_dict).values("instance_id").distinct()
+        SqlWorkflow.objects.filter(
+            **filter_dict).values("instance_id").distinct()
     )
     instance = Instance.objects.filter(pk__in=instance_id)
     resource_group_id = (
         SqlWorkflow.objects.filter(**filter_dict).values("group_id").distinct()
     )
-    resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
+    resource_group = ResourceGroup.objects.filter(
+        group_id__in=resource_group_id)
 
     return render(
         request,

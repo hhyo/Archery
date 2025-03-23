@@ -29,7 +29,7 @@ class ChartDao(object):
         return dates
 
     # 语法类型
-    def syntax_type(self,start_date, end_date):
+    def syntax_type(self, start_date, end_date):
         sql = """
         select
           case when syntax_type = 1
@@ -199,7 +199,7 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
         group by db_type 
         order by 2 desc;"""
         return self.__query(sql)
-    
+
     def query_sql_prod_bill(self, start_date, end_date):
         sql = """
             SELECT
@@ -232,6 +232,7 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
             start_date, end_date
         )
         return self.__query(sql)
+
     def query_instance_env_info(self):
         sql = """
              SELECT
