@@ -183,7 +183,7 @@ class ElasticsearchEngineBase(EngineBase):
                 # 返回字段名
                 result_set.column_list = ["column_name"]
                 if properties is None:
-                    result_set.rows = [("无")]
+                    result_set.rows = ["无"]
                 else:
                     result_set.rows = list(properties.keys())
                 return result_set

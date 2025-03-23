@@ -191,7 +191,7 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
         )
         return self.__query(sql)
 
-   # 数据库实例类型统计
+    # 数据库实例类型统计
     def instance_count_by_type(self):
         sql = """
         select db_type,count(1) as cn 

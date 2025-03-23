@@ -43,16 +43,18 @@ def pyecharts(request):
     # 获取图表数据
     # 字符串，近7天日期 "%Y-%m-%d"
     today = (date.today() - relativedelta(days=-1)).strftime("%Y-%m-%d")
-    one_week_before = (date.today() - relativedelta(days=+6)
-                       ).strftime("%Y-%m-%d")
+    one_week_before = (date.today() - relativedelta(days=+6)).strftime("%Y-%m-%d")
     dashboard_chart = get_chart_data(one_week_before, today)
 
     return render(
         request,
         "dashboard.html",
-        {"instance_chart": instance_chart, "chart": dashboard_chart,
-            "count_stats": dashboard_count_stats},
-    )
+        {
+            "instance_chart": instance_chart,
+            "chart": dashboard_chart,
+            "count_stats": dashboard_count_stats,
+        },
+     )
 
 
 @permission_required("sql.menu_dashboard", raise_exception=True)
@@ -77,18 +79,20 @@ def validate_date(date_str):
         return date_obj.strftime("%Y-%m-%d")
     except ValueError:
         raise ValidationError(
-            f"Invalid date format: {date_str}. Expected format: YYYY-MM-DD.")
+            f"Invalid date format: {date_str}. Expected format: YYYY-MM-DD."
+        )
 
 
 def get_chart_data(start_date, end_date):
-    logging.info("Dashboard: start_date: %s, end_date: %s",
-                 start_date, end_date)
+    logging.info("Dashboard: start_date: %s, end_date: %s", start_date, end_date)
     chart_dao = ChartDao()
 
     # SQL上线数量
     data = chart_dao.workflow_by_date(start_date, end_date)
-    attr = chart_dao.get_date_list(datetime.strptime(
-        start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
+    attr = chart_dao.get_date_list(
+        datetime.strptime(start_date, "%Y-%m-%d"),
+        datetime.strptime(end_date, "%Y-%m-%d"),
+    )
     _dict = {row[0]: row[1] for row in data["rows"]}
     value = [_dict.get(day, 0) for day in attr]
     bar1 = create_bar_chart(attr, value)
@@ -112,16 +116,17 @@ def get_chart_data(start_date, end_date):
     bar2 = create_bar_chart(attr, value)
 
     # SQL查询统计
-    attr = chart_dao.get_date_list(datetime.strptime(
-        start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
+    attr = chart_dao.get_date_list(
+        datetime.strptime(start_date, "%Y-%m-%d"),
+        datetime.strptime(end_date, "%Y-%m-%d"),
+    )
     effect_data = chart_dao.querylog_effect_row_by_date(start_date, end_date)
     effect_dict = {row[0]: int(row[1]) for row in effect_data["rows"]}
     effect_value = [effect_dict.get(day, 0) for day in attr]
     count_data = chart_dao.querylog_count_by_date(start_date, end_date)
     count_dict = {row[0]: int(row[1]) for row in count_data["rows"]}
     count_value = [count_dict.get(day, 0) for day in attr]
-    line1 = Line(init_opts=opts.InitOpts(
-        width="600", height="380px", bg_color="white"))
+    line1 = Line(init_opts=opts.InitOpts(width="600", height="380px", bg_color="white"))
     line1.set_global_opts(
         title_opts=opts.TitleOpts(title=""),
         legend_opts=opts.LegendOpts(selected_mode="single"),
@@ -131,16 +136,14 @@ def get_chart_data(start_date, end_date):
         "检索行数",
         effect_value,
         is_smooth=True,
-        markpoint_opts=opts.MarkPointOpts(
-            data=[opts.MarkPointItem(type_="average")]),
+        markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="average")]),
     )
     line1.add_yaxis(
         "检索次数",
         count_value,
         is_smooth=True,
         markline_opts=opts.MarkLineOpts(
-            data=[opts.MarkLineItem(type_="max"),
-                  opts.MarkLineItem(type_="average")]
+            data=[opts.MarkLineItem(type_="max"), opts.MarkLineItem(type_="average")]
         ),
     )
 
@@ -189,37 +192,38 @@ def get_chart_data(start_date, end_date):
 
     return chart
 
+
 # 创建柱状图
-
-
 def create_bar_chart(attr, value, width="600", height="380px"):
-    bar = Bar(init_opts=opts.InitOpts(
-        width=width, height=height, bg_color="white"))
+    bar = Bar(init_opts=opts.InitOpts(width=width, height=height, bg_color="white"))
     bar.add_xaxis(attr)
 
     if len(attr) > 60:
-        bar.add_yaxis("", value, label_opts=opts.LabelOpts(is_show=False),
-                      markline_opts=opts.MarkLineOpts(
-            data=[opts.MarkLineItem(
-                type_="max"), opts.MarkLineItem(type_="average")]
-        ))
+        bar.add_yaxis(
+            "",
+            value,
+            label_opts=opts.LabelOpts(is_show=False),
+            markline_opts=opts.MarkLineOpts(
+                data=[
+                    opts.MarkLineItem(type_="max"),
+                    opts.MarkLineItem(type_="average"),
+                ]
+            ),
+        )
     else:
         bar.add_yaxis("", value, label_opts=opts.LabelOpts())
 
     if len(attr) > 0 and len(attr[0]) > 20:
         bar.set_global_opts(
-            xaxis_opts=opts.AxisOpts(
-                axislabel_opts=opts.LabelOpts(rotate=-10)),
-            legend_opts=opts.LegendOpts(pos_left="right")
+            xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-10)),
+            legend_opts=opts.LegendOpts(pos_left="right"),
         )
     return bar
 
+
 # 创建饼图
-
-
 def create_pie_chart(attr, value, width="600", height="380px"):
-    pie = Pie(init_opts=opts.InitOpts(
-        width=width, height=height, bg_color="white"))
+    pie = Pie(init_opts=opts.InitOpts(width=width, height=height, bg_color="white"))
     pie.set_global_opts(
         title_opts=opts.TitleOpts(title=""),
         legend_opts=opts.LegendOpts(
@@ -227,19 +231,16 @@ def create_pie_chart(attr, value, width="600", height="380px"):
         ),
     )
     pie.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
-    pie.add("", [list(z) for z in zip(attr, value)]
-            ) if attr and value else None
+    pie.add("", [list(z) for z in zip(attr, value)]) if attr and value else None
     return pie
 
+
 # 生成堆叠图
-
-
 def gen_stack_chart(data):
     rows = data.get("rows", [])
     envs = list(set(row[0] for row in rows if len(row) >= 1))  # X轴
     db_types = list(set(row[1] for row in rows if len(row) >= 2))  # 堆叠1
-    env_dict = {env: {db_type: 0 for db_type in db_types}
-                for env in envs}  # 堆叠2
+    env_dict = {env: {db_type: 0 for db_type in db_types} for env in envs}  # 堆叠2
 
     # 填充
     for row in rows:
@@ -255,10 +256,11 @@ def gen_stack_chart(data):
             db_data[db_type].append(env_dict[env][db_type])
 
     # 绘制堆叠柱状图
-    stack_bar = (
-        Bar(init_opts=opts.InitOpts(width="800px", height="380px", bg_color="white"))
-        .add_xaxis(envs)  # 设置X轴数据（环境）
-    )
+    stack_bar = Bar(
+        init_opts=opts.InitOpts(width="800px", height="380px", bg_color="white")
+    ).add_xaxis(
+        envs
+    )  # 设置X轴数据（环境）
 
     for db_type in db_types:
         y_values = db_data[db_type]
@@ -266,13 +268,13 @@ def gen_stack_chart(data):
         stack_bar.add_yaxis(
             series_name=db_type,
             y_axis=y_values,
-            stack='stack1',
-            label_opts=opts.LabelOpts(is_show=False)
+            stack="stack1",
+            label_opts=opts.LabelOpts(is_show=False),
         )
 
     # 隐藏Y轴的刻度标签
     stack_bar.set_global_opts(
         xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-10)),
-        legend_opts=opts.LegendOpts(pos_left="right")
+        legend_opts=opts.LegendOpts(pos_left="right"),
     )
     return stack_bar
