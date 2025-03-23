@@ -256,8 +256,8 @@
     <script type="text/javascript">
         // 初始化时间控件
         $(function () {
-            let start = moment().subtract(6, 'days');
-            let end = moment();
+            let start = moment().subtract('days', 6);
+            let end = moment().subtract('days', -1);
 
             function cb(start, end) {
                 if (start.isValid() && end.isValid()) {
@@ -285,13 +285,13 @@
                     firstDay: 1
                 },
                 ranges: {
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "最近365日": [moment().subtract('days', 364), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "本年": [moment().startOf("year"), moment().endOf("year")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")],
-                    "上一年": [moment().subtract(1, "year").startOf("year"), moment().subtract(1, "year").endOf("year")]
+                    "最近7日": [moment().subtract('days', 6), moment().subtract('days', -1)],
+                    "最近30日": [moment().subtract('days', 29), moment().subtract('days', -1)],
+                    "最近365日": [moment().subtract('days', 364), moment().subtract('days', -1)],
+                    "本月": [moment().startOf("month"), moment().endOf("month").subtract('days', -1)],
+                    "本年": [moment().startOf("year"), moment().endOf("year").subtract('days', -1)],
+                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month").subtract('days', -1)],
+                    "上一年": [moment().subtract(1, "year").startOf("year"), moment().subtract(1, "year").endOf("year").subtract('days', -1)]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 let startDate = picker.startDate.format('YYYY-MM-DD');
