@@ -138,8 +138,7 @@ def sqlworkflow(request):
     else:
         filter_dict["engineer"] = user.username
     instance_id = (
-        SqlWorkflow.objects.filter(
-            **filter_dict).values("instance_id").distinct()
+        SqlWorkflow.objects.filter(**filter_dict).values("instance_id").distinct()
     )
     instance = Instance.objects.filter(pk__in=instance_id).order_by(
         Convert("instance_name", "gbk").asc()
@@ -147,8 +146,7 @@ def sqlworkflow(request):
     resource_group_id = (
         SqlWorkflow.objects.filter(**filter_dict).values("group_id").distinct()
     )
-    resource_group = ResourceGroup.objects.filter(
-        group_id__in=resource_group_id)
+    resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
 
     return render(
         request,

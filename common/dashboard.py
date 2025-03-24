@@ -54,7 +54,7 @@ def pyecharts(request):
             "chart": dashboard_chart,
             "count_stats": dashboard_count_stats,
         },
-     )
+    )
 
 
 @permission_required("sql.menu_dashboard", raise_exception=True)
