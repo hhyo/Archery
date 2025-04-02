@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-""" 
+"""
 @author: hhyo
 @license: Apache Licence
 @file: storage.py
