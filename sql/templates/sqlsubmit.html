@@ -54,10 +54,11 @@
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="实例" data-placeholder="请选择实例！"
                                         title="请选择实例"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
-                                {% for name, engine in engines.items %}
-                                    <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
-                                {%  endfor %}
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例"
+                                        required>
+                                    {% for name, engine in engines.items %}
+                                        <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="form-group">
@@ -94,6 +95,11 @@
                                     <span class="input-group-addon"><span
                                             class="glyphicon glyphicon-time"></span></span>
                                 </div>
+                            </div>
+                            <!--附件-->
+                            <div class="form-group">
+                                <input id="image-upload" name="image-upload" accept="image/*" type="file"
+                                       class="file-loading">
                             </div>
                             <!--审批流程-->
                             <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
@@ -143,7 +149,8 @@
                 </div>
                 <div class="modal-body">
                     <p>提交的SQL经检测仍存在<font color="red" size="5"><b id="CheckWarningCount"></b></font>个警告信息和<font
-                            color="red" size="5"><b id="CheckErrorCount"></b></font>个错误信息，请按照平台规范仔细检查！<br>
+                            color="red" size="5"><b
+                            id="CheckErrorCount"></b></font>个错误信息，请按照平台规范仔细检查！<br>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
@@ -222,6 +229,16 @@
                 }
             }).on('fileclear', function (event) {
                 editor.setValue("");
+            });
+
+            $("#image-upload").fileinput({
+                language: 'zh',
+                allowedFileExtensions: ['jpg', 'png', 'gif'],//接收的文件后缀
+                showCaption: true,//是否显示标题
+                initialCaption: '支持的格式jpg、png、gif',
+                defaultPreviewContent: '支持的格式jpg、png、gif',
+                showUpload: false,     //不显示上传按钮
+                showPreview: false,    // 不显示预览,
             });
         }
 
@@ -344,7 +361,7 @@
                         result = false;
                         return result;
                     }
-                    if(fieldId == "workflow_name" && value.length>=50){
+                    if (fieldId == "workflow_name" && value.length >= 50) {
                         alert("上线单名称/工单名称不能超过50个字符！");
                         result = false;
                         return result;
@@ -390,8 +407,8 @@
             }
             return true
         }
-        
-        function removeStartsWith(str,prefix) {
+
+        function removeStartsWith(str, prefix) {
             if (typeof str !== 'string' || str === null) {
                 return str;
             }
@@ -403,11 +420,10 @@
         $("#btn-autoreview").click(function () {
             //先做表单验证，成功了提交ajax给后端
             const sqlTips = "-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n";
-            var editorValue=editor.getValue();
+            var editorValue = editor.getValue();
             // 删除默认的提示字符串。
-            editorValueRemove=removeStartsWith(editorValue,sqlTips);
-            if(editorValue!==editorValueRemove)
-            {
+            editorValueRemove = removeStartsWith(editorValue, sqlTips);
+            if (editorValue !== editorValueRemove) {
                 editor.setValue(editorValueRemove);
             }
             $("#sql_content").val(editorValueRemove);
@@ -614,7 +630,14 @@
                     $('#btn-submitsql').button('reset')
                 },
                 success: function (data) {
-                    window.location.href = "/detail/"+ data.workflow_id
+                    // 如果有文件，发送第二个请求上传附件
+                    const imageFile = $("#image-upload")[0].files[0];
+                    if (imageFile) {
+                        uploadAttachment(data.workflow_id, imageFile);
+                    } else {
+                        // 没有文件，直接跳转
+                        window.location.href = "/detail/" + data.workflow_id;
+                    }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     if (XMLHttpRequest.responseJSON) {
@@ -625,6 +648,29 @@
                 }
             });
 
+        }
+
+        // 上传附件的函数
+        function uploadAttachment(workflowId, file) {
+            // 创建 FormData 对象
+            const formData = new FormData();
+            formData.append("file", file);
+            // 发送第二个请求，上传附件
+            $.ajax({
+                type: "post",
+                url: `/api/v1/workflow/${workflowId}/upload/`, // 上传附件的接口
+                data: formData,
+                processData: false, // 禁止 jQuery 处理数据
+                contentType: false, // 禁止设置 Content-Type 头
+                success: function (data) {
+                    // 上传成功，跳转到详情页面
+                    window.location.href = "/detail/" + workflowId;
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    // 上传失败，提示错误
+                    alert("附件上传失败：" + errorThrown);
+                }
+            });
         }
     </script>
     <!--group -->
@@ -653,7 +699,7 @@
                     if (data.status === 0) {
                         $("optgroup[id^='optgroup']").empty();
                         let result = data['data']
-                        const supportDb = [ {% for name in engines.keys %}"{{ name }}", {% endfor %}]
+                        const supportDb = [{% for name in engines.keys %}"{{ name }}", {% endfor %}]
                         for (let i of result) {
                             let instance = "<option value=\"" + i.instance_name + "\" instance-id=" + i.id + ">" + i.instance_name + "</option>";
                             if (supportDb.indexOf(i.db_type) !== -1) {

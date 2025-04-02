@@ -40,10 +40,11 @@ alibabacloud_dysmsapi20170525==2.0.9
 tencentcloud-sdk-python==3.0.656
 mozilla-django-oidc==3.0.0
 django-auth-dingding==0.0.3
-django-cas-ng==4.3.0
+django-cas-ng==5.0.0
 cassandra-driver
 httpx
 OpenAI
 elasticsearch==8.14.0
 opensearch_py==2.6.0
+sqlglot==26.10.1
 

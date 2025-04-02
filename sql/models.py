@@ -12,7 +12,6 @@ from mirage.crypto import Crypto
 
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 
-
 logger = logging.getLogger("default")
 file, _class = settings.PASSWORD_MIXIN_PATH.split(":")
 
@@ -380,6 +379,36 @@ class SqlWorkflowContent(models.Model):
         db_table = "sql_workflow_content"
         verbose_name = "SQL工单内容"
         verbose_name_plural = "SQL工单内容"
+
+
+class SqlWorkflowAIResult(models.Model):
+    """
+    存放各个工单sql语句的AI审核内容
+    """
+
+    workflow = models.OneToOneField(SqlWorkflow, on_delete=models.CASCADE)
+    data = models.TextField("审核结果的JSON格式", default="")
+
+    class Meta:
+        managed = True
+        db_table = "sql_workflow_ai_result"
+        verbose_name = "SQL工单AI审核结果"
+        verbose_name_plural = "SQL工单AI审核结果"
+
+
+class SqlWorkflowAttach(models.Model):
+    """
+    存放各个工单的附件
+    """
+
+    workflow = models.OneToOneField(SqlWorkflow, on_delete=models.CASCADE)
+    file = models.ImageField("附件", upload_to="attach/")
+
+    class Meta:
+        managed = True
+        db_table = "sql_workflow_attach"
+        verbose_name = "SQL工单附件"
+        verbose_name_plural = "SQL工单附件"
 
 
 class WorkflowAudit(models.Model):

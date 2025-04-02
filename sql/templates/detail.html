@@ -10,10 +10,12 @@
         </h4>
         <!--只允许发起人提交其他实例-->
         {% if user.username == workflow_detail.engineer %}
-            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
+            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning'
+               href="/submitotherinstance/">上线其他实例</a>
         {% endif %}
         {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
-            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)"
+               href="/editsql/">查看提交信息</a>
         {% endif %}
     </div>
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
@@ -122,6 +124,12 @@
         <li id="logs_tab">
             <a href="#logs" role="tab" data-toggle="tab">工单日志</a>
         </li>
+        <li id="ai_tab">
+            <a href="#ai-audit" role="tab" data-toggle="tab">AI审核结果</a>
+        </li>
+        <li id="attach_tab">
+            <a href="#attach" role="tab" data-toggle="tab">附件</a>
+        </li>
     </ul>
     <!-- Tab panes -->
     <div id="tab-content" class="tab-content">
@@ -162,6 +170,22 @@
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
+
+        <!-- AI审核结果 -->
+        <div id="ai-audit" role="tabpanel" class="tab-pane fade table-responsive">
+            <div id="ai-audit-content" style="margin-top: 60px; margin-bottom: 60px;">
+                <!-- 这里是AI审核结果的内容 -->
+            </div>
+        </div>
+
+        <!-- 附件 -->
+        {% if attach %}
+            <div id="attach" role="tabpanel" class="tab-pane fade table-responsive">
+                <div style="margin-top: 20px; margin-bottom: 20px;">
+                    <img src="{{ attach }}" width="80%" alt="未添加附件">
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     <!--审核备注输入框-->
@@ -213,7 +237,8 @@
         {% if workflow_detail.status == 'workflow_review_pass' %}
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="定时执行"/>
         {% elif workflow_detail.status == 'workflow_timingtask' %}
-            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm"
+                   value="执行时间变更"/>
         {% endif %}
     {% endif %}
     <!--终止执行按钮-->
@@ -360,6 +385,7 @@
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'marked/js/marked.min.js' %}"></script>
     <!--初始化时间控件 -->
     <script>
         var date = new Date();
@@ -607,7 +633,7 @@
                     title: 'SQL内容',
                     field: 'sql',
                     formatter: function (value, row, index) {
-                        var sql=row.sql;
+                        var sql = row.sql;
                         if (sql.length > 80) {
                             return sql.substr(0, 80) + '...';
                         } else {
@@ -732,6 +758,35 @@
                         },
                         onLoadError: onLoadErrorCallback,
                     });
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            })
+        }
+
+        // 获取ai审核结果
+        function get_ai_result() {
+            $.ajax({
+                type: "post",
+                url: "/workflow/ai_result/",
+                dataType: "json",
+                data: {
+                    workflow_id: "{{ workflow_detail.id }}"
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    // 渲染审核结果
+                    if (data.data) {
+                        // 渲染为 HTML
+                        var html = marked.parse(data.data);
+                        console.log("渲染为 HTML", html);
+                        // 输出到展示区
+                        $("#ai-audit-content").html(html);
+                    } else {
+                        $("#ai-audit-content").text("暂无审核结果。");
+                    }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
@@ -960,6 +1015,9 @@
                     get_detail();
                 } else if (active_li_id === 'logs_tab') {
                     get_logs();
+                } else if (active_li_id === 'ai_tab') {
+                    get_ai_result();
+                } else if (active_li_id === 'attach') {
                 }
             });
         });

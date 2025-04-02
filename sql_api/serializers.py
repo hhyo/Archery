@@ -11,7 +11,7 @@ from sql.models import (
     WorkflowAudit,
     WorkflowLog,
     QueryPrivilegesApply,
-    ArchiveConfig,
+    ArchiveConfig, SqlWorkflowAttach,
 )
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
@@ -568,3 +568,9 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
             raise serializers.ValidationError({"errors": "不存在该工单"})
 
         return attrs
+
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SqlWorkflowAttach
+        fields = ['file']

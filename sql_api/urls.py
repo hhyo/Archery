@@ -51,6 +51,7 @@ urlpatterns = [
     path("v1/workflow/auditlist/", api_workflow.WorkflowAuditList.as_view()),
     path("v1/workflow/execute/", api_workflow.ExecuteWorkflow.as_view()),
     path("v1/workflow/log/", api_workflow.WorkflowLogList.as_view()),
+    path('v1/workflow/<int:workflow_id>/upload/',api_workflow.AddAttachment.as_view()),
     path("info", views.info),
     path("debug", views.debug),
     path("do_once/mirage", views.mirage),
