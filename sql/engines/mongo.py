@@ -816,6 +816,8 @@ class MongoEngine(EngineBase):
                 authSource=auth_db,
                 connect=True,
                 connectTimeoutMS=10000,
+                tls=self.instance.is_ssl,
+                tlsInsecure=not self.instance.verify_ssl,
             )
         else:
             self.conn = pymongo.MongoClient(
@@ -824,6 +826,8 @@ class MongoEngine(EngineBase):
                 authSource=auth_db,
                 connect=True,
                 connectTimeoutMS=10000,
+                tls=self.instance.is_ssl,
+                tlsInsecure=not self.instance.verify_ssl,
             )
 
         return self.conn
