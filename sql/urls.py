@@ -63,6 +63,7 @@ urlpatterns = [
     path("workflow/<int:audit_id>/", views.workflowsdetail),
     path("dbaprinciples/", views.dbaprinciples),
     path("dashboard/", dashboard.pyecharts),
+    path("dashboard/api/", dashboard.DashboardApi),
     path("group/", views.group),
     path("grouprelations/<int:group_id>/", views.groupmgmt),
     path("instance/", views.instance),
