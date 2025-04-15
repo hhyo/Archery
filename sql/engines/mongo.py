@@ -811,7 +811,7 @@ class MongoEngine(EngineBase):
         options = {
             "host": self.host,
             "port": self.port,
-            "user": self.user,
+            "username": self.user,
             "password": self.password,
             "authSource": auth_db,
             "connect": True,
