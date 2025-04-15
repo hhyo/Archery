@@ -807,28 +807,28 @@ class MongoEngine(EngineBase):
     def get_connection(self, db_name=None):
         self.db_name = db_name or self.instance.db_name or "admin"
         auth_db = self.instance.db_name or "admin"
+
+        options = {
+            "host": self.host,
+            "port": self.port,
+            "user": self.user,
+            "password": self.password,
+            "authSource": auth_db,
+            "connect": True,
+            "connectTimeoutMS": 10000,
+        }
+
+        # only set TLS options while the instance enabled the TLS, to avoid
+        # tlsInsecure option being set but the instance is not enabled the TLS
+        # which would cause pymongo.ConfigurationError
+        if self.instance.is_ssl:
+            options["tls"] = True
+            options["tlsInsecure"] = not self.instance.verify_ssl
+
         if self.user and self.password:
-            self.conn = pymongo.MongoClient(
-                self.host,
-                self.port,
-                username=self.user,
-                password=self.password,
-                authSource=auth_db,
-                connect=True,
-                connectTimeoutMS=10000,
-                tls=self.instance.is_ssl,
-                tlsInsecure=not self.instance.verify_ssl,
-            )
+            self.conn = pymongo.MongoClient(**options)
         else:
-            self.conn = pymongo.MongoClient(
-                self.host,
-                self.port,
-                authSource=auth_db,
-                connect=True,
-                connectTimeoutMS=10000,
-                tls=self.instance.is_ssl,
-                tlsInsecure=not self.instance.verify_ssl,
-            )
+            self.conn = pymongo.MongoClient(**options)
 
         return self.conn
 
