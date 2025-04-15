@@ -22,6 +22,11 @@ RUN apt-get update \
     && rm -rf /var/cache/apt/* \
     && rm -rf /root/.cache
 
+
+#openssl
+RUN chmod +rwx /etc/ssl/openssl.cnf \
+    && sed -i 's/MinProtocol = TLSv1.2/MinProtocol = TLSv1/g' /etc/ssl/openssl.cnf \
+    && sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /etc/ssl/openssl.cnf
 #port
 EXPOSE 9123
 
