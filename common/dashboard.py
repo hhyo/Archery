@@ -213,7 +213,7 @@ def create_bar_chart(attr, value, width="600", height="380px"):
     else:
         bar.add_yaxis("", value, label_opts=opts.LabelOpts())
 
-    if len(attr) > 0 and attr[0] is not None and len(attr[0]) > 20:
+    if len(attr) > 0 and attr[0] and len(attr[0]) > 20:
         bar.set_global_opts(
             xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-10)),
             legend_opts=opts.LegendOpts(pos_left="right"),
