@@ -119,6 +119,7 @@ class RedisEngine(EngineBase):
             "mget",
             "strlen",
             "hgetall",
+            "hlen",
             "hexists",
             "hget",
             "hmget",
