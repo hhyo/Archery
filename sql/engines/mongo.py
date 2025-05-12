@@ -490,7 +490,7 @@ class MongoEngine(EngineBase):
                             r = json.loads(r)
                         except Exception as e:
                             try:
-                                r = json5.loads(re.search(r'[{\[].*[\]}]',r).group(0))
+                                r = json5.loads(re.search(r"[{\[].*[\]}]", r).group(0))
                             except Exception as e:
                                 logger.warning(str(e))
                         finally:
