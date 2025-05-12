@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import os
 import re
 import time
 import pymongo
@@ -8,6 +9,7 @@ import subprocess
 import simplejson as json
 import datetime
 import tempfile
+import json5
 from bson.son import SON
 from bson import json_util
 from pymongo.errors import OperationFailure
@@ -353,7 +355,7 @@ class MongoEngine(EngineBase):
     ):
         # 提取公共参数
         common_params = {
-            "mongo": "mongo",
+            "mongo": self.mongo,
             "host": self.host,
             "port": self.port,
             "db_name": db_name,
@@ -382,6 +384,13 @@ class MongoEngine(EngineBase):
         else:
             common_params["auth_options"] = ""
         return cmd_template.format(**common_params)
+
+    def get_mongosh(self):
+        for client in ("mongosh", "mongo"):
+            if os.path.exists(f"/usr/bin/{client}"):
+                self.mongo = client
+                return
+            raise Exception("未找到MongoDB客户端")
 
     def get_master(self):
         """获得主节点的port和host"""
@@ -434,6 +443,7 @@ class MongoEngine(EngineBase):
 
     def execute(self, db_name=None, sql=""):
         """mongo命令执行语句"""
+        self.get_mongosh()
         self.get_master()
         execute_result = ReviewSet(full_sql=sql)
         sql = sql.strip()
@@ -479,7 +489,10 @@ class MongoEngine(EngineBase):
                         try:
                             r = json.loads(r)
                         except Exception as e:
-                            logger.info(str(e))
+                            try:
+                                r = json5.loads(re.search(r'[{\[].*[\]}]',r).group(0))
+                            except Exception as e:
+                                logger.warning(str(e))
                         finally:
                             methodStr = exec_sql.split(").")[-1].split("(")[0].strip()
                             if "." in methodStr:
