@@ -550,7 +550,7 @@ class OracleEngine(EngineBase):
             else:
                 return False
         elif re.match(r"^delete", sql):
-            table_name = re.match(r"^delete\s+from\s+([\w-]+)\s*", sql, re.M).group(1)
+            table_name = re.match(r"^delete\s(.+?)\s", sql, re.M).group(1)
             if "." not in table_name:
                 table_name = f"{schema_name}.{table_name}"
             table_name = table_name.upper()
