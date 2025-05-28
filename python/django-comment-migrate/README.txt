@@ -1,0 +1,3 @@
+此文件中django_dmPython.py用于适配django-comment-migrate插件，使用时将django_dmPython.py文件移动至python的django_comment_migrate/backends目录下即可使用。
+例如：
+	python目录为D:\Python311，则需要放在D:\Python311\Lib\site-packages\django_comment_migrate\backends目录下即可使用插件。
