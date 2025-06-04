@@ -10,6 +10,7 @@ import simplejson as json
 import datetime
 import tempfile
 import json5
+import shutil
 from bson.son import SON
 from bson import json_util
 from pymongo.errors import OperationFailure
@@ -25,9 +26,12 @@ from common.config import SysConfig
 
 logger = logging.getLogger("default")
 
-# mongo客户端安装在本机的位置
-mongo = "mongo"
-
+# 获取本机的mongo shell客户端
+mongo = shutil.which("mongosh") or shutil.which("mongo")
+if mongo:
+    mongo = os.path.basename(mongo)
+else:
+    raise Exception("Mongo客户端未找到。")
 
 # 自定义异常
 class mongo_error(Exception):
@@ -385,13 +389,6 @@ class MongoEngine(EngineBase):
             common_params["auth_options"] = ""
         return cmd_template.format(**common_params)
 
-    def get_mongosh(self):
-        for client in ("mongosh", "mongo"):
-            if os.path.exists(f"/usr/bin/{client}"):
-                self.mongo = client
-                return
-            raise Exception("未找到MongoDB客户端")
-
     def get_master(self):
         """获得主节点的port和host"""
 
@@ -443,7 +440,6 @@ class MongoEngine(EngineBase):
 
     def execute(self, db_name=None, sql=""):
         """mongo命令执行语句"""
-        self.get_mongosh()
         self.get_master()
         execute_result = ReviewSet(full_sql=sql)
         sql = sql.strip()
@@ -487,12 +483,12 @@ class MongoEngine(EngineBase):
                         )
                     else:
                         try:
-                            r = json.loads(r)
-                        except Exception as e:
-                            try:
+                            if self.mongo == "mongosh":
                                 r = json5.loads(re.search(r"[{\[].*[\]}]", r).group(0))
-                            except Exception as e:
-                                logger.warning(str(e))
+                            else:
+                                r = json.loads(r)
+                        except Exception as e:
+                            logger.warning(str(e))
                         finally:
                             methodStr = exec_sql.split(").")[-1].split("(")[0].strip()
                             if "." in methodStr:

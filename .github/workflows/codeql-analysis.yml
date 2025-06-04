@@ -63,5 +63,11 @@ jobs:
     #   make bootstrap
     #   make release
 
+    # Install MongoDB Shell to test the recognition of the mongo client.
+    - name: Install MongoDB Shell
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y mongodb-org-shell
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
