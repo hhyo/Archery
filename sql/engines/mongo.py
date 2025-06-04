@@ -33,6 +33,7 @@ if mongo:
 else:
     raise Exception("Mongo客户端未找到。")
 
+
 # 自定义异常
 class mongo_error(Exception):
     def __init__(self, error_info):
