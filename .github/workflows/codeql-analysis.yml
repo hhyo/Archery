@@ -66,8 +66,9 @@ jobs:
     # Install MongoDB Shell to test the recognition of the mongo client.
     - name: Install MongoDB Shell
       run: |
-        sudo apt-get update -y
-        sudo apt-get install -y mongodb-org-shell
+        wget https://downloads.mongodb.com/compass/mongodb-mongosh_2.5.2_arm64.deb
+        sudo apt install ./mongodb-mongosh_2.5.2_arm64.deb
+        mongosh --version
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

@@ -74,6 +74,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r dev-requirements.txt
+    
+    
+    # Install MongoDB Shell to test the recognition of the mongo client.
+    - name: Install MongoDB Shell
+      run: |
+        wget https://downloads.mongodb.com/compass/mongodb-mongosh_2.5.2_arm64.deb
+        sudo apt install ./mongodb-mongosh_2.5.2_arm64.deb
+        mongosh --version
         
     - name: Init Table
       run: |
