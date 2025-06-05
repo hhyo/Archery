@@ -103,6 +103,92 @@ const mysqlDiagnosticInfo = {
     ],
 }
 
+const dorisDiagnosticInfo = {
+    fieldsProcesslist: [
+        'doris',
+        ["All","Not Sleep","Query"],
+        [{
+            title: '',
+            field: 'checkbox',
+            checkbox: true
+        }, {
+            title: 'THEEAD ID',
+            field: 'id',
+            sortable: true
+        }, {
+            title: 'USER',
+            field: 'user',
+            sortable: true
+        }, {
+            title: 'HOST',
+            field: 'host',
+            sortable: true
+        }, {
+            title: 'CATALOG',
+            field: 'catalog',
+            sortable: true
+        }, {
+            title: 'DATABASE',
+            field: 'db',
+            sortable: true
+        }, {
+            title: 'TIME(s)',
+            field: 'time',
+            sortable: true
+        }, {
+            title: 'COMMAND',
+            field: 'command',
+            sortable: true
+        }, {
+            title: 'STATE',
+            field: 'state',
+            sortable: true
+        }, {
+            title: 'INFO',
+            field: 'info',
+            sortable: true,
+            formatter: function (value, row, index) {
+                if (value.length > 20) {
+                    var sql = value.substr(0, 20) + '...';
+                    return sql;
+                } else {
+                    return value
+                }
+            }
+        }, {
+            title: 'QUERYID',
+            field: 'query_id',
+            sortable: true,
+            visible: false // 默认不显示
+        }, {
+            title: '完整INFO',
+            field: 'info',
+            sortable: true,
+            visible: false // 默认不显示
+        }, {
+            title: 'FE',
+            field: 'fe',
+            sortable: true,
+            visible: false // 默认不显示
+        }],
+        function (index, row) {
+            var html = [];
+            $.each(row, function (key, value) {
+                if (key === 'info') {
+                    var sql = window.sqlFormatter.format(value);
+                    //替换所有的换行符
+                    sql = sql.replace(/\r\n/g, "<br>");
+                    sql = sql.replace(/\n/g, "<br>");
+                    //替换所有的空格
+                    sql = sql.replace(/\s/g, "&nbsp;");
+                    html.push('<span>' + sql + '</span>');
+                }
+            });
+            return html.join('');
+        }
+    ]
+}
+
 const mongoDiagnosticInfo = {
     fieldsProcesslist: [
         'mongo',
