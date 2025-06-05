@@ -62,6 +62,8 @@ class MysqlForkType(Enum):
 
 
 class MysqlEngine(EngineBase):
+    name = "MySQL"
+    info = "MySQL engine"
     test_query = "SELECT 1"
     _server_version = None
     _server_fork_type = None
@@ -102,10 +104,6 @@ class MysqlEngine(EngineBase):
             )
         self.thread_id = self.conn.thread_id()
         return self.conn
-
-    name = "MySQL"
-
-    info = "MySQL engine"
 
     def escape_string(self, value: str) -> str:
         """字符串参数转义"""
@@ -540,7 +538,7 @@ class MysqlEngine(EngineBase):
                 result_set = self.result_set_binary_as_hex(result_set)
         except Exception as e:
             logger.warning(
-                f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+                f"{self.name}语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
             )
             result_set.error = str(e)
         finally:
@@ -721,7 +719,7 @@ class MysqlEngine(EngineBase):
             cursor.close()
         except Exception as e:
             logger.warning(
-                f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+                f"{self.name}语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
             )
             result.error = str(e)
         if close_conn:
@@ -762,9 +760,13 @@ class MysqlEngine(EngineBase):
         """
         return self.inc_engine.osc_control(**kwargs)
 
-    def processlist(self, command_type, **kwargs):
+    def processlist(
+        self,
+        command_type,
+        base_sql="select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist",
+        **kwargs,
+    ):
         """获取连接信息"""
-        base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
         # escape
         command_type = self.escape_string(command_type)
         if not command_type:
@@ -778,11 +780,12 @@ class MysqlEngine(EngineBase):
 
         return self.query("information_schema", sql)
 
-    def get_kill_command(self, thread_ids):
+    def get_kill_command(self, thread_ids, thread_ids_check=True):
         """由传入的线程列表生成kill命令"""
         # 校验传参
-        if [i for i in thread_ids if not isinstance(i, int)]:
-            return None
+        if thread_ids_check:
+            if [i for i in thread_ids if not isinstance(i, int)]:
+                return None
         sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
             ",".join(str(tid) for tid in thread_ids)
         )
@@ -793,11 +796,12 @@ class MysqlEngine(EngineBase):
 
         return kill_sql
 
-    def kill(self, thread_ids):
+    def kill(self, thread_ids, thread_ids_check=True):
         """kill线程"""
         # 校验传参
-        if [i for i in thread_ids if not isinstance(i, int)]:
-            return ResultSet(full_sql="")
+        if thread_ids_check:
+            if [i for i in thread_ids if not isinstance(i, int)]:
+                return ResultSet(full_sql="")
         sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
             ",".join(str(tid) for tid in thread_ids)
         )

@@ -29,6 +29,7 @@ class DorisEngine(MysqlEngine):
         version = result.rows[0][-1].split("-")[0]
         return tuple([int(n) for n in version.split(".")[:3]])
 
+    '''
     def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
@@ -52,12 +53,27 @@ class DorisEngine(MysqlEngine):
             if close_conn:
                 self.close()
         return result_set
+    '''
 
     forbidden_databases = [
         "__internal_schema",
         "INFORMATION_SCHEMA",
         "information_schema",
     ]
+
+    def processlist(
+        self,
+        command_type,
+        base_sql="select id, user, host, catalog, db, command, time, state, query_id, ifnull(info,'') as info, fe from information_schema.processlist",
+        **kwargs,
+    ):
+        return super(DorisEngine, self).processlist(command_type, base_sql)
+
+    def get_kill_command(self, thread_ids, thread_ids_check=False):
+        return super(DorisEngine, self).get_kill_command(thread_ids, thread_ids_check)
+
+    def kill(self, thread_ids, thread_ids_check=False):
+        return super(DorisEngine, self).kill(thread_ids, thread_ids_check)
 
     def execute_check(self, db_name=None, sql=""):
         """上线单执行前的检查, 返回Review set"""
@@ -186,3 +202,10 @@ class DorisEngine(MysqlEngine):
         if close_conn:
             self.close()
         return execute_result
+    
+    def get_long_transaction(self, *args, **kwargs):
+        # 不支持的方法需要抛出错误
+        raise AttributeError(f"{self.__class__.__name__} has no attribute 'get_long_transaction'")
+
+    def trxandlocks(self, *args, **kwargs):
+        raise AttributeError(f"{self.__class__.__name__} has no attribute 'trxandlocks'")
