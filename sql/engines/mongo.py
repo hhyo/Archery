@@ -1091,13 +1091,10 @@ class MongoEngine(EngineBase):
             query_skip = int(query_dict["skip"])
             find_cmd += f".skip({query_skip})"
         if "count" in query_dict:
-            if method == "find":
-                if condition == "{}" or not condition:
-                    find_cmd = "collection.count_documents({})"
-                else:
-                    find_cmd = "collection.count_documents(condition)"
+            if condition:
+                find_cmd = "collection.count_documents(condition)"
             else:
-                find_cmd += ".count()"
+                find_cmd = "collection.count_documents({})"
         if "explain" in query_dict:
             find_cmd += ".explain()"
 
