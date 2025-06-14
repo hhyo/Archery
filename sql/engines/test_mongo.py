@@ -268,7 +268,7 @@ def test_build_cmd_with_load_without_auth(mongo_engine):
             "mongo --quiet -u test_user -p 'test_password' localhost:27017/admin <<\\EOF\n"
             "db=db.getSiblingDB('test_db');db.createCollection('new_collection')\nEOF",
         ),
-    ]
+    ],
 )
 def test_build_cmd_various_queries(mongo_engine, params, expected_cmd):
     # 测试多种Mongo命令的生成
@@ -358,5 +358,3 @@ def test_build_cmd_with_load_without_auth_and_slave_ok(mongo_engine):
         "db=db.getSiblingDB('test_db');rs.slaveOk();load('/tmp/test.js')\nEOF"
     )
     assert cmd == expected_cmd
-
-
