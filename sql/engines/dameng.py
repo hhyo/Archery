@@ -242,6 +242,31 @@ class DamengEngine(EngineBase):
             conn = self.get_connection(db_name=db_name)
             cursor = conn.cursor()
 
+            # Attempt to set schema for the current session if db_name is provided
+            if db_name:
+                try:
+                    # Common syntax for setting schema. VERIFY THIS FOR DAMENG.
+                    set_schema_sql = f"SET SCHEMA {db_name.upper()}"
+                    logger.debug(f"Attempting to set Dameng schema for workflow: {set_schema_sql}")
+                    cursor.execute(set_schema_sql)
+                    logger.info(f"Dameng session schema set to {db_name.upper()} for workflow execution.")
+                except Exception as schema_err:
+                    # If setting schema fails, this is likely a critical issue for the workflow.
+                    # We'll log it and the workflow will likely fail on subsequent DML/DDL if tables are not found.
+                    logger.error(f"CRITICAL: Failed to set schema '{db_name.upper()}' for Dameng workflow. Error: {schema_err}")
+                    # Populate a single error for the whole workflow if schema set fails.
+                    execute_result_set.error = f"Failed to set schema '{db_name.upper()}': {schema_err}"
+                    for idx, stmt_text_for_error in enumerate(statements):
+                        st_err = stmt_text_for_error.strip()
+                        if not st_err: continue
+                        execute_result_set.rows.append(ReviewResult(
+                            id=idx + 1, sql=st_err, errlevel=2, stagestatus="Execute Failed",
+                            errormessage=f"Failed to set schema '{db_name.upper()}': {schema_err}"
+                        ))
+                    if cursor: cursor.close()
+                    if conn: self.close()
+                    return execute_result_set
+
             line_num = 1
             for stmt_idx, stmt in enumerate(statements):
                 s = stmt.strip()
