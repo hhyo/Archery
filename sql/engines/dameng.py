@@ -105,12 +105,6 @@ class DamengEngine(EngineBase):
             cursor = conn.cursor()
 
             # Attempt to set schema for the current session/cursor if db_name is provided.
-            # The _archery_schema_set flag was causing issues because standard cursor objects
-            # might not allow arbitrary attribute setting.
-            # For simplicity, we'll attempt to set schema if db_name is present.
-            # This might be slightly less efficient if the same connection/cursor is reused
-            # by the calling code for multiple queries with the same db_name,
-            # but typically Archery's query() method implies a fresh operation.
             if db_name:
                 try:
                     set_schema_sql = f"SET SCHEMA {db_name.upper()}" # Common syntax, VERIFY FOR DAMENG
@@ -379,8 +373,4 @@ class DamengEngine(EngineBase):
         finally:
             if conn:
                 self.close()
-<<<<<<< Updated upstream
         return result
-=======
-        return result
->>>>>>> Stashed changes
