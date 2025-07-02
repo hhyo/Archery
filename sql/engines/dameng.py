@@ -379,8 +379,4 @@ class DamengEngine(EngineBase):
         finally:
             if conn:
                 self.close()
-<<<<<<< Updated upstream
         return result
-=======
-        return result
->>>>>>> Stashed changes
