@@ -104,6 +104,26 @@ class DamengEngine(EngineBase):
             conn = self.get_connection(db_name=db_name)
             cursor = conn.cursor()
 
+            # Attempt to set schema for the current session/cursor if db_name is provided
+            # and we haven't tried for this cursor instance before.
+            if db_name and not getattr(cursor, '_archery_schema_set', False):
+                try:
+                    # Common syntax for setting schema. VERIFY THIS FOR DAMENG.
+                    # Alternatives: "ALTER SESSION SET CURRENT_SCHEMA = schema_name" (Oracle)
+                    # Or the database user's default schema might be sufficient if tables are accessed without schema.
+                    set_schema_sql = f"SET SCHEMA {db_name.upper()}"
+                    logger.debug(f"Attempting to set Dameng schema: {set_schema_sql}")
+                    cursor.execute(set_schema_sql)
+                    setattr(cursor, '_archery_schema_set', True) # Mark that schema has been set for this cursor
+                    logger.info(f"Dameng session schema set to {db_name.upper()} for current query execution.")
+                except Exception as schema_err:
+                    # Log the error but proceed with the original query.
+                    # The user might have used fully qualified names, or the table might be in the default schema.
+                    logger.warning(f"Failed to set schema '{db_name.upper()}' for Dameng query. Error: {schema_err}. Query will proceed.")
+                    # Optionally, if schema setting is critical, you could re-raise or set result_set.error here.
+                    # For now, we allow the query to proceed. If it fails due to table not found,
+                    # this warning gives a clue.
+
             cursor.execute(sql, parameters or [])
 
             if int(limit_num) > 0:
