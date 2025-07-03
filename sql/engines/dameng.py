@@ -293,10 +293,19 @@ class DamengEngine(EngineBase):
 
                 execute_result_set.rows.append(review_result)
                 line_num += 1
-        except Exception as e:
+
+            # After loop: if all statements were successful, commit the transaction
+            if execute_result_set.error_count == 0 and conn:
+                logger.info(f"Workflow ID {workflow.id}: All statements executed successfully. Committing transaction for Dameng.")
+                conn.commit()
+            elif execute_result_set.error_count > 0 and conn:
+                logger.warning(f"Workflow ID {workflow.id}: Errors occurred. Rolling back transaction for Dameng.")
+                conn.rollback()
+
+        except Exception as e: # This catches errors from get_connection, cursor creation, or schema setting.
             logger.error(f"Dameng workflow connection/setup failed. DB: {db_name}. Error: {e}\n{traceback.format_exc()}")
             execute_result_set.error = f"Workflow failed: {str(e)}"
-            if not execute_result_set.rows:
+            if not execute_result_set.rows: # If error before any statement processing
                  for idx, stmt_text in enumerate(statements):
                     st = stmt_text.strip()
                     if not st: continue
@@ -304,12 +313,17 @@ class DamengEngine(EngineBase):
                         id=idx + 1, sql=st, errlevel=2, stagestatus="Execute Failed",
                         errormessage=f"Connection/setup error: {str(e)}"
                     ))
+            if conn: # If connection was made, try to rollback
+                try:
+                    conn.rollback()
+                except Exception as rb_err:
+                    logger.error(f"Error during rollback attempt after workflow setup failure: {rb_err}")
         finally:
             if cursor:
                 try: cursor.close()
                 except Exception: pass
             if conn:
-                self.close()
+                self.close() # self.close() sets self.conn to None
 
         return execute_result_set
 
