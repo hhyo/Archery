@@ -465,33 +465,33 @@ LOGGING = {
     "loggers": {
         "default": {  # default日志
             "handlers": ["console", "default"],
-            "level": "WARNING",
+            "level": "DEBUG",
         },
         "django-q": {  # django_q模块相关日志
             "handlers": ["console", "django-q"],
-            "level": "WARNING",
+            "level": "DEBUG",
             "propagate": False,
         },
         "django_auth_ldap": {  # django_auth_ldap模块相关日志
             "handlers": ["console", "default"],
-            "level": "WARNING",
+            "level": "DEBUG",
             "propagate": False,
         },
         "mozilla_django_oidc": {
             "handlers": ["console", "default"],
-            "level": "WARNING",
+            "level": "DEBUG",
             "propagate": False,
         },
-        # 'django.db': {  # 打印SQL语句，方便开发
-        #     'handlers': ['console', 'default'],
-        #     'level': 'DEBUG',
-        #     'propagate': False
-        # },
-        # 'django.request': {  # 打印请求错误堆栈信息，方便开发
-        #     'handlers': ['console', 'default'],
-        #     'level': 'DEBUG',
-        #     'propagate': False
-        # },
+         'django.db': {  # 打印SQL语句，方便开发
+             'handlers': ['console', 'default'],
+             'level': 'DEBUG',
+             'propagate': False
+         },
+         'django.request': {  # 打印请求错误堆栈信息，方便开发
+             'handlers': ['console', 'default'],
+             'level': 'DEBUG',
+             'propagate': False
+         },
     },
 }
 
