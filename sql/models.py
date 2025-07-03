@@ -154,11 +154,9 @@ DB_TYPE_CHOICES = (
     ("cassandra", "Cassandra"),
     ("doris", "Doris"),
     ("elasticsearch", "Elasticsearch"),
+    ("dm", "dm"),
     ("opensearch", "OpenSearch"),
-    ("dameng", "Dameng"),
 )
-
-
 class Tunnel(models.Model):
     """
     SSH隧道配置

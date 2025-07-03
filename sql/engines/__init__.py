@@ -222,27 +222,30 @@ def get_engine_map():
         config = available_engines.get(e)
         if not config:
             raise ValueError(f"invalid engine {e}, not found in engine map")
-        module_path, class_name = config["path"].split(":")
-
-        # Dynamically import the module
-        module = importlib.import_module(module_path)
-        # Get the class from the module
-        engine_class = getattr(module, class_name)
-        enabled_engines[e] = engine_class
-
-    # Manually add DamengEngine if not already managed by settings
-    # This is a fallback/direct way, ideally it should be in settings.AVAILABLE_ENGINES
-    if 'dameng' not in enabled_engines and 'dameng' in settings.ENABLED_ENGINES:
-        try:
-            from .dameng import DamengEngine
-            enabled_engines['dameng'] = DamengEngine
-        except ImportError as e:
-            # Log this error or handle as appropriate
-            print(f"Failed to import DamengEngine directly: {e}")
-            # Depending on policy, either raise an error or allow Archery to run without it
-            # For now, if 'dameng' is in ENABLED_ENGINES, an error here implies misconfiguration
-
+        module, o = config["path"].split(":")
+        engine = getattr(importlib.import_module(module), o)
+        enabled_engines[e] = engine
     return enabled_engines
+
+
+engine_map = get_engine_map()
+
+
+def get_engine(instance=None):  # pragma: no cover
+    """获取数据库操作engine"""
+    if instance.db_type == "mysql":
+        from sql.models import AliyunRdsConfig
+
+        if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
+            from .cloud.aliyun_rds import AliyunRDS
+
+            return AliyunRDS(instance=instance)
+    engine = engine_map.get(instance.db_type)
+    if not engine:
+        raise ValueError(
+            f"engine {instance.db_type} not enabled or not supported, please contact admin"
+        )
+    return engine(instance=instance)
 
 
 engine_map = get_engine_map()

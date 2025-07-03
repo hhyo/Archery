@@ -39,7 +39,7 @@ class DamengEngine(EngineBase):
                 password=self.password,
                 host=self.host,
                 port=int(self.port),
-                autoCommit=False
+                autoCommit=True
             )
         except Exception as e:
             logger.error(f"Dameng connection failed for user {self.user} on {self.host}:{self.port}. Error: {e}\n{traceback.format_exc()}")
