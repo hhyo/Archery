@@ -579,10 +579,8 @@ def execute_check_sql(conn, sql, config, workflow):
                 cursor.execute(f"alter session set current_schema={schema_name}")
             cursor.execute(count_sql)
             actual_rows = cursor.fetchone()[0]
-            
             if actual_rows > max_export_rows:
                 return Exception(f"实际行数{actual_rows}超出阈值: {max_export_rows}")
-                
             return actual_rows
         except Exception as e:
             return e
