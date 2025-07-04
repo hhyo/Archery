@@ -264,9 +264,14 @@ class AuditV2:
         ):
             # 影响行数超规模, 需要人工审核
             return False
+        # if self.offline_data["is_offline_export"] == "yes":
+        if self.workflow.is_offline_export == "yes":
+            return False
         return True
 
     def generate_audit_setting(self) -> AuditSetting:
+        if self.is_auto_review():
+            return AuditSetting(auto_pass=True)
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
             group_id = self.workflow.group_id
         else:
@@ -806,3 +811,4 @@ def get_auditor(
         resource_group=resource_group,
         resource_group_id=resource_group_id,
     )
+

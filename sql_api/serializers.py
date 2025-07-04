@@ -378,14 +378,24 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         try:
             user_instances(user, tag_codes=["can_write"]).get(id=instance.id)
         except instance.DoesNotExist:
-            raise serializers.ValidationError({"errors": "你所在组未关联该实例！"})
+            if workflow_data["is_offline_export"] == "yes":
+                pass
+            else:
+                raise serializers.ValidationError({"errors": "你所在组未关联该实例！"})
 
         # 再次交给engine进行检测，防止绕过
         try:
             check_engine = get_engine(instance=instance)
-            check_result = check_engine.execute_check(
-                db_name=workflow_data["db_name"], sql=sql_content
-            )
+            if instance.db_type in ("mysql",'oracle'):
+                check_result = check_engine.execute_check(
+                    db_name=workflow_data["db_name"],
+                    sql=sql_content,
+                    offline_data=workflow_data,
+                )
+            else:
+                check_result = check_engine.execute_check(
+                    db_name=workflow_data["db_name"], sql=sql_content
+                )
         except Exception as e:
             raise serializers.ValidationError({"errors": str(e)})
 
@@ -395,7 +405,20 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         )
         sys_config = SysConfig()
         if not sys_config.get("enable_backup_switch") and check_engine.auto_backup:
-            is_backup = True
+            if workflow_data["is_offline_export"] == "yes":
+                pass
+            else:
+                is_backup = True
+
+        # 按照系统配置确定是自动驳回还是放行
+        auto_review_wrong = sys_config.get(
+            "auto_review_wrong", ""
+        )  # 1表示出现警告就驳回，2和空表示出现错误才驳回
+        workflow_status = "workflow_manreviewing"
+        if check_result.warning_count > 0 and auto_review_wrong == "1":
+            workflow_status = "workflow_autoreviewwrong"
+        elif check_result.error_count > 0 and auto_review_wrong in ("", "1", "2"):
+            workflow_status = "workflow_autoreviewwrong"
 
         workflow_data.update(
             status="workflow_manreviewing",
@@ -568,3 +591,4 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
             raise serializers.ValidationError({"errors": "不存在该工单"})
 
         return attrs
+

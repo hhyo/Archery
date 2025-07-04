@@ -19,6 +19,7 @@ from . import EngineBase
 import cx_Oracle
 from .models import ResultSet, ReviewSet, ReviewResult
 from sql.utils.data_masking import simple_column_mask
+from sql.engines.offlinedownload import OffLineDownLoad
 
 logger = logging.getLogger("default")
 
@@ -31,6 +32,7 @@ class OracleEngine(EngineBase):
         if instance:
             self.service_name = instance.service_name
             self.sid = instance.sid
+            self.sql_export = OffLineDownLoad()
 
     def get_connection(self, db_name=None):
         if self.conn:
@@ -715,12 +717,16 @@ class OracleEngine(EngineBase):
             filtered_result = resultset
         return filtered_result
 
-    def execute_check(self, db_name=None, sql="", close_conn=True):
+    def execute_check(self, db_name=None, sql="", close_conn=True,  offline_data=None):
         """
         上线单执行前的检查, 返回Review set
         update by Jan.song 20200302
         使用explain对数据修改预计进行检测
         """
+        # 获取离线导出工单参数
+        offline_exp = (
+            offline_data["is_offline_export"] if offline_data is not None else "0"
+        )
         config = SysConfig()
         check_result = ReviewSet(full_sql=sql)
         # explain支持的语法
@@ -745,7 +751,7 @@ class OracleEngine(EngineBase):
                     object_name = f"""{db_name}.{object_name}"""
                 object_name_list.add(object_name)
                 # 禁用语句
-                if re.match(r"^select|^with|^explain", sql_lower):
+                if re.match(r"^select|^with|^explain", sql_lower) and not offline_exp == "yes":
                     result = ReviewResult(
                         id=line,
                         errlevel=2,
@@ -1071,6 +1077,8 @@ class OracleEngine(EngineBase):
                     check_result.syntax_type = 1
                 check_result.rows += [result]
                 line += 1
+            if offline_exp == "yes":
+                check_result.syntax_type = 3
         except Exception as e:
             logger.warning(
                 f"Oracle 语句执行报错，第{line}个SQL：{sqlitem.statement}，错误信息{traceback.format_exc()}"
@@ -1093,146 +1101,150 @@ class OracleEngine(EngineBase):
         新的逻辑变更为根据审核结果中记录的sql来执行，
         如果是PLSQL存储过程等对象定义操作，还需检查确认新建对象是否编译通过!
         """
-        review_content = workflow.sqlworkflowcontent.review_content
-        review_result = json.loads(review_content)
-        sqlitemList = get_exec_sqlitem_list(review_result, workflow.db_name)
+        # 增加判断如果是离线下载的工单，就跳转至execute_offline_download执行导出操作
+        if workflow.is_offline_export == "yes":
+            return self.sql_export.execute_offline_download(workflow)
+        else:
+            review_content = workflow.sqlworkflowcontent.review_content
+            review_result = json.loads(review_content)
+            sqlitemList = get_exec_sqlitem_list(review_result, workflow.db_name)
 
-        sql = workflow.sqlworkflowcontent.sql_content
-        execute_result = ReviewSet(full_sql=sql)
+            sql = workflow.sqlworkflowcontent.sql_content
+            execute_result = ReviewSet(full_sql=sql)
 
-        line = 1
-        statement = None
-        try:
-            conn = self.get_connection()
-            cursor = conn.cursor()
-            conn.current_schema = workflow.db_name
-            # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
-            cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
-            cursor.execute(f"select sysdate from dual")
-            rows = cursor.fetchone()
-            begin_time = rows[0]
-            # 逐条执行切分语句，追加到执行结果中
-            for sqlitem in sqlitemList:
-                statement = sqlitem.statement
-                if sqlitem.stmt_type == "SQL":
-                    statement = statement.rstrip(";")
-                # 如果是DDL的工单，获取对象的原定义，并保存到sql_rollback.undo_sql
-                # 需要授权 grant execute on dbms_metadata to xxxxx
-                if workflow.syntax_type == 1:
-                    object_name = self.get_sql_first_object_name(statement)
-                    back_obj_sql = f"""select dbms_metadata.get_ddl(object_type,object_name,owner)
-                    from all_objects where (object_name=upper( '{object_name}' ) or OBJECT_NAME = '{sqlitem.object_name}')
-                    and owner='{workflow.db_name}'
-                                        """
-                    cursor.execute(back_obj_sql)
-                    metdata_back_flag = self.metdata_backup(workflow, cursor, statement)
+            line = 1
+            statement = None
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+                conn.current_schema = workflow.db_name
+                # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
+                cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
+                cursor.execute(f"select sysdate from dual")
+                rows = cursor.fetchone()
+                begin_time = rows[0]
+                # 逐条执行切分语句，追加到执行结果中
+                for sqlitem in sqlitemList:
+                    statement = sqlitem.statement
+                    if sqlitem.stmt_type == "SQL":
+                        statement = statement.rstrip(";")
+                    # 如果是DDL的工单，获取对象的原定义，并保存到sql_rollback.undo_sql
+                    # 需要授权 grant execute on dbms_metadata to xxxxx
+                    if workflow.syntax_type == 1:
+                        object_name = self.get_sql_first_object_name(statement)
+                        back_obj_sql = f"""select dbms_metadata.get_ddl(object_type,object_name,owner)
+                        from all_objects where (object_name=upper( '{object_name}' ) or OBJECT_NAME = '{sqlitem.object_name}')
+                        and owner='{workflow.db_name}'
+                                            """
+                        cursor.execute(back_obj_sql)
+                        metdata_back_flag = self.metdata_backup(workflow, cursor, statement)
 
-                with FuncTimer() as t:
-                    if statement != "":
-                        cursor.execute(statement)
-                        conn.commit()
+                    with FuncTimer() as t:
+                        if statement != "":
+                            cursor.execute(statement)
+                            conn.commit()
 
-                rowcount = cursor.rowcount
-                stagestatus = "Execute Successfully"
-                if (
-                    sqlitem.stmt_type == "PLSQL"
-                    and sqlitem.object_name
-                    and sqlitem.object_name != "ANONYMOUS"
-                    and sqlitem.object_name != ""
-                ):
-                    query_obj_sql = f"""SELECT OBJECT_NAME, STATUS, TO_CHAR(LAST_DDL_TIME, 'YYYY-MM-DD HH24:MI:SS') FROM ALL_OBJECTS
-                                         WHERE OWNER = '{sqlitem.object_owner}'
-                                         AND OBJECT_NAME = '{sqlitem.object_name}'
-                                        """
-                    cursor.execute(query_obj_sql)
-                    row = cursor.fetchone()
-                    if row:
-                        status = row[1]
-                        if status and status == "INVALID":
+                    rowcount = cursor.rowcount
+                    stagestatus = "Execute Successfully"
+                    if (
+                        sqlitem.stmt_type == "PLSQL"
+                        and sqlitem.object_name
+                        and sqlitem.object_name != "ANONYMOUS"
+                        and sqlitem.object_name != ""
+                    ):
+                        query_obj_sql = f"""SELECT OBJECT_NAME, STATUS, TO_CHAR(LAST_DDL_TIME, 'YYYY-MM-DD HH24:MI:SS') FROM ALL_OBJECTS
+                                             WHERE OWNER = '{sqlitem.object_owner}'
+                                             AND OBJECT_NAME = '{sqlitem.object_name}'
+                                            """
+                        cursor.execute(query_obj_sql)
+                        row = cursor.fetchone()
+                        if row:
+                            status = row[1]
+                            if status and status == "INVALID":
+                                stagestatus = (
+                                    "Compile Failed. Object "
+                                    + sqlitem.object_owner
+                                    + "."
+                                    + sqlitem.object_name
+                                    + " is invalid."
+                                )
+                        else:
                             stagestatus = (
                                 "Compile Failed. Object "
                                 + sqlitem.object_owner
                                 + "."
                                 + sqlitem.object_name
-                                + " is invalid."
+                                + " doesn't exist."
                             )
-                    else:
-                        stagestatus = (
-                            "Compile Failed. Object "
-                            + sqlitem.object_owner
-                            + "."
-                            + sqlitem.object_name
-                            + " doesn't exist."
+
+                        if stagestatus != "Execute Successfully":
+                            raise Exception(stagestatus)
+
+                    execute_result.rows.append(
+                        ReviewResult(
+                            id=line,
+                            errlevel=0,
+                            stagestatus=stagestatus,
+                            errormessage="None",
+                            sql=statement,
+                            affected_rows=cursor.rowcount,
+                            execute_time=t.cost,
                         )
-
-                    if stagestatus != "Execute Successfully":
-                        raise Exception(stagestatus)
-
-                execute_result.rows.append(
-                    ReviewResult(
-                        id=line,
-                        errlevel=0,
-                        stagestatus=stagestatus,
-                        errormessage="None",
-                        sql=statement,
-                        affected_rows=cursor.rowcount,
-                        execute_time=t.cost,
                     )
+                    line += 1
+            except Exception as e:
+                logger.warning(
+                    f"Oracle命令执行报错，工单id：{workflow.id}，语句：{statement or sql}， 错误信息：{traceback.format_exc()}"
                 )
-                line += 1
-        except Exception as e:
-            logger.warning(
-                f"Oracle命令执行报错，工单id：{workflow.id}，语句：{statement or sql}， 错误信息：{traceback.format_exc()}"
-            )
-            execute_result.error = str(e)
-            # conn.rollback()
-            # 追加当前报错语句信息到执行结果中
-            execute_result.rows.append(
-                ReviewResult(
-                    id=line,
-                    errlevel=2,
-                    stagestatus="Execute Failed",
-                    errormessage=f"异常信息：{e}",
-                    sql=statement or sql,
-                    affected_rows=0,
-                    execute_time=0,
-                )
-            )
-            line += 1
-            # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
-            for sqlitem in sqlitemList[line - 1 :]:
+                execute_result.error = str(e)
+                # conn.rollback()
+                # 追加当前报错语句信息到执行结果中
                 execute_result.rows.append(
                     ReviewResult(
                         id=line,
-                        errlevel=0,
-                        stagestatus="Audit completed",
-                        errormessage=f"前序语句失败, 未执行",
-                        sql=sqlitem.statement,
+                        errlevel=2,
+                        stagestatus="Execute Failed",
+                        errormessage=f"异常信息：{e}",
+                        sql=statement or sql,
                         affected_rows=0,
                         execute_time=0,
                     )
                 )
                 line += 1
-        finally:
-            # 备份
-            if workflow.is_backup:
-                try:
-                    cursor.execute(f"select sysdate from dual")
-                    rows = cursor.fetchone()
-                    end_time = rows[0]
-                    self.backup(
-                        workflow,
-                        cursor=cursor,
-                        begin_time=begin_time,
-                        end_time=end_time,
+                # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
+                for sqlitem in sqlitemList[line - 1 :]:
+                    execute_result.rows.append(
+                        ReviewResult(
+                            id=line,
+                            errlevel=0,
+                            stagestatus="Audit completed",
+                            errormessage=f"前序语句失败, 未执行",
+                            sql=sqlitem.statement,
+                            affected_rows=0,
+                            execute_time=0,
+                        )
                     )
-                except Exception as e:
-                    logger.error(
-                        f"Oracle工单备份异常，工单id：{workflow.id}， 错误信息：{traceback.format_exc()}"
-                    )
-            if close_conn:
-                self.close()
-        return execute_result
+                    line += 1
+            finally:
+                # 备份
+                if workflow.is_backup:
+                    try:
+                        cursor.execute(f"select sysdate from dual")
+                        rows = cursor.fetchone()
+                        end_time = rows[0]
+                        self.backup(
+                            workflow,
+                            cursor=cursor,
+                            begin_time=begin_time,
+                            end_time=end_time,
+                        )
+                    except Exception as e:
+                        logger.error(
+                            f"Oracle工单备份异常，工单id：{workflow.id}， 错误信息：{traceback.format_exc()}"
+                        )
+                if close_conn:
+                    self.close()
+            return execute_result
 
     def backup(self, workflow, cursor, begin_time, end_time):
         """

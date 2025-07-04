@@ -116,6 +116,7 @@ def _sql_workflow_list(request):
         "db_name",
         "group_name",
         "syntax_type",
+        "export_format",
     )
 
     # QuerySet 序列化
@@ -525,3 +526,4 @@ def osc_control(request):
         json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
         content_type="application/json",
     )
+

@@ -212,6 +212,19 @@
                             return 'DDL'
                         } else if (String(value) === '2') {
                             return 'DML'
+                        } else if (String(value) === '3') {
+                            if (String(row.export_format) === 'csv') {
+                                row.export_format = 'CSV'
+                            } else if (String(row.export_format) === 'xlsx') {
+                                row.export_format = 'Excel'
+                            } else if (String(row.export_format) === 'sql') {
+                                row.export_format = 'SQL'
+                            } else if (String(row.export_format) === 'json') {
+                                row.export_format = 'JSON'
+                            } else if (String(row.export_format) === 'xml') {
+                                row.export_format = 'XML'
+                            }
+                            return '数据导出: ' + row.export_format
                         }
                     }
                 }, {
@@ -351,3 +364,4 @@
         });
     </script>
 {% endblock %}
+
