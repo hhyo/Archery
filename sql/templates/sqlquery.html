@@ -1109,28 +1109,11 @@
                         }
                         var showExport = {{can_download}}===1
                         var query_result_id=(`query_result${n}`);
+                        $("#btn-submitdownload").prop("disabled", false);
                         if ($("#btn-submitdownload").is(':hidden')) {
                             var isOfflineExport = "no"
                         } else {
                             var isOfflineExport = "yes"
-                        }
-                        if (result['full_sql'].trim().toLowerCase().startsWith('explain')) {
-                            if ((optgroup  === "MySQL" || optgroup  === "Oracle") && isOfflineExport === "yes") {
-                                var totalExplainScanRows = 0;
-                                var maxExportRows = "{{ config.max_export_rows }}";
-                                for (var i = 0; i < result['rows'].length; i++) {
-                                    var explainScanRows = parseFloat(result['rows'][i][9]);
-                                    totalExplainScanRows += explainScanRows;
-                                }
-                                if (totalExplainScanRows > maxExportRows) {
-                                    alert('警告信息:\n总扫描行数：' + totalExplainScanRows
-                                        + '\n阈值：' + maxExportRows
-                                        + '\n禁止提交导出!');
-                                    $("#btn-submitdownload").prop("disabled", true);
-                                } else {
-                                    $("#btn-submitdownload").prop("disabled", false);
-                                }
-                            }
                         }
                         $(`#${query_result_id}`).bootstrapTable('destroy').bootstrapTable({
                             escape: true,

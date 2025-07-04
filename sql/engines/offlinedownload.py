@@ -567,36 +567,22 @@ def execute_check_sql(conn, sql, config, workflow):
     max_export_rows_str = config.get("max_export_rows", "10000")
     max_export_rows = int(max_export_rows_str) if max_export_rows_str else 10000
     instance = workflow.instance
+    schema_name = workflow.db_name
     # 判断sql是否以 select 开头
     if not sql.strip().lower().startswith("select"):
         return Exception(f"违规语句：{sql}")
-    if instance.db_type == 'mysql':
-        sql = "explain " + sql
-        cursor = conn.cursor()
+    # 最终执行导出的时候判断行数是否超过阈值，若超过则抛出异常
+    with conn.cursor() as cursor:
         try:
-            cursor.execute(sql.rstrip(';'))
-            check_result = cursor.fetchall()
-            total_explain_scan_rows = sum(
-                row[9] if row[9] is not None else 0 for row in check_result
-            )
-            if int(total_explain_scan_rows) > max_export_rows:
-                return Exception(f"扫描行数超出阈值: {max_export_rows}")
-            else:
-                return total_explain_scan_rows
-        except Exception as e:
-            return e
-        finally:
-            # 关闭游标和数据库连接
-            cursor.close()
-    elif instance.db_type == 'oracle':
-        cursor = conn.cursor()
-        try:
-            # 获取真实查询行数
             count_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
+            if instance.db_type == "oracle":
+                cursor.execute(f"alter session set current_schema={schema_name}")
             cursor.execute(count_sql)
-            total_explain_scan_rows = cursor.fetchone()[0]
-            return total_explain_scan_rows
+            actual_rows = cursor.fetchone()[0]
+            
+            if actual_rows > max_export_rows:
+                return Exception(f"实际行数{actual_rows}超出阈值: {max_export_rows}")
+                
+            return actual_rows
         except Exception as e:
             return e
-        finally:
-            cursor.close()
