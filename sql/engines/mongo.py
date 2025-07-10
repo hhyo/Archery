@@ -388,7 +388,7 @@ class MongoEngine(EngineBase):
 
         sql = "rs.isMaster().primary"
         master = self.exec_cmd(sql)
-        if master != "undefined" and master.find("TypeError") >= 0:
+        if master != "undefined":
             sp_host = master.replace('"', "").split(":")
             self.host = sp_host[0]
             self.port = int(sp_host[1])
