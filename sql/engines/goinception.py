@@ -68,9 +68,7 @@ class GoInceptionEngine(EngineBase):
         """字符串参数转义"""
         return pymysql.escape_string(value)
 
-    def execute_check(
-        self, instance=None, db_name=None, sql="", is_offline_export=None
-    ):
+    def execute_check(self, instance=None, db_name=None, sql=""):
         """inception check"""
         # 判断如果配置了隧道则连接隧道
         host, port, user, password = self.remote_instance_conn(instance)
@@ -101,8 +99,6 @@ class GoInceptionEngine(EngineBase):
             if check_result.syntax_type == 2:
                 if get_syntax_type(r[5], parser=False, db_type="mysql") == "DDL":
                     check_result.syntax_type = 1
-        if is_offline_export == "yes":
-            check_result.syntax_type = 3
         check_result.column_list = inception_result.column_list
         check_result.checked = True
         check_result.error = inception_result.error

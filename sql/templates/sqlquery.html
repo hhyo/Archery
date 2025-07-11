@@ -175,8 +175,8 @@
                             <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
                         </div>
                         <div class="text-info toggleable">
-                            <li>导出工单仅支持导出一条查询语句</li>
-                            <li>导出请先看执行计划，若扫描行数过多将禁止执行，阈值: {{ config.max_export_rows }}</li>
+                            <li>导出工单仅支持提交一条查询语句，编辑器中如果有多行语句可选中要提交的sql进行导出</li>
+                            <li>导出前请先点击统计行数进行统计和校验，若行数超过阈值或有其他错误禁止提交，阈值: {{ config.max_export_rows }}</li>
                         </div>
                         <style>
                             .toggleable {
@@ -343,11 +343,13 @@
                         // $(".toggleableother").css("display", "");
                         toggleableElement.removeClass("hidden");
                         $("#btn-offlinedownload").val("切换至导出")
+                        $("#btn-explain").val("执行计划")
                     } else {
                         $(".toggleable").show();
                         // $(".toggleableother").css("display", "none");
                         toggleableElement.addClass("hidden");
                         $("#btn-offlinedownload").val("切换至查询")
+                        $("#btn-explain").val("行数统计")
                     }
                 }
             });
@@ -366,6 +368,11 @@
             $("#btn-submitdownload").prop("disabled", true);
         });
 
+        // 监听选区变化，若选取变化则禁用
+        editor.getSession().selection.on('changeSelection', function(e) {
+            $("#btn-submitdownload").prop("disabled", true);
+        });
+
         // 提交导出工单
         function submitofflinedownload() {
             let formData = $('#form-sqlquery').serializeArray().reduce(function (obj, item) {
@@ -373,6 +380,10 @@
                 return obj;
             }, {})
             var sqlContent = editor.getValue();
+            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+            if (select_sqlContent) {
+                sqlContent = select_sqlContent
+            }
             $.ajax({
                 type: "post",
                 url: "/api/v1/workflow/",
@@ -453,30 +464,12 @@
             var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
             var sqlContent = editor.getValue();
-            // 假设 sqlContent 包含多条 SQL 语句，使用分号分隔
-            var sqlStatements = sqlContent.split(';');
-            // 用于存储筛选后的语句
-            var errorStatements = [];
-            // 遍历每一条语句
-            for (var i = 0; i < sqlStatements.length; i++) {
-                // 去除首尾空白字符
-                var trimmedStatement = sqlStatements[i].trim();
-
-                // 只保留以 "SELECT" 开头的语句
-                if (trimmedStatement.toUpperCase().startsWith('SELECT') && trimmedStatement.length > 0) {
-                } else {
-                    // 如果不以 SELECT 开头，输出报错提示
-                    errorStatements.push(trimmedStatement.replace(/\s+/g, ' '));
-                }
+            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+            if (select_sqlContent) {
+                sqlContent = select_sqlContent
             }
-            // 将筛选后的语句重新组合成一个字符串，使用分号分隔
-            var filteredErrorSql = errorStatements.join(';\n');
             // 输出非select的SQL语句，并禁用按钮
-            if (filteredErrorSql) {
-                $("#btn-submitdownload").prop("disabled", true);
-                alert("非法SQL\n" + filteredErrorSql)
-                return result = false;
-            } else if (!instance_name) {
+            if (!instance_name) {
                 alert("请选择实例！");
                 return result = false;
             } else if (!db_name) {
@@ -885,6 +878,37 @@
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
             }
+            if ($("#btn-submitdownload").is(':hidden')) {
+                    var isOfflineExport = "no"
+                } else {
+                    var isOfflineExport = "yes"
+                }
+            var totalSqlCnt = sqlContent.split(';')
+                .map(stmt => stmt.trim()) // 去除每个语句两端的空白
+                .filter(stmt => stmt.length > 0) // 过滤掉空语句
+                .length; // 统计语句数量
+
+                // 检查SQL开头
+            let trimmedSQL = sqlContent.trim().toUpperCase();
+            // 跳过所有开头的注释（单行/多行）
+            while (true) {
+                // 跳过单行注释 (--)
+                if (trimmedSQL.startsWith("--")) {
+                    const nlIndex = trimmedSQL.indexOf('\n');
+                    trimmedSQL = (nlIndex > -1) 
+                        ? trimmedSQL.substring(nlIndex + 1).trim() 
+                        : "";
+                    continue;
+                }
+                // 跳过多行注释 (/*...*/)
+                if (trimmedSQL.startsWith("/*")) {
+                    const endIndex = trimmedSQL.indexOf("*/");
+                    if (endIndex === -1) break; // 未闭合注释不处理
+                    trimmedSQL = trimmedSQL.substring(endIndex + 2).trim();
+                    continue;
+                }
+                break;
+            }
             if (!instance_name) {
                 alert("请选择实例！");
                 return result = false;
@@ -893,6 +917,12 @@
                 return result = false;
             } else if (!sqlContent) {
                 alert("SQL内容不能为空！");
+                return result = false;
+            } else if (!trimmedSQL.startsWith("SELECT") && !trimmedSQL.startsWith("WITH")) {
+                alert("SQL必须是查询语句！");
+                return result = false;
+            } else if (isOfflineExport === "yes" && totalSqlCnt > 1) {
+                alert("检测到多个SQL语句，只能提交一个SQL，请选中要提交导出工单的SQL重试。");
                 return result = false;
             }
             return result;
@@ -937,7 +967,16 @@
                     inputButton.addClass('disabled');
                     inputButton.prop("disabled", true)
                     $("#btn-submitdownload").prop("disabled", true);
-                    sqlquery('explain')
+                    if ($("#btn-submitdownload").is(':hidden')) {
+                            var isOfflineExport = "no"
+                        } else {
+                            var isOfflineExport = "yes"
+                        }
+                    if (isOfflineExport === "yes") {
+                        sqlcount('explain')
+                    } else {
+                        sqlquery('explain')
+                    }
                 }
             }
         );
@@ -1109,11 +1148,23 @@
                         }
                         var showExport = {{can_download}}===1
                         var query_result_id=(`query_result${n}`);
-                        $("#btn-submitdownload").prop("disabled", false);
                         if ($("#btn-submitdownload").is(':hidden')) {
                             var isOfflineExport = "no"
                         } else {
                             var isOfflineExport = "yes"
+                        }
+                        if (isOfflineExport === "yes") {
+                            var ActualRows = 0;
+                            var maxExportRows = "{{ config.max_export_rows }}";
+                            ActualRows = parseFloat(result['rows'][0][0]);
+                            if (ActualRows > maxExportRows) {
+                                alert('警告信息:\n实际统计行数：' + ActualRows
+                                    + '\n阈值：' + maxExportRows
+                                    + '\n禁止提交导出!');
+                                $("#btn-submitdownload").prop("disabled", true);
+                            } else {
+                                $("#btn-submitdownload").prop("disabled", false);
+                            }
                         }
                         $(`#${query_result_id}`).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
@@ -1302,6 +1353,48 @@
                     sqlContent = 'explain ' + sqlContent
                 }
             }
+            //提交请求
+            $.ajax({
+                type: "post",
+                url: "/query/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val(),
+                    schema_name: $("#schema_name").val(),
+                    tb_name: $("#table_name").val(),
+                    sql_content: sqlContent,
+                    limit_num: $("#limit_num").val()
+                },
+                complete: function () {
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').prop('disabled', false);
+                    optgroup_control();
+                },
+                success: function (data) {
+                    var target = $("#instance_name").val()+"/"+$("#db_name").val();
+                    display_data(data, target);
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        //导出工单的时候将数据通过ajax提交给后端进行count检查
+        function sqlcount(sql) {
+            var result = true;
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+            if (select_sqlContent) {
+                sqlContent = select_sqlContent
+            } else {
+                var sqlContent = editor.getValue();
+            }
+
+            var sqlContent = sqlContent.trim().replace(/;$/, '');
+            var sqlContent = 'select count(1) from (' + sqlContent + ') t'
+             
             //提交请求
             $.ajax({
                 type: "post",

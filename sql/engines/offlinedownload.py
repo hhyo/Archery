@@ -38,7 +38,36 @@ class TimeoutException(Exception):
 
 
 class OffLineDownLoad(EngineBase):
+
+    def create_connection(self, instance, workflow):
+        if instance.db_type == 'mysql':
+            host, port, user, password = self.remote_instance_conn(instance)
+            return MySQLdb.connect(
+                host=host,
+                port=port,
+                user=user,
+                passwd=password,
+                db=workflow.db_name,
+                charset='utf8mb4'
+            )
+        elif instance.db_type == 'oracle':
+            host, port, user, password = instance.host, instance.port, instance.user, instance.password
+            service_name = instance.service_name
+            dsn = cx_Oracle.makedsn(host, port, service_name=service_name)
+            return cx_Oracle.connect(
+                user=user,
+                password=password,
+                dsn=dsn,
+                encoding="UTF-8",
+                nencoding="UTF-8"
+            )
+
     def execute_offline_download(self, workflow):
+        """
+        执行离线下载操作
+        :param workflow: 工单实例
+        :return: 下载结果
+        """
         if workflow.is_offline_export == "yes":
             # 创建一个临时目录用于存放文件
             temp_dir = tempfile.mkdtemp()
@@ -54,50 +83,10 @@ class OffLineDownLoad(EngineBase):
             full_sql = sqlparse.split(full_sql)[0]
             sql = full_sql.strip()
             instance = workflow.instance
-            if instance.db_type == 'mysql':
-                host, port, user, password = self.remote_instance_conn(instance)
-            elif instance.db_type == 'oracle':
-                host, port, user, password = instance.host, instance.port, instance.user, instance.password
-                service_name = instance.service_name
             execute_result = ReviewSet(full_sql=sql)
-            # 定义数据库连接
-            if instance.db_type == 'mysql':
-                conn = MySQLdb.connect(
-                    host=host,
-                    port=port,
-                    user=user,
-                    passwd=password,
-                    db=workflow.db_name,
-                    charset='utf8mb4'
-                )
-            elif instance.db_type == 'oracle':
-                dsn = cx_Oracle.makedsn(host, port, service_name=service_name)
-                conn = cx_Oracle.connect(
-                    user=user,
-                    password=password,
-                    dsn=dsn,
-                    encoding="UTF-8",
-                    nencoding="UTF-8"
-                )
+            conn = self.create_connection(instance, workflow)
 
             start_time = time.time()
-            try:
-                check_result = execute_check_sql(conn, sql, config, workflow)
-                if isinstance(check_result, Exception):
-                    raise check_result
-            except Exception as e:
-                execute_result.rows = [
-                    ReviewResult(
-                        stage="Execute failed",
-                        error=1,
-                        errlevel=2,
-                        stagestatus="异常终止",
-                        errormessage=f"{e}",
-                        sql=full_sql,
-                    )
-                ]
-                execute_result.error = e
-                return execute_result
 
             try:
                 # 执行 SQL 查询
@@ -107,6 +96,7 @@ class OffLineDownLoad(EngineBase):
                 if results:
                     columns = results["columns"]
                     result = results["data"]
+                    actual_rows = results["rowcount"]
 
                 # 保存查询结果为 CSV or JSON or XML or XLSX or SQL 文件
                 get_format_type = workflow.export_format
@@ -127,7 +117,7 @@ class OffLineDownLoad(EngineBase):
                         errormessage=f"保存文件: {file_name}",
                         sql=full_sql,
                         execute_time=elapsed_time,
-                        affected_rows=check_result,
+                        affected_rows=actual_rows,
                     )
                 ]
 
@@ -156,13 +146,60 @@ class OffLineDownLoad(EngineBase):
                 # 关闭游标和数据库连接
                 conn.close()
 
+    def pre_count_check(self,workflow):
+        """
+        提交工单时进行后端检查，检查行数是否符合阈值 以及 是否允许的查询语句
+        :param workflow: 工单实例
+        :return: 检查结果字典
+        """
+        # 获取系统配置
+        config = get_sys_config()
+        # 获取前端提交的 SQL 和其他工单信息
+        full_sql = workflow.sql_content
+        full_sql = sqlparse.format(full_sql, strip_comments=True)
+        full_sql = sqlparse.split(full_sql)[0]
+        sql = full_sql.strip()
+        instance = workflow
+        check_result = ReviewSet(full_sql=sql)
+        check_result.syntax_type = 3
+        conn = self.create_connection(instance, workflow)
+
+        actual_rows_check = execute_check_sql(conn, sql, config, workflow)
+        if actual_rows_check["msg"]:
+            result = ReviewResult(
+                        stage="自动审核失败",
+                        errlevel=2,
+                        stagestatus="检查未通过！",
+                        errormessage=actual_rows_check["msg"],
+                        affected_rows=actual_rows_check["rows"],
+                        sql=full_sql,
+                )
+        else:
+            result = ReviewResult(
+                errlevel=0,
+                stagestatus="行数统计完成",
+                errormessage="None",
+                sql=full_sql,
+                affected_rows=actual_rows_check["rows"],
+                execute_time=0,
+            )
+        check_result.rows = [result]
+        # 统计警告和错误数量
+        for r in check_result.rows:
+            if r.errlevel == 1:
+                check_result.warning_count += 1
+            if r.errlevel == 2:
+                check_result.error_count += 1
+        conn.close()
+        return check_result
+
     @staticmethod
     def execute_query(conn, sql):
         try:
             cursor = conn.cursor()
             cursor.execute(sql.rstrip(';'))
             columns = [column[0] for column in cursor.description]
-            result = {"columns": columns, "data": cursor.fetchall()}
+            result = {"columns": columns, "data": cursor.fetchall(), "rowcount": cursor.rowcount}
             cursor.close()
             return result
         except Exception as e:
@@ -563,24 +600,44 @@ class StorageControl:
                 os.remove(file_path)
 
 def execute_check_sql(conn, sql, config, workflow):
-    # 先进行 max_export_rows 变量的判断是否存在以及是否为空,默认值10000
+    """
+    检查 SQL 语句是否合法
+    :param conn: 数据库连接
+    :param sql: 待检查的 SQL 语句
+    :param config: 配置信息
+    :param workflow: 工作流实例
+    :return: 检查结果字典
+    """
     max_export_rows_str = config.get("max_export_rows", "10000")
     max_export_rows = int(max_export_rows_str) if max_export_rows_str else 10000
-    instance = workflow.instance
+    result = {"msg": "", "rows": 0}
+    instance = workflow
     schema_name = workflow.db_name
-    # 判断sql是否以 select 开头
-    if not sql.strip().lower().startswith("select"):
-        return Exception(f"违规语句：{sql}")
-    # 最终执行导出的时候判断行数是否超过阈值，若超过则抛出异常
+    
+    sql_clean = sql.strip().lower()
+    allowed_prefixes = ("select", "with")  # 允许 SELECT 和 WITH 开头
+    if not sql_clean.startswith(allowed_prefixes):
+        return {"error": True, "msg": f"违规语句：{sql}", "rows": 0}
+    
     with conn.cursor() as cursor:
         try:
             count_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
             if instance.db_type == "oracle":
-                cursor.execute(f"alter session set current_schema={schema_name}")
+                conn.current_schema = schema_name
             cursor.execute(count_sql)
             actual_rows = cursor.fetchone()[0]
+            result["rows"] = actual_rows
+            
             if actual_rows > max_export_rows:
-                return Exception(f"实际行数{actual_rows}超出阈值: {max_export_rows}")
-            return actual_rows
+                return {
+                    "error": True,
+                    "msg": f"实际行数{actual_rows}超出阈值: {max_export_rows}",
+                    "rows": actual_rows
+                }
+            return result
+        
         except Exception as e:
-            return e
+            result["msg"] = str(e)
+            result["error"] = True
+            return result
+

@@ -24,6 +24,7 @@ from common.utils.const import WorkflowType, WorkflowStatus
 from common.config import SysConfig
 import traceback
 import logging
+from sql.engines.offlinedownload import OffLineDownLoad
 
 logger = logging.getLogger("default")
 
@@ -386,12 +387,11 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         # 再次交给engine进行检测，防止绕过
         try:
             check_engine = get_engine(instance=instance)
-            if instance.db_type in ("mysql",'oracle'):
-                check_result = check_engine.execute_check(
-                    db_name=workflow_data["db_name"],
-                    sql=sql_content,
-                    offline_data=workflow_data,
-                )
+            sql_export = OffLineDownLoad()
+            if workflow_data["is_offline_export"] == "yes":
+                instance.sql_content = sql_content
+                instance.db_name = workflow_data["db_name"]
+                check_result = sql_export.pre_count_check(workflow=instance)
             else:
                 check_result = check_engine.execute_check(
                     db_name=workflow_data["db_name"], sql=sql_content
