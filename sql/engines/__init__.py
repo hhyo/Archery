@@ -243,7 +243,7 @@ def get_engine(instance=None):  # pragma: no cover
     engine = engine_map.get(instance.db_type)
     if not engine:
         raise ValueError(
-            f"engine {instance.db_type} not enabled or not supported, please contact admin"
+            f"engine {instance.db_type} not 111 enabled or not supported, please contact admin"
         )
     return engine(instance=instance)
 
@@ -263,6 +263,6 @@ def get_engine(instance=None):  # pragma: no cover
     engine = engine_map.get(instance.db_type)
     if not engine:
         raise ValueError(
-            f"engine {instance.db_type} not enabled or not supported, please contact admin"
+            f"engine {instance.db_type} not 111 enabled or not supported, please contact admin"
         )
     return engine(instance=instance)
