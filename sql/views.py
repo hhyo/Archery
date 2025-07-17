@@ -158,6 +158,45 @@ def sqlworkflow(request):
         },
     )
 
+def sqlexportworkflow(request):
+    """SQL数据导出工单列表页面"""
+    user = request.user
+    # 过滤筛选项的数据
+    filter_dict = dict()
+    # 管理员，可查看所有工单
+    if user.is_superuser or user.has_perm("sql.audit_user"):
+        pass
+    # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
+    elif user.has_perm("sql.sql_review") or user.has_perm(
+        "sql.sql_execute_for_resource_group"
+    ):
+        # 先获取用户所在资源组列表
+        group_list = user_groups(user)
+        group_ids = [group.group_id for group in group_list]
+        filter_dict["group_id__in"] = group_ids
+    # 其他人只能查看自己提交的工单
+    else:
+        filter_dict["engineer"] = user.username
+    instance_id = (
+        SqlWorkflow.objects.filter(**filter_dict).values("instance_id").distinct()
+    )
+    instance = Instance.objects.filter(pk__in=instance_id).order_by(
+        Convert("instance_name", "gbk").asc()
+    )
+    resource_group_id = (
+        SqlWorkflow.objects.filter(**filter_dict).values("group_id").distinct()
+    )
+    resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
+
+    return render(
+        request,
+        "sqlexportworkflow.html",
+        {
+            "status_list": SQL_WORKFLOW_CHOICES,
+            "instance": instance,
+            "resource_group": resource_group,
+        },
+    )
 
 @permission_required("sql.sql_submit", raise_exception=True)
 def submit_sql(request):
@@ -695,3 +734,40 @@ def audit_sqlworkflow(request):
         },
     )
 
+@permission_required("sql.sqlexport_submit", raise_exception=True)
+def sqlexportsubmit(request):
+    """SQL导出工单页面"""
+    # 主动创建标签
+    InstanceTag.objects.get_or_create(
+        tag_code="can_read", defaults={"tag_name": "支持查询", "active": True}
+    )
+    # 收藏语句
+    user = request.user
+    group_list = user_groups(user)
+    # 获取所有配置项
+    all_config = Config.objects.all().values("item", "value")
+    sys_config = {}
+    for items in all_config:
+        sys_config[items["item"]] = items["value"]
+    # 前端需要对 max_export_rows 进行判断,先进行变量的判断是否存在以及是否为空,默认值10000
+    max_export_rows_str = sys_config.get("max_export_rows", "10000")
+    sys_config["max_export_rows"] = (
+        int(max_export_rows_str) if max_export_rows_str else 10000
+    )
+
+    favorites = QueryLog.objects.filter(username=user.username, favorite=True).values(
+        "id", "alias"
+    )
+    can_download = 1 if user.has_perm("sql.query_download") or user.is_superuser else 0
+    can_offline_download = (
+        1 if user.has_perm("sql.offline_download") or user.is_superuser else 0
+    )
+    context = {
+        "favorites": favorites,
+        "can_download": can_download,
+        "engines": engine_map,
+        "group_list": group_list,
+        "config": sys_config,
+        "can_offline_download": can_offline_download,
+    }
+    return render(request, "sqlexportsubmit.html", context)

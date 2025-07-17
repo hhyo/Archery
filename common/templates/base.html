@@ -18,6 +18,7 @@
     <link href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet">
+    <link href="{% static 'notice/css/notice.css' %}" rel="stylesheet">
     <style type="text/css">
     table{
         max-width: none !important;      /*解决 ios 横向滚动失效*/
@@ -122,6 +123,11 @@
                                 {% if perms.sql.menu_sqlquery %}
                                     <li>
                                         <a href="/sqlquery/">在线查询</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_sqlexportworkflow %}
+                                    <li>
+                                        <a href="/sqlquery_export/">数据导出工单</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_data_dictionary %}

@@ -38,9 +38,9 @@
         </div>
         <div class="form-group ">
             <button id="btn_add" type="button" class="btn btn-default"
-                    onclick="window.location.href='/submitsql/'">
+                    onclick="window.location.href='/sqlquery/'">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                提交SQL
+                提交数据导出工单
             </button>
         </div>
     </div>
@@ -174,7 +174,7 @@
                             end_date = ''
                         }
                         return {
-                            "syntax_type":[1,2], //获取类型为数据变更工单
+                            "syntax_type":[3], //获取类型为数据导出工单
                             limit: params.limit,
                             offset: params.offset,
                             navStatus: $("#navStatus").val(),

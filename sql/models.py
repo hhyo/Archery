@@ -1040,6 +1040,8 @@ class Permission(models.Model):
             ("audit_user", "审计权限"),
             ("query_download", "在线查询下载权限"),
             ("offline_download", "离线下载权限"),
+            ("menu_sqlexportworkflow", "菜单 数据导出工单"),
+            ("sqlexport_submit", "提交数据导出工单"),
         )
 
 

@@ -62,9 +62,13 @@ def _sql_workflow_list(request):
     limit = limit if limit else None
     search = request.POST.get("search")
     user = request.user
+    syntax_type = request.POST.get("syntax_type[]")
 
     # 组合筛选项
     filter_dict = dict()
+    # 工单类型
+    if filter_dict:
+        filter_dict['syntax_type__in'] = syntax_type
     # 工单状态
     if nav_status:
         filter_dict["status"] = nav_status
