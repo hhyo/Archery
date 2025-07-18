@@ -938,4 +938,3 @@ class MysqlEngine(EngineBase):
         if self.conn:
             self.conn.close()
             self.conn = None
-

@@ -380,4 +380,3 @@ def get_session_variables(instance):
     for k, v in variables.items():
         set_session_sql += f"inception set session {k} = '{v}';\n"
     return variables, set_session_sql
-
