@@ -57,6 +57,16 @@
                             <option value={{ sql.id }}>{{ sql.alias }}</option>
                         {% endfor %}
                     </select>
+                    <div class="form-group ">
+                        {% if config.sqlfile_storage == "sftp" or config.sqlfile_storage == "oss" or config.sqlfile_storage == "local"%}
+                            {% if can_offline_download == 1 %}
+                                <button id="btn-exportsubmit" type="button" class="btn btn-default">
+                                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                    提交导出工单
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
                     <textarea id="generateDesc" class="form-control" style="display: none;width: 70%;" placeholder="AI 查询描述" rows=1></textarea>
                     <input id="btn-generatesql" type="button" class="btn btn-info" style="display: none" value="生成SQL"/>
                     <button id="btn-openaiTooltip" type="button" class="btn" style="display: none" data-toggle="tooltip" title="仅此操作会与 AI 交互, 收集数据库类型、表结构以及输入框信息, 交给 AI 生成 SQL 并置于下面的语句框中" >
@@ -68,55 +78,8 @@
                         {% csrf_token %}
                         <div class="col-md-9 column">
                             <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
-    				        <!-- 校验提示 -->
-		      	            <div class="validation-notice" id="validationNotice">
-                                <div class="notice-icon" id="noticeIcon">
-                                </div>
-			                    <div class="notice-content">
-			                        <div class="notice-title">行数统计中...</div>
-			                        <div class="notice-message">正在校验SQL语法并统计结果行数，请稍候...</div>
-			                    </div>
-			                    <button class="close-notice" id="closeNotice" title="关闭">
-			                        &times;
-			                    </button>
-                                <div class="progress-bar">
-                                    <div class="progress-bar-inner"></div>
-                                </div>
-			                </div>
                         </div>
                         <div class="col-md-3 column">
-                            <div class="form-group toggleable">
-                                <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
-                                       class="form-control"
-                                       data-name="导出单名称" data-placeholder="请输入导出单名称！"
-                                       placeholder="请输入导出单名称，如:XX项目数据分析需求"
-                                       required>
-                            </div>
-                            <div class="form-group toggleable">
-                                <select id="export_format" name="export_format"
-                                        class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="离线导出数据格式" data-placeholder="请选择导出数据格式！"
-                                        title="请选择导出数据格式"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
-                                    <option value="csv">CSV</option>
-                                    <option value="xlsx">Excel</option>
-                                    <option value="sql">SQL</option>
-                                    <option value="json">JSON</option>
-                                    <option value="xml">XML</option>
-                                </select>
-                            </div>
-                            <div class="form-group toggleable">
-                                <select id="group_name" name="group_name"
-                                        class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="组" data-placeholder="请选择组！"
-                                        title="请选择组"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
-                                    {% for group in group_list %}
-                                        <option value="{{ group.group_name }}"
-                                                group-id="{{ group.group_id }}">{{ group.group_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
@@ -144,7 +107,7 @@
                                         data-placeholder="请选择模式:" required>
                                 </select>
                             </div>
-                            <div id="div-table_name" class="form-group toggleableother">
+                            <div id="div-table_name" class="form-group">
                                 <select id="table_name" name="table_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true" data-live-search-placeholder="搜索您要查询的表"
@@ -153,7 +116,7 @@
                                         data-placeholder="查看表结构:" required>
                                 </select>
                             </div>
-                            <div class="form-group toggleableother">
+                            <div class="form-group">
                                 <select id="limit_num" name="limit_num"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-placeholder="返回行数:" required>
@@ -164,46 +127,16 @@
                                     <option value=0>max(最大限制行数)</option>
                                 </select>
                             </div>
-                            <!--审批流程-->
-                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
-                                   data-placeholder="请配置审批流程！" required>
-                            <div id="div-workflow_auditors" class="form-group toggleable" style="display: none">
-                                <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
-                            </div>
                             <div class="form-group">
                                 <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
                                 <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
-                                <input id="btn-sqlquery" type="button" class="btn btn-success toggleableother" value="SQL查询"/>
-                                <button type="button" id="btn-submitdownload" data-loading-text="提交中..."
-                                        class="btn btn-danger toggleable" disabled>
-                                    提交导出
-                                </button>
-                                {% if config.sqlfile_storage == "sftp" or config.sqlfile_storage == "oss" or config.sqlfile_storage == "local"%}
-                                    {% if can_offline_download == 1 %}
-                                        <input id="btn-offlinedownload" type="button" class="btn btn-primary" value="切换至导出"/>
-                                    {% endif %}
-                                {% endif %}
+                                <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
                             </div>
                         </div>
-                        <div class="text-info toggleableother">
+                        <div class="text-info">
                             <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
                             <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
                         </div>
-                        <div class="text-info toggleable">
-                            <li>导出工单仅支持提交一条查询语句，编辑器中如果有多行语句可选中要提交的sql进行导出</li>
-                            <li>导出前请先点击统计行数进行统计和校验，若行数超过阈值或有其他错误禁止提交，阈值: {{ config.max_export_rows }}</li>
-                        </div>
-                        <style>
-                            .toggleable {
-                                display: none;
-                            }
-                            .toggleableother {
-
-                            }
-                            .hidden {
-                                display: none;
-                            }
-                        </style>
                     </form>
                 </div>
             </div>
@@ -337,297 +270,6 @@
     <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
-
-    <!-- 校验提示  notice/css/notice.css-->
-    <script>
-	    const validationNotice = document.getElementById('validationNotice');
-	    const closeNotice = document.getElementById('closeNotice');
-	    const successMessage = document.getElementById('successMessage');
-        const noticeIcon = document.getElementById('noticeIcon');
-        const progressBar = document.querySelector('.progress-bar-inner');
-	    validationNotice.style.display = 'none';
-        let timeoutId;
-        
-        // 重置校验通知
-        function resetValidationNotice() {
-            clearTimeout(timeoutId);
-            closeNotice.style.display = 'none';
-            validationNotice.style.display = 'flex';
-            noticeIcon.classList.remove('icon-loading','icon-success','icon-error');
-            noticeIcon.classList.add('icon-loading');
-            validationNotice.className = 'validation-notice visible';
-            validationNotice.querySelector('.notice-title').textContent = "行数统计中...";
-            validationNotice.querySelector('.notice-message').textContent = "正在校验SQL语法并统计结果行数，请稍候...";
-            validationNotice.classList.remove('status-success', 'status-error', 'status-warning');
-        }
-
-        // 关闭提示按钮
-        closeNotice.addEventListener('click', function(e) {
-            e.preventDefault();
-            validationNotice.style.display = 'none';
-        });
-
-        function showStatusNotice(options = {}) {
-            // 解构配置参数并提供默认值
-            const {
-                element = validationNotice,   // 默认使用validationNotice元素
-                noticeIconClass = '',         // 通知图标元素
-                statusClass = 'status-error', // 状态类名
-                title = '校验失败',            // 默认标题
-                message = '',                 // 默认消息
-                params = {},                  // 消息中的替换参数
-                delay = 5000,                 // 默认5秒后消失
-            } = options;
-            
-            clearTimeout(timeoutId);
-
-            // 替换消息中的占位符 {key} => value
-            const formatMessage = (msg, values) => {
-                return msg.replace(/\{(\w+)\}/g, (_, key) => values[key] || '');
-            };
-        
-            const formattedMessage = formatMessage(message, params);
-
-            // 更新显示内容
-            closeNotice.style.display = 'flex';
-            noticeIcon.classList.remove('icon-loading');
-            noticeIcon.classList.add(noticeIconClass);
-            element.classList.add(statusClass);
-            element.querySelector('.notice-title').textContent = title;
-            element.querySelector('.notice-message').textContent = formattedMessage;
-
-            // 进度条
-            progressBar.style.width = '100%';
-            progressBar.style.transition = 'none';
-            void progressBar.offsetWidth;
-            progressBar.style.transition = `width ${delay}ms linear`;
-            progressBar.style.width = '0'
-
-            setAutoClose(delay);
-        }
-
-        // 设置自动隐藏
-        function setAutoClose(delay) {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                validationNotice.style.display = 'none';
-                validationNotice.classList.remove('visible');
-            }, delay);
-        }
-
-        // 鼠标悬停暂停
-        validationNotice.addEventListener('mouseenter', () => {
-            if (validationNotice.classList.contains('status-success') || validationNotice.classList.contains('status-error')) {
-                clearTimeout(timeoutId);
-                progressBar.style.transition = 'none';
-                progressBar.style.width = '100%';
-            }
-        });
-        // 鼠标离开重新倒计时关闭
-        validationNotice.addEventListener('mouseleave', () => {
-            if (validationNotice.classList.contains('status-success') || validationNotice.classList.contains('status-error')) {
-                const remainingWidth = progressBar.offsetWidth;
-                const delay = (remainingWidth / validationNotice.offsetWidth) * 5000;
-                progressBar.style.transition = `width ${delay}ms linear`;
-                progressBar.style.width = '0';
-                setAutoClose(delay);
-            }
-        });
-    </script>
-
-    <!-- 导出表单展示切换  -->
-    <script>
-        //初始状态
-        isHidden = true
-        //获取url参数判断是否是直接到导出模式，用于提交导出工单按钮入口
-        const urlParams = new URLSearchParams(window.location.search);
-        const initMode = urlParams.get('mode');
-        var toggleableElement = $(".toggleableother");
-        let isExp = initMode === 'export' ? true : false;
-        if (isExp) {
-            $(".toggleable").show();
-            toggleableElement.addClass("hidden");
-            $("#btn-offlinedownload").val("切换至查询")
-            $("#btn-explain").val("行数统计")
-            isHidden = false
-        }
-        (function() {
-            // 在按钮点击事件中处理显示/隐藏逻辑
-            $("#btn-offlinedownload").click(function () {
-                // 进行二次确认
-                if (confirm("是否确定要进行查询/导出功能切换？")) {
-                    // 切换状态
-                    isHidden = !isHidden;
-
-                    // 根据状态执行显示或隐藏
-                    if (isHidden) {
-                        $(".toggleable").hide();
-                        // $(".toggleableother").css("display", "");
-                        toggleableElement.removeClass("hidden");
-                        $("#btn-offlinedownload").val("切换至导出")
-                        $("#btn-explain").val("执行计划")
-                    } else {
-                        $(".toggleable").show();
-                        // $(".toggleableother").css("display", "none");
-                        toggleableElement.addClass("hidden");
-                        $("#btn-offlinedownload").val("切换至查询")
-                        $("#btn-explain").val("行数统计")
-                    }
-                }
-            });
-
-            $("#instance_name").change(function () {
-                var optgroup = $('#instance_name :selected').parent().attr('label');
-                if (optgroup != 'MySQL') {
-                   isHidden = true;
-                }
-            });
-
-        })();
-
-        // 监听sql文本，若sql发生变化则禁用
-        editor.getSession().on('change', function(e) {
-            $("#btn-submitdownload").prop("disabled", true);
-        });
-
-        // 监听选区变化，若选取变化则禁用
-        editor.getSession().selection.on('changeSelection', function(e) {
-            $("#btn-submitdownload").prop("disabled", true);
-        });
-
-        // 提交导出工单
-        function submitofflinedownload() {
-            let formData = $('#form-sqlquery').serializeArray().reduce(function (obj, item) {
-                obj[item.name] = item.value;
-                return obj;
-            }, {})
-            var sqlContent = editor.getValue();
-            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
-            if (select_sqlContent) {
-                sqlContent = select_sqlContent
-            }
-            $.ajax({
-                type: "post",
-                url: "/api/v1/workflow/",
-                dataType: "json",
-                contentType: 'application/json;',
-                data: JSON.stringify({
-                        workflow: {
-                            workflow_name: formData.workflow_name,
-                            // demand_url: formData.demand_url,
-                            export_format: formData.export_format,
-                            is_offline_export: 'yes',
-                            group_id: $("#group_name option:selected").attr("group-id"),
-                            instance: $("#instance_name option:selected").attr("instance-id"),
-                            db_name: formData.db_name,
-                            is_backup: 'False',
-                            // run_date_start: formData.run_date_start,
-                            // run_date_end: formData.run_date_end,
-                            run_date_start: '',
-                            run_date_end: '',
-                        },
-                        sql_content: sqlContent
-                    }
-                ),
-                beforeSend: function (xhr) {
-                    $('#btn-submitdownload').button('loading')
-                },
-                complete: function () {
-                    $('#btn-submitdownload').button('reset')
-                    editor.container.style.pointerEvents = "auto";
-                    editor.container.style.opacity = 1;
-                },
-                success: function (data) {
-                    window.location.href = "/detail/"+ data.workflow_id
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    if (XMLHttpRequest.responseJSON) {
-                        alert(XMLHttpRequest.responseText)
-                    } else {
-                        alert(errorThrown);
-                    }
-                }
-            });
-
-        }
-
-        // 获取审批流程
-        $("#group_name").change(function () {
-            $.ajax({
-                type: "post",
-                url: "/group/auditors/",
-                dataType: "json",
-                data: {
-                    group_name: $("#group_name").val(),
-                    workflow_type: 2
-                },
-                complete: function () {
-                },
-                success: function (data) {
-                    if (data.status === 0) {
-                        var result = data.data;
-                        $("#workflow_auditors").val(result['auditors']);
-                        $("#workflow_auditors_display").text(result['auditors_display']);
-                        // $("#div-workflow_auditors").show();
-                    } else {
-                        alert(data.msg);
-                    }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
-        });
-        //离线导出表单验证
-        function sqlofflinedownload_validate() {
-            var result = true;
-            var workflow_name = $("#workflow_name").val();
-            var export_format = $("#export_format").val();
-            var group_name = $("#group_name").val();
-            var workflow_auditors = $("#workflow_auditors").val();
-            var instance_name = $("#instance_name").val();
-            var db_name = $("#db_name").val();
-            var sqlContent = editor.getValue();
-            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
-            if (select_sqlContent) {
-                sqlContent = select_sqlContent
-            }
-            // 输出非select的SQL语句，并禁用按钮
-            if (!instance_name) {
-                alert("请选择实例！");
-                return result = false;
-            } else if (!db_name) {
-                alert("请选择数据库！");
-                return result = false;
-            } else if (!sqlContent) {
-                alert("SQL内容不能为空！");
-                return result = false;
-            } else if (!workflow_name) {
-                alert("请输入离线数据导出单名称！");
-                return result = false;
-            } else if (!export_format) {
-                alert("请选择导出格式！");
-                return result = false;
-            } else if (!group_name) {
-                alert("请选择组！");
-                return result = false;
-            } else if (!workflow_auditors) {
-                alert("请配置审批流程！");
-                return result = false;
-            }
-            return result;
-        }
-        $("#btn-submitdownload").click(function () {
-            if (sqlofflinedownload_validate()) {
-                resetValidationNotice()
-                validationNotice.querySelector('.notice-title').textContent = "工单提交中...";
-                validationNotice.querySelector('.notice-message').textContent = "后台二次校验，请稍候...";
-                editor.container.style.pointerEvents = "none";
-                editor.container.style.opacity = 0.6;
-                submitofflinedownload();
-            }
-        });
-    </script>
 
     <!-- 查询历史  -->
     <script>
@@ -862,7 +504,6 @@
             if (instance_name && db_name && sql) {
                 $('input[type=button]').addClass('disabled');
                 $('input[type=button]').prop('disabled', true);
-                $("#btn-submitdownload").prop("disabled", true);
                 sqlquery()
             } else {
                 alert("信息不完整，无法一键查询！")
@@ -1007,33 +648,6 @@
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
             }
-            var isOfflineExport = $("#btn-submitdownload").is(':hidden') ? "no" : "yes";
-            var totalSqlCnt = sqlContent.split(';')
-                .map(stmt => stmt.trim()) // 去除每个语句两端的空白
-                .filter(stmt => stmt.length > 0) // 过滤掉空语句
-                .length; // 统计语句数量
-
-            // 检查SQL开头
-            let trimmedSQL = sqlContent.trim().toUpperCase();
-            // 跳过所有开头的注释（单行/多行）
-            while (true) {
-                // 跳过单行注释 (--)
-                if (trimmedSQL.startsWith("--")) {
-                    const nlIndex = trimmedSQL.indexOf('\n');
-                    trimmedSQL = (nlIndex > -1) 
-                        ? trimmedSQL.substring(nlIndex + 1).trim() 
-                        : "";
-                    continue;
-                }
-                // 跳过多行注释 (/*...*/)
-                if (trimmedSQL.startsWith("/*")) {
-                    const endIndex = trimmedSQL.indexOf("*/");
-                    if (endIndex === -1) break; // 未闭合注释不处理
-                    trimmedSQL = trimmedSQL.substring(endIndex + 2).trim();
-                    continue;
-                }
-                break;
-            }
             if (!instance_name) {
                 alert("请选择实例！");
                 return result = false;
@@ -1042,12 +656,6 @@
                 return result = false;
             } else if (!sqlContent) {
                 alert("SQL内容不能为空！");
-                return result = false;
-            } else if (!trimmedSQL.startsWith("SELECT") && !trimmedSQL.startsWith("WITH")) {
-                alert("SQL必须是查询语句！");
-                return result = false;
-            } else if (isOfflineExport === "yes" && totalSqlCnt > 1) {
-                alert("检测到多个SQL语句，只能提交一个SQL，请选中要提交导出工单的SQL重试。");
                 return result = false;
             }
             return result;
@@ -1085,25 +693,29 @@
             }
         );
 
+        const exportButton = document.getElementById('btn-exportsubmit');
+        exportButton.addEventListener('click', function() {
+                var sqlContent = editor.getValue();
+                var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                if (select_sqlContent) {
+                    sqlContent = select_sqlContent
+                }
+                group_name = $("#group_name").val()
+                instance_name = $("#instance_name").val()
+                db_name = $("#db_name").val()
+                sessionStorage.setItem('submitSqlContent', sqlContent);
+                window.open('/sqlexportsubmit/?source=query', '_blank');
+            }
+        );
+
+        
         //先做表单验证，验证成功再成功提交执行计划查看
         $("#btn-explain").click(function () {
                 if (sqlquery_validate()) {
                     const inputButton = $('input[type=button]')
                     inputButton.addClass('disabled');
                     inputButton.prop("disabled", true)
-                    $("#btn-submitdownload").prop("disabled", true);
-                    isOfflineExport = $("#btn-submitdownload").is(':hidden') ? "no" : "yes";
-                    if (isOfflineExport === "yes") {
-                        resetValidationNotice()
-                        editor.container.style.pointerEvents = "none";
-                        editor.container.style.opacity = 0.6;
-                        $("#db_name").attr("disabled", true);
-                        $("#instance_name").attr("disabled", true);
-                        $("#group_name").attr("disabled", true);
-                        sqlcount('explain')
-                    } else {
-                        sqlquery('explain')
-                    }
+                    sqlquery('explain')
                 }
             }
         );
@@ -1170,7 +782,6 @@
             //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
             var active_li_id = sessionStorage.getItem('active_li_id');
             let active_li_title = sessionStorage.getItem('active_li_title');
-            var isOfflineExport = $("#btn-submitdownload").is(':hidden') ? "no" : "yes";
             let tb_name, n
             let need_describe_display = false
             if (data.status === 0) {
@@ -1276,34 +887,6 @@
                         }
                         var showExport = {{can_download}}===1
                         var query_result_id=(`query_result${n}`);
-                        if (isOfflineExport === "yes") {
-                            var ActualRows = 0;
-                            var maxExportRows = "{{ config.max_export_rows }}";
-                            ActualRows = parseFloat(result['rows'][0][0]);
-                            if (ActualRows > maxExportRows) {
-                                $("#btn-submitdownload").prop("disabled", true);
-                                showStatusNotice({
-                                    noticeIconClass: 'icon-error',
-                                    statusClass: 'status-error',
-                                    title: '校验失败',
-                                    message: '统计查询结果：{ActualRows} 行数据，超过了阈值：{maxExportRows}',
-                                    params: { ActualRows: ActualRows, maxExportRows: maxExportRows },
-                                    delay: 5000
-                                });
-                            } else if (ActualRows <= maxExportRows) {
-                                $("#btn-submitdownload").prop("disabled", false);
-                                showStatusNotice({
-                                    noticeIconClass: 'icon-success',
-                                    statusClass: 'status-success',
-                                    title: '校验成功',
-                                    message: '统计查询结果：{ActualRows} 行数据，点击提交导出按钮申请导出。',
-                                    params: { ActualRows: ActualRows},
-                                    delay: 5000
-                                });
-                            } else {
-                                $("#btn-submitdownload").prop("disabled", true);
-                            }
-                        }
                         $(`#${query_result_id}`).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['rows'],
@@ -1419,18 +1002,6 @@
                 }
 
             } else {
-		        if (isOfflineExport === "yes") {
-                    showStatusNotice({
-                        noticeIconClass: 'icon-error',
-                        statusClass: 'status-error',
-                        title: '校验失败',
-                        message: '错误：{msg}',
-                        params: { msg: data.msg },
-                        delay: 5000
-                    });
-                    editor.container.style.pointerEvents = "auto";
-                    editor.container.style.opacity = 1;
-		        }
                 //查询报错失败信息
                 if (active_li_title.match(/^执行结果\d$/)) {
                     n = active_li_id.split("execute_result_tab")[1];
@@ -1531,53 +1102,6 @@
             });
         }
 
-        //导出工单的时候将数据通过ajax提交给后端进行count检查
-        function sqlcount(sql) {
-            var result = true;
-            var optgroup = $('#instance_name :selected').parent().attr('label');
-            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
-            if (select_sqlContent) {
-                sqlContent = select_sqlContent
-            } else {
-                var sqlContent = editor.getValue();
-            }
-
-            var sqlContent = sqlContent.trim().replace(/;$/, '');
-            var sqlContent = 'select count(1) from (' + sqlContent + '\n) t'
-             
-            //提交请求
-            $.ajax({
-                type: "post",
-                url: "/query/",
-                dataType: "json",
-                data: {
-                    instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val(),
-                    schema_name: $("#schema_name").val(),
-                    tb_name: $("#table_name").val(),
-                    sql_content: sqlContent,
-                    limit_num: $("#limit_num").val()
-                },
-                complete: function () {
-                    $('input[type=button]').removeClass('disabled');
-                    $('input[type=button]').prop('disabled', false);
-                    $("#db_name").attr("disabled", false);
-                    $("#instance_name").attr("disabled", false);
-                    $("#group_name").attr("disabled", false);
-                    editor.container.style.pointerEvents = "auto";
-                    editor.container.style.opacity = 1;
-                    optgroup_control();
-                },
-                success: function (data) {
-                    var target = $("#instance_name").val()+"/"+$("#db_name").val();
-                    display_data(data, target);
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
-        }
-
         function generatesql() {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             const data = {
@@ -1613,7 +1137,6 @@
             if (sqlquery_validate()) {
                 $('input[type=button]').addClass('disabled');
                 $('input[type=button]').prop('disabled', true);
-                $("#btn-submitdownload").prop("disabled", true);
                 sqlquery();
             }
         }
@@ -1627,7 +1150,6 @@
             showFormat: true,
             showExplain: true,
             showRedisHelp: false,
-            showOfflineDownload: false,
         }
         const createDisplayConfig = function(extraArgs = null) {
             if (extraArgs === null) {
@@ -1636,8 +1158,6 @@
             return Object.assign({}, defaultDisplayConfig, extraArgs)
         }
         const engineDisplayConfig = {
-            "MySQL": createDisplayConfig({showOfflineDownload: true}),
-            "Oracle": createDisplayConfig({showOfflineDownload: true}),
             "MsSQL": createDisplayConfig({showExplain: false}),
             "Redis": createDisplayConfig({showTableName: true, showSchemaName: false,
                 showRedisHelp: true,
@@ -1653,14 +1173,6 @@
         function optgroup_control(change) {
             let optgroup = $('#instance_name :selected').parent().attr('label');
             let displayConfig = engineDisplayConfig[optgroup] || defaultDisplayConfig
-            if (displayConfig.showOfflineDownload) {
-                $("#btn-offlinedownload").show();
-            } else {
-                $(".toggleable").hide();
-                $(".toggleableother").removeClass("hidden");
-                $("#btn-offlinedownload").val("切换至导出")
-                $("#btn-offlinedownload").hide();
-            }
             if (displayConfig.showExplain) {
                 $("#btn-explain").attr('disabled', false);
             } else {
@@ -1999,5 +1511,4 @@
         }
     </script>
 {% endblock %}
-
 

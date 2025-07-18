@@ -4,20 +4,16 @@
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
-                <div class="panel-heading form-inline">
-                    数据导出工单申请
-                    <textarea id="generateDesc" class="form-control" style="display: none;width: 70%;" placeholder="AI 查询描述" rows=1></textarea>
-                    <input id="btn-generatesql" type="button" class="btn btn-info" style="display: none" value="生成SQL"/>
-                    <button id="btn-openaiTooltip" type="button" class="btn" style="display: none" data-toggle="tooltip" title="仅此操作会与 AI 交互, 收集数据库类型、表结构以及输入框信息, 交给 AI 生成 SQL 并置于下面的语句框中" >
-                        <span class="fa fa-question-circle" />
-                    </button>
+                <div class="panel-heading">
+                    SQL上线
                 </div>
                 <div class="panel-body">
-                    <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
+                    <form id="form-submitsql" class="form-horizontal">
                         {% csrf_token %}
+                        <input type="hidden" id="workflow_id" name="workflow_id"/>
                         <div class="col-md-9 column">
-                            <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
-    				        <!-- 校验提示 -->
+                            <pre id="sql_content_editor" style="min-height:450px"></pre>
+                            <!-- 校验提示 -->
 		      	            <div class="validation-notice" id="validationNotice">
                                 <div class="notice-icon" id="noticeIcon">
                                 </div>
@@ -33,12 +29,21 @@
                                 </div>
 			                </div>
                         </div>
+                        <div style="display: none" class="col-md-8 column">
+                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
+                                      data-placeholder="SQL内容不能为空！"
+                                      placeholder="请在此提交SQL，请以分号结尾。" rows=20
+                                      required></textarea>
+                        </div>
                         <div class="col-md-3 column">
-                            <div class="form-group toggleable">
+                            <div class="form-group">
+                                <input id="sql-upload" name="sql-upload" accept=".sql" type="file" class="file-loading">
+                            </div>
+                            <div class="form-group">
                                 <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
                                        class="form-control"
-                                       data-name="导出单名称" data-placeholder="请输入导出单名称！"
-                                       placeholder="请输入导出单名称，如:XX项目数据分析需求"
+                                       data-name="上线单名称" data-placeholder="请输入上线单名称!"
+                                       placeholder="请输入上线单名称，如:XX项目会员功能建表"
                                        required>
                             </div>
                             <div class="form-group toggleable">
@@ -54,7 +59,7 @@
                                     <option value="xml">XML</option>
                                 </select>
                             </div>
-                            <div class="form-group toggleable">
+                            <div class="form-group">
                                 <select id="group_name" name="group_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="组" data-placeholder="请选择组！"
@@ -69,90 +74,101 @@
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例"
-                                        title="请选择实例:"
-                                        data-placeholder="请选择实例:" required>
-                                {% for name,engine in engines.items %}
+                                        data-name="实例" data-placeholder="请选择实例！"
+                                        title="请选择实例"
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
+                                {% for name, engine in engines.items %}
                                     <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
-                                {% endfor %}
+                                {%  endfor %}
                                 </select>
                             </div>
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true" data-live-search-placeholder="搜索您要查询的数据库"
-                                        title="请选择数据库:"
-                                        data-placeholder="请选择数据库:" required>
+                                        data-name="数据库" data-placeholder="请选择数据库！"
+                                        data-live-search="true" data-live-search-placeholder="搜索要提交的数据库"
+                                        title="请选择数据库"
+                                        required>
+                                    <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                                 </select>
                             </div>
-                            <div id="div-schema_name" class="form-group" style="display: none">
-                                <select id="schema_name" name="schema_name"
-                                        class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true"
-                                        title="请选择模式:"
-                                        data-placeholder="请选择模式:" required>
-                                </select>
-                            </div>
-                            <div class="form-group toggleableother">
-                                <select id="limit_num" name="limit_num"
-                                        class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-placeholder="返回行数:" required>
-                                    <option value="is-empty" disabled="">返回行数:</option>
-                                    <option value=100 selected="selected">100</option>
-                                    <option value=500>500</option>
-                                    <option value=1000>1000</option>
-                                    <option value=0>max(最大限制行数)</option>
-                                </select>
+                            {% if enable_backup_switch %}
+                                <div id="div-backup" class="form-group">
+                                    <select id="is_backup" name="is_backup"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-name="是否选择备份"
+                                            title="请选择是否需要备份"
+                                            data-placeholder="请选择是否要备份" required>
+                                        <option value=True selected="selected">备份SQL</option>
+                                        <option value=False>不备份SQL</option>
+                                    </select>
+                                </div>
+                            {% endif %}
+                            <!--可执行范围时间-->
+                            <div class='form-group'>
+                                <input type="hidden" id="run_date_start" name="run_date_start">
+                                <input type="hidden" id="run_date_end" name="run_date_end">
+                                <div class='input-group date'>
+                                    <input type="text" id="run_date_range" readonly
+                                           value="请选择可执行时间范围"
+                                           style="background-color: #fff;color: #999 "
+                                           class="form-control "/>
+                                    <span class="input-group-addon"><span
+                                            class="glyphicon glyphicon-time"></span></span>
+                                </div>
                             </div>
                             <!--审批流程-->
                             <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
                                    data-placeholder="请配置审批流程！" required>
-                            <div id="div-workflow_auditors" class="form-group toggleable" style="display: none">
+                            <div id="div-workflow_auditors" class="form-group" style="display: none">
                                 <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
                             </div>
+                            <!--button-->
                             <div class="form-group">
-                                <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
-                                <input id="btn-validate" type="button" class="btn btn-warning" value="统计验证"/>
-                                <button type="button" id="btn-submitdownload" data-loading-text="提交中..."
-                                        class="btn btn-danger toggleable" disabled>
-                                    提交导出
+                                <button type="button" id="btn-format" class="btn btn-info">美化</button>
+                                <button type="button" id="btn-autoreview" data-loading-text="检测中..."
+                                        class="btn btn-danger">SQL检测
+                                </button>
+                                <button type="button" id="btn-submitsql" data-loading-text="提交中..."
+                                        class="btn btn-success" disabled>
+                                    导出提交
                                 </button>
                             </div>
                         </div>
-                        <div class="text-info toggleable">
-                            <li>导出工单仅支持提交一条查询语句，编辑器中如果有多行语句可选中要提交的sql进行导出</li>
-                            <li>导出前请先点击统计行数进行统计和校验，若行数超过阈值或有其他错误禁止提交，阈值: {{ config.max_export_rows }}</li>
-                        </div>
-                        <style>
-                            .toggleable {
-                                display: none;
-                            }
-                            .toggleableother {
-
-                            }
-                            .hidden {
-                                display: none;
-                            }
-                        </style>
                     </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 column">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    检测结果
+                </div>
+
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table id="inception-result" data-toggle="table" class="table table-striped table-hover"
+                               style="table-layout:inherit;overflow:hidden;white-space:nowrap;word-break:break-word;text-overflow:ellipsis;display: none"></table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 {% endblock content %}
-
 {% block js %}
     {% load static %}
+    <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
+    <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'ace/ace.js' %}"></script>
     <script src="{% static 'ace/ext-language_tools.js' %}"></script>
     <script src="{% static 'ace/mode-mysql.js' %}"></script>
     <script src="{% static 'ace/theme-github.js' %}"></script>
     <script src="{% static 'ace/snippets/mysql.js' %}"></script>
     <script src="{% static 'ace/ace-init.js' %}"></script>
-    <script src="{% static 'bootstrap-table/export-libs/FileSaver/FileSaver.min.js' %}"></script>
-    <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
-    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
-    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
+    <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
 
     <!-- 校验提示  notice/css/notice.css-->
     <script>
@@ -251,93 +267,79 @@
         });
     </script>
 
-    <!-- 导出表单展示切换  -->
+    <!--初始化时间控件 -->
     <script>
-        $(".toggleable").show();
-        // 监听sql文本，若sql发生变化则禁用
-        editor.getSession().on('change', function(e) {
-            $("#btn-submitdownload").prop("disabled", true);
+        $("#run_date_range").daterangepicker({
+            timePicker: true,
+            timePicker24Hour: true,
+            autoApply: true,
+            autoUpdateInput: false,
+            opens: "left",
+            drops: "up",
+            minDate: moment().startOf('minutes'),
+            startDate: moment().startOf('hour'),
+            endDate: moment().startOf('hour'),
+            locale: {
+                "applyLabel": "确定",
+                "cancelLabel": "清空",
+                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
+                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "firstDay": 1
+            },
+        }).on('apply.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#333");
+            $("#run_date_start").val(picker.startDate.format('YYYY-MM-DD HH:mm'));
+            $("#run_date_end").val(picker.endDate.format('YYYY-MM-DD HH:mm'));
+            $(this).val(picker.startDate.format('MM-DD HH:mm') + ' / ' + picker.endDate.format('MM-DD HH:mm'));
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#999");
+            $(this).val('请选择可执行时间范围');
+            $("#run_date_start").val('');
+            $("#run_date_end").val('');
         });
-
-        // 监听选区变化，若选取变化则禁用
-        editor.getSession().selection.on('changeSelection', function(e) {
-            $("#btn-submitdownload").prop("disabled", true);
-        });
-
-        // 提交导出工单
-        function submitofflinedownload() {
-            let formData = $('#form-sqlquery').serializeArray().reduce(function (obj, item) {
-                obj[item.name] = item.value;
-                return obj;
-            }, {})
-            var sqlContent = editor.getValue();
-            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
-            if (select_sqlContent) {
-                sqlContent = select_sqlContent
+    </script>
+    <!--ace -->
+    <script>
+        // 实例变更获取数据库补全提示
+        $("#instance_name").change(function () {
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            $("#div-backup").show();
+            if (optgroup != "MySQL" && optgroup != "Oracle") {
+                $("#div-backup").hide();
+                $("#is_backup").val("False");
             }
+            //将数据通过ajax提交给获取db_name
             $.ajax({
-                type: "post",
-                url: "/api/v1/workflow/",
-                dataType: "json",
-                contentType: 'application/json;',
-                data: JSON.stringify({
-                        workflow: {
-                            workflow_name: formData.workflow_name,
-                            // demand_url: formData.demand_url,
-                            export_format: formData.export_format,
-                            is_offline_export: 'yes',
-                            group_id: $("#group_name option:selected").attr("group-id"),
-                            instance: $("#instance_name option:selected").attr("instance-id"),
-                            db_name: formData.db_name,
-                            is_backup: 'False',
-                            // run_date_start: formData.run_date_start,
-                            // run_date_end: formData.run_date_end,
-                            run_date_start: '',
-                            run_date_end: '',
-                        },
-                        sql_content: sqlContent
-                    }
-                ),
-                beforeSend: function (xhr) {
-                    $('#btn-submitdownload').button('loading')
-                },
-                complete: function () {
-                    $('#btn-submitdownload').button('reset')
-                    editor.container.style.pointerEvents = "auto";
-                    editor.container.style.opacity = 1;
-                },
-                success: function (data) {
-                    window.location.href = "/detail/"+ data.workflow_id
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    if (XMLHttpRequest.responseJSON) {
-                        alert(XMLHttpRequest.responseText)
-                    } else {
-                        alert(errorThrown);
-                    }
-                }
-            });
-
-        }
-
-        // 获取审批流程
-        $("#group_name").change(function () {
-            $.ajax({
-                type: "post",
-                url: "/group/auditors/",
+                type: "get",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
-                    group_name: $("#group_name").val(),
-                    workflow_type: 2
+                    instance_name: $("#instance_name").val(),
+                    resource_type: "database"
                 },
                 complete: function () {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlSource = urlParams.get('source');
+                    if (urlSource === "resubmit") {
+                        //填充库名
+                        $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
+                        if ($("#db_name").val()) {
+                            $("#db_name").selectpicker().trigger("change");
+                        }
+                    }
                 },
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
-                        $("#workflow_auditors").val(result['auditors']);
-                        $("#workflow_auditors_display").text(result['auditors_display']);
-                        // $("#div-workflow_auditors").show();
+                        $("#db_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            $("#db_name").append(name);
+                        }
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+                        //自动补全提示
+                        setDbsCompleteData(result)
                     } else {
                         alert(data.msg);
                     }
@@ -347,161 +349,126 @@
                 }
             });
         });
-        //离线导出表单验证
-        function sqlofflinedownload_validate() {
-            var result = true;
-            var workflow_name = $("#workflow_name").val();
-            var export_format = $("#export_format").val();
-            var group_name = $("#group_name").val();
-            var workflow_auditors = $("#workflow_auditors").val();
-            var instance_name = $("#instance_name").val();
-            var db_name = $("#db_name").val();
-            var sqlContent = editor.getValue();
-            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
-            if (select_sqlContent) {
-                sqlContent = select_sqlContent
-            }
-            // 输出非select的SQL语句，并禁用按钮
-            if (!instance_name) {
-                alert("请选择实例！");
-                return result = false;
-            } else if (!db_name) {
-                alert("请选择数据库！");
-                return result = false;
-            } else if (!sqlContent) {
-                alert("SQL内容不能为空！");
-                return result = false;
-            } else if (!workflow_name) {
-                alert("请输入离线数据导出单名称！");
-                return result = false;
-            } else if (!export_format) {
-                alert("请选择导出格式！");
-                return result = false;
-            } else if (!group_name) {
-                alert("请选择组！");
-                return result = false;
-            } else if (!workflow_auditors) {
-                alert("请配置审批流程！");
-                return result = false;
-            }
-            return result;
-        }
-        $("#btn-submitdownload").click(function () {
-            if (sqlofflinedownload_validate()) {
-                resetValidationNotice()
-                validationNotice.querySelector('.notice-title').textContent = "工单提交中...";
-                validationNotice.querySelector('.notice-message').textContent = "后台二次校验，请稍候...";
-                editor.container.style.pointerEvents = "none";
-                editor.container.style.opacity = 0.6;
-                submitofflinedownload();
-            }
+        //数据库变更获取表名称补全提示
+        $("#db_name").change(function () {
+            //将数据通过ajax提交给获取db_name
+            $.ajax({
+                type: "get",
+                url: "/instance/instance_resource/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val(),
+                    resource_type: "table"
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        //自动补全提示
+                        setTablesCompleteData(data.data)
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
         });
     </script>
-
-    <!-- 执行结果  -->
+    <!--validate -->
     <script>
-        // 添加redis帮助页
-        function redis_help_tab_add() {
-            redis_help_tab_remove();
-            //增加执行结果tab页
-            var li = document.createElement("li"); //创建li
-            li.setAttribute("id", "redis_help_tab");
-            li.setAttribute("role", "presentation");
-
-            var href_a = document.createElement("a"); //创建li中的链接a
-            href_a.setAttribute("href", "#redis_help");
-            href_a.setAttribute("role", "tab");
-            href_a.setAttribute("data-toggle", "tab");
-            href_a.innerHTML = "Redis帮助文档"; //链接显示文本（相当于标签标题）
-            li.appendChild(href_a);//将a添加到li
-
-            $("#nav-tabs").prepend(li);//li添加到ul
-            $("#nav-tabs a:first").tab('show')
+        function validateForm(element) {
+            var result = true;
+            element.find('[required]').each(
+                function () {
+                    var fieldElement = $(this);
+                    var fieldId = $(this).attr('id');
+                    //如果为null则设置为''
+                    var value = fieldElement.val() || '';
+                    if (value) {
+                        value = value.trim();
+                    }
+                    if (!value || value === fieldElement.attr('data-placeholder')) {
+                        alert(fieldElement.attr('data-placeholder'));
+                        result = false;
+                        return result;
+                    }
+                    if(fieldId == "workflow_name" && value.length>=50){
+                        alert("上线单名称/工单名称不能超过50个字符！");
+                        result = false;
+                        return result;
+                    }
+                }
+            );
+            return result;
         }
 
-        // 删除redis帮助页
-        function redis_help_tab_remove() {
-            $("#redis_help_tab").remove();
-            //激活最后一个tab
-            $("#nav-tabs a:last").tab('show');
-        }
+        //美化
+        $("#btn-format").click(function () {
+                var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                if (select_sqlContent) {
+                    var sqlContent = select_sqlContent
+                } else {
+                    var sqlContent = editor.getValue();
 
-        //添加执行结果页面
-        function tab_add(tab_title) {
-            var tab_number = sessionStorage.getItem('tab_num');
-
-            //增加执行结果tab页
-            var li = document.createElement("li"); //创建li
-            li.setAttribute("id", "execute_result_tab" + (Number(tab_number) + 1));
-            li.setAttribute("role", "presentation");
-
-            var href_a = document.createElement("a"); //创建li中的链接a
-            href_a.setAttribute("href", "#sqlquery_result" + (Number(tab_number) + 1));
-            href_a.setAttribute("role", "tab");
-            href_a.setAttribute("data-toggle", "tab");
-            if (tab_title) {
-                href_a.innerHTML = tab_title; //链接显示文本（相当于标签标题）
-            } else {
-                href_a.innerHTML = "执行结果" + (Number(tab_number) + 1); //链接显示文本（相当于标签标题）
-
+                }
+                var sqlContent = window.sqlFormatter.format(sqlContent);
+                editor.setValue(sqlContent);
+                editor.clearSelection();
             }
-            li.appendChild(href_a);//将a添加到li
+        );
+    </script>
+    <!--check-->
+    <script>
+        // 监听sql文本，若sql发生变化则禁用提交按钮
+        editor.getSession().on('change', function(e) {
+            $("#btn-submitsql").prop("disabled", true);
+        });
 
-            //缓存sql
-            var cache_sql = document.createElement("input");
-            cache_sql.setAttribute("type", "hidden")
-            cache_sql.setAttribute("sql_cache", editor.getValue())
-            li.appendChild(cache_sql);
+        // 监听选区变化，若选取变化则禁用提交按钮
+        editor.getSession().selection.on('changeSelection', function(e) {
+            $("#btn-submitsql").prop("disabled", true);
+        });
 
-            $("#nav-tabs").append(li);//li添加到ul
-
-            //执行结果tab数量加1
-            sessionStorage.setItem('tab_num', Number(tab_number) + 1);
-            //重新获取tab数
-            tab_number = sessionStorage.getItem('tab_num');
-
-            //增加查询结果显示div
-            var div =
-                "<div id=\"sqlquery_result" + tab_number + "\" role=\"tabpanel\" class=\"tab-pane fade table-responsive\">\n" +
-                "    <div id=\"query_time" + tab_number + "\" class=\"navbar-text\" >\n" +
-                "        <small>查询时间 : <strong id=\"time" + tab_number + "\"> sec </strong></small>\n" +
-                "    </div>\n" +
-                "    <div id=\"mask_time" + tab_number + "\" class=\"navbar-text\" >\n" +
-                "        <small>脱敏时间 : <strong id=\"masking_time" + tab_number + "\"> sec </strong></small>\n" +
-                "    </div>\n" +
-                "    <table id=\"query_result" + tab_number + "\" data-toggle=\"table\" class=\"table table-condensed\"\n" +
-                "           style=\"table-layout:inherit;white-space:pre;overflow:hidden;text-overflow:ellipsis;\"></table>\n" +
-                "</div>\t";
-            $("#tab-content").append(div);//div添加到div
-
-            //激活添加的tab
-            $("#nav-tabs a:last").tab('show')
-
-        }
-
-        //删除执行结果页面
-        function tab_remove() {
-            var tab_number = sessionStorage.getItem('tab_num');
-            var active_li_id = sessionStorage.getItem('active_li_id');
-
-            if (active_li_id === 'sqllog_tab') {
-                //alert("查询历史tab不允许删除")
-            }
-            //非查询历史时，删除当前激活的tab
-            else if (active_li_id.match(/^execute_result_tab*/)) {
-                //sqlquery_result的tab数量大于0才执行
-                if (Number(tab_number) > 0) {
-                    var n = active_li_id.split("execute_result_tab")[1];
-                    $("#" + active_li_id).remove();
-                    $("#" + 'sqlquery_result' + n).remove();
-
-                    //激活最后一个tab
-                    $("#nav-tabs a:last").tab('show');
-                    sessionStorage.setItem('tab_num', Number(tab_number) - 1);
-                    //页面只剩下最后一个查询tab，则激活历史查询页
+        function checkRunDate(gap = 60) {
+            // 结束时间与开始时间的间隔不应该太短
+            var start = $("#run_date_start").val();
+            var end = $("#run_date_end").val();
+            if (start && end) {
+                var realGap = ((new Date(end)).getTime() - (new Date(start)).getTime()) / (1000 * 60)
+                if (realGap >= gap) {
+                    return true
+                } else {
+                    alert("可执行时间范围不应该短于" + gap + "分钟");
+                    return false
                 }
             }
+            return true
         }
+        
+        function removeStartsWith(str,prefix) {
+            if (typeof str !== 'string' || str === null) {
+                return str;
+            }
+            if (str.startsWith(prefix)) {
+                return str.substring(prefix.length);
+            }
+            return str;
+        };
+        $("#btn-autoreview").click(function () {
+            if (sqlquery_validate()) {
+                $("#btn-submitsql").prop("disabled", true);
+                resetValidationNotice()
+                editor.container.style.pointerEvents = "none";
+                editor.container.style.opacity = 0.6;
+                $("#db_name").attr("disabled", true);
+                $("#instance_name").attr("disabled", true);
+                $("#group_name").attr("disabled", true);
+                sqlcount('explain')
+            }
+        });
 
         //表单验证
         function sqlquery_validate() {
@@ -513,7 +480,7 @@
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
             }
-            var isOfflineExport = $("#btn-submitdownload").is(':hidden') ? "no" : "yes";
+            var isOfflineExport = $("#btn-submitsql").is(':hidden') ? "no" : "yes";
             var totalSqlCnt = sqlContent.split(';')
                 .map(stmt => stmt.trim()) // 去除每个语句两端的空白
                 .filter(stmt => stmt.length > 0) // 过滤掉空语句
@@ -558,481 +525,8 @@
             }
             return result;
         }
-
-        //提交AI生成sql语句请求
-        $("#btn-generatesql").click(function () {
-                var check = false
-                var optgroup = $('#instance_name :selected').parent().attr('label')
-                var instance_name = $("#instance_name").val()
-                var db_name = $("#db_name").val()
-                var tb_name = $("#table_name").val()
-                var query_desc = $("#generateDesc").val()
-
-                if (!instance_name) {
-                    alert("请选择实例！")
-                } else if (!db_name) {
-                    alert("请选择数据库！")
-                } else if (optgroup !== 'Redis' && !tb_name){
-                    alert("请选择表结构！")
-                } else if (!query_desc) {
-                    alert("请输入查询描述！")
-                } else {
-                    check = true
-                }
-                if (check) {
-                    generatesql()
-                }
-            }
-        );
-
-
-        //先做表单验证，验证成功再成功提交执行计划查看
-        $("#btn-validate").click(function () {
-                if (sqlquery_validate()) {
-                    const inputButton = $('input[type=button]')
-                    inputButton.addClass('disabled');
-                    inputButton.prop("disabled", true)
-                    $("#btn-submitdownload").prop("disabled", true);
-                    isOfflineExport = $("#btn-submitdownload").is(':hidden') ? "no" : "yes";
-                    if (isOfflineExport === "yes") {
-                        resetValidationNotice()
-                        editor.container.style.pointerEvents = "none";
-                        editor.container.style.opacity = 0.6;
-                        $("#db_name").attr("disabled", true);
-                        $("#instance_name").attr("disabled", true);
-                        $("#group_name").attr("disabled", true);
-                        sqlcount('explain')
-                    } else {
-                        sqlquery('explain')
-                    }
-                }
-            }
-        );
-
-        //先做表单验证，验证成功再成功提交格式化sql
-        $("#btn-format").click(function () {
-                var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
-                var optgroup = $('#instance_name :selected').parent().attr('label');
-                let sqlContent = '';
-                if (select_sqlContent) {
-                    sqlContent = select_sqlContent
-                } else {
-                    sqlContent = editor.getValue();
-                }
-                sqlContent = window.sqlFormatter.format(sqlContent);
-                editor.setValue(sqlContent);
-                editor.clearSelection();
-            }
-        );
-
-        //实时保存编辑器的文字，防止刷新丢失
-        editor.session.on('change', function (delta) {
-            var sqlContent = editor.getValue();
-            window.sessionStorage.setItem('sqlContent', sqlContent);
-            //获取当前的标签页
-            var active_li_id = sessionStorage.getItem('active_li_id');
-            var active_li_title = sessionStorage.getItem('active_li_title');
-            if (active_li_title.match(/^执行结果\d$/)){
-                //当前激活的执行结果页
-                var n = active_li_id.split("execute_result_tab")[1];
-                //填入sql
-              var inputs = $("#execute_result_tab"+n + " input");
-              if(inputs.length > 0){
-                    inputs[0].setAttribute("sql_cache", sqlContent)
-                }
-            }
-
-        });
-
-        function highLight(json) {
-            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                var cls = 'text-muted';
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) {
-                        cls = 'text-success';
-                    } else {
-                        match = match
-                        cls = 'text-primary';
-                    }
-                } else if (/true|false/.test(match)) {
-                    cls = 'text-success';
-                } else if (/null/.test(match)) {
-                    cls = 'text-warning';
-                }
-                return '<span class="' + cls + '">' + match + '</span>';
-            });
-        }
-
-        // 展示数据
-        function display_data(data, target='') {
-            var result = data.data;
-            var query_str = target+'|'+result['full_sql'];
-            //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
-            var active_li_id = sessionStorage.getItem('active_li_id');
-            let active_li_title = sessionStorage.getItem('active_li_title');
-            var isOfflineExport = $("#btn-submitdownload").is(':hidden') ? "no" : "yes";
-            let tb_name, n
-            let need_describe_display = false
-            if (data.status === 0) {
-                // 查看表结构默认新增tab，相同表结构获取不新增
-                if (result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
-                    need_describe_display = true
-                    if (data.is_describe===undefined || !data.is_describe) {
-                        tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
-                    }
-                }
-                if (data.is_describe || need_describe_display) {
-                    if (tb_name === undefined) {
-                        tb_name = $("#table_name").val();
-                    }
-                    if (tb_name !== active_li_title) {
-                        tab_add(tb_name);
-                    }
-                    n = sessionStorage.getItem('tab_num');
-                    if (result.column_list === ["table", "create table"]) {
-                        need_describe_display = true
-                    }
-                }
-                // 执行结果页默认不新增
-                else if (active_li_title.match(/^执行结果\d$/)) {
-                    n = active_li_id.split("execute_result_tab")[1];
-                } else {
-                    tab_add();
-                    n = sessionStorage.getItem('tab_num');
-                }
-                // 因为一个tab可能对应多个执行，因此移除所有的p元素，新增一个隐藏的p元素
-                for (let i=0; i<$("#execute_result_tab"+n+" p").length; i++) {
-                    $("#execute_result_tab"+n+" p").remove();
-                }
-                $("#execute_result_tab"+n).append("<p style=\"display:none\">"+query_str+"</p>");
-
-                //显示查询结果
-                if (result['column_list']) {
-                    //异步获取要动态生成的列
-                    let columns = [];
-                    $.each(result['column_list'], function (i, column) {
-                        var iswholeCol = true;
-                        if (column == "mongodballdata") {
-                            iswholeCol = false
-                        }
-                        columns.push({
-                            "field": i,
-                            "title": column,
-                            "visible": iswholeCol,
-                            "sortable": true,
-                            cellStyle: function (value, row, index) {
-                                if (!value && typeof (value) !== "undefined" && value !== 0) {
-                                    return {
-                                        css: {
-                                            color: 'darkgrey'
-                                        }
-                                    }
-                                } else {
-                                    return {
-                                        css: {}
-                                    }
-                                }
-                            },
-                            formatter: function (value, row, index, field) {
-                                if (value instanceof Array || value instanceof Object){
-                                    return JSON.stringify(value);
-                                }
-                                return value
-                            }
-                        });
-                    });
-                    if (need_describe_display) {
-                        //初始化表结构显示
-                        $(`#query_result${n}`).bootstrapTable('destroy').bootstrapTable({
-                                escape: false,
-                                data: result['rows'],
-                                columns: [{
-                                    title: 'Create Table',
-                                    field: 1,
-                                    formatter: function (value, row, index) {
-                                        let sql = window.sqlFormatter.format(value);
-                                        //替换标签
-                                        sql = sql.replace(/&/g, "&amp;");
-                                        sql = sql.replace(/</g, "&lt;");
-                                        sql = sql.replace(/>/g, "&gt;");
-                                        sql = sql.replace(/"/g, "&quot;");
-                                        //替换所有的换行符
-                                        sql = sql.replace(/\r\n/g, "<br>");
-                                        sql = sql.replace(/\n/g, "<br>");
-                                        //替换所有的空格
-                                        return sql;
-                                    },
-                                }
-                                ],
-                                locale: 'zh-CN'
-                            }
-                        );
-                    } else {
-                        //初始化查询结果
-                        var isdetail = false
-                        var optgroup = $('#instance_name :selected').parent().attr('label');
-                        if (optgroup === 'Mongo' || optgroup === 'Redis') {
-                            isdetail = true
-                        }
-                        var showExport = {{can_download}}===1
-                        var query_result_id=(`query_result${n}`);
-                        if (isOfflineExport === "yes") {
-                            var ActualRows = 0;
-                            var maxExportRows = "{{ config.max_export_rows }}";
-                            ActualRows = parseFloat(result['rows'][0][0]);
-                            if (ActualRows > maxExportRows) {
-                                $("#btn-submitdownload").prop("disabled", true);
-                                showStatusNotice({
-                                    noticeIconClass: 'icon-error',
-                                    statusClass: 'status-error',
-                                    title: '校验失败',
-                                    message: '统计查询结果：{ActualRows} 行数据，超过了阈值：{maxExportRows}',
-                                    params: { ActualRows: ActualRows, maxExportRows: maxExportRows },
-                                    delay: 5000
-                                });
-                            } else if (ActualRows <= maxExportRows) {
-                                $("#btn-submitdownload").prop("disabled", false);
-                                showStatusNotice({
-                                    noticeIconClass: 'icon-success',
-                                    statusClass: 'status-success',
-                                    title: '校验成功',
-                                    message: '统计查询结果：{ActualRows} 行数据，点击提交导出按钮申请导出。',
-                                    params: { ActualRows: ActualRows},
-                                    delay: 5000
-                                });
-                            } else {
-                                $("#btn-submitdownload").prop("disabled", true);
-                            }
-                        }
-                        $(`#${query_result_id}`).bootstrapTable('destroy').bootstrapTable({
-                            escape: true,
-                            data: result['rows'],
-                            columns: columns,
-                            showExport: showExport,
-                            exportDataType: "all",
-                            exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
-                            exportOptions: {
-                                //ignoreColumn: [0],  //忽略某些列的索引数组
-                                fileName: function () {
-                                var userInput = prompt('请输入文件名：');  // 弹出对话框让用户输入文件名
-                                return userInput || 'export_result';  // 若用户未输入文件名，则使用默认文件名
-                                },
-                                onFileSave: function (e) {
-                                    var url = e.currentTarget.href;
-                                    var xhr = new XMLHttpRequest();
-                                    xhr.open('GET', url, true);
-                                    xhr.responseType = 'blob';
-                                    xhr.onload = function () {
-                                        if (xhr.status === 200) {
-                                            var blob = xhr.response;
-                                            var downloadLink = document.createElement('a');
-                                            downloadLink.href = window.URL.createObjectURL(blob);
-                                            downloadLink.click();
-                                        }
-                                    };
-                                    xhr.send();
-                                    return false;
-                                }
-                            },
-                            undefinedText: '(null)',
-                            detailView: isdetail, //开启显示行首"+"
-                            showColumns: true,
-                            showToggle: true,
-                            clickToSelect: true,
-                            striped: true,
-                            pagination: true,
-                            pageSize: 30,
-                            pageList: [30, 50, 100, 500, 1000],
-                            search: true,                      //是否显示表格搜索
-                            strictSearch: false,                //是否全匹配搜索
-                            //格式化详情
-                            detailFormatter: function (index, row) {
-                                var html = [];
-                                $.each(row, function (key, value) {
-                                    if (key === 0) {//mongodb这里要修改
-                                        let rs = value;
-                                        if (optgroup === 'Redis') {
-                                            try {
-                                                rs = JSON.parse(rs);
-                                                if (typeof rs == 'object' && rs) {
-                                                    rs = JSON.stringify(rs, null, 2)
-                                                }
-                                            } catch (e) {
-                                                html.push('<strong>' + "非json格式，无法格式化！" + '</strong>');
-                                                return false;
-                                            }
-                                        }
-                                        html.push('<pre>' + highLight(rs) + '</pre>');
-                                    }
-                                });
-                                return html.join('');
-                            },
-                            onPostBody: function(data) {
-                                //此处的属性及样式名称，来自于bootstrap-table.js
-                                //有detail的表头，添加sytle
-                                var thHasDetail=$(`#${query_result_id} th.detail`);
-                                thHasDetail.css('white-space', 'nowrap');
-                                //有详情+号的的td,添加sytle。
-                                var tdHasDetail=$(`#${query_result_id} tr[data-has-detail-view="true"] .detail-icon`).parent('td');
-                                tdHasDetail.css('white-space', 'nowrap');
-                            },
-                            locale: 'zh-CN',
-                            onExportSaved: function (e) {
-                                var tabs = $("#nav-tabs li")
-                                for(let i=0;i<tabs.length;i++){
-                                    if(tabs[i].getAttribute("class") === "active") {
-                                        // sql内容固定隐藏绑定在第二个子元素
-                                        var instance_name = $("#instance_name").val()
-                                        var db_name =$("#db_name").val()
-                                        var extraInfo = instance_name+"/"+db_name+"|"+$(tabs[i].children[1]).attr('sql_cache')+"|"+e.length;
-                                        $.ajax({
-                                            type: "post",
-                                            url: "/audit/input/",
-                                            dataType: "json",
-                                            data: {
-                                                action:"下载",
-                                                extra_info: extraInfo
-                                            },
-                                            complete: function () {
-                                                console.log("回调触发")
-                                            },
-                                            success: function (data) {
-                                                console.log("回调成功")
-                                                console.log(data)
-                                            },
-                                            error: function (XMLHttpRequest, textStatus, errorThrown) {
-                                                console.log("回调失败")
-                                            }
-                                        });
-                                    }
-                                }
-                            },
-                        });
-                    }
-                    //执行时间和脱敏时间赋值
-                    $("#" + ('time') + n).text(result['query_time'] + ' sec');
-                    $("#" + ('masking_time') + n).text(result['mask_time'] + ' sec');
-                    //主从延迟赋值，仅在出现延迟时展示，null和0都不展示
-                    if (result['seconds_behind_master']) {
-                        $("#seconds_behind_master").text('Seconds_Behind_Master:  ' + result['seconds_behind_master']);
-                    }
-                }
-
-            } else {
-		        if (isOfflineExport === "yes") {
-                    showStatusNotice({
-                        noticeIconClass: 'icon-error',
-                        statusClass: 'status-error',
-                        title: '校验失败',
-                        message: '错误：{msg}',
-                        params: { msg: data.msg },
-                        delay: 5000
-                    });
-                    editor.container.style.pointerEvents = "auto";
-                    editor.container.style.opacity = 1;
-		        }
-                //查询报错失败信息
-                if (active_li_title.match(/^执行结果\d$/)) {
-                    n = active_li_id.split("execute_result_tab")[1];
-                } else {
-                    tab_add();
-                    n = sessionStorage.getItem('tab_num');
-                }
-                $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                    escape: false,
-                    columns: [{
-                        field: 'error',
-                        title: 'Error',
-                        formatter: function (value, row, index) {
-                            //staus为2的时候，增加申请链接
-                            if (data.status === 2) {
-                                return value + "<a href=\"/queryapplylist/\">" + "（提交申请）" + "</a>"
-                            } else {
-                                return value
-                            }
-                        }
-                    }],
-                    data: [{
-                        error: data.msg
-                    }]
-                })
-            }
-        }
-
-        //将数据通过ajax提交给后端进行检查
-        function sqlquery(sql) {
-            var optgroup = $('#instance_name :selected').parent().attr('label');
-            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
-            if (select_sqlContent) {
-                sqlContent = select_sqlContent
-            } else {
-                var sqlContent = editor.getValue();
-
-            }
-            if (optgroup === "Oracle") {
-                //查看执行计划
-                if (sql === 'explain') {
-                    sqlContent = 'explain plan for ' + sqlContent
-                }
-                //查看表结构
-                else if (sql === 'show create table') {
-                    sqlContent = "desc " + $("#table_name").val() + ";"
-                }
-            } else if (optgroup === "MySQL" || optgroup === "PgSQL" ) {
-                //查看执行计划
-                if (sql === 'explain') {
-                    sqlContent = 'explain ' + sqlContent
-                }
-                //查看表结构
-                else if (sql === 'show create table') {
-                    sqlContent = "show create table " + $("#table_name").val() + ";"
-                }
-            } else if (optgroup === "Mongo") {
-                //查看执行计划
-                if (sql === 'explain') {
-                    sqlContent = 'explain ' + sqlContent
-                }
-            } else if (optgroup === "ClickHouse") {
-                //查看执行计划
-                if (sql === 'explain') {
-                    sqlContent = 'explain ' + sqlContent
-                }
-            } else if (optgroup === "Doris") {
-                //查看执行计划
-                if (sql === 'explain') {
-                    sqlContent = 'explain ' + sqlContent
-                }
-            }
-            //提交请求
-            $.ajax({
-                type: "post",
-                url: "/query/",
-                dataType: "json",
-                data: {
-                    instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val(),
-                    schema_name: $("#schema_name").val(),
-                    tb_name: $("#table_name").val(),
-                    sql_content: sqlContent,
-                    limit_num: $("#limit_num").val()
-                },
-                complete: function () {
-                    $('input[type=button]').removeClass('disabled');
-                    $('input[type=button]').prop('disabled', false);
-                    optgroup_control();
-                },
-                success: function (data) {
-                    var target = $("#instance_name").val()+"/"+$("#db_name").val();
-                    display_data(data, target);
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
-        }
-
-        //导出工单的时候将数据通过ajax提交给后端进行count检查
+        
+        //count行数统计
         function sqlcount(sql) {
             var result = true;
             var optgroup = $('#instance_name :selected').parent().attr('label');
@@ -1060,18 +554,14 @@
                     limit_num: $("#limit_num").val()
                 },
                 complete: function () {
-                    $('input[type=button]').removeClass('disabled');
-                    $('input[type=button]').prop('disabled', false);
                     $("#db_name").attr("disabled", false);
                     $("#instance_name").attr("disabled", false);
                     $("#group_name").attr("disabled", false);
                     editor.container.style.pointerEvents = "auto";
                     editor.container.style.opacity = 1;
-                    optgroup_control();
                 },
                 success: function (data) {
-                    var target = $("#instance_name").val()+"/"+$("#db_name").val();
-                    display_data(data, target);
+                    validate_data(data);
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
@@ -1079,360 +569,211 @@
             });
         }
 
-        function generatesql() {
-            var optgroup = $('#instance_name :selected').parent().attr('label');
-            const data = {
-                db_type: optgroup,
-                instance_name: $("#instance_name").val(),
-                db_name: $("#db_name").val(),
-                schema_name: $("#schema_name").val(),
-                tb_name: $("#table_name").val(),
-                query_desc: $("#generateDesc").val(),
+        //SQL提交
+        $("#btn-submitsql").click(function () {
+            //获取form对象，判断输入，通过则提交
+            $("#sql_content").val(editor.getValue());
+            if (validateForm($("#form-submitsql")) && checkRunDate()) {
+                resetValidationNotice()
+                validationNotice.querySelector('.notice-title').textContent = "工单提交中...";
+                validationNotice.querySelector('.notice-message').textContent = "后台二次校验，请稍候...";
+                editor.container.style.pointerEvents = "none";
+                editor.container.style.opacity = 0.6;
+                sqlSubmit()
             }
-            //提交请求
+        });
+
+        // 校验返回的结果
+        function validate_data(data) {
+            var result = data.data;
+            if (data.status === 0) {
+                var ActualRows = 0;
+                var maxExportRows = "{{ config.max_export_rows }}";
+                ActualRows = parseFloat(result['rows'][0][0]);
+                if (ActualRows > maxExportRows) {
+                    $("#btn-submitsql").prop("disabled", true);
+                    showStatusNotice({
+                        noticeIconClass: 'icon-error',
+                        statusClass: 'status-error',
+                        title: '校验失败',
+                        message: '统计查询结果：{ActualRows} 行数据，超过了阈值：{maxExportRows}',
+                        params: { ActualRows: ActualRows, maxExportRows: maxExportRows },
+                        delay: 5000
+                    });
+                } else if (ActualRows <= maxExportRows) {
+                    $("#btn-submitsql").prop("disabled", false);
+                    showStatusNotice({
+                        noticeIconClass: 'icon-success',
+                        statusClass: 'status-success',
+                        title: '校验成功',
+                        message: '统计查询结果：{ActualRows} 行数据，点击提交导出按钮申请导出。',
+                        params: { ActualRows: ActualRows},
+                        delay: 5000
+                    });
+                } else {
+                    $("#btn-submitsql").prop("disabled", true);
+                }
+            } else {
+                showStatusNotice({
+                    noticeIconClass: 'icon-error',
+                    statusClass: 'status-error',
+                    title: '校验失败',
+                    message: '错误：{msg}',
+                    params: { msg: data.msg },
+                    delay: 5000
+                });
+            }
+        }
+
+        // 提交sql
+        function sqlSubmit() {
+            let formData = $('#form-submitsql').serializeArray().reduce(function (obj, item) {
+                obj[item.name] = item.value;
+                return obj;
+            }, {})
+            var sqlContent = editor.getValue();
+            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+            if (select_sqlContent) {
+                sqlContent = select_sqlContent
+            }
             $.ajax({
                 type: "post",
-                url: "/query/generate_sql/",
+                url: "/api/v1/workflow/",
                 dataType: "json",
-                data: data,
+                contentType: 'application/json;',
+                data: JSON.stringify({
+                        workflow: {
+                            workflow_name: formData.workflow_name,
+                            export_format: formData.export_format,
+                            is_offline_export: 'yes',
+                            group_id: $("#group_name option:selected").attr("group-id"),
+                            instance: $("#instance_name option:selected").attr("instance-id"),
+                            db_name: formData.db_name,
+                            is_backup: 'False',
+                            run_date_start: formData.run_date_start,
+                            run_date_end: formData.run_date_end,
+                        },
+                        sql_content: sqlContent
+                    }
+                ),
+                beforeSend: function (xhr) {
+                    $('#btn-submitsql').button('loading')
+                },
                 complete: function () {
-                    $('input[type=button]').removeClass('disabled');
-                    $('input[type=button]').prop('disabled', false);
-                    optgroup_control();
+                    $('#btn-submitsql').button('reset')
+                    editor.container.style.pointerEvents = "auto";
+                    editor.container.style.opacity = 1;
                 },
                 success: function (data) {
-                    editor.setValue(data["data"]);
-                    editor.clearSelection();
+                    window.location.href = "/detail/"+ data.workflow_id
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    if (XMLHttpRequest.responseJSON) {
+                        alert(XMLHttpRequest.responseText)
+                    } else {
+                        alert(errorThrown);
+                    }
                 }
             });
-        }
 
-        function dosqlquery() {
-            if (sqlquery_validate()) {
-                $('input[type=button]').addClass('disabled');
-                $('input[type=button]').prop('disabled', true);
-                $("#btn-submitdownload").prop("disabled", true);
-                sqlquery();
-            }
         }
     </script>
-    <!-- common -->
+    <!--group -->
     <script>
-        // 按钮和控制器展示配置
-        const defaultDisplayConfig = {
-            showTableName: true,
-            showSchemaName: false,
-            showFormat: true,
-            showExplain: true,
-            showRedisHelp: false,
-            showOfflineDownload: true,
-        }
-        const createDisplayConfig = function(extraArgs = null) {
-            if (extraArgs === null) {
-                extraArgs = {}
-            }
-            return Object.assign({}, defaultDisplayConfig, extraArgs)
-        }
-        const engineDisplayConfig = {
-            "MySQL": createDisplayConfig({showOfflineDownload: true}),
-            "Oracle": createDisplayConfig({showOfflineDownload: true}),
-            "MsSQL": createDisplayConfig({showExplain: false}),
-            "Redis": createDisplayConfig({showTableName: true, showSchemaName: false,
-                showRedisHelp: true,
-                showFormat: false, showExplain: false}),
-            "PgSQL": createDisplayConfig({showSchemaName: true}),
-            "Mongo": createDisplayConfig({showFormat: false}),
-            "Phoenix": createDisplayConfig({showExplain: false}),
-            "Cassandra": createDisplayConfig({showExplain: false}),
-            // 如有特殊的显示需求, 在此处添加配置, 并在下方的optgroup_control中添加对应的控制逻辑
-            // 如无特殊需求, 可以直接不填写, 这样会使用默认配置
-        };
-        //控制按钮和选择器显示
-        function optgroup_control(change) {
-            let optgroup = $('#instance_name :selected').parent().attr('label');
-            let displayConfig = engineDisplayConfig[optgroup] || defaultDisplayConfig
-
-            if (displayConfig.showExplain) {
-                $("#btn-validate").attr('disabled', false);
-            } else {
-                $("#btn-validate").attr('disabled', true);
-            }
-            if (displayConfig.showFormat) {
-                $("#btn-format").attr('disabled', false);
-            } else {
-                $("#btn-format").attr('disabled', true);
-            }
-            if (change) {
-                if (displayConfig.showSchemaName) {
-                    $("#div-schema_name").show();
-                } else {
-                    $("#div-schema_name").hide();
-                }
-                if (displayConfig.showRedisHelp) {
-                    redis_help_tab_add();
-                } else {
-                    redis_help_tab_remove();
-                }
-            }
-        }
-
-        //实例变更获取数据库
-        $("#instance_name").change(function () {
-            if (sessionStorage.getItem('re_query')) {
-                get_instance(false)
-            } else {
-                get_instance(true)
-            }
-        });
-
-        function get_instance(async) {
-            optgroup_control(true);
-            $("#db_name").empty();
-            $('#db_name').selectpicker('render');
-            $('#db_name').selectpicker('refresh');
-            sessionStorage.setItem('sql_query_instance_name', $("#instance_name").val());
-            //获取db_name
+        // 获取实例信息和审批流程
+        $("#group_name").change(function () {
             $.ajax({
-                type: "get",
-                url: "/instance/instance_resource/",
-                dataType: "json",
-                async: async,
-                data: {
-                    instance_name: $("#instance_name").val(),
-                    resource_type: "database"
-                },
-                complete: function () {
-                    $("#db_name").selectpicker('val', db_name);
-                    if ($("#db_name").val()) {
-                        $("#db_name").selectpicker().trigger("change");
-                    }
-                },
-                success: function (data) {
-                    if (data.status === 0) {
-                        var result = data.data;
-                        var dbs = [];
-                        for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
-                            $("#db_name").append(name);
-                            dbs.push({
-                                name: result[i],
-                                value: result[i],
-                                caption: result[i],
-                                meta: 'databases',
-                                score: '100'
-                            })
-                        }
-                        $('#db_name').selectpicker('render');
-                        $('#db_name').selectpicker('refresh');
-                        //自动补全提示
-                        setCompleteData(dbs)
-                    } else {
-                        alert(data.msg);
-                    }
-                },
-
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
-        }
-
-        //数据库变更获取表/模式名称
-        $("#db_name").change(function () {
-            $("#table_name").empty();
-            $('#table_name').selectpicker('render');
-            $('#table_name').selectpicker('refresh');
-            $("#schema_name").empty();
-            $('#schema_name').selectpicker('render');
-            $('#schema_name').selectpicker('refresh');
-            // PgSQL需要选择模式再获取表
-            var optgroup = $('#instance_name :selected').parent().attr('label');
-            var resource_type = "table";
-            if (optgroup === "PgSQL") {
-                //获取schema
-                resource_type = "schema"
-            }
-            $.ajax({
-                type: "get",
-                url: "/instance/instance_resource/",
+                type: "post",
+                url: "/group/instances/",
                 dataType: "json",
                 data: {
-                    instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val(),
-                    resource_type: resource_type
+                    group_name: $("#group_name").val(),
+                    tag_code: 'can_read'
                 },
                 complete: function () {
-                    if (optgroup === "PgSQL") {
-                        //获取schema
-                        $("#div-schema_name").show();
-                        $("#schema_name").selectpicker('val', db_name);
-                        if ($("#schema_name").val()) {
-                            $("#schema_name").selectpicker().trigger("change");
-                        }
-                    }
-                },
-                success: function (data) {
-                    if (data.status === 0) {
-                        var result = data.data;
-                        if (resource_type === "table") {
-                            if (optgroup == 'Mongo') {
-                                $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">查看集合字段:</option>")
-                            }
-                            for (var i = 0; i < result.length; i++) {
-                                var name = "<option>" + result[i] + "</option>";
-                                $("#table_name").append(name);
-                            }
-                            $('#table_name').selectpicker('render');
-                            $('#table_name').selectpicker('refresh');
-                            //自动补全提示
-                            $("#schema_name").val('');
-                            setTablesCompleteData(result)
-                        } else {
-                            for (var i = 0; i < result.length; i++) {
-                                var name = "<option>" + result[i] + "</option>";
-                                $("#schema_name").append(name);
-                            }
-                            $('#schema_name').selectpicker('render');
-                            $('#schema_name').selectpicker('refresh');
-                            //自动补全提示
-                            setSchemasCompleteData(result)
-                        }
-
-                    } else {
-                        alert(data.msg);
-                    }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
-        });
-
-        //模式变更获取表
-        $("#schema_name").change(function () {
-            $("#table_name").empty();
-            $('#table_name').selectpicker('render');
-            $('#table_name').selectpicker('refresh');
-            //获取table
-            $.ajax({
-                type: "get",
-                url: "/instance/instance_resource/",
-                dataType: "json",
-                data: {
-                    instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val(),
-                    schema_name: $("#schema_name").val(),
-                    resource_type: "table"
-                },
-                complete: function () {
-                    $("#schema_name").attr('disabled', false);
-                },
-                success: function (data) {
-                    if (data.status === 0) {
-                        var result = data.data;
-                        for (var i = 0; i < result.length; i++) {
-                            var name = "<option>" + result[i] + "</option>";
-                            $("#table_name").append(name);
-                        }
-                        $('#table_name').selectpicker('render');
-                        $('#table_name').selectpicker('refresh');
-                        //自动补全提示
-                        setTablesCompleteData(result)
-                    } else {
-                        alert(data.msg);
-                    }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
-        });
-
-        //初始化
-        $(document).ready(function () {
-            //重置执行结果的tab数量
-            sessionStorage.setItem('tab_num', 0);
-
-            //读取上次保存的sqlContent
-            let sqlContent = window.sessionStorage.getItem('sqlContent');
-            if (sqlContent != null) {
-                editor.setValue(sqlContent);
-            } else {
-                editor.setValue("");
-            }
-            
-
-            //获取用户实例列表
-            $(function () {
-                $.ajax({
-                    type: "get",
-                    url: "/group/user_all_instances/",
-                    dataType: "json",
-                    data: {
-                        tag_codes: ['can_read']
-                    },
-                    complete: function () {
-                        //填充实例名
-                        $("#instance_name").selectpicker('val', sessionStorage.getItem('sql_query_instance_name'));
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlSource = urlParams.get('source');
+                    if (urlSource === "resubmit") {
+                        //填充实例信息
+                        $('#instance_name').selectpicker('val', sessionStorage.getItem('editClustername'));
                         if ($("#instance_name").val()) {
                             $("#instance_name").selectpicker().trigger("change");
                         }
-                    },
-                    success: function (data) {
-                        if (data.status === 0) {
-                            $("optgroup[id^='optgroup']").empty();
-                            let result = data['data']
-                            const supportDb = [ {% for name in engines.keys %}"{{ name }}", {% endfor %}]
-                            for (let i of result) {
-                                let instance = "<option value=\"" + i.instance_name + "\" instance-id=" + i.id + ">" + i.instance_name + "</option>";
-                                if (supportDb.indexOf(i.db_type) !== -1) {
-                                    console.log("get supported db")
-                                    console.log(i)
-                                    $("#optgroup-" + i.db_type).append(instance);
-                                }
-                            }
-                            $('#instance_name').selectpicker('render').selectpicker('refresh');
-                            $("#db_name").empty().selectpicker('render').selectpicker('refresh');
-                        } else {
-                            alert(data.msg);
-                        }
-                    },
-                    error: function (XMLHttpRequest, textStatus, errorThrown) {
-                        alert(errorThrown);
                     }
-                });
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        $("optgroup[id^='optgroup']").empty();
+                        let result = data['data']
+                        const supportDb = [ {% for name in engines.keys %}"{{ name }}", {% endfor %}]
+                        for (let i of result) {
+                            let instance = "<option value=\"" + i.instance_name + "\" instance-id=" + i.id + ">" + i.instance_name + "</option>";
+                            if (supportDb.indexOf(i.db_type) !== -1) {
+                                $("#optgroup-" + i.db_type).append(instance);
+                            }
+                        }
+                        $('#instance_name').selectpicker('render').selectpicker('refresh');
+                        $("#db_name").empty().selectpicker('render').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+            $.ajax({
+                type: "post",
+                url: "/group/auditors/",
+                dataType: "json",
+                data: {
+                    group_name: $("#group_name").val(),
+                    workflow_type: 2
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#workflow_auditors").val(result['auditors']);
+                        $("#workflow_auditors_display").text(result['auditors_display']);
+                        $("#div-workflow_auditors").show();
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
             });
         });
-
-        function show(o) {
-            let allHelpPages = ["keyHelp", "stringHelp", "hashHelp", "setHelp", "zsetHelp"]
-            allHelpPages.forEach(function (item) {
-                document.getElementById(item).style.display = "none";
-            })
-            switch(o.value) {
-                case "key":
-                    document.getElementById("keyHelp").style.display = "block";
-                    break;
-                case "string":
-                    document.getElementById("stringHelp").style.display = "block";
-                    break;
-                case "hash":
-                    document.getElementById("hashHelp").style.display = "block";
-                    break;
-                case "set":
-                    document.getElementById("setHelp").style.display = "block";
-                    break;
-                case "zset":
-                    document.getElementById("zsetHelp").style.display = "block";
-                    break;
-                default:
-                    break;
+    </script>
+    <!--init -->
+    <script>
+        $(document).ready(function () {
+            // 清空id, 只允许新增不允许修改
+            sessionStorage.removeItem('editWorkflowDetailId');
+            //获取url参数置入对应的初始化内容
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlSource = urlParams.get('source');
+            if (urlSource == "resubmit") {
+                $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+                $("#group_name").val(sessionStorage.getItem('editGroup'));
+                editor.setValue(sessionStorage.getItem('editSqlContent'));
+                editor.clearSelection();
+            } else if (urlSource === "query") {
+                editor.setValue(sessionStorage.getItem('submitSqlContent'));
+                editor.clearSelection();
+            } else {
+                //重置页面内容
+                editor.setValue("");
+                $(".selectpicker").selectpicker('val', '');
+                $(".selectpicker").selectpicker('render');
+                $(".selectpicker").selectpicker('refresh');
             }
-        }
+            if ($("#group_name").val()) {
+                $("#group_name").trigger("change");
+            }
+        });
     </script>
 {% endblock %}
-
-

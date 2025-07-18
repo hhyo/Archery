@@ -161,6 +161,15 @@ def sqlworkflow(request):
 def sqlexportworkflow(request):
     """SQL数据导出工单列表页面"""
     user = request.user
+    # 获取所有配置项
+    all_config = Config.objects.all().values("item", "value")
+    sys_config = {}
+    for items in all_config:
+        sys_config[items["item"]] = items["value"]
+    # 离线下载权限判断
+    can_offline_download = (
+        1 if user.has_perm("sql.offline_download") or user.is_superuser else 0
+    )
     # 过滤筛选项的数据
     filter_dict = dict()
     # 管理员，可查看所有工单
@@ -195,7 +204,9 @@ def sqlexportworkflow(request):
             "status_list": SQL_WORKFLOW_CHOICES,
             "instance": instance,
             "resource_group": resource_group,
-        },
+            "config": sys_config,
+            "can_offline_download": can_offline_download,
+        }
     )
 
 @permission_required("sql.sql_submit", raise_exception=True)

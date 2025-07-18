@@ -258,8 +258,15 @@
         {% if user.username == workflow_detail.engineer %}
             <!--只允许发起人修改工单-->
             {% csrf_token %}
-            <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
-               href="/editsql/">重新修改</a>
+            {% if workflow_detail.is_offline_export == 'yes' %}
+                <!-- 离线导出工单跳转到导出提交页 -->
+                <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
+                   href="/sqlexportsubmit/?source=resubmit">重新修改</a>
+            {% else %}
+                <!-- 非离线导出工单跳转到上线变更提交页 -->
+                <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
+                   href="/editsql/">重新修改</a>
+            {% endif %}
         {% endif %}
     {% endif %}
 
