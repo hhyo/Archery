@@ -586,6 +586,21 @@
             tab_number = sessionStorage.getItem('tab_num');
 
             //增加查询结果显示div
+var showButton =   {{can_download}}===1;
+                    var dropdownId = "export_dropdown" + tab_number;
+                    var dropdownHtml = showButton
+                      ? `<div class="btn-group mb-2">
+                          <input id="${dropdownId}" type="button" class="btn btn-success dropdown-toggle"
+                                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" value="查询导出">
+                          </input>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <li><a  id="export_excel${tab_number}" class="dropdown-item" >导出为Excel</a></li>
+                            <li><a  id="export_sql${tab_number}" class="dropdown-item" >导出为SQL</a></li>
+                          </ul>
+                        </div>`
+                      : "";
+
+            //增加查询结果显示div
             var div =
                 "<div id=\"sqlquery_result" + tab_number + "\" role=\"tabpanel\" class=\"tab-pane fade table-responsive\">\n" +
                 "    <div id=\"query_time" + tab_number + "\" class=\"navbar-text\" >\n" +
@@ -594,6 +609,7 @@
                 "    <div id=\"mask_time" + tab_number + "\" class=\"navbar-text\" >\n" +
                 "        <small>脱敏时间 : <strong id=\"masking_time" + tab_number + "\"> sec </strong></small>\n" +
                 "    </div>\n" +
+dropdownHtml+
                 "    <table id=\"query_result" + tab_number + "\" data-toggle=\"table\" class=\"table table-condensed\"\n" +
                 "           style=\"table-layout:inherit;white-space:pre;overflow:hidden;text-overflow:ellipsis;\"></table>\n" +
                 "</div>\t";
@@ -859,7 +875,27 @@
                         if (optgroup === 'Mongo' || optgroup === 'Redis') {
                             isdetail = true
                         }
-                        var showExport = {{can_download}}===1
+                        tab_number = sessionStorage.getItem('tab_num');
+                        var showButton =   {{can_download}}===1;
+                        var button_excelfile = "export_excel" + tab_number;
+                        var button_sqlfile = "export_sql" + tab_number;
+                         if (showButton) {
+                            $("#" + button_excelfile).off("click").on("click", function () {
+                                const inputButton = $('input[type=button]')
+                                inputButton.addClass('disabled');
+                                inputButton.prop("disabled", true)
+                                sqlquery_download("excel")
+
+                            });
+                            $("#" + button_sqlfile).off("click").on("click", function () {
+                                const inputButton = $('input[type=button]')
+                                inputButton.addClass('disabled');
+                                inputButton.prop("disabled", true)
+                                sqlquery_download("sql")
+                            });
+
+                         }
+                        var showExport = false;
                         var query_result_id=(`query_result${n}`);
                         $(`#${query_result_id}`).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
@@ -1075,7 +1111,63 @@
                 }
             });
         }
+ function sqlquery_download(download_type) {
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+            if (select_sqlContent) {
+                sqlContent = select_sqlContent
+            } else {
+                var sqlContent = editor.getValue();
+            }
 
+              const requestData = {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val(),
+                    schema_name: $("#schema_name").val(),
+                    tb_name: $("#table_name").val(),
+                    sql_content: sqlContent,
+                    limit_num: $("#limit_num").val(),
+                    download_type: download_type
+              };
+            //提交请求
+            $.ajax({
+                type: "post",
+                url: "/query_download/",
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                xhrFields: {
+                        responseType: 'blob'  // 关键：指定响应类型为二进制文件
+                },
+                processData: false,
+                contentType: false,
+                complete: function () {
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').prop('disabled', false);
+                    optgroup_control();
+                },
+                success: function(response, status, xhr) {
+                    var contentType = xhr.getResponseHeader("Content-Type");
+                    var blob = new Blob([response], { type: contentType });
+                    var link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    // 根据文件类型设置下载文件名
+                    var fileName = download_type === 'sql' ? '导出数据.sql' : '导出数据.xlsx';
+                    link.download = fileName; // 设置下载的文件名
+                    document.body.appendChild(link);
+                    link.click();  // 自动点击下载链接
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').prop('disabled', false);
+                    },
+                  error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        alert("请选择查询语句进行导出");
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').prop('disabled', false);
+                    optgroup_control();
+                    }
+            });
+        }
         function generatesql() {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             const data = {

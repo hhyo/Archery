@@ -624,7 +624,7 @@ class QueryLog(models.Model):
     alias = models.CharField("语句标识", max_length=64, default="", blank=True)
     create_time = models.DateTimeField("操作时间", auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
-
+    query_type=models.CharField("查询类型", max_length=64, default="online_query", blank=True)
     class Meta:
         managed = True
         db_table = "query_log"
