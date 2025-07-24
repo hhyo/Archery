@@ -202,10 +202,14 @@ class DorisEngine(MysqlEngine):
         if close_conn:
             self.close()
         return execute_result
-    
+
     def get_long_transaction(self, *args, **kwargs):
         # 不支持的方法需要抛出错误
-        raise AttributeError(f"{self.__class__.__name__} has no attribute 'get_long_transaction'")
+        raise AttributeError(
+            f"{self.__class__.__name__} has no attribute 'get_long_transaction'"
+        )
 
     def trxandlocks(self, *args, **kwargs):
-        raise AttributeError(f"{self.__class__.__name__} has no attribute 'trxandlocks'")
+        raise AttributeError(
+            f"{self.__class__.__name__} has no attribute 'trxandlocks'"
+        )
