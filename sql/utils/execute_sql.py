@@ -17,21 +17,43 @@ logger = logging.getLogger("default")
 
 def execute(workflow_id, user=None):
     """为延时或异步任务准备的execute, 传入工单ID和执行人信息"""
+    audit_id = Audit.detail_by_workflow_id(
+        workflow_id=workflow_id, workflow_type=WorkflowType.SQL_REVIEW
+    ).audit_id
     # 使用当前读防止重复执行
     with transaction.atomic():
         workflow_detail = SqlWorkflow.objects.select_for_update().get(id=workflow_id)
         # 只有排队中和定时执行的数据才可以继续执行，否则直接抛错
         if workflow_detail.status not in ["workflow_queuing", "workflow_timingtask"]:
-            raise Exception("工单状态不正确，禁止执行！")
+            logger.error(f"工单号[{workflow_id}] 可能被任务调度器重试")
+            Audit.add_log(
+                audit_id=audit_id,
+                operation_type=5,
+                operation_type_desc="执行工单发生异常",
+                operation_info="请检查工单执行情况",
+                operator=user.username if user else "",
+                operator_display=user.display if user else "系统",
+            )
+            result = ReviewSet(
+                rows=[
+                    ReviewResult(
+                        id=1,
+                        errlevel=2,
+                        stagestatus="执行发生错误",
+                        errormessage=f"任务[{workflow_id}]被重试。可能是执行时发生超时，请检查数据库会话及执行状态,或联系管理员",
+                    )
+                ],
+            )
+            result.error = (
+                f"任务[{workflow_id}]被重试。可能是执行时发生超时，请检查数据库会话及执行状态,或联系管理员",
+            )
+            return result
         # 将工单状态修改为执行中
         else:
             SqlWorkflow(id=workflow_id, status="workflow_executing").save(
                 update_fields=["status"]
             )
     # 增加执行日志
-    audit_id = Audit.detail_by_workflow_id(
-        workflow_id=workflow_id, workflow_type=WorkflowType.SQL_REVIEW
-    ).audit_id
     Audit.add_log(
         audit_id=audit_id,
         operation_type=5,
