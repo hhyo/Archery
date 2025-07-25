@@ -30,7 +30,7 @@ from sql.utils.sql_review import (
 )
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
-from .models import SqlWorkflow
+from .models import SqlWorkflow, ArcheryBackupDameng
 
 logger = logging.getLogger("default")
 
@@ -183,6 +183,19 @@ def backup_sql(request):
     if not can_rollback(request.user, workflow_id):
         raise PermissionDenied
     workflow = get_object_or_404(SqlWorkflow, pk=workflow_id)
+
+    # 检查是否为DM实例
+    if workflow.instance.db_type == 'dm':
+        try:
+            # 从备份表中获取数据
+            backup_data = ArcheryBackupDameng.objects.filter(table_name=workflow.sqlworkflowcontent.sql_content.split(' ')[1]).order_by('-created_at')
+            # 格式化数据以适应前端显示
+            rows = [json.loads(item.backup_data) for item in backup_data]
+            result = {"status": 0, "msg": "ok", "rows": rows}
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            result = {"status": 1, "msg": str(e), "rows": []}
+        return JsonResponse(result)
 
     try:
         query_engine = get_engine(instance=workflow.instance)
