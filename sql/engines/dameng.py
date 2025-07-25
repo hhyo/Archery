@@ -186,14 +186,15 @@ class DamengEngine(EngineBase):
     def execute_check(self, db_name=None, sql=""):
         review_set = ReviewSet(full_sql=sql)
         statements = sqlparse.split(sqlparse.format(sql, strip_comments=True))
+
         sys_config = SysConfig()
         critical_ddl_regex = sys_config.get("critical_ddl_regex", "")
         p_critical = re.compile(critical_ddl_regex, re.IGNORECASE) if critical_ddl_regex else None
+
         line_num = 1
         for stmt in statements:
             s = stmt.strip()
-            if not s:
-                continue
+            if not s: continue
 
             review_result = ReviewResult(
                 id=line_num, errlevel=0, stagestatus="Audit completed",
@@ -204,23 +205,13 @@ class DamengEngine(EngineBase):
                 review_result.errlevel = 2
                 review_result.stagestatus = "Rejected"
                 review_result.errormessage = "SELECT statements not allowed in execution workflows."
-            elif re.search(r"limit\s+\d+", s, re.IGNORECASE):
-                review_result.errlevel = 2
-                review_result.stagestatus = "Rejected"
-                review_result.errormessage = "LIMIT keyword is not supported in Dameng. Use ROWNUM for row limiting."
-            elif re.match(r"^(UPDATE|DELETE)", s, re.IGNORECASE) and not re.search(r"WHERE", s, re.IGNORECASE):
-                review_result.errlevel = 2
-                review_result.stagestatus = "Rejected"
-                review_result.errormessage = "UPDATE/DELETE statements must have a WHERE clause."
             elif p_critical and p_critical.match(s):
                 review_result.errlevel = 2
                 review_result.stagestatus = "Rejected"
-                review_result.errormessage = "Statement matches critical DDL regex."
+                review_result.errormessage = f"Statement matches critical DDL regex."
 
-            if review_result.errlevel == 2:
-                review_set.error_count += 1
-            elif review_result.errlevel == 1:
-                review_set.warning_count += 1
+            if review_result.errlevel == 2: review_set.error_count += 1
+            elif review_result.errlevel == 1: review_set.warning_count += 1
 
             review_set.rows.append(review_result)
             line_num += 1

@@ -254,7 +254,7 @@
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             $("#div-backup").show();
-            if (optgroup != "MySQL" && optgroup != "Oracle" && optgroup != "Dameng") {
+            if (optgroup != "MySQL" && optgroup != "Oracle") {
                 $("#div-backup").hide();
                 $("#is_backup").val("False");
             }
