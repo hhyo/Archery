@@ -582,6 +582,21 @@ class QueryLog(models.Model):
     记录在线查询sql的日志
     """
 
+
+class ArcheryBackupDameng(models.Model):
+    """达梦备份表"""
+    table_name = models.CharField(max_length=255)
+    backup_data = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'archery_backup_dameng'
+        verbose_name = 'DM Backup'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return f"{self.table_name} - {self.created_at}"
+
     # TODO 改为实例外键
     instance_name = models.CharField("实例名称", max_length=50)
     db_name = models.CharField("数据库名称", max_length=64)
@@ -1316,6 +1331,4 @@ class ArcheryBackupDameng(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return "{0} - {1} - {2} - {3} - {4}".format(
-            self.user_id, self.user_name, self.extra_info, self.action, self.action_time
-        )
+        return f"{self.table_name} - {self.created_at}"

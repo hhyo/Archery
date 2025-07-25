@@ -185,10 +185,16 @@ def backup_sql(request):
     workflow = get_object_or_404(SqlWorkflow, pk=workflow_id)
 
     # 检查是否为DM实例
-    if workflow.instance.db_type == 'dm':
+    if workflow.instance.db_type == "dm":
         try:
+            # 获取表名
+            table_name_match = re.search(r'from\s+`?([\w\.\-]+)`?', workflow.sqlworkflowcontent.sql_content, re.IGNORECASE)
+            if not table_name_match:
+                return JsonResponse({"status": 1, "msg": "无法从SQL中解析出表名", "rows": []})
+            table_name = table_name_match.group(1)
+
             # 从备份表中获取数据
-            backup_data = ArcheryBackupDameng.objects.filter(table_name=workflow.sqlworkflowcontent.sql_content.split(' ')[1]).order_by('-created_at')
+            backup_data = ArcheryBackupDameng.objects.filter(table_name=table_name).order_by('-created_at')
             # 格式化数据以适应前端显示
             rows = [json.loads(item.backup_data) for item in backup_data]
             result = {"status": 0, "msg": "ok", "rows": rows}
@@ -204,7 +210,7 @@ def backup_sql(request):
         logger.error(traceback.format_exc())
         return JsonResponse({"status": 1, "msg": f"{msg}", "rows": []})
 
-    result = {"status": 0, "msg": "", "rows": list_backup_sql}
+    result = {"status": 0, "msg": "ok", "rows": list_backup_sql}
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 
