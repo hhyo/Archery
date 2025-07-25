@@ -2,7 +2,6 @@
 import logging
 import traceback
 import re
-import json
 import sqlparse
 # Import the Dameng Python driver
 # Assuming the driver is named 'dmPython' and can be imported as such
@@ -52,7 +51,7 @@ class DamengEngine(EngineBase):
 
     @property
     def auto_backup(self):
-        return True
+        return False
 
     def get_all_databases(self):
         sql = "SELECT USERNAME FROM ALL_USERS WHERE USERNAME NOT IN ('SYS','SYSTEM','SYSDBA','SYSAUDITOR', 'CTLSYS', 'SQLGUARD', 'STREAMAGO', 'REPLSYS', 'SECURITY', 'DSVIEW', 'DBAUDIT', 'ETLTOOL', 'DMHR') ORDER BY USERNAME"
@@ -265,10 +264,6 @@ class DamengEngine(EngineBase):
 
                 review_result = ReviewResult(id=line_num, sql=s)
                 try:
-                    # 备份数据
-                    if workflow.is_backup:
-                        self.backup(db_name, s, cursor)
-
                     cursor.execute(s)
 
                     review_result.errlevel = 0
@@ -331,62 +326,6 @@ class DamengEngine(EngineBase):
                 self.close() # self.close() sets self.conn to None
 
         return execute_result_set
-
-    def backup(self, db_name, sql, cursor):
-        # 检查是否为UPDATE或DELETE语句
-        sql_lower = sql.lower().strip()
-        if not sql_lower.startswith(('update', 'delete')):
-            return
-
-        # 创建备份表（如果不存在）
-        backup_table_name = "archery_backup_dameng"
-        create_table_sql = f"""
-        DECLARE
-            V_CNT INT;
-        BEGIN
-            SELECT COUNT(1) INTO V_CNT FROM ALL_TABLES WHERE OWNER = '{db_name.upper()}' AND TABLE_NAME = '{backup_table_name.upper()}';
-            IF V_CNT = 0 THEN
-                EXECUTE IMMEDIATE 'CREATE TABLE "{db_name.upper()}"."{backup_table_name.upper()}" (
-                    "table_name" VARCHAR2(255),
-                    "backup_data" CLOB,
-                    "created_at" TIMESTAMP DEFAULT SYSTIMESTAMP
-                )';
-            END IF;
-        END;
-        """
-        try:
-            cursor.execute(create_table_sql)
-        except Exception as e:
-            logger.error(f"Failed to create backup table {backup_table_name}. Error: {e}")
-            raise
-
-        # 解析SQL语句
-        table_name_match = re.search(r'(?:from|update)\s+`?([\w\.\-]+)`?', sql, re.IGNORECASE)
-        if not table_name_match:
-            return
-        table_name = table_name_match.group(1)
-
-        where_clause_match = re.search(r'\s+where\s+(.*)', sql, re.IGNORECASE)
-        where_clause = where_clause_match.group(1) if where_clause_match else "1=1"
-
-        # 查询备份数据
-        backup_query = f"SELECT * FROM {table_name} WHERE {where_clause}"
-        try:
-            cursor.execute(backup_query)
-            rows = cursor.fetchall()
-            if not rows:
-                return
-
-            columns = [desc[0] for desc in cursor.description]
-            backup_data_list = [dict(zip(columns, row)) for row in rows]
-            backup_data_json = json.dumps(backup_data_list, ensure_ascii=False)
-
-            # 插入备份数据
-            insert_sql = f"INSERT INTO {backup_table_name} (table_name, backup_data) VALUES (:1, :2)"
-            cursor.execute(insert_sql, (table_name, backup_data_json))
-        except Exception as e:
-            logger.error(f"Failed to backup data for table {table_name}. Error: {e}")
-            raise
 
     def close(self):
         if self.conn:

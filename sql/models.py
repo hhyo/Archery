@@ -1304,17 +1304,6 @@ class AuditEntry(models.Model):
             self.user_id, self.user_name, self.extra_info, self.action, self.action_time
         )
 
-
-class ArcheryBackupDameng(models.Model):
-    table_name = models.CharField(max_length=255)
-    backup_data = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'archery_backup_dameng'
-        verbose_name = 'DM Backup'
-        verbose_name_plural = verbose_name
-
     def __str__(self):
         return "{0} - {1} - {2} - {3} - {4}".format(
             self.user_id, self.user_name, self.extra_info, self.action, self.action_time
