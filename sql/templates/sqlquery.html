@@ -58,7 +58,7 @@
                         {% endfor %}
                     </select>
                     <div class="form-group ">
-                        {% if config.sqlfile_storage == "sftp" or config.sqlfile_storage == "oss" or config.sqlfile_storage == "local"%}
+                        {% if config.storage_type %}
                             {% if can_offline_download == 1 %}
                                 <button id="btn-exportsubmit" type="button" class="btn btn-default">
                                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>

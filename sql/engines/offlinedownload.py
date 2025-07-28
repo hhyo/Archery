@@ -1,11 +1,8 @@
 # -*- coding: UTF-8 -*-
 import logging
-import re
-import traceback
 import os
 import tempfile
 import csv
-from io import BytesIO
 import hashlib
 import shutil
 import datetime
@@ -19,26 +16,30 @@ import time
 import MySQLdb
 import cx_Oracle
 import simplejson as json
-from paramiko import Transport, SFTPClient
-import oss2
 import pandas as pd
-from django.http import HttpResponse
-from urllib.parse import quote
+from django.http import JsonResponse, FileResponse
+
 
 from sql.models import SqlWorkflow, AuditEntry, Config
 from . import EngineBase
 from .models import ReviewSet, ReviewResult
+from .storage import DynamicStorage
 
 
 logger = logging.getLogger("default")
 
 
 class TimeoutException(Exception):
+    """
+    超时异常类，用于在执行超时情况下抛出异常。
+    """
     pass
 
 
 class OffLineDownLoad(EngineBase):
-
+    """
+    离线下载类，用于执行离线下载操作。
+    """
     def create_connection(self, instance, workflow):
         if instance.db_type == 'mysql':
             host, port, user, password = self.remote_instance_conn(instance)
@@ -76,7 +77,6 @@ class OffLineDownLoad(EngineBase):
             # 先进行 max_export_exec_time 变量的判断是否存在以及是否为空,默认值60
             timeout_str = config.get("max_export_exec_time", "60")
             timeout = int(timeout_str) if timeout_str else 60
-            storage_type = config["sqlfile_storage"]
             # 获取前端提交的 SQL 和其他工单信息
             full_sql = workflow.sqlworkflowcontent.sql_content
             full_sql = sqlparse.format(full_sql, strip_comments=True)
@@ -85,7 +85,7 @@ class OffLineDownLoad(EngineBase):
             instance = workflow.instance
             execute_result = ReviewSet(full_sql=sql)
             conn = self.create_connection(instance, workflow)
-
+            storage = DynamicStorage()
             start_time = time.time()
 
             try:
@@ -104,8 +104,10 @@ class OffLineDownLoad(EngineBase):
                     get_format_type, result, workflow, columns, temp_dir
                 )
 
-                # 将导出的文件上传至 OSS 或 FTP 或 本地保存
-                upload_file_to_storage(file_name, storage_type, temp_dir)
+                # 将导出的文件保存到存储
+                tmp_file = os.path.join(temp_dir, file_name)
+                with open(tmp_file, "rb") as f:
+                    storage.save(file_name, f)
 
                 end_time = time.time()  # 记录结束时间
                 elapsed_time = round(end_time - start_time, 3)
@@ -232,6 +234,10 @@ class OffLineDownLoad(EngineBase):
 
 
 def get_sys_config():
+    """
+    获取系统配置信息。
+    :return: 系统配置字典
+    """
     all_config = Config.objects.all().values("item", "value")
     sys_config = {}
     for items in all_config:
@@ -242,6 +248,15 @@ def get_sys_config():
 def save_to_format_file(
     format_type=None, result=None, workflow=None, columns=None, temp_dir=None
 ):
+    """
+    保存查询结果为指定格式的文件。
+    :param format_type: 文件格式类型（csv、json、xml、xlsx、sql）
+    :param result: 查询结果
+    :param workflow: 工单实例
+    :param columns: 列名
+    :param temp_dir: 临时目录路径
+    :return: 压缩后的文件名
+    """
     # 生成唯一的文件名（包含工单ID、日期和随机哈希值）
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     hash_value = hashlib.sha256(os.urandom(32)).hexdigest()[:8]  # 使用前8位作为哈希值
@@ -268,40 +283,32 @@ def save_to_format_file(
         zipf.write(file_path, os.path.basename(file_path))
     return zip_file_name
 
-
-def upload_file_to_storage(file_name=None, storage_type=None, temp_dir=None):
-    action_exec = StorageControl(
-        file_name=file_name, storage_type=storage_type, temp_dir=temp_dir
-    )
-    try:
-        if storage_type == "oss":
-            # 使用阿里云 OSS 进行上传
-            action_exec.upload_to_oss()
-        elif storage_type == "sftp":
-            # 使用 SFTP 进行上传
-            action_exec.upload_to_sftp()
-        elif storage_type == "local":
-            # 本地存储
-            action_exec.upload_to_local()
-        else:
-            # 未知存储类型，可以抛出异常或处理其他逻辑
-            raise ValueError(f"Unknown storage type: {storage_type}")
-    except Exception as e:
-        raise e
-
-
 def clean_local_files(temp_dir):
-    # 删除临时目录及其内容
+    """
+    清理本地临时文件，删除临时目录及其内容。
+    :param temp_dir: 临时目录路径
+    """
     shutil.rmtree(temp_dir)
 
 
 def datetime_serializer(obj):
+    """
+    自定义 JSON 序列化函数，用于处理 datetime 对象。
+    :param obj: 待序列化的对象
+    :return: 序列化后的字符串
+    """
     if isinstance(obj, (datetime.date, datetime.datetime)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
 
 
 def save_csv(file_path, result, columns):
+    """
+    保存CSV文件，将查询结果写入CSV文件。
+    :param file_path: CSV文件路径
+    :param result: 查询结果
+    :param columns: 列名
+    """
     with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
         csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
 
@@ -314,6 +321,12 @@ def save_csv(file_path, result, columns):
 
 
 def save_json(file_path, result, columns):
+    """
+    保存JSON文件，将查询结果写入JSON文件。
+    :param file_path: JSON文件路径
+    :param result: 查询结果
+    :param columns: 列名
+    """
     with open(file_path, "w", encoding="utf-8") as json_file:
         json.dump(
             [dict(zip(columns, row)) for row in result],
@@ -325,6 +338,12 @@ def save_json(file_path, result, columns):
 
 
 def save_xml(file_path, result, columns):
+    """
+    保存XML文件，将查询结果写入XML文件。
+    :param file_path: XML文件路径
+    :param result: 查询结果
+    :param columns: 列名
+    """
     root = ET.Element("tabledata")
 
     # Create fields element
@@ -351,6 +370,12 @@ def save_xml(file_path, result, columns):
 
 
 def save_xlsx(file_path, result, columns):
+    """
+    保存Excel文件，将查询结果写入Excel文件。
+    :param file_path: Excel文件路径
+    :param result: 查询结果
+    :param columns: 列名
+    """
     try:
         df = pd.DataFrame(
             [
@@ -368,6 +393,12 @@ def save_xlsx(file_path, result, columns):
 
 
 def save_sql(file_path, result, columns):
+    """
+    保存SQL文件，将查询结果写入SQL文件。
+    :param file_path: SQL文件路径
+    :param result: 查询结果
+    :param columns: 列名
+    """
     with open(file_path, "w") as sql_file:
         for row in result:
             table_name = "your_table_name"
@@ -391,213 +422,85 @@ def save_sql(file_path, result, columns):
             sql_file.write(f"({values});\n")
 
 
+class StorageFileResponse(FileResponse):
+    """
+    自定义文件响应类，用于处理文件下载，主要用于处理sftp下载后无法关闭后台连接的问题。
+    """
+    def __init__(self, *args, storage=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.storage = storage
+
+    def close(self):
+        super().close()
+        if hasattr(self, 'storage') and self.storage:
+            self.storage.close()
+
 def offline_file_download(request):
+    """
+    下载文件，本地文件和sftp文件使用文件流，云对象存储服务的文件重定向到url。
+    :param request:
+    :return:
+    """
     file_name = request.GET.get("file_name", " ")
     workflow_id = request.GET.get("workflow_id", " ")
     action = "离线下载"
-    extra_info = f"工单id：{workflow_id},文件：{file_name}"
+    extra_info = f"工单id：{workflow_id}，文件：{file_name}"
     config = get_sys_config()
-    storage_type = config["sqlfile_storage"]
+    storage_type = config["storage_type"]
+    storage = DynamicStorage()
 
     try:
-        action_exec = StorageControl(storage_type=storage_type, file_name=file_name)
-        if storage_type == "sftp":
-            response = action_exec.download_from_sftp()
-            return response
-        elif storage_type == "oss":
-            response = action_exec.download_from_oss()
-            return response
-        elif storage_type == "local":
-            response = action_exec.download_from_local()
-            return response
+        if not storage.exists(file_name):
+            extra_info = extra_info + f"，error:文件不存在。"
+            return JsonResponse({
+                "error": "文件不存在"
+            }, status=404)
+        elif storage.exists(file_name):
+            if storage_type in ["sftp", "local"]:
+                # SFTP/LOCAL处理 - 直接提供文件流
+                try:
+                    file = storage.open(file_name, 'rb')
+                    file_size = storage.size(file_name)
+                    response = StorageFileResponse(file, storage=storage)
+                    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+                    response['Content-Length'] = str(file_size)
+                    response["Content-Encoding"] = "identity"
+                    return response
+                except Exception as e:
+                    extra_info = extra_info + f"，error:{str(e)}"
+                    return JsonResponse({
+                        "error": f"文件下载失败: {str(e)}"
+                    }, status=500)
+
+            elif storage_type in ["oss"]:
+                try:
+                    # 云对象存储生成带有效期的临时下载URL
+                    presigned_url = storage.url(file_name)
+                    return JsonResponse({
+                        "type": "redirect",
+                        "url": presigned_url
+                    })
+                except Exception as e:
+                    extra_info = extra_info + f"，error:{str(e)}"
+                    return JsonResponse({
+                        "error": f"文件下载失败: {str(e)}"
+                    }, status=500)
 
     except Exception as e:
-        action = "离线下载失败"
-        return HttpResponse(f"下载失败：{e}", status=500)
+        extra_info = extra_info + f"，error:{str(e)}"
+        return JsonResponse({
+                "error": "内部错误，请联系管理员。"
+            }, status=500)
+
     finally:
-        AuditEntry.objects.create(
-            user_id=request.user.id,
-            user_name=request.user.username,
-            user_display=request.user.display,
-            action=action,
-            extra_info=extra_info,
-        )
-
-
-class StorageControl:
-    def __init__(
-        self, storage_type=None, do_action=None, file_name=None, temp_dir=None
-    ):
-        """根据存储服务进行文件的上传下载"""
-        # 存储类型
-        self.storage_type = storage_type
-        # 暂时无用，可考虑删除
-        self.do_action = do_action
-        # 导出文件的压缩包名称
-        self.file_name = file_name
-        # 导出文件的本地临时目录，上传完成后会自动清理
-        self.temp_dir = temp_dir
-
-        # 获取系统配置
-        self.config = get_sys_config()
-        # 先进行系统管理内配置的 files_expire_with_days 参数的判断是否存在以及是否为空,默认值 0-不过期
-        self.expire_time_str = self.config.get("files_expire_with_days", "0")
-        self.expire_time_with_days = (
-            int(self.expire_time_str) if self.expire_time_str else 0
-        )
-        # 获取当前时间
-        self.current_time = datetime.datetime.now()
-        # 获取过期的时间
-        self.expire_time = self.current_time - datetime.timedelta(
-            days=self.expire_time_with_days
-        )
-
-        # SFTP 存储相关配置信息
-        self.sftp_host = self.config["sftp_host"]
-        self.sftp_user = self.config["sftp_user"]
-        self.sftp_password = self.config["sftp_password"]
-        self.sftp_port_str = self.config.get("sftp_port", "22")
-        self.sftp_port = int(self.sftp_port_str) if self.sftp_port_str else 22
-        self.sftp_path = self.config["sftp_path"]
-
-        # OSS 存储相关配置信息
-        self.access_key_id = self.config["oss_access_key_id"]
-        self.access_key_secret = self.config["oss_access_key_secret"]
-        self.endpoint = self.config["oss_endpoint"]
-        self.bucket_name = self.config["oss_bucket_name"]
-        self.oss_path = self.config["oss_path"]
-
-        # 本地存储相关配置信息
-        # self.local_path = r'{}'.format(self.config['local_path'])
-        self.local_path = r"{}".format(self.config.get("local_path", "/tmp"))
-
-    def upload_to_sftp(self):
-        # SFTP 配置
-        try:
-            with Transport((self.sftp_host, self.sftp_port)) as transport:
-                transport.connect(username=self.sftp_user, password=self.sftp_password)
-                with SFTPClient.from_transport(transport) as sftp:
-                    remote_file = os.path.join(
-                        self.sftp_path, os.path.basename(self.file_name)
-                    )
-                    # 判断时间是否配置，为 0 则默认不删除，大于 0 则调用删除方法进行删除过期文件
-                    if self.expire_time_with_days > 0:
-                        self.del_file_before_upload_to_sftp(sftp)
-                    # 上传离线导出的文件压缩包到SFTP
-                    sftp.put(os.path.join(self.temp_dir, self.file_name), remote_file)
-
-        except Exception as e:
-            upload_to_sftp_exception = Exception(f"上传失败: {e}")
-            raise upload_to_sftp_exception
-
-    def download_from_sftp(self):
-        file_path = os.path.join(self.sftp_path, self.file_name)
-
-        with Transport((self.sftp_host, self.sftp_port)) as transport:
-            transport.connect(username=self.sftp_user, password=self.sftp_password)
-            with SFTPClient.from_transport(transport) as sftp:
-                # 获取压缩包内容
-                file_content = BytesIO()
-                sftp.getfo(file_path, file_content)
-
-        # 构造 HttpResponse 返回 ZIP 文件内容
-        response = HttpResponse(file_content.getvalue(), content_type="application/zip")
-        response["Content-Disposition"] = (
-            f"attachment; filename={quote(self.file_name)}"
-        )
-        return response
-
-    def del_file_before_upload_to_sftp(self, sftp):
-        for file_info in sftp.listdir_attr(self.sftp_path):
-            file_path = os.path.join(self.sftp_path, file_info.filename)
-
-            # 获取文件的修改时间
-            modified_time = datetime.datetime.fromtimestamp(file_info.st_mtime)
-
-            # 如果文件过期，则删除
-            if modified_time < self.expire_time:
-                sftp.remove(file_path)
-
-    def upload_to_oss(self):
-        # 创建 OSS 认证
-        auth = oss2.Auth(self.access_key_id, self.access_key_secret)
-
-        # 创建 OSS Bucket 对象
-        bucket = oss2.Bucket(auth, self.endpoint, self.bucket_name)
-
-        # 上传文件到 OSS
-        remote_key = os.path.join(self.oss_path, os.path.basename(self.file_name))
-        # 判断时间是否配置，为 0 则默认不删除，大于 0 则调用删除方法进行删除过期文件
-        if self.expire_time_with_days > 0:
-            self.del_file_before_upload_to_oss(bucket)
-        # 读取并上传离线导出的文件压缩包到OSS
-        with open(os.path.join(self.temp_dir, self.file_name), "rb") as file:
-            bucket.put_object(remote_key, file)
-
-    def download_from_oss(self):
-        # 创建 OSS 认证
-        auth = oss2.Auth(self.access_key_id, self.access_key_secret)
-
-        # 创建 OSS Bucket 对象
-        bucket = oss2.Bucket(auth, self.endpoint, self.bucket_name)
-
-        # 从OSS下载文件
-        remote_path = self.oss_path
-        remote_key = os.path.join(remote_path, self.file_name)
-        object_stream = bucket.get_object(remote_key)
-        response = HttpResponse(object_stream.read(), content_type="application/zip")
-        response["Content-Disposition"] = (
-            f"attachment; filename={quote(self.file_name)}"
-        )
-        return response
-
-    def del_file_before_upload_to_oss(self, bucket):
-        for object_info in oss2.ObjectIterator(bucket, prefix=self.oss_path):
-            # 获取 bucket 存储路径下的文件名
-            file_path = object_info.key
-
-            # 获取文件的修改时间
-            modified_time = datetime.datetime.fromtimestamp(object_info.last_modified)
-
-            # 如果文件过期，则删除
-            if modified_time < self.expire_time:
-                bucket.delete_object(file_path)
-
-    def upload_to_local(self):
-        try:
-            source_path = os.path.join(self.temp_dir, self.file_name)
-            # 判断配置内的本地存储路径是否存在，若不存在则抛出报错
-            if not os.path.exists(self.local_path):
-                raise FileNotFoundError(
-                    f"Destination directory '{self.local_path}' not found."
-                )
-            # 判断时间是否配置，为 0 则默认不删除，大于 0 则调用删除方法进行删除过期文件
-            if self.expire_time_with_days > 0:
-                self.del_file_before_upload_to_local()
-            # 拷贝离线导出的文件压缩包到指定路径
-            shutil.copy(source_path, self.local_path)
-        except Exception as e:
-            raise e
-
-    def download_from_local(self):
-        file_path = os.path.join(self.local_path, self.file_name)
-
-        with open(file_path, "rb") as file:
-            response = HttpResponse(file.read(), content_type="application/zip")
-            response["Content-Disposition"] = (
-                f"attachment; filename={quote(self.file_name)}"
+        if request.method != "HEAD":
+            AuditEntry.objects.create(
+                user_id=request.user.id,
+                user_name=request.user.username,
+                user_display=request.user.display,
+                action=action,
+                extra_info=extra_info,
             )
-            return response
-
-    def del_file_before_upload_to_local(self):
-        for local_file_info in os.listdir(self.local_path):
-            file_path = os.path.join(self.local_path, local_file_info)
-            if (
-                os.path.isfile(file_path)
-                and os.path.splitext(file_path)[1] == '.zip'
-                and os.path.getmtime(file_path) < self.expire_time.timestamp()
-            ):
-                os.remove(file_path)
 
 def execute_check_sql(conn, sql, config, workflow):
     """

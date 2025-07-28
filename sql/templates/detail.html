@@ -984,43 +984,58 @@
     </script>
     <!--下载导出文件-->
     <script>
-        $(document).ready(function () {
-            // $('#btnDownload').prop('disabled', false);
-            $('#btnDownload').click(function () {
-                // 禁用按钮
-                $('#btnDownload').prop('disabled', true);
-                let workflow_id = "{{ workflow_detail.id }}"
-                let file_name = "{{ workflow_detail.file_name }}";
-                let filePath = `/downloadfile/?file_name=${file_name}&workflow_id=${workflow_id}`;
-
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', filePath, true);
-                xhr.responseType = 'arraybuffer';
-
-                xhr.onload = function () {
-                    if (xhr.status === 200) {
-                        var blob = new Blob([xhr.response], { type: 'application/zip' });
-                        // 创建下载链接
-                        var downloadLink = document.createElement('a');
-                        downloadLink.href = window.URL.createObjectURL(blob);
-                        downloadLink.download = file_name;  // 替换为实际下载文件的名称
-                        // 触发点击下载链接
-                        downloadLink.click();
-                    } else {
-                        alert('下载失败，文件可能已过期失效')
-                        console.error('下载失败', xhr.statusText);
+        $('#btnDownload').click(async function() {
+            const $btn = $(this);
+            $btn.prop('disabled', true);
+            const originalText = $btn.html();
+            $btn.html('<i class="fa fa-spinner fa-spin"></i> 准备下载...');
+                
+            try {
+                const workflow_id = "{{ workflow_detail.id }}";
+                const file_name = "{{ workflow_detail.file_name }}";
+                const filePath = `/downloadfile/?file_name=${encodeURIComponent(file_name)}&workflow_id=${workflow_id}`;
+            
+                // 轻量级类型检查
+                const typeCheck = await fetch(filePath, {
+                    method: 'HEAD',
+                    cache: 'no-store'
+                });
+            
+                if (typeCheck.headers.get('content-type')?.includes('application/json')) {
+                    // 处理OSS重定向
+                    const res = await fetch(filePath);
+                    const data = await res.json();
+                    // 优先处理错误响应
+                    if (data.error) {
+                        throw new Error(data.error);  // 抛出后端返回的错误信息
                     }
-                    // 重新启用按钮
-                    $('#btnDownload').prop('disabled', false);
-                };
-
-                xhr.onerror = function () {
-                    console.error('网络错误');
-                    // 重新启用按钮
-                    $('#btnDownload').prop('disabled', false);
-                };
-                xhr.send();
-            });
+                    // 处理重定向
+                    if (data.type === 'redirect') {
+                        window.location.href = data.url;
+                        return;
+                    }
+                    throw new Error('未知的响应格式');
+                }
+            
+                // 处理文件下载
+                const a = document.createElement('a');
+                a.href = filePath;
+                a.download = file_name;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+            
+            } catch (error) {
+                console.error('下载失败:', error);
+                alert(`下载错误: ${error.message || '服务器连接失败'}`);
+            } finally {
+                // 恢复按钮
+                if (!$btn.prop('disabled')) return;
+                setTimeout(() => {
+                    $btn.prop('disabled', false);
+                    $btn.html(originalText);
+                }, 3000);
+            }
         });
     </script>
 

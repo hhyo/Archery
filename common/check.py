@@ -143,15 +143,12 @@ def file_storage_connect(request):
     # 检查是否存在该变量
     max_export_rows = request.POST.get("max_export_rows", "10000")
     max_export_exec_time = request.POST.get("max_export_exec_time", "60")
-    files_expire_with_days = request.POST.get("files_expire_with_days", "0")
     # 若变量已经定义，检查是否为空
     max_export_rows = max_export_rows if max_export_rows else "10000"
     max_export_exec_time = max_export_exec_time if max_export_exec_time else "60"
-    files_expire_with_days = files_expire_with_days if files_expire_with_days else "0"
     check_list = {
         "max_export_rows": max_export_rows,
         "max_export_exec_time": max_export_exec_time,
-        "files_expire_with_days": files_expire_with_days,
     }
     try:
         # 遍历字典，判断是否只有数字
