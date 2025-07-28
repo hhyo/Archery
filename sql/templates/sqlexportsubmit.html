@@ -139,20 +139,6 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-12 column">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    检测结果
-                </div>
-
-                <div class="panel-body">
-                    <div class="table-responsive">
-                        <table id="inception-result" data-toggle="table" class="table table-striped table-hover"
-                               style="table-layout:inherit;overflow:hidden;white-space:nowrap;word-break:break-word;text-overflow:ellipsis;display: none"></table>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 {% endblock content %}
 {% block js %}
@@ -481,7 +467,10 @@
                 sqlContent = select_sqlContent
             }
             var isOfflineExport = $("#btn-submitsql").is(':hidden') ? "no" : "yes";
-            var totalSqlCnt = sqlContent.split(';')
+            // 移除单行注释和多行注释后再统计语句数量
+            let processedSql = sqlContent.replace(/--.*$/gm, ''); // 移除单行注释
+            processedSql = processedSql.replace(/\/\*[\s\S]*?\*\//gm, ''); // 移除多行注释
+            var totalSqlCnt = processedSql.split(';')
                 .map(stmt => stmt.trim()) // 去除每个语句两端的空白
                 .filter(stmt => stmt.length > 0) // 过滤掉空语句
                 .length; // 统计语句数量
