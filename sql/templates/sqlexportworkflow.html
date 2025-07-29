@@ -241,17 +241,6 @@
                         return sqlworkflowStatus_formatter(value)
                     }
                 }, {
-                    title: '备份',
-                    field: 'is_backup',
-                    visible: true, // 默认显示
-                    formatter: function (value, row, index) {
-                        if (String(value) === 'true') {
-                            return '是'
-                        } else {
-                            return '否'
-                        }
-                    }
-                }, {
                     title: '发起时间',
                     field: 'create_time'
                 }, {

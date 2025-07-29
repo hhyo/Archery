@@ -414,16 +414,6 @@
                                                placeholder="导出数据量阈值限制，单位: 行，默认值: 10000">
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="max_export_exec_time"
-                                           class="col-sm-4 control-label">MAX_EXPORT_EXEC_TIME</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control" id="max_export_exec_time"
-                                               key="max_export_exec_time"
-                                               value="{{ config.max_export_exec_time }}"
-                                               placeholder="数据导出工单超时时间，单位: 秒，默认值: 60">
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- 存储类型选择 -->
@@ -1880,7 +1870,6 @@
             if (SqlfileStorageType === 'sftp') {
                 var formData = {
                     max_export_rows: $("#max_export_rows").val(),
-                    max_export_exec_time: $("#max_export_exec_time").val(),
                     storage_type: $("#storage_type").val(),
                     sftp_host: $("#sftp_host").val(),
                     sftp_user: $("#sftp_user").val(),
@@ -1891,7 +1880,6 @@
             } else if (SqlfileStorageType === 'oss') {
                 var formData = {
                     max_export_rows: $("#max_export_rows").val(),
-                    max_export_exec_time: $("#max_export_exec_time").val(),
                     storage_type: $("#storage_type").val(),
                     access_key_id: $("#oss_access_key_id").val(),
                     access_key_secret: $("#oss_access_key_secret").val(),
@@ -1902,7 +1890,6 @@
             } else if (SqlfileStorageType === 'local') {
                 var formData = {
                     max_export_rows: $("#max_export_rows").val(),
-                    max_export_exec_time: $("#max_export_exec_time").val(),
                     storage_type: $("#storage_type").val(),
                     local_path: $("#local_path").val(),
                 }

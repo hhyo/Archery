@@ -9,12 +9,8 @@ import datetime
 import xml.etree.ElementTree as ET
 import zipfile
 import sqlparse
-from threading import Thread
-import queue
 import time
 
-import MySQLdb
-import cx_Oracle
 import simplejson as json
 import pandas as pd
 from django.http import JsonResponse, FileResponse
@@ -24,45 +20,14 @@ from sql.models import SqlWorkflow, AuditEntry, Config
 from . import EngineBase
 from .models import ReviewSet, ReviewResult
 from .storage import DynamicStorage
-
+from sql.engines import get_engine
 
 logger = logging.getLogger("default")
-
-
-class TimeoutException(Exception):
-    """
-    超时异常类，用于在执行超时情况下抛出异常。
-    """
-    pass
-
 
 class OffLineDownLoad(EngineBase):
     """
     离线下载类，用于执行离线下载操作。
     """
-    def create_connection(self, instance, workflow):
-        if instance.db_type == 'mysql':
-            host, port, user, password = self.remote_instance_conn(instance)
-            return MySQLdb.connect(
-                host=host,
-                port=port,
-                user=user,
-                passwd=password,
-                db=workflow.db_name,
-                charset='utf8mb4'
-            )
-        elif instance.db_type == 'oracle':
-            host, port, user, password = instance.host, instance.port, instance.user, instance.password
-            service_name = instance.service_name
-            dsn = cx_Oracle.makedsn(host, port, service_name=service_name)
-            return cx_Oracle.connect(
-                user=user,
-                password=password,
-                dsn=dsn,
-                encoding="UTF-8",
-                nencoding="UTF-8"
-            )
-
     def execute_offline_download(self, workflow):
         """
         执行离线下载操作
@@ -74,9 +39,9 @@ class OffLineDownLoad(EngineBase):
             temp_dir = tempfile.mkdtemp()
             # 获取系统配置
             config = get_sys_config()
-            # 先进行 max_export_exec_time 变量的判断是否存在以及是否为空,默认值60
-            timeout_str = config.get("max_export_exec_time", "60")
-            timeout = int(timeout_str) if timeout_str else 60
+            # 先进行 max_execution_time 变量的判断是否存在以及是否为空,默认值60
+            max_execution_time_str = config.get("max_export_rows", "60")
+            max_execution_time = int(max_execution_time_str) if max_execution_time_str else 60
             # 获取前端提交的 SQL 和其他工单信息
             full_sql = workflow.sqlworkflowcontent.sql_content
             full_sql = sqlparse.format(full_sql, strip_comments=True)
@@ -84,19 +49,20 @@ class OffLineDownLoad(EngineBase):
             sql = full_sql.strip()
             instance = workflow.instance
             execute_result = ReviewSet(full_sql=sql)
-            conn = self.create_connection(instance, workflow)
+            check_engine = get_engine(instance=instance)
+            
             storage = DynamicStorage()
             start_time = time.time()
 
             try:
                 # 执行 SQL 查询
-                results = self.execute_with_timeout(
-                    conn, workflow.sqlworkflowcontent.sql_content, timeout
-                )
+                results = check_engine.query(db_name=workflow.db_name,sql=sql,max_execution_time=max_execution_time * 1000)
+                if results.error:
+                    raise Exception(results.error)
                 if results:
-                    columns = results["columns"]
-                    result = results["data"]
-                    actual_rows = results["rowcount"]
+                    columns = results.column_list
+                    result = results.rows
+                    actual_rows = results.affected_rows
 
                 # 保存查询结果为 CSV or JSON or XML or XLSX or SQL 文件
                 get_format_type = workflow.export_format
@@ -145,8 +111,6 @@ class OffLineDownLoad(EngineBase):
             finally:
                 # 清理本地文件和临时目录
                 clean_local_files(temp_dir)
-                # 关闭游标和数据库连接
-                conn.close()
 
     def pre_count_check(self,workflow):
         """
@@ -161,28 +125,51 @@ class OffLineDownLoad(EngineBase):
         full_sql = sqlparse.format(full_sql, strip_comments=True)
         full_sql = sqlparse.split(full_sql)[0]
         sql = full_sql.strip()
+        count_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
+        clean_sql = sql.strip().lower()
         instance = workflow
         check_result = ReviewSet(full_sql=sql)
         check_result.syntax_type = 3
-        conn = self.create_connection(instance, workflow)
+        check_engine = get_engine(instance=instance)
+        result_set = check_engine.query(db_name=workflow.db_name,sql=count_sql)
+        actual_rows_check = result_set.rows[0][0]
+        max_export_rows_str = config.get("max_export_rows", "10000")
+        max_export_rows = int(max_export_rows_str) if max_export_rows_str else 10000
 
-        actual_rows_check = execute_check_sql(conn, sql, config, workflow)
-        if actual_rows_check["msg"]:
+        allowed_prefixes = ("select", "with")  # 允许 SELECT 和 WITH 开头
+        if not clean_sql.startswith(allowed_prefixes):
             result = ReviewResult(
-                        stage="自动审核失败",
-                        errlevel=2,
-                        stagestatus="检查未通过！",
-                        errormessage=actual_rows_check["msg"],
-                        affected_rows=actual_rows_check["rows"],
-                        sql=full_sql,
-                )
+                stage="自动审核失败",
+                errlevel=2,
+                stagestatus="检查未通过！",
+                errormessage=f"违规语句！",
+                affected_rows=actual_rows_check,
+                sql=full_sql,
+            )
+        elif result_set.error:
+            result = ReviewResult(
+                stage="自动审核失败",
+                errlevel=2,
+                stagestatus="检查未通过！",
+                errormessage=result_set.error,
+                affected_rows=actual_rows_check,
+                sql=full_sql,
+            )
+        elif actual_rows_check > max_export_rows:
+            result = ReviewResult(
+                errlevel=2,
+                stagestatus="检查未通过！",
+                errormessage=f"导出数据行数({actual_rows_check})超过阈值({max_export_rows})。",
+                affected_rows=actual_rows_check,
+                sql=full_sql,
+            )
         else:
             result = ReviewResult(
                 errlevel=0,
                 stagestatus="行数统计完成",
                 errormessage="None",
                 sql=full_sql,
-                affected_rows=actual_rows_check["rows"],
+                affected_rows=actual_rows_check,
                 execute_time=0,
             )
         check_result.rows = [result]
@@ -192,45 +179,7 @@ class OffLineDownLoad(EngineBase):
                 check_result.warning_count += 1
             if r.errlevel == 2:
                 check_result.error_count += 1
-        conn.close()
         return check_result
-
-    @staticmethod
-    def execute_query(conn, sql):
-        try:
-            cursor = conn.cursor()
-            cursor.execute(sql.rstrip(';'))
-            columns = [column[0] for column in cursor.description]
-            result = {"columns": columns, "data": cursor.fetchall(), "rowcount": cursor.rowcount}
-            cursor.close()
-            return result
-        except Exception as e:
-            raise Exception(f"Query execution failed: {e}")
-
-    def worker(self, conn, sql, result_queue):
-        try:
-            result = self.execute_query(conn, sql)
-            result_queue.put(result)
-        except Exception as e:
-            result_queue.put(e)
-
-    def execute_with_timeout(self, conn, sql, timeout):
-        result_queue = queue.Queue()
-        thread = Thread(target=self.worker, args=(conn, sql, result_queue))
-        thread.start()
-        thread.join(timeout)
-
-        if thread.is_alive():
-            thread.join()
-            raise TimeoutException(
-                f"Query execution timed out after {timeout} seconds."
-            )
-        else:
-            result = result_queue.get()
-            if isinstance(result, Exception):
-                raise result
-            else:
-                return result
 
 
 def get_sys_config():
@@ -424,7 +373,7 @@ def save_sql(file_path, result, columns):
 
 class StorageFileResponse(FileResponse):
     """
-    自定义文件响应类，用于处理文件下载，主要用于处理sftp下载后无法关闭后台连接的问题。
+    自定义文件响应类，用于处理文件下载，主要用于处理storages.backends.sftpstorage下载后无法关闭后台连接的问题。
     """
     def __init__(self, *args, storage=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -501,46 +450,3 @@ def offline_file_download(request):
                 action=action,
                 extra_info=extra_info,
             )
-
-def execute_check_sql(conn, sql, config, workflow):
-    """
-    检查 SQL 语句是否合法
-    :param conn: 数据库连接
-    :param sql: 待检查的 SQL 语句
-    :param config: 配置信息
-    :param workflow: 工作流实例
-    :return: 检查结果字典
-    """
-    max_export_rows_str = config.get("max_export_rows", "10000")
-    max_export_rows = int(max_export_rows_str) if max_export_rows_str else 10000
-    result = {"msg": "", "rows": 0}
-    instance = workflow
-    schema_name = workflow.db_name
-    
-    sql_clean = sql.strip().lower()
-    allowed_prefixes = ("select", "with")  # 允许 SELECT 和 WITH 开头
-    if not sql_clean.startswith(allowed_prefixes):
-        return {"error": True, "msg": f"违规语句：{sql}", "rows": 0}
-    
-    with conn.cursor() as cursor:
-        try:
-            count_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
-            if instance.db_type == "oracle":
-                conn.current_schema = schema_name
-            cursor.execute(count_sql)
-            actual_rows = cursor.fetchone()[0]
-            result["rows"] = actual_rows
-            
-            if actual_rows > max_export_rows:
-                return {
-                    "error": True,
-                    "msg": f"实际行数{actual_rows}超出阈值: {max_export_rows}",
-                    "rows": actual_rows
-                }
-            return result
-        
-        except Exception as e:
-            result["msg"] = str(e)
-            result["error"] = True
-            return result
-

@@ -142,13 +142,10 @@ def file_storage_connect(request):
     storage_type = request.POST.get("storage_type")
     # 检查是否存在该变量
     max_export_rows = request.POST.get("max_export_rows", "10000")
-    max_export_exec_time = request.POST.get("max_export_exec_time", "60")
     # 若变量已经定义，检查是否为空
     max_export_rows = max_export_rows if max_export_rows else "10000"
-    max_export_exec_time = max_export_exec_time if max_export_exec_time else "60"
     check_list = {
         "max_export_rows": max_export_rows,
-        "max_export_exec_time": max_export_exec_time,
     }
     try:
         # 遍历字典，判断是否只有数字
