@@ -124,6 +124,7 @@ urlpatterns = [
     path("param/history/", instance.param_history),
     path("param/edit/", instance.param_edit),
     path("query/", query.query),
+    path("query_download/", query.query_download),
     path("query/querylog/", query.querylog),
     path("query/querylog_audit/", query.querylog_audit),
     path("query/favorite/", query.favorite),
