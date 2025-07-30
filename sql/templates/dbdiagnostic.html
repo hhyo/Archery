@@ -29,6 +29,7 @@
                         <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                         <optgroup id="optgroup-redis" label="Redis"></optgroup>
                         <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                        <optgroup id="optgroup-doris" label="Doris"></optgroup>
                 </select>
             </div>
             <div id="command-div" class="form-group">
@@ -123,7 +124,9 @@
         if (typeof oracleDiagnosticInfo !== "undefined" && Array.isArray(oracleDiagnosticInfo.fieldsProcesslist)) {
             processListTableInfos.push(oracleDiagnosticInfo?.fieldsProcesslist);
         }
-        
+        if (typeof dorisDiagnosticInfo !== "undefined" && Array.isArray(dorisDiagnosticInfo.fieldsProcesslist)) {
+            processListTableInfos.push(dorisDiagnosticInfo?.fieldsProcesslist);
+        }
          
 
         // 问题诊断--进程列表
@@ -246,6 +249,8 @@
                 }]
             ]
         ]
+        let dorisTableInfo = ['doris',tablespaceListTableInfos[0][1]]
+        tablespaceListTableInfos.push(dorisTableInfo)
 
         // 问题诊断--表空间列表
         function get_space_list() {
@@ -729,7 +734,7 @@
                 //获取用户实例列表
                 $(function () {
                     // 会话管理-支持的数据库类型
-                    supportedDbType=['mysql','mongo', 'oracle','redis','pgsql']
+                    supportedDbType=['mysql','mongo', 'oracle','redis','pgsql','doris']
                     $.ajax({
                         type: "get",
                         url: "/group/user_all_instances/",
