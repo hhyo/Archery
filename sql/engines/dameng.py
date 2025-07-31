@@ -225,8 +225,8 @@ class DamengEngine(EngineBase):
                     if stmt_type in ('INSERT', 'UPDATE', 'DELETE'):
                         cursor = None
                         try:
-                            # Use EXPLAIN to validate syntax and object existence without execution
-                            explain_sql = f"EXPLAIN {s}"
+                            # Use EXPLAIN FOR to validate syntax and object existence without execution
+                            explain_sql = f"EXPLAIN FOR {s}"
                             cursor = conn.cursor()
                             cursor.execute(explain_sql)
                             cursor.fetchall()  # Consume results to ensure check is complete
