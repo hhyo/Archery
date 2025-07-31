@@ -482,10 +482,10 @@ class MongoEngine(EngineBase):
                             logger.info(str(e))
                         finally:
                             import re
-                            
+
                             def mongo_shell_output_to_json(raw):
                                 m = re.search(
-                                    r'(WriteResult|BulkWriteResult)?\((\{.*\})\)', raw
+                                    r"(WriteResult|BulkWriteResult)?\((\{.*\})\)", raw
                                 )
                                 if m:
                                     inner_json = m.group(2).replace("'", '"')
@@ -498,7 +498,7 @@ class MongoEngine(EngineBase):
                                 except Exception:
                                     pass
                                 return None
-                                
+
                             raw_r = r
                             if not isinstance(r, dict):
                                 r = mongo_shell_output_to_json(r)
@@ -541,7 +541,7 @@ class MongoEngine(EngineBase):
                                 elif isinstance(r, str):
                                     m = re.search(
                                         r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)',
-                                        r
+                                        r,
                                     )
                                     actual_affected_rows = int(m.group(1)) if m else 0
                                 else:
