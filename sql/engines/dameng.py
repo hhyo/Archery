@@ -430,6 +430,54 @@ class DamengEngine(EngineBase):
 
         return execute_result_set
 
+    def get_rollback(self, workflow):
+        """
+        获取回滚语句
+        """
+        # NOTE: This method constructs rollback SQL strings manually and might not handle all data types correctly (e.g., dates, binary data).
+        # It assumes that primary keys are not updated.
+        # 获取备份历史
+        backup_history = SqlBackupHistory.objects.filter(workflow=workflow)
+        if not backup_history:
+            return []
+
+        rollback_sql_list = []
+        for history in backup_history:
+            original_sql = history.sql_statement
+            parsed = sqlparse.parse(original_sql)[0]
+            stmt_type = parsed.get_type()
+            table_name = history.table_name
+            backup_data = json.loads(history.backup_data)
+
+            if stmt_type == 'DELETE':
+                for row in backup_data:
+                    columns = ", ".join(row.keys())
+                    values = ", ".join([f"'{v}'" if isinstance(v, str) else str(v) for v in row.values()])
+                    rollback_sql = f"INSERT INTO {table_name} ({columns}) VALUES ({values});"
+                    rollback_sql_list.append([original_sql, rollback_sql])
+            elif stmt_type == 'UPDATE':
+                # 获取主键
+                primary_key = self._get_primary_key(workflow.db_name, table_name)
+                if not primary_key:
+                    raise Exception(f"无法找到表 {table_name} 的主键，无法生成UPDATE回滚语句。")
+
+                for row in backup_data:
+                    set_clause = ", ".join([f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}" for k, v in row.items() if k != primary_key])
+                    where_clause = f"{primary_key} = '{row[primary_key]}'" if isinstance(row[primary_key], str) else f"{primary_key} = {row[primary_key]}"
+                    rollback_sql = f"UPDATE {table_name} SET {set_clause} WHERE {where_clause};"
+                    rollback_sql_list.append([original_sql, rollback_sql])
+        return rollback_sql_list
+
+    def _get_primary_key(self, db_name, tb_name):
+        """
+        获取表的主键
+        """
+        sql = f"SELECT COLUMN_NAME FROM ALL_CONSTRAINTS C, ALL_CONS_COLUMNS CC WHERE C.CONSTRAINT_NAME = CC.CONSTRAINT_NAME AND C.CONSTRAINT_TYPE = 'P' AND C.OWNER = '{db_name.upper()}' AND C.TABLE_NAME = '{tb_name.upper()}'"
+        result = self.query(db_name=db_name, sql=sql)
+        if result.rows:
+            return result.rows[0][0]
+        return None
+
     def close(self):
         if self.conn:
             try:
