@@ -16,8 +16,10 @@ except ImportError:
 
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
-from sql.utils.data_masking import brute_mask # Or a more specific masking function if available/needed
+from sql.utils.data_masking import brute_mask
 from common.config import SysConfig
+from sql.models import SqlBackupHistory
+import json
 
 logger = logging.getLogger("default")
 
@@ -190,33 +192,81 @@ class DamengEngine(EngineBase):
         critical_ddl_regex = sys_config.get("critical_ddl_regex", "")
         p_critical = re.compile(critical_ddl_regex, re.IGNORECASE) if critical_ddl_regex else None
 
-        line_num = 1
-        for stmt in statements:
-            s = stmt.strip()
-            if not s: continue
+        # Get connection for validation
+        conn = None
+        try:
+            conn = self.get_connection(db_name=db_name)
 
-            review_result = ReviewResult(
-                id=line_num, errlevel=0, stagestatus="Audit completed",
-                errormessage="None", sql=s, affected_rows=0, execute_time=0
-            )
+            line_num = 1
+            for stmt in statements:
+                s = stmt.strip()
+                if not s:
+                    continue
 
-            if re.match(r"^SELECT", s, re.IGNORECASE):
-                review_result.errlevel = 2
-                review_result.stagestatus = "Rejected"
-                review_result.errormessage = "SELECT statements not allowed in execution workflows."
-            elif p_critical and p_critical.match(s):
-                review_result.errlevel = 2
-                review_result.stagestatus = "Rejected"
-                review_result.errormessage = f"Statement matches critical DDL regex."
+                review_result = ReviewResult(
+                    id=line_num, errlevel=0, stagestatus="Audit completed",
+                    errormessage="None", sql=s, affected_rows=0, execute_time=0
+                )
 
-            if review_result.errlevel == 2: review_set.error_count += 1
-            elif review_result.errlevel == 1: review_set.warning_count += 1
+                # Existing checks
+                if re.match(r"^SELECT", s, re.IGNORECASE):
+                    review_result.errlevel = 2
+                    review_result.stagestatus = "Rejected"
+                    review_result.errormessage = "SELECT statements not allowed in execution workflows."
+                elif p_critical and p_critical.match(s):
+                    review_result.errlevel = 2
+                    review_result.stagestatus = "Rejected"
+                    review_result.errormessage = f"Statement matches critical DDL regex."
 
-            review_set.rows.append(review_result)
-            line_num += 1
+                # New Dameng validation logic for INSERT, UPDATE, DELETE
+                # Only perform this check if no other error was found yet
+                if review_result.errlevel == 0:
+                    stmt_type = sqlparse.parse(s)[0].get_type()
+                    if stmt_type in ('INSERT', 'UPDATE', 'DELETE'):
+                        cursor = None
+                        try:
+                            # Use EXPLAIN to validate syntax and object existence without execution
+                            explain_sql = f"EXPLAIN {s}"
+                            cursor = conn.cursor()
+                            cursor.execute(explain_sql)
+                            cursor.fetchall()  # Consume results to ensure check is complete
+                        except Exception as e:
+                            logger.warning(f"Dameng syntax check failed for statement: {s}\nError: {traceback.format_exc()}")
+                            review_result.errlevel = 2
+                            review_result.stagestatus = "Rejected"
+                            review_result.errormessage = f"达梦语法或字段有效性检查失败: {e}"
+                        finally:
+                            if cursor:
+                                cursor.close()
+
+                if review_result.errlevel == 2:
+                    review_set.error_count += 1
+                elif review_result.errlevel == 1:
+                    review_set.warning_count += 1
+
+                review_set.rows.append(review_result)
+                line_num += 1
+
+        except Exception as e:
+            logger.error(f"Error during Dameng execute_check connection/setup: {traceback.format_exc()}")
+            review_set.error = f"连接达梦数据库失败: {e}"
+            review_set.error_count = len([s for s in statements if s.strip()])
+            line_num = 1
+            for stmt in statements:
+                s = stmt.strip()
+                if not s: continue
+                review_set.rows.append(ReviewResult(
+                    id=line_num, sql=s, errlevel=2, stagestatus="Audit failed",
+                    errormessage=f"连接达梦数据库失败: {e}"
+                ))
+                line_num += 1
+        finally:
+            if conn:
+                self.close()
 
         if review_set.error_count > 0:
             review_set.error = "One or more statements failed audit."
+
         return review_set
 
     def execute_workflow(self, workflow):
@@ -230,22 +280,75 @@ class DamengEngine(EngineBase):
         cursor = None
         try:
             conn = self.get_connection(db_name=db_name)
-            cursor = conn.cursor()
+            # Set autocommit to False to control transaction manually
+            conn.autocommit = False
+
+            # Backup logic starts here
+            if workflow.is_backup:
+                logger.info(f"Workflow ID {workflow.id}: Backup option is enabled. Starting backup process.")
+                backup_cursor = conn.cursor()
+                for stmt in statements:
+                    s = stmt.strip()
+                    if not s:
+                        continue
+
+                    parsed = sqlparse.parse(s)[0]
+                    stmt_type = parsed.get_type()
+
+                    if stmt_type in ('UPDATE', 'DELETE'):
+                        table_name = None
+                        where_clause = ""
+
+                        # Extract table name
+                        from_seen = False
+                        update_seen = False
+                        for t in parsed.tokens:
+                            if t.is_keyword and t.normalized == 'FROM':
+                                from_seen = True
+                                continue
+                            if t.is_keyword and t.normalized == 'UPDATE':
+                                update_seen = True
+                                continue
+                            if (from_seen or update_seen) and isinstance(t, sqlparse.sql.Identifier):
+                                table_name = t.get_real_name()
+                                break
+
+                        # Extract where clause
+                        where_token = next((t for t in parsed.tokens if isinstance(t, sqlparse.sql.Where)), None)
+                        if where_token:
+                            where_clause = where_token.value
+
+                        if table_name:
+                            backup_sql = f"SELECT * FROM {table_name} {where_clause}"
+                            logger.info(f"Executing backup query for workflow {workflow.id}: {backup_sql}")
+                            backup_cursor.execute(backup_sql)
+                            rows = backup_cursor.fetchall()
+                            if rows:
+                                columns = [desc[0] for desc in backup_cursor.description]
+                                backup_data = [dict(zip(columns, row)) for row in rows]
+
+                                # Save to backup history
+                                SqlBackupHistory.objects.create(
+                                    workflow=workflow,
+                                    table_name=table_name,
+                                    sql_statement=s,
+                                    backup_data=backup_data
+                                )
+                                logger.info(f"Backed up {len(rows)} rows from {table_name} for workflow {workflow.id}")
+                backup_cursor.close()
 
             # Attempt to set schema for the current session if db_name is provided
+            cursor = conn.cursor()
             if db_name:
                 try:
-                    # Common syntax for setting schema. VERIFY THIS FOR DAMENG.
                     set_schema_sql = f"SET SCHEMA {db_name.upper()}"
                     logger.debug(f"Attempting to set Dameng schema for workflow: {set_schema_sql}")
                     cursor.execute(set_schema_sql)
                     logger.info(f"Dameng session schema set to {db_name.upper()} for workflow execution.")
                 except Exception as schema_err:
-                    # If setting schema fails, this is likely a critical issue for the workflow.
-                    # We'll log it and the workflow will likely fail on subsequent DML/DDL if tables are not found.
                     logger.error(f"CRITICAL: Failed to set schema '{db_name.upper()}' for Dameng workflow. Error: {schema_err}")
-                    # Populate a single error for the whole workflow if schema set fails.
                     execute_result_set.error = f"Failed to set schema '{db_name.upper()}': {schema_err}"
+                    # Populate error for all statements
                     for idx, stmt_text_for_error in enumerate(statements):
                         st_err = stmt_text_for_error.strip()
                         if not st_err: continue
@@ -253,8 +356,7 @@ class DamengEngine(EngineBase):
                             id=idx + 1, sql=st_err, errlevel=2, stagestatus="Execute Failed",
                             errormessage=f"Failed to set schema '{db_name.upper()}': {schema_err}"
                         ))
-                    if cursor: cursor.close()
-                    if conn: self.close()
+                    conn.rollback()
                     return execute_result_set
 
             line_num = 1
@@ -265,7 +367,6 @@ class DamengEngine(EngineBase):
                 review_result = ReviewResult(id=line_num, sql=s)
                 try:
                     cursor.execute(s)
-
                     review_result.errlevel = 0
                     review_result.stagestatus = "Execute Successfully"
                     review_result.errormessage = "None"
@@ -277,10 +378,10 @@ class DamengEngine(EngineBase):
                     review_result.errormessage = str(e)
                     execute_result_set.error_count += 1
                     execute_result_set.error = "Error during workflow execution."
-
+                    # Add failed result and break loop
                     execute_result_set.rows.append(review_result)
                     line_num += 1
-
+                    # Mark subsequent statements as not executed
                     for subsequent_stmt in statements[stmt_idx+1:]:
                         ss = subsequent_stmt.strip()
                         if not ss: continue
@@ -294,16 +395,16 @@ class DamengEngine(EngineBase):
                 execute_result_set.rows.append(review_result)
                 line_num += 1
 
-            # After loop: if all statements were successful, commit the transaction
-            if execute_result_set.error_count == 0 and conn:
-                logger.info(f"Workflow ID {workflow.id}: All statements executed successfully. Committing transaction for Dameng.")
+            # After loop, commit or rollback
+            if execute_result_set.error_count == 0:
+                logger.info(f"Workflow ID {workflow.id}: All statements executed successfully. Committing transaction.")
                 conn.commit()
-            elif execute_result_set.error_count > 0 and conn:
-                logger.warning(f"Workflow ID {workflow.id}: Errors occurred. Rolling back transaction for Dameng.")
+            else:
+                logger.warning(f"Workflow ID {workflow.id}: Errors occurred. Rolling back transaction.")
                 conn.rollback()
 
-        except Exception as e: # This catches errors from get_connection, cursor creation, or schema setting.
-            logger.error(f"Dameng workflow connection/setup failed. DB: {db_name}. Error: {e}\n{traceback.format_exc()}")
+        except Exception as e:
+            logger.error(f"Dameng workflow connection/setup/backup failed. DB: {db_name}. Error: {e}\n{traceback.format_exc()}")
             execute_result_set.error = f"Workflow failed: {str(e)}"
             if not execute_result_set.rows: # If error before any statement processing
                  for idx, stmt_text in enumerate(statements):
@@ -311,19 +412,21 @@ class DamengEngine(EngineBase):
                     if not st: continue
                     execute_result_set.rows.append(ReviewResult(
                         id=idx + 1, sql=st, errlevel=2, stagestatus="Execute Failed",
-                        errormessage=f"Connection/setup error: {str(e)}"
+                        errormessage=f"Connection/setup/backup error: {str(e)}"
                     ))
-            if conn: # If connection was made, try to rollback
+            if conn:
                 try:
                     conn.rollback()
                 except Exception as rb_err:
-                    logger.error(f"Error during rollback attempt after workflow setup failure: {rb_err}")
+                    logger.error(f"Error during rollback attempt after workflow failure: {rb_err}")
         finally:
             if cursor:
                 try: cursor.close()
                 except Exception: pass
             if conn:
-                self.close() # self.close() sets self.conn to None
+                # Restore autocommit state and close
+                conn.autocommit = True
+                self.close()
 
         return execute_result_set
 

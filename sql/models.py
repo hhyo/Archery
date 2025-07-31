@@ -1281,6 +1281,24 @@ class SlowQueryHistory(models.Model):
         verbose_name_plural = "慢日志明细"
 
 
+class SqlBackupHistory(models.Model):
+    """
+    SQL备份历史
+    """
+    id = models.AutoField(primary_key=True)
+    workflow = models.ForeignKey(SqlWorkflow, on_delete=models.CASCADE)
+    table_name = models.CharField("表名", max_length=128)
+    sql_statement = models.TextField("原始SQL语句")
+    backup_data = models.JSONField("备份数据")
+    created_at = models.DateTimeField("备份时间", auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "sql_backup_history"
+        verbose_name = "SQL备份历史"
+        verbose_name_plural = "SQL备份历史"
+
+
 class AuditEntry(models.Model):
     """
     登录审计日志
