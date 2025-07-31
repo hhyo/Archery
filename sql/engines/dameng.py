@@ -281,7 +281,6 @@ class DamengEngine(EngineBase):
         try:
             conn = self.get_connection(db_name=db_name)
             # Set autocommit to False to control transaction manually
-            conn.autocommit = False
 
             # Backup logic starts here
             if workflow.is_backup:
@@ -439,7 +438,6 @@ class DamengEngine(EngineBase):
                 except Exception: pass
             if conn:
                 # Restore autocommit state and close
-                conn.autocommit = True
                 self.close()
 
         return execute_result_set

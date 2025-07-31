@@ -240,29 +240,14 @@ def get_engine(instance=None):  # pragma: no cover
             from .cloud.aliyun_rds import AliyunRDS
 
             return AliyunRDS(instance=instance)
+
+    if instance.db_type == "dm":
+        from .dameng import DamengEngine
+        return DamengEngine(instance=instance)
+
     engine = engine_map.get(instance.db_type)
     if not engine:
         raise ValueError(
-            f"engine {instance.db_type} not 111 enabled or not supported, please contact admin"
-        )
-    return engine(instance=instance)
-
-
-engine_map = get_engine_map()
-
-
-def get_engine(instance=None):  # pragma: no cover
-    """获取数据库操作engine"""
-    if instance.db_type == "mysql":
-        from sql.models import AliyunRdsConfig
-
-        if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-            from .cloud.aliyun_rds import AliyunRDS
-
-            return AliyunRDS(instance=instance)
-    engine = engine_map.get(instance.db_type)
-    if not engine:
-        raise ValueError(
-            f"engine {instance.db_type} not 111 enabled or not supported, please contact admin"
+            f"engine {instance.db_type} not enabled or not supported, please contact admin"
         )
     return engine(instance=instance)
