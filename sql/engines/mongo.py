@@ -481,17 +481,58 @@ class MongoEngine(EngineBase):
                         except Exception as e:
                             logger.info(str(e))
                         finally:
+                            import re
+                            def mongo_shell_output_to_json(raw):
+                                m = re.search(r'(WriteResult|BulkWriteResult)?\((\{.*\})\)', raw)
+                                if m:
+                                    inner_json = m.group(2).replace("'", '"')
+                                    try:
+                                        return json.loads(inner_json)
+                                    except Exception:
+                                        pass
+                                try:
+                                    return json.loads(raw)
+                                except Exception:
+                                    pass
+                                return None                            
+                            raw_r = r
+                            if not isinstance(r, dict):
+                                r = mongo_shell_output_to_json(r)
+                            if not r:
+                                r = raw_r                            
                             methodStr = exec_sql.split(").")[-1].split("(")[0].strip()
                             if "." in methodStr:
                                 methodStr = methodStr.split(".")[-1]
                             if methodStr == "insert":
                                 actual_affected_rows = r.get("nInserted", 0)
                             elif methodStr in ("insertOne", "insertMany"):
-                                actual_affected_rows = r.count("ObjectId")
+                                if isinstance(r, dict):
+                                   # mongosh / driver JSON formats
+                                   if "nInserted" in r:                # BulkWriteResult style
+                                       actual_affected_rows = r["nInserted"]
+                                   elif "insertedIds" in r:            # CLI acknowledged + insertedIds
+                                       actual_affected_rows = len(r["insertedIds"])
+                                   elif "insertedId" in r:             # insertOne single id
+                                       actual_affected_rows = 1
+                                   else:
+                                       actual_affected_rows = 0
+                                elif isinstance(r, str):
+                                   # mongo 4.x CLI string outputs
+                                   m = re.search(r'"nInserted"\s*:\s*(\d+)', r)
+                                   actual_affected_rows = int(m.group(1)) if m else r.count("ObjectId")
+                                   actual_affected_rows = r.count("ObjectId")
+                                else:
+                                   actual_affected_rows = 0
                             elif methodStr == "update":
                                 actual_affected_rows = r.get("nModified", 0)
                             elif methodStr in ("updateOne", "updateMany"):
-                                actual_affected_rows = r.get("modifiedCount", 0)
+                                if isinstance(r, dict):
+                                    actual_affected_rows = r.get("modifiedCount", r.get("nModified", 0))
+                                elif isinstance(r, str):
+                                    m = re.search(r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)', r)
+                                    actual_affected_rows = int(m.group(1)) if m else 0
+                                else:
+                                    actual_affected_rows = 0                                
                             elif methodStr in ("deleteOne", "deleteMany"):
                                 actual_affected_rows = r.get("deletedCount", 0)
                             elif methodStr == "remove":
