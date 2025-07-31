@@ -285,57 +285,71 @@ class DamengEngine(EngineBase):
 
             # Backup logic starts here
             if workflow.is_backup:
-                logger.info(f"Workflow ID {workflow.id}: Backup option is enabled. Starting backup process.")
-                backup_cursor = conn.cursor()
-                for stmt in statements:
-                    s = stmt.strip()
-                    if not s:
-                        continue
+                try:
+                    logger.info(f"Workflow ID {workflow.id}: Backup option is enabled. Starting backup process.")
+                    backup_cursor = conn.cursor()
+                    for stmt in statements:
+                        s = stmt.strip()
+                        if not s:
+                            continue
 
-                    parsed = sqlparse.parse(s)[0]
-                    stmt_type = parsed.get_type()
+                        parsed = sqlparse.parse(s)[0]
+                        stmt_type = parsed.get_type()
 
-                    if stmt_type in ('UPDATE', 'DELETE'):
-                        table_name = None
-                        where_clause = ""
+                        if stmt_type in ('UPDATE', 'DELETE'):
+                            table_name = None
+                            where_clause = ""
 
-                        # Extract table name
-                        from_seen = False
-                        update_seen = False
-                        for t in parsed.tokens:
-                            if t.is_keyword and t.normalized == 'FROM':
-                                from_seen = True
-                                continue
-                            if t.is_keyword and t.normalized == 'UPDATE':
-                                update_seen = True
-                                continue
-                            if (from_seen or update_seen) and isinstance(t, sqlparse.sql.Identifier):
-                                table_name = t.get_real_name()
-                                break
+                            # Extract table name
+                            from_seen = False
+                            update_seen = False
+                            for t in parsed.tokens:
+                                if t.is_keyword and t.normalized == 'FROM':
+                                    from_seen = True
+                                    continue
+                                if t.is_keyword and t.normalized == 'UPDATE':
+                                    update_seen = True
+                                    continue
+                                if (from_seen or update_seen) and isinstance(t, sqlparse.sql.Identifier):
+                                    table_name = t.get_real_name()
+                                    break
 
-                        # Extract where clause
-                        where_token = next((t for t in parsed.tokens if isinstance(t, sqlparse.sql.Where)), None)
-                        if where_token:
-                            where_clause = where_token.value
+                            # Extract where clause
+                            where_token = next((t for t in parsed.tokens if isinstance(t, sqlparse.sql.Where)), None)
+                            if where_token:
+                                where_clause = where_token.value
 
-                        if table_name:
-                            backup_sql = f"SELECT * FROM {table_name} {where_clause}"
-                            logger.info(f"Executing backup query for workflow {workflow.id}: {backup_sql}")
-                            backup_cursor.execute(backup_sql)
-                            rows = backup_cursor.fetchall()
-                            if rows:
-                                columns = [desc[0] for desc in backup_cursor.description]
-                                backup_data = [dict(zip(columns, row)) for row in rows]
+                            if table_name:
+                                backup_sql = f"SELECT * FROM {table_name} {where_clause}"
+                                logger.info(f"Executing backup query for workflow {workflow.id}: {backup_sql}")
+                                backup_cursor.execute(backup_sql)
+                                rows = backup_cursor.fetchall()
+                                if rows:
+                                    columns = [desc[0] for desc in backup_cursor.description]
+                                    backup_data = [dict(zip(columns, row)) for row in rows]
 
-                                # Save to backup history
-                                SqlBackupHistory.objects.create(
-                                    workflow=workflow,
-                                    table_name=table_name,
-                                    sql_statement=s,
-                                    backup_data=backup_data
-                                )
-                                logger.info(f"Backed up {len(rows)} rows from {table_name} for workflow {workflow.id}")
-                backup_cursor.close()
+                                    # Save to backup history
+                                    SqlBackupHistory.objects.create(
+                                        workflow=workflow,
+                                        table_name=table_name,
+                                        sql_statement=s,
+                                        backup_data=backup_data
+                                    )
+                                    logger.info(f"Backed up {len(rows)} rows from {table_name} for workflow {workflow.id}")
+                    backup_cursor.close()
+                except Exception as e:
+                    logger.error(f"Backup failed for workflow {workflow.id}. Error: {traceback.format_exc()}")
+                    execute_result_set.error = f"数据备份失败: {e}"
+                    execute_result_set.error_count = 1
+                    for idx, stmt_text_for_error in enumerate(statements):
+                        st_err = stmt_text_for_error.strip()
+                        if not st_err: continue
+                        execute_result_set.rows.append(ReviewResult(
+                            id=idx + 1, sql=st_err, errlevel=2, stagestatus="Execute Failed",
+                            errormessage=f"数据备份失败: {e}"
+                        ))
+                    conn.rollback()
+                    return execute_result_set
 
             # Attempt to set schema for the current session if db_name is provided
             cursor = conn.cursor()
