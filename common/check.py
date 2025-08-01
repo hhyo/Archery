@@ -153,7 +153,6 @@ def file_storage_connect(request):
     # 构建配置字典
     config_dict = {
         "storage_type": storage_type,
-        "local_path": request.POST.get("local_path", ""),
         "sftp_host": request.POST.get("sftp_host", ""),
         "sftp_port": request.POST.get("sftp_port", 22),
         "sftp_user": request.POST.get("sftp_user", ""),
