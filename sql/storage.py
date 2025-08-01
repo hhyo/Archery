@@ -18,7 +18,7 @@ def get_sys_config():
 
 class DynamicStorage:
     """动态存储适配器，根据配置选择实际存储后端"""
-    
+
     def __init__(self, storage_type=None, config_dict=None):
         """根据存储服务进行文件的上传下载"""
 
@@ -29,7 +29,7 @@ class DynamicStorage:
         self.storage_type = self.config["storage_type"]
 
         # 本地存储相关配置信息
-        self.local_path = Path(self.config.get("local_path", ""))
+        self.local_path = Path(self.config.get("local_path", "")).resolve()
         self.base_download_path = Path(settings.BASE_DIR).resolve() / "downloads"
 
         # 安全地构建下载路径
@@ -80,7 +80,7 @@ class DynamicStorage:
                     "username": self.sftp_user,
                     "password": self.sftp_password,
                     "port": self.sftp_port,
-                    },
+                },
                 root_path=self.sftp_path,
             )
 

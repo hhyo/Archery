@@ -44,7 +44,7 @@ class OffLineDownLoad(EngineBase):
             # 先进行 max_execution_time 变量的判断是否存在以及是否为空,默认值60
             max_execution_time_str = config.get("max_export_rows", "60")
             max_execution_time = (
-+                int(max_execution_time_str) if max_execution_time_str else 60
+                int(max_execution_time_str) if max_execution_time_str else 60
             )
             # 获取前端提交的 SQL 和其他工单信息
             full_sql = workflow.sqlworkflowcontent.sql_content
@@ -63,7 +63,7 @@ class OffLineDownLoad(EngineBase):
                 results = check_engine.query(
                     db_name=workflow.db_name,
                     sql=sql,
-                    max_execution_time=max_execution_time * 1000
+                    max_execution_time=max_execution_time * 1000,
                 )
                 if results.error:
                     raise Exception(results.error)
@@ -439,8 +439,8 @@ def offline_file_download(request):
                     return JsonResponse({"type": "redirect", "url": presigned_url})
                 except Exception as e:
                     extra_info = extra_info + f"，error:{str(e)}"
-                    return JsonResponse({
-                        "error": f"文件下载失败：请联系管理员。"}, status=500
+                    return JsonResponse(
+                        {"error": f"文件下载失败：请联系管理员。"}, status=500
                     )
 
     except Exception as e:
