@@ -152,7 +152,7 @@ class DynamicStorage:
                 raise PermissionError("本地路径不允许包含 '..'")
 
             # 只允许安全字符
-            if not re.match(r'^[a-zA-Z0-9._\-/\\]+$', local_path_str):
+            if not re.match(r"^[a-zA-Z0-9._\-/\\]+$", local_path_str):
                 raise PermissionError("本地路径包含非法字符")
 
             base_download_path = Path(settings.BASE_DIR) / "downloads"
