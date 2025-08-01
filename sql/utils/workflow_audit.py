@@ -806,4 +806,3 @@ def get_auditor(
         resource_group=resource_group,
         resource_group_id=resource_group_id,
     )
-

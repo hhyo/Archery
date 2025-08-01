@@ -68,7 +68,7 @@ def _sql_workflow_list(request):
     filter_dict = dict()
     # 工单类型
     if syntax_type:
-        filter_dict['syntax_type__in'] = syntax_type
+        filter_dict["syntax_type__in"] = syntax_type
     # 工单状态
     if nav_status:
         filter_dict["status"] = nav_status
@@ -530,4 +530,3 @@ def osc_control(request):
         json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
         content_type="application/json",
     )
-

@@ -1344,4 +1344,3 @@ class AuditEntry(models.Model):
         return "{0} - {1} - {2} - {3} - {4}".format(
             self.user_id, self.user_name, self.extra_info, self.action, self.action_time
         )
-
