@@ -30,7 +30,7 @@ class DynamicStorage:
         self.storage_type = self.config["storage_type"]
 
         # 本地存储相关配置信息
-        self.local_path = "downloads/" + self.config.get("local_path", "")
+        self.local_path = "downloads/DataExportFile/"
 
         # SFTP 存储相关配置信息
         self.sftp_host = self.config["sftp_host"]
@@ -144,42 +144,8 @@ class DynamicStorage:
 
     def check_connection(self):
         """测试存储连接是否有效"""
-        if self.storage_type == "local":
-            local_path_str = self.config.get("local_path", "").strip("/\\")
 
-            # 防止路径遍历
-            if ".." in local_path_str.split(os.sep):
-                raise PermissionError("本地路径不允许包含 '..'")
-
-            # 只允许安全字符
-            if not re.match(r"^[a-zA-Z0-9._\-/\\]+$", local_path_str):
-                raise PermissionError("本地路径包含非法字符")
-
-            base_download_path = Path(settings.BASE_DIR) / "downloads"
-            base_real = base_download_path.resolve()
-
-            # 拼接路径
-            full_download_path = base_download_path / local_path_str
-            full_real = full_download_path.resolve()
-
-            try:
-                # 检查解析后的路径是否在基础目录下
-                full_real.relative_to(base_real)
-            except ValueError:
-                raise PermissionError(
-                    f"不允许访问 BASE_DIR 外的路径: {full_real}，"
-                    f"只允许在 {base_real} 下的路径"
-                )
-
-            # 检查路径是否存在且是目录
-            if not full_real.is_dir():
-                raise ValueError(f"本地路径不存在: {full_real}")
-
-            # 检查目录权限
-            if not os.access(str(full_real), os.R_OK | os.W_OK):
-                raise PermissionError(f"路径权限不足: {full_real}")
-
-        elif self.storage_type == "sftp":
+        if self.storage_type == "sftp":
             with self.storage as s:
                 s.listdir(".")
 

@@ -444,10 +444,8 @@
                                     <div class="form-group">
                                         <label for="local-path" class="col-sm-4 control-label">本地存储路径</label>
                                         <div class="col-sm-5">
-                                        <input type="text" class="form-control" id="local_path"
-                                               key="local_path"
-                                               value="{{ config.local_path }}"
-                                               placeholder="项目根目录下downloads的相对路径(非/开头)">
+                                            <input type="text" class="form-control" disabled
+                                                   placeholder="项目根目录/downloads/DataExportFile/">
                                         </div>
                                     </div>
                                 </div>
@@ -1891,7 +1889,6 @@
                 var formData = {
                     max_export_rows: $("#max_export_rows").val(),
                     storage_type: $("#storage_type").val(),
-                    local_path: $("#local_path").val(),
                 }
             }
             $.ajax({
