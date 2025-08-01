@@ -17,9 +17,9 @@ from django.http import JsonResponse, FileResponse
 
 
 from sql.models import SqlWorkflow, AuditEntry, Config
-from . import EngineBase
-from .models import ReviewSet, ReviewResult
-from .storage import DynamicStorage
+from sql.engines import EngineBase
+from sql.engines.models import ReviewSet, ReviewResult
+from sql.storage import DynamicStorage
 from sql.engines import get_engine
 
 logger = logging.getLogger("default")
@@ -418,7 +418,7 @@ def offline_file_download(request):
                 except Exception as e:
                     extra_info = extra_info + f"，error:{str(e)}"
                     return JsonResponse({
-                        "error": f"文件下载失败: {str(e)}"
+                        "error": f"文件下载失败：请联系管理员。"
                     }, status=500)
 
             elif storage_type in ["oss"]:
@@ -432,7 +432,7 @@ def offline_file_download(request):
                 except Exception as e:
                     extra_info = extra_info + f"，error:{str(e)}"
                     return JsonResponse({
-                        "error": f"文件下载失败: {str(e)}"
+                        "error": f"文件下载失败：请联系管理员。"
                     }, status=500)
 
     except Exception as e:

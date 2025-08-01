@@ -408,7 +408,7 @@
                                     <label for="max_export_rows"
                                            class="col-sm-4 control-label">MAX_EXPORT_ROWS</label>
                                     <div class="col-sm-5">
-                                        <input type="text" class="form-control" id="max_export_rows"
+                                        <input type="number" class="form-control" id="max_export_rows"
                                                key="max_export_rows"
                                                value="{{ config.max_export_rows }}"
                                                placeholder="导出数据量阈值限制，单位: 行，默认值: 10000">
@@ -447,7 +447,7 @@
                                         <input type="text" class="form-control" id="local_path"
                                                key="local_path"
                                                value="{{ config.local_path }}"
-                                               placeholder="本地存储路径">
+                                               placeholder="项目根目录下downloads的相对路径(非/开头)">
                                         </div>
                                     </div>
                                 </div>

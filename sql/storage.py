@@ -2,7 +2,9 @@ from django.core.files.storage import FileSystemStorage
 from storages.backends.s3boto3 import S3Boto3Storage
 from storages.backends.azure_storage import AzureStorage
 from storages.backends.sftpstorage import SFTPStorage
-
+from pathlib import Path
+from django.conf import settings
+import os
 from sql.models import Config
 
 def get_sys_config():
@@ -16,24 +18,27 @@ class DynamicStorage:
     """动态存储适配器，根据配置选择实际存储后端"""
     
     def __init__(
-        self, storage_type=None
+        self, storage_type=None, config_dict=None
     ):
         """根据存储服务进行文件的上传下载"""
 
         # 获取系统配置
-        self.config = get_sys_config()
+        #self.config = get_sys_config()
+        self.config = config_dict or get_sys_config()
 
         # 存储类型
         self.storage_type = self.config["storage_type"]
 
         # 本地存储相关配置信息
-        self.local_path = r"{}".format(self.config.get("local_path", "/tmp"))
-        
+        self.local_path = Path(self.config.get("local_path", ""))
+        self.base_download_path = Path(settings.BASE_DIR).resolve() / "downloads"
+        self.full_download_path = self.base_download_path / self.local_path
+
         # SFTP 存储相关配置信息
         self.sftp_host = self.config["sftp_host"]
         self.sftp_user = self.config["sftp_user"]
         self.sftp_password = self.config["sftp_password"]
-        self.sftp_port = self.config["sftp_port"]
+        self.sftp_port = int(self.config.get("sftp_port", 22))
         self.sftp_path = self.config["sftp_path"]
 
         # OSS 存储相关配置信息
@@ -63,8 +68,8 @@ class DynamicStorage:
 
         if self.storage_type == 'local':
             return FileSystemStorage(
-                location=self.local_path,
-                base_url=f'{self.local_path}'
+                location=self.full_download_path,
+                base_url=f'{self.full_download_path}'
             )
         
         elif self.storage_type == 'sftp':
@@ -86,7 +91,6 @@ class DynamicStorage:
                 bucket_name=self.oss_bucket_name,
                 location=self.oss_path,
                 endpoint_url=self.oss_endpoint,
-                #region_name='oss-cn-beijing',
                 file_overwrite=False,
                 addressing_style='virtual',
             )
@@ -139,3 +143,27 @@ class DynamicStorage:
         if hasattr(self.storage, 'url'):
             return self.storage.url(name)
         return f"/download/{name}"
+
+    def check_connection(self):
+        """测试存储连接是否有效"""
+        if self.storage_type == 'local':
+            if self.base_download_path not in self.full_download_path.parents:
+                raise PermissionError(f"不允许访问 BASE_DIR 外的路径: {self.full_download_path}，只允许在 {self.base_download_path} 下的路径")
+            if not os.path.isdir(self.full_download_path):
+                raise ValueError(f"本地路径不存在: {self.full_download_path}")
+            if not os.access(self.full_download_path, os.R_OK | os.W_OK):
+                raise PermissionError(f"路径权限不足: {self.full_download_path}")
+        elif self.storage_type == 'sftp':
+            with self.storage as s:
+                s.listdir('.')
+        
+        elif self.storage_type in ['oss', 's3']:
+            # 使用S3兼容接口测试
+            client = self.storage.connection.meta.client
+            client.head_bucket(Bucket=self.storage.bucket_name)
+            
+        elif self.storage_type == 'azure':
+            container_client = self.storage.client.get_container_client(
+                self.storage.container_name
+            )
+            container_client.get_container_properties()

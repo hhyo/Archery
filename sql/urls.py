@@ -26,7 +26,7 @@ from sql import (
 )
 from sql.utils import tasks
 from common.utils import ding_api
-from sql.engines import offlinedownload
+from sql import offlinedownload
 
 urlpatterns = [
     path("", views.index),

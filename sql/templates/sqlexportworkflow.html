@@ -37,7 +37,7 @@
             </div>
         </div>
         <div class="form-group ">
-            {% if config.storage_type %}
+            {% if storage_type %}
                 {% if can_offline_download == 1 %}
                     <button id="btn_exportsubmit" type="button" class="btn btn-default" onclick="window.location.href='/sqlexportsubmit/'">
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
