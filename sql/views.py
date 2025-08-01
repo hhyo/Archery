@@ -158,6 +158,7 @@ def sqlworkflow(request):
         },
     )
 
+
 def sqlexportworkflow(request):
     """SQL数据导出工单列表页面"""
     user = request.user
@@ -201,8 +202,9 @@ def sqlexportworkflow(request):
             "resource_group": resource_group,
             "storage_type": storage_type,
             "can_offline_download": can_offline_download,
-        }
+        },
     )
+
 
 @permission_required("sql.sql_submit", raise_exception=True)
 def submit_sql(request):
@@ -733,6 +735,7 @@ def audit_sqlworkflow(request):
             "resource_group": resource_group,
         },
     )
+
 
 @permission_required("sql.sqlexport_submit", raise_exception=True)
 def sqlexportsubmit(request):

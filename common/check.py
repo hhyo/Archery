@@ -133,12 +133,11 @@ def instance(request):
     # 返回结果
     return HttpResponse(json.dumps(result), content_type="application/json")
 
-
 @superuser_required
 def file_storage_connect(request):
     result = {"status": 0, "msg": "ok", "data": []}
     storage_type = request.POST.get("storage_type")
-    
+
     # 检查 max_export_rows 参数
     max_export_rows = request.POST.get("max_export_rows", "10000")
     max_export_rows = max_export_rows if max_export_rows else "10000"
@@ -179,11 +178,10 @@ def file_storage_connect(request):
         # 使用统一接口测试连接
         storage = DynamicStorage(config_dict=config_dict)
         storage.check_connection()
-        
+
     except Exception as e:
         result["status"] = 1
         result["msg"] = f"连接测试失败: {str(e)}"
         logging.error(f"存储连接测试异常: {e}", exc_info=True)
-    
-    return HttpResponse(json.dumps(result), content_type="application/json")
 
+    return HttpResponse(json.dumps(result), content_type="application/json")

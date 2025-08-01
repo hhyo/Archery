@@ -24,10 +24,12 @@ from sql.engines import get_engine
 
 logger = logging.getLogger("default")
 
+
 class OffLineDownLoad(EngineBase):
     """
     离线下载类，用于执行离线下载操作。
     """
+
     def execute_offline_download(self, workflow):
         """
         执行离线下载操作
@@ -41,7 +43,9 @@ class OffLineDownLoad(EngineBase):
             config = get_sys_config()
             # 先进行 max_execution_time 变量的判断是否存在以及是否为空,默认值60
             max_execution_time_str = config.get("max_export_rows", "60")
-            max_execution_time = int(max_execution_time_str) if max_execution_time_str else 60
+            max_execution_time = (
++                int(max_execution_time_str) if max_execution_time_str else 60
+            )
             # 获取前端提交的 SQL 和其他工单信息
             full_sql = workflow.sqlworkflowcontent.sql_content
             full_sql = sqlparse.format(full_sql, strip_comments=True)
@@ -50,13 +54,17 @@ class OffLineDownLoad(EngineBase):
             instance = workflow.instance
             execute_result = ReviewSet(full_sql=sql)
             check_engine = get_engine(instance=instance)
-            
+
             storage = DynamicStorage()
             start_time = time.time()
 
             try:
                 # 执行 SQL 查询
-                results = check_engine.query(db_name=workflow.db_name,sql=sql,max_execution_time=max_execution_time * 1000)
+                results = check_engine.query(
+                    db_name=workflow.db_name,
+                    sql=sql,
+                    max_execution_time=max_execution_time * 1000
+                )
                 if results.error:
                     raise Exception(results.error)
                 if results:
@@ -112,7 +120,7 @@ class OffLineDownLoad(EngineBase):
                 # 清理本地文件和临时目录
                 clean_local_files(temp_dir)
 
-    def pre_count_check(self,workflow):
+    def pre_count_check(self, workflow):
         """
         提交工单时进行后端检查，检查行数是否符合阈值 以及 是否允许的查询语句
         :param workflow: 工单实例
@@ -131,7 +139,7 @@ class OffLineDownLoad(EngineBase):
         check_result = ReviewSet(full_sql=sql)
         check_result.syntax_type = 3
         check_engine = get_engine(instance=instance)
-        result_set = check_engine.query(db_name=workflow.db_name,sql=count_sql)
+        result_set = check_engine.query(db_name=workflow.db_name, sql=count_sql)
         actual_rows_check = result_set.rows[0][0]
         max_export_rows_str = config.get("max_export_rows", "10000")
         max_export_rows = int(max_export_rows_str) if max_export_rows_str else 10000
@@ -231,6 +239,7 @@ def save_to_format_file(
     with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         zipf.write(file_path, os.path.basename(file_path))
     return zip_file_name
+
 
 def clean_local_files(temp_dir):
     """
@@ -375,14 +384,16 @@ class StorageFileResponse(FileResponse):
     """
     自定义文件响应类，用于处理文件下载，主要用于处理storages.backends.sftpstorage下载后无法关闭后台连接的问题。
     """
+
     def __init__(self, *args, storage=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.storage = storage
 
     def close(self):
         super().close()
-        if hasattr(self, 'storage') and self.storage:
+        if hasattr(self, "storage") and self.storage:
             self.storage.close()
+
 
 def offline_file_download(request):
     """
@@ -401,45 +412,40 @@ def offline_file_download(request):
     try:
         if not storage.exists(file_name):
             extra_info = extra_info + f"，error:文件不存在。"
-            return JsonResponse({
-                "error": "文件不存在"
-            }, status=404)
+            return JsonResponse({"error": "文件不存在"}, status=404)
         elif storage.exists(file_name):
             if storage_type in ["sftp", "local"]:
                 # SFTP/LOCAL处理 - 直接提供文件流
                 try:
-                    file = storage.open(file_name, 'rb')
+                    file = storage.open(file_name, "rb")
                     file_size = storage.size(file_name)
                     response = StorageFileResponse(file, storage=storage)
-                    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-                    response['Content-Length'] = str(file_size)
+                    response["Content-Disposition"] = (
+                        f'attachment; filename="{file_name}"'
+                    )
+                    response["Content-Length"] = str(file_size)
                     response["Content-Encoding"] = "identity"
                     return response
                 except Exception as e:
                     extra_info = extra_info + f"，error:{str(e)}"
-                    return JsonResponse({
-                        "error": f"文件下载失败：请联系管理员。"
-                    }, status=500)
+                    return JsonResponse(
+                        {"error": f"文件下载失败：请联系管理员。"}, status=500
+                    )
 
             elif storage_type in ["oss"]:
                 try:
                     # 云对象存储生成带有效期的临时下载URL
                     presigned_url = storage.url(file_name)
-                    return JsonResponse({
-                        "type": "redirect",
-                        "url": presigned_url
-                    })
+                    return JsonResponse({"type": "redirect", "url": presigned_url})
                 except Exception as e:
                     extra_info = extra_info + f"，error:{str(e)}"
                     return JsonResponse({
-                        "error": f"文件下载失败：请联系管理员。"
-                    }, status=500)
+                        "error": f"文件下载失败：请联系管理员。"}, status=500
+                    )
 
     except Exception as e:
         extra_info = extra_info + f"，error:{str(e)}"
-        return JsonResponse({
-                "error": "内部错误，请联系管理员。"
-            }, status=500)
+        return JsonResponse({"error": "内部错误，请联系管理员。"}, status=500)
 
     finally:
         if request.method != "HEAD":
