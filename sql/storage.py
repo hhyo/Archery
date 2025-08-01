@@ -32,8 +32,10 @@ class DynamicStorage:
         # 本地存储相关配置信息
         self.local_path = Path(self.config.get("local_path", ""))
         self.base_download_path = Path(settings.BASE_DIR).resolve() / "downloads"
-        self.full_download_path = self.base_download_path / self.local_path
-
+        
+        # 安全地构建下载路径
+        self.full_download_path = (self.base_download_path / self.local_path).resolve()
+        
         # SFTP 存储相关配置信息
         self.sftp_host = self.config["sftp_host"]
         self.sftp_user = self.config["sftp_user"]
@@ -68,7 +70,7 @@ class DynamicStorage:
 
         if self.storage_type == 'local':
             return FileSystemStorage(
-                location=self.full_download_path,
+                location=str(self.full_download_path),
                 base_url=f'{self.full_download_path}'
             )
         
@@ -147,18 +149,29 @@ class DynamicStorage:
     def check_connection(self):
         """测试存储连接是否有效"""
         if self.storage_type == 'local':
-            if self.base_download_path not in self.full_download_path.parents:
-                raise PermissionError(f"不允许访问 BASE_DIR 外的路径: {self.full_download_path}，只允许在 {self.base_download_path} 下的路径")
-            if not os.path.isdir(self.full_download_path):
+            # 安全地检查路径是否在基础目录下
+            try:
+                # 检查解析后的路径是否在基础目录下
+                self.full_download_path.relative_to(self.base_download_path.resolve())
+            except ValueError:
+                raise PermissionError(
+                    f"不允许访问 BASE_DIR 外的路径: {self.full_download_path}，"
+                    f"只允许在 {self.base_download_path} 下的路径"
+                )
+            
+            # 检查路径是否存在且是目录
+            if not self.full_download_path.is_dir():
                 raise ValueError(f"本地路径不存在: {self.full_download_path}")
-            if not os.access(self.full_download_path, os.R_OK | os.W_OK):
+            
+            # 检查目录权限
+            if not os.access(str(self.full_download_path), os.R_OK | os.W_OK):
                 raise PermissionError(f"路径权限不足: {self.full_download_path}")
+                
         elif self.storage_type == 'sftp':
             with self.storage as s:
                 s.listdir('.')
         
         elif self.storage_type in ['oss', 's3']:
-            # 使用S3兼容接口测试
             client = self.storage.connection.meta.client
             client.head_bucket(Bucket=self.storage.bucket_name)
             
