@@ -481,29 +481,6 @@ class MongoEngine(EngineBase):
                         except Exception as e:
                             logger.info(str(e))
                         finally:
-                            import re
-
-                            def mongo_shell_output_to_json(raw):
-                                m = re.search(
-                                    r"(WriteResult|BulkWriteResult)?\((\{.*\})\)", raw
-                                )
-                                if m:
-                                    inner_json = m.group(2).replace("'", '"')
-                                    try:
-                                        return json.loads(inner_json)
-                                    except Exception:
-                                        pass
-                                try:
-                                    return json.loads(raw)
-                                except Exception:
-                                    pass
-                                return None
-
-                            raw_r = r
-                            if not isinstance(r, dict):
-                                r = mongo_shell_output_to_json(r)
-                            if not r:
-                                r = raw_r
                             methodStr = exec_sql.split(").")[-1].split("(")[0].strip()
                             if "." in methodStr:
                                 methodStr = methodStr.split(".")[-1]
