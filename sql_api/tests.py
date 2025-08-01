@@ -559,7 +559,7 @@ class TestWorkflow(APITestCase):
                 "is_offline_export": "no",
             },
             "sql_content": "alter table abc add column note varchar(64);",
-        } 
+        }
         r = self.client.post("/api/v1/workflow/", json_data, format="json")
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         self.assertEqual(r.json()["workflow"]["workflow_name"], "上线工单1")

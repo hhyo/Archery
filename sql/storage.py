@@ -5,6 +5,7 @@ from storages.backends.sftpstorage import SFTPStorage
 from pathlib import Path
 from django.conf import settings
 import os
+import re
 from sql.models import Config
 
 
@@ -144,12 +145,23 @@ class DynamicStorage:
     def check_connection(self):
         """测试存储连接是否有效"""
         if self.storage_type == "local":
-            # 本地存储相关配置信息
-            local_path = Path(self.config.get("local_path", ""))
+            local_path_str = self.config.get("local_path", "").strip("/\\")
+
+            # 防止路径遍历
+            if ".." in local_path_str.split(os.sep):
+                raise PermissionError("本地路径不允许包含 '..'")
+
+            # 只允许安全字符
+            if not re.match(r'^[a-zA-Z0-9._\-/\\]+$', local_path_str):
+                raise PermissionError("本地路径包含非法字符")
+
             base_download_path = Path(settings.BASE_DIR) / "downloads"
-            full_download_path = (base_download_path / local_path)
             base_real = base_download_path.resolve()
+
+            # 拼接路径
+            full_download_path = base_download_path / local_path_str
             full_real = full_download_path.resolve()
+
             try:
                 # 检查解析后的路径是否在基础目录下
                 full_real.relative_to(base_real)
