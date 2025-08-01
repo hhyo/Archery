@@ -388,7 +388,7 @@ class MongoEngine(EngineBase):
 
         sql = "rs.isMaster().primary"
         master = self.exec_cmd(sql)
-        if master != "undefined" and master.find("TypeError") >= 0:
+        if master != "undefined":
             sp_host = master.replace('"', "").split(":")
             self.host = sp_host[0]
             self.port = int(sp_host[1])
@@ -1091,7 +1091,10 @@ class MongoEngine(EngineBase):
             query_skip = int(query_dict["skip"])
             find_cmd += f".skip({query_skip})"
         if "count" in query_dict:
-            find_cmd += ".count()"
+            if condition:
+                find_cmd = "collection.count_documents(condition)"
+            else:
+                find_cmd = "collection.count_documents({})"
         if "explain" in query_dict:
             find_cmd += ".explain()"
 
