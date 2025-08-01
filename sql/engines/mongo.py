@@ -485,7 +485,8 @@ class MongoEngine(EngineBase):
                             if "." in methodStr:
                                 methodStr = methodStr.split(".")[-1]
                             if methodStr == "insert":
-                                actual_affected_rows = r.get("nInserted", 0)
+                                m = re.search(r'"nInserted"\s*:\s*(\d+)', r)
+                                actual_affected_rows = int(m.group(1))
                             elif methodStr in ("insertOne", "insertMany"):
                                 if isinstance(r, dict):
                                     # mongosh / driver JSON formats
@@ -509,7 +510,18 @@ class MongoEngine(EngineBase):
                                 else:
                                     actual_affected_rows = 0
                             elif methodStr == "update":
-                                actual_affected_rows = r.get("nModified", 0)
+                                if isinstance(r, dict):
+                                    actual_affected_rows = r.get(
+                                        "modifiedCount", r.get("nModified", 0)
+                                    )
+                                elif isinstance(r, str):
+                                    m = re.search(
+                                        r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)',
+                                        r,
+                                    )
+                                    actual_affected_rows = int(m.group(1)) if m else 0
+                                else:
+                                    actual_affected_rows = 0
                             elif methodStr in ("updateOne", "updateMany"):
                                 if isinstance(r, dict):
                                     actual_affected_rows = r.get(
