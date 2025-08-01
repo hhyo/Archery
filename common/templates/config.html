@@ -399,6 +399,260 @@
                                            placeholder="管理员/DBA查询结果集限制" />
                                 </div>
                             </div>
+
+                            <!-- 数据导出配置 -->
+                            <h5 style="color: darkgrey"><b>数据导出配置</b></h5>
+                            <hr/>
+                            <div id="offline_download_export_msg">
+                                <div class="form-group">
+                                    <label for="max_export_rows"
+                                           class="col-sm-4 control-label">MAX_EXPORT_ROWS</label>
+                                    <div class="col-sm-5">
+                                        <input type="number" class="form-control" id="max_export_rows"
+                                               key="max_export_rows"
+                                               value="{{ config.max_export_rows }}"
+                                               placeholder="导出数据量阈值限制，单位: 行，默认值: 10000">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 存储类型选择 -->
+                            <h5 style="color: darkgrey"><b>存储类型选择</b></h5>
+                            <hr/>
+                            <div class="form-group">
+                                <label for="storage_type" class="col-sm-4 control-label">存储类型</label>
+                                <div class="col-sm-5">
+                                    <select id="storage_type" 
+                                            key="storage_type"
+                                            class="form-control selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            onchange="showStorageConfig()">
+                                        <option value="local">本地存储</option>
+                                        <option value="sftp">SFTP</option>
+                                        <option value="oss">阿里云 OSS</option>
+                                        <option value="s3">Amazon S3</option>
+                                        <option value="azure">Azure Blob</option>
+                                    </select>
+                                </div>
+                                <button id='check_storage_conn' class='btn-sm btn-info'>测试连接</button>
+                            </div>
+
+                            <!-- 动态配置区域 -->
+                            <div id="dynamic-config">
+                                <!-- 本地存储配置 -->
+                                <div id="storage-local" class="storage-config" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="local-path" class="col-sm-4 control-label">本地存储路径</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control" disabled
+                                                   placeholder="项目根目录/downloads/DataExportFile/">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- SFTP配置 -->
+                                <div id="storage-sftp" class="storage-config" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="sftp-host" class="col-sm-4 control-label">SFTP主机</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="sftp_host"
+                                               key="sftp_host"
+                                               value="{{ config.sftp_host }}"
+                                               placeholder="SFTP服务访问IP">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sftp-port" class="col-sm-4 control-label">SFTP端口</label>
+                                        <div class="col-sm-5">
+                                        <input type="number" class="form-control" id="sftp_port"
+                                               key="sftp_port"
+                                               value="{{ config.sftp_port }}"
+                                               placeholder="SFTP服务端口">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sftp-user" class="col-sm-4 control-label">SFTP用户名</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="sftp_user"
+                                               key="sftp_user"
+                                               value="{{ config.sftp_user }}"
+                                               placeholder="SFTP用户名">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sftp-password" class="col-sm-4 control-label">SFTP密码</label>
+                                        <div class="col-sm-5">
+                                        <input type="password" class="form-control" id="sftp_password"
+                                               key="sftp_password"
+                                               value="{{ config.sftp_password }}"
+                                               placeholder="SFTP密码">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sftp-password" class="col-sm-4 control-label">SFTP路径</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="sftp_path"
+                                               key="sftp_path"
+                                               value="{{ config.sftp_path }}"
+                                               placeholder="SFTP服务存储路径">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- OSS配置 -->
+                                <div id="storage-oss" class="storage-config" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="oss-access-key-id" class="col-sm-4 control-label">OSS Access Key</label>
+                                        <div class="col-sm-5">
+                                        <input type="password" class="form-control" id="oss_access_key_id"
+                                               key="oss_access_key_id"
+                                               value="{{ config.oss_access_key_id }}"
+                                               placeholder="OSS Access Key">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="oss-access-key-secret" class="col-sm-4 control-label">OSS Secret Key</label>
+                                        <div class="col-sm-5">
+                                        <input type="password" class="form-control" id="oss_access_key_secret"
+                                               key="oss_access_key_secret"
+                                               value="{{ config.oss_access_key_secret }}"
+                                               placeholder="OSS Secret Key">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="oss-endpoint" class="col-sm-4 control-label">OSS Endpoint URL</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="oss_endpoint"
+                                               key="oss_endpoint"
+                                               value="{{ config.oss_endpoint }}"
+                                               placeholder="http://oss-cn-hangzhou.aliyuncs.com">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="oss-bucket-name" class="col-sm-4 control-label">OSS Bucket</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="oss_bucket_name"
+                                               key="oss_bucket_name"
+                                               value="{{ config.oss_bucket_name }}"
+                                               placeholder="OSS Bucket">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="oss-path" class="col-sm-4 control-label">OSS Path</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="oss_path"
+                                               key="oss_path"
+                                               value="{{ config.oss_path }}"
+                                               placeholder="OSS 存储路径，开头没有 / ，如存储到tmp目录: tmp/">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- S3配置 -->
+                                <div id="storage-s3" class="storage-config" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="s3-bucket" class="col-sm-4 control-label">AWS S3 Bucket</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="s3_bucket"
+                                               key="s3_bucket"
+                                               value="{{ config.s3_bucket }}"
+                                               placeholder="S3 Bucket">
+                                        </div>  
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="s3-access-key" class="col-sm-4 control-label">AWS Access Key</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="s3_access_key"
+                                               key="s3_access_key"
+                                               value="{{ config.s3_access_key }}"
+                                               placeholder="AWS Access Key">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="s3-secret-key" class="col-sm-4 control-label">AWS Secret Key</label>
+                                        <div class="col-sm-5">
+                                        <input type="password" class="form-control" id="s3_secret_key"
+                                               key="s3_secret_key"
+                                               value="{{ config.s3_secret_key }}"
+                                               placeholder="AWS Secret Key">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="s3-region" class="col-sm-4 control-label">AWS Region</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="s3_region"
+                                               key="s3_region"
+                                               value="{{ config.s3_region }}"
+                                               placeholder="AWS Region">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="s3-path" class="col-sm-4 control-label">S3 Path</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="s3_path"
+                                               key="s3_path"
+                                               value="{{ config.s3_path }}"
+                                               placeholder="AWS 存储路径，开头没有 / ，如存储到tmp目录: tmp/">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Azure配置 -->
+                                <div id="storage-azure" class="storage-config" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="azure-container" class="col-sm-4 control-label">Azure容器</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="azure_container"
+                                               key="azure_container"
+                                               value="{{ config.azure_container }}"
+                                               placeholder="Azure账号名">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="azure-account-name" class="col-sm-4 control-label">Azure账号名</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="azure_account_name"
+                                               key="azure_account_name"
+                                               value="{{ config.azure_account_name }}"
+                                               placeholder="Azure账号名">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="azure-account-key" class="col-sm-4 control-label">Azure账号密钥</label>
+                                        <div class="col-sm-5">
+                                        <input type="password" class="form-control" id="azure_account_key"
+                                               key="azure_account_key"
+                                               value="{{ config.azure_account_key }}"
+                                               placeholder="Azure账号密钥">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="azure-path" class="col-sm-4 control-label">Azure Path</label>
+                                        <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="azure_path"
+                                               key="azure_path"
+                                               value="{{ config.azure_path }}"
+                                               placeholder="Azure 存储路径，开头没有 / ，如存储到tmp目录: tmp/">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        <script>
+                            // 根据选择的存储类型显示配置项
+                            function showStorageConfig() {
+                                const storageType = document.getElementById('storage_type').value;
+                                // 隐藏所有存储类型配置
+                                document.querySelectorAll('.storage-config').forEach(elem => {
+                                    elem.style.display = 'none';
+                                });
+                                // 显示当前选中的存储类型配置
+                                document.getElementById(`storage-${storageType}`).style.display = 'block';
+                            }
+
+                            // 页面加载时初始化
+                            window.onload = function() {
+                                document.getElementById('storage_type').value = "{{ config.storage_type }}";
+                                showStorageConfig();
+                            };
+                        </script>
+
                             <h5 style="color: darkgrey"><b>SQL优化</b></h5>
                             <hr/>
                             <div class="form-group">
@@ -1260,6 +1514,7 @@
                 }
             });
 
+            
             // sms_provider参数处理
             function provider_display(provider) {
                 if (provider === 'disabled') {
@@ -1604,6 +1859,59 @@
                 }
             });
         });
+        
+        // 检查sftp或oss的连通性
+        $("#check_storage_conn").click(function () {
+            $(this).addClass('disabled');
+            $(this).prop('disabled', true);
+            var SqlfileStorageType = $("#storage_type").val();
+            if (SqlfileStorageType === 'sftp') {
+                var formData = {
+                    max_export_rows: $("#max_export_rows").val(),
+                    storage_type: $("#storage_type").val(),
+                    sftp_host: $("#sftp_host").val(),
+                    sftp_user: $("#sftp_user").val(),
+                    sftp_password: $("#sftp_password").val(),
+                    sftp_port: $("#sftp_port").val(),
+                    sftp_path: $("#sftp_path").val(),
+                }
+            } else if (SqlfileStorageType === 'oss') {
+                var formData = {
+                    max_export_rows: $("#max_export_rows").val(),
+                    storage_type: $("#storage_type").val(),
+                    access_key_id: $("#oss_access_key_id").val(),
+                    access_key_secret: $("#oss_access_key_secret").val(),
+                    endpoint: $("#oss_endpoint").val(),
+                    bucket_name: $("#oss_bucket_name").val(),
+                    oss_path: $("#oss_path").val(),
+                }
+            } else if (SqlfileStorageType === 'local') {
+                var formData = {
+                    max_export_rows: $("#max_export_rows").val(),
+                    storage_type: $("#storage_type").val(),
+                }
+            }
+            $.ajax({
+                type: "post",
+                url: "/check/file_storage_connect/",
+                dataType: "json",
+                data: formData,
+                complete: function () {
+                    $("#check_storage_conn").removeClass('disabled');
+                    $("#check_storage_conn").prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        alert('连接测试成功，请点击页面下方的保存按钮生效！')
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
 
         // 同步钉钉用户信息
         $("#sync_ding_user").click(function () {
@@ -1642,6 +1950,7 @@
             });
         });
 
+
         // 短信服务商切换
         $("#sms_provider").change(function () {
             let provider = this.value;
@@ -1667,3 +1976,4 @@
         })
     </script>
 {% endblock %}
+
