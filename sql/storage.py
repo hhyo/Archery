@@ -29,11 +29,7 @@ class DynamicStorage:
         self.storage_type = self.config["storage_type"]
 
         # 本地存储相关配置信息
-        self.local_path = Path(self.config.get("local_path", "")).resolve()
-        self.base_download_path = Path(settings.BASE_DIR).resolve() / "downloads"
-
-        # 安全地构建下载路径
-        self.full_download_path = (self.base_download_path / self.local_path).resolve()
+        self.local_path = "downloads/" + self.config.get("local_path", "")
 
         # SFTP 存储相关配置信息
         self.sftp_host = self.config["sftp_host"]
@@ -69,8 +65,8 @@ class DynamicStorage:
 
         if self.storage_type == "local":
             return FileSystemStorage(
-                location=str(self.full_download_path),
-                base_url=f"{self.full_download_path}",
+                location=str(self.local_path),
+                base_url=f"{self.local_path}",
             )
 
         elif self.storage_type == "sftp":
@@ -148,8 +144,12 @@ class DynamicStorage:
     def check_connection(self):
         """测试存储连接是否有效"""
         if self.storage_type == "local":
-            base_real = self.base_download_path.resolve()
-            full_real = self.full_download_path.resolve()
+            # 本地存储相关配置信息
+            local_path = Path(self.config.get("local_path", ""))
+            base_download_path = Path(settings.BASE_DIR) / "downloads"
+            full_download_path = (base_download_path / local_path)
+            base_real = base_download_path.resolve()
+            full_real = full_download_path.resolve()
             try:
                 # 检查解析后的路径是否在基础目录下
                 full_real.relative_to(base_real)
