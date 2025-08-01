@@ -133,6 +133,7 @@ def instance(request):
     # 返回结果
     return HttpResponse(json.dumps(result), content_type="application/json")
 
+
 @superuser_required
 def file_storage_connect(request):
     result = {"status": 0, "msg": "ok", "data": []}
