@@ -517,7 +517,7 @@ class MongoEngine(EngineBase):
                                         r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)',
                                         r,
                                     )
-                                    actual_affected_rows = int(m.group(1))
+                                actual_affected_rows = int(m.group(1))
                             elif methodStr in ("updateOne", "updateMany"):
                                 if isinstance(r, dict):
                                     actual_affected_rows = r.get(
