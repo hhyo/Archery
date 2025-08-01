@@ -162,14 +162,9 @@ def sqlexportworkflow(request):
     """SQL数据导出工单列表页面"""
     user = request.user
     # 获取所有配置项
-    all_config = Config.objects.all().values("item", "value")
-    sys_config = {}
-    for items in all_config:
-        sys_config[items["item"]] = items["value"]
+    storage_type = SysConfig().get("storage_type")
     # 离线下载权限判断
-    can_offline_download = (
-        1 if user.has_perm("sql.offline_download") or user.is_superuser else 0
-    )
+    can_offline_download = user.is_superuser or user.has_perm("sql.offline_download")
     # 过滤筛选项的数据
     filter_dict = dict()
     # 管理员，可查看所有工单
@@ -204,7 +199,7 @@ def sqlexportworkflow(request):
             "status_list": SQL_WORKFLOW_CHOICES,
             "instance": instance,
             "resource_group": resource_group,
-            "config": sys_config,
+            "storage_type": storage_type,
             "can_offline_download": can_offline_download,
         }
     )
@@ -298,13 +293,7 @@ def detail(request, workflow_id):
     # 获取是否开启手工执行确认
     manual = SysConfig().get("manual")
 
-    all_config = Config.objects.all().values("item", "value")
-    sys_config = {}
-    for items in all_config:
-        sys_config[items["item"]] = items["value"]
-
     context = {
-        "sys_config": sys_config,
         "workflow_detail": workflow_detail,
         "current_reviewers": current_reviewers,
         "last_operation_info": last_operation_info,
@@ -756,15 +745,8 @@ def sqlexportsubmit(request):
     user = request.user
     group_list = user_groups(user)
     # 获取所有配置项
-    all_config = Config.objects.all().values("item", "value")
-    sys_config = {}
-    for items in all_config:
-        sys_config[items["item"]] = items["value"]
-    # 前端需要对 max_export_rows 进行判断,先进行变量的判断是否存在以及是否为空,默认值10000
-    max_export_rows_str = sys_config.get("max_export_rows", "10000")
-    sys_config["max_export_rows"] = (
-        int(max_export_rows_str) if max_export_rows_str else 10000
-    )
+    max_export_rows = SysConfig().get("max_export_rows")
+    max_export_rows = int(max_export_rows) if max_export_rows else 10000
 
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values(
         "id", "alias"
@@ -778,7 +760,7 @@ def sqlexportsubmit(request):
         "can_download": can_download,
         "engines": engine_map,
         "group_list": group_list,
-        "config": sys_config,
+        "max_export_rows": max_export_rows,
         "can_offline_download": can_offline_download,
     }
     return render(request, "sqlexportsubmit.html", context)

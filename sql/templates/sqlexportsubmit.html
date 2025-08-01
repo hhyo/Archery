@@ -5,7 +5,7 @@
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL上线
+                    数据导出
                 </div>
                 <div class="panel-body">
                     <form id="form-submitsql" class="form-horizontal">
@@ -577,7 +577,7 @@
             var result = data.data;
             if (data.status === 0) {
                 var ActualRows = 0;
-                var maxExportRows = "{{ config.max_export_rows }}";
+                var maxExportRows = "{{ max_export_rows }}";
                 ActualRows = parseFloat(result['rows'][0][0]);
                 if (ActualRows > maxExportRows) {
                     $("#btn-submitsql").prop("disabled", true);

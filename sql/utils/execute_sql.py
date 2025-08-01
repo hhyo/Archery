@@ -11,7 +11,7 @@ from sql.models import SqlWorkflow
 from sql.notify import notify_for_execute, EventType
 from sql.utils.workflow_audit import Audit
 from sql.engines import get_engine
-from sql.engines.offlinedownload import OffLineDownLoad
+from sql.offlinedownload import OffLineDownLoad
 
 logger = logging.getLogger("default")
 
