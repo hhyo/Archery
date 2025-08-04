@@ -13,10 +13,22 @@ import csv
 import xml.etree.ElementTree as ET
 
 from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, Config, AuditEntry
-from sql.offlinedownload import OffLineDownLoad, save_to_format_file, clean_local_files, get_sys_config, save_csv, save_json, save_xml, save_xlsx, save_sql, offline_file_download, datetime_serializer
+from sql.offlinedownload import (
+    OffLineDownLoad,
+    save_to_format_file,
+    clean_local_files,
+    get_sys_config,
+    save_csv,
+    save_json,
+    save_xml,
+    save_xlsx,
+    save_sql,
+    offline_file_download,
+    datetime_serializer,
+)
 from sql.engines.models import ReviewSet, ReviewResult, ResultSet
 from sql.storage import DynamicStorage
-
+from sql.tests import User
 
 class TestOfflineDownload(TestCase):
     """
@@ -26,7 +38,6 @@ class TestOfflineDownload(TestCase):
     def setUp(self):
         # 创建测试用户
         self.client = Client()
-        from sql.tests import User
         self.superuser = User.objects.create(username="super", is_superuser=True)
         # 创建测试实例
         self.instance = Instance.objects.create(
@@ -56,7 +67,7 @@ class TestOfflineDownload(TestCase):
         self.sql_content = SqlWorkflowContent.objects.create(
             workflow=self.workflow,
             sql_content="SELECT * FROM test_table",
-            execute_result=""
+            execute_result="",
         )
         # 设置系统配置
         Config.objects.create(item="max_export_rows", value="10000")
@@ -79,7 +90,7 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(config["max_export_rows"], "10000")
         self.assertEqual(config["storage_type"], "local")
 
-    @patch('sql.offlinedownload.get_engine')
+    @patch("sql.offlinedownload.get_engine")
     def test_pre_count_check_pass(self, mock_get_engine):
         """
         测试pre_count_check方法 - 正常通过
@@ -105,7 +116,7 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(result.rows[0].stagestatus, "行数统计完成")
         self.assertEqual(result.rows[0].affected_rows, 500)
 
-    @patch('sql.offlinedownload.get_engine')
+    @patch("sql.offlinedownload.get_engine")
     def test_pre_count_check_over_limit(self, mock_get_engine):
         """
         测试pre_count_check方法 - 超过行数限制
@@ -129,7 +140,7 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(result.warning_count, 0)
         self.assertIn("超过阈值", result.rows[0].errormessage)
 
-    @patch('sql.offlinedownload.get_engine')
+    @patch("sql.offlinedownload.get_engine")
     def test_pre_count_check_invalid_sql(self, mock_get_engine):
         """
         测试pre_count_check方法 - 无效SQL语句
@@ -148,11 +159,13 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(result.warning_count, 0)
         self.assertEqual(result.rows[0].errormessage, "违规语句！")
 
-    @patch('sql.offlinedownload.get_engine')
-    @patch('sql.offlinedownload.DynamicStorage')
-    @patch('sql.offlinedownload.save_to_format_file')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_execute_offline_download_success(self, mock_open_file, mock_save_format, mock_storage, mock_get_engine):
+    @patch("sql.offlinedownload.get_engine")
+    @patch("sql.offlinedownload.DynamicStorage")
+    @patch("sql.offlinedownload.save_to_format_file")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_execute_offline_download_success(
+        self, mock_open_file, mock_save_format, mock_storage, mock_get_engine
+    ):
         """
         测试execute_offline_download方法 - 成功执行
         """
@@ -189,8 +202,8 @@ class TestOfflineDownload(TestCase):
         updated_workflow = SqlWorkflow.objects.get(id=self.workflow.id)
         self.assertEqual(updated_workflow.file_name, "test_file.zip")
 
-    @patch('sql.offlinedownload.get_engine')
-    @patch('sql.offlinedownload.DynamicStorage')
+    @patch("sql.offlinedownload.get_engine")
+    @patch("sql.offlinedownload.DynamicStorage")
     def test_execute_offline_download_error(self, mock_storage, mock_get_engine):
         """
         测试execute_offline_download方法 - 执行错误
@@ -272,10 +285,10 @@ class TestOfflineDownload(TestCase):
 
         # 测试数据包含特殊字符
         result = [
-            (1, 'Normal, value'),
+            (1, "Normal, value"),
             (2, 'Value with "quotes"'),
-            (3, 'Line\nbreak'),
-            (4, 'Comma, and quote"')
+            (3, "Line\nbreak"),
+            (4, 'Comma, and quote"'),
         ]
         columns = ["id", "text"]
 
@@ -391,7 +404,7 @@ class TestOfflineDownload(TestCase):
         # 清理
         os.unlink(temp_file.name)
 
-    @patch('sql.offlinedownload.pd.DataFrame')
+    @patch("sql.offlinedownload.pd.DataFrame")
     def test_save_xlsx_large_file(self, mock_dataframe):
         """
         测试save_xlsx方法处理超过Excel行数限制的情况
@@ -402,7 +415,9 @@ class TestOfflineDownload(TestCase):
         temp_file.close()
 
         # 模拟pd.DataFrame.to_excel抛出异常
-        mock_dataframe.return_value.to_excel.side_effect = ValueError("Excel max rows exceeded")
+        mock_dataframe.return_value.to_excel.side_effect = ValueError(
+            "Excel max rows exceeded"
+        )
 
         # 测试数据（不需要实际生成大量数据）
         result = [(1, "test1")]
@@ -435,8 +450,13 @@ class TestOfflineDownload(TestCase):
         # 验证结果
         with open(temp_file.name, "r") as f:
             content = f.read()
-            self.assertIn("INSERT INTO your_table_name (id, name) VALUES (1, 'test1');", content)
-            self.assertIn("INSERT INTO your_table_name (id, name) VALUES (2, '2023-01-01 00:00:00');", content)
+            self.assertIn(
+                "INSERT INTO your_table_name (id, name) VALUES (1, 'test1');", content
+            )
+            self.assertIn(
+                "INSERT INTO your_table_name (id, name) VALUES (2, '2023-01-01 00:00:00');",
+                content,
+            )
 
         # 清理
         os.unlink(temp_file.name)
@@ -452,10 +472,10 @@ class TestOfflineDownload(TestCase):
 
         # 测试数据
         result = [
-            (1, None),              # NULL值
-            (2, ""),                # 空字符串
-            (3, "O'Reilly"),        # 包含单引号
-            (4, "Special;value")    # 包含分号
+            (1, None),
+            (2, ""),
+            (3, "O'Reilly"),
+            (4, "Special;value")
         ]
         columns = ["id", "name"]
 
@@ -486,7 +506,9 @@ class TestOfflineDownload(TestCase):
         columns = ["id", "name"]
 
         # 测试CSV格式
-        csv_file_name = save_to_format_file("csv", result, self.workflow, columns, temp_dir)
+        csv_file_name = save_to_format_file(
+            "csv", result, self.workflow, columns, temp_dir
+        )
         self.assertTrue(csv_file_name.endswith(".zip"))
         # 验证ZIP文件包含CSV
         zip_file_path = os.path.join(temp_dir, csv_file_name)
@@ -511,14 +533,16 @@ class TestOfflineDownload(TestCase):
 
         # 测试不支持的格式
         with self.assertRaises(ValueError) as context:
-            save_to_format_file("invalid_format", result, self.workflow, columns, temp_dir)
+            save_to_format_file(
+                "invalid_format", result, self.workflow, columns, temp_dir
+            )
 
         self.assertIn("Unsupported format type: invalid_format", str(context.exception))
 
         # 清理
         shutil.rmtree(temp_dir)
 
-    @patch('sql.offlinedownload.get_engine')
+    @patch("sql.offlinedownload.get_engine")
     def test_execute_offline_download_empty_result(self, mock_get_engine):
         """
         测试execute_offline_download方法处理空结果集
@@ -551,16 +575,16 @@ class TestOfflineDownload(TestCase):
         # 测试日期对象
         date_obj = date(2023, 1, 15)
         self.assertEqual(datetime_serializer(date_obj), "2023-01-15")
-        
+
         # 测试日期时间对象
         datetime_obj = datetime(2023, 1, 15, 12, 30, 45)
         self.assertEqual(datetime_serializer(datetime_obj), "2023-01-15T12:30:45")
-        
+
         # 测试不支持的类型
         with self.assertRaises(TypeError):
             datetime_serializer("not a date")
 
-    @patch('sql.offlinedownload.DynamicStorage')
+    @patch("sql.offlinedownload.DynamicStorage")
     def test_offline_file_download_error(self, mock_storage):
         """
         测试文件下载时的错误处理
@@ -568,28 +592,30 @@ class TestOfflineDownload(TestCase):
 
         # 清除已有的审计日志
         AuditEntry.objects.all().delete()
-        
+
         # 配置mock
         mock_storage_instance = MagicMock()
         mock_storage.return_value = mock_storage_instance
         mock_storage_instance.exists.return_value = False  # 文件不存在
-        
+
         # 创建请求对象
         request = HttpRequest()
         request.GET = {"file_name": "missing.zip", "workflow_id": "123"}
         request.method = "GET"
         request.user = self.superuser
-        
+
         # 执行测试
         response = offline_file_download(request)
-        
+
         # 验证响应
         self.assertEqual(response.status_code, 404)
         self.assertEqual(json.loads(response.content)["error"], "文件不存在")
-        
+
         # 验证审计日志
         audit_entry = AuditEntry.objects.last()
         self.assertIsNotNone(audit_entry)
         self.assertEqual(audit_entry.action, "离线下载")
-        self.assertIn("工单id：123，文件：missing.zip，error:文件不存在", audit_entry.extra_info)
+        self.assertIn(
+            "工单id：123，文件：missing.zip，error:文件不存在", audit_entry.extra_info
+        )
         self.assertEqual(audit_entry.user_id, self.superuser.id)
