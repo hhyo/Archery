@@ -68,7 +68,7 @@ class DynamicStorage:
             "sftp": self._init_sftp_storage,
             "oss": self._init_oss_storage,
             "s3": self._init_s3_storage,
-            "azure": self._init_azure_storage
+            "azure": self._init_azure_storage,
         }
 
         init_func = storage_backends.get(self.storage_type)
@@ -158,7 +158,7 @@ class DynamicStorage:
             "sftp": self._check_sftp_connection,
             "oss": self._check_oss_s3_connection,
             "s3": self._check_oss_s3_connection,
-            "azure": self._check_azure_connection
+            "azure": self._check_azure_connection,
         }
 
         check_func = connection_checks.get(self.storage_type)

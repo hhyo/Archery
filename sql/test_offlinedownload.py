@@ -30,6 +30,7 @@ from sql.engines.models import ReviewSet, ReviewResult, ResultSet
 from sql.storage import DynamicStorage
 from sql.tests import User
 
+
 class TestOfflineDownload(TestCase):
     """
     测试离线下载功能
@@ -471,12 +472,7 @@ class TestOfflineDownload(TestCase):
         temp_file.close()
 
         # 测试数据
-        result = [
-            (1, None),
-            (2, ""),
-            (3, "O'Reilly"),
-            (4, "Special;value")
-        ]
+        result = [(1, None), (2, ""), (3, "O'Reilly"), (4, "Special;value")]
         columns = ["id", "name"]
 
         # 执行测试
