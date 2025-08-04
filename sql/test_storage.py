@@ -230,7 +230,7 @@ class TestDynamicStorage(unittest.TestCase):
         mock_storage = MagicMock()
         # 模拟 close 存在但调用会出错（或不存在）
         delattr(mock_storage, "close")  # 删除 close 属性
-    
+
         with patch.object(DynamicStorage, "_init_storage", return_value=mock_storage):
             storage = DynamicStorage(config_dict=self.local_config)
             try:
