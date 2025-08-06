@@ -16,7 +16,6 @@ from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, Config, AuditE
 from sql.offlinedownload import (
     OffLineDownLoad,
     save_to_format_file,
-    clean_local_files,
     get_sys_config,
     save_csv,
     save_json,
@@ -229,24 +228,6 @@ class TestOfflineDownload(TestCase):
         self.assertIsNotNone(result.error)
         self.assertEqual(result.rows[0].stagestatus, "异常终止")
         self.assertEqual(result.rows[0].errormessage, "Database error")
-
-    def test_clean_local_files(self):
-        """
-        测试clean_local_files方法
-        """
-
-        # 创建临时目录
-        temp_dir = tempfile.mkdtemp()
-        # 创建测试文件
-        test_file = os.path.join(temp_dir, "test.txt")
-        with open(test_file, "w") as f:
-            f.write("test")
-
-        # 执行测试
-        clean_local_files(temp_dir)
-
-        # 验证目录已删除
-        self.assertFalse(os.path.exists(temp_dir))
 
     def test_save_csv(self):
         """

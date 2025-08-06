@@ -117,8 +117,10 @@ class OffLineDownLoad(EngineBase):
                 execute_result.error = e
                 return execute_result
             finally:
+                # 关闭存储连接（主要是sftp情况save后需要关闭连接）
+                storage.close()
                 # 清理本地文件和临时目录
-                clean_local_files(temp_dir)
+                shutil.rmtree(temp_dir)
 
     def pre_count_check(self, workflow):
         """
@@ -239,15 +241,6 @@ def save_to_format_file(
     with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         zipf.write(file_path, os.path.basename(file_path))
     return zip_file_name
-
-
-def clean_local_files(temp_dir):
-    """
-    清理本地临时文件，删除临时目录及其内容。
-    :param temp_dir: 临时目录路径
-    """
-    shutil.rmtree(temp_dir)
-
 
 def datetime_serializer(obj):
     """
@@ -432,7 +425,7 @@ def offline_file_download(request):
                         {"error": f"文件下载失败：请联系管理员。"}, status=500
                     )
 
-            elif storage_type in ["oss"]:
+            elif storage_type in ["s3c", "azure"]:
                 try:
                     # 云对象存储生成带有效期的临时下载URL
                     presigned_url = storage.url(file_name)
