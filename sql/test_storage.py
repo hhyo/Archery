@@ -92,7 +92,6 @@ class TestDynamicStorage(unittest.TestCase):
             ),
         ]
     )
-
     def test_storage_initialization(self, storage_type, storage_class, expected_kwargs):
         """参数化测试存储后端初始化"""
         config_dict = getattr(self, f"{storage_type}_config")
@@ -116,7 +115,6 @@ class TestDynamicStorage(unittest.TestCase):
             ("size", "test.txt", None),
         ]
     )
-
     def test_method_proxying(self, method, filename, content):
         """测试方法代理到底层存储"""
         mock_storage = MagicMock()
