@@ -2,11 +2,7 @@ from django.core.files.storage import FileSystemStorage
 from storages.backends.s3boto3 import S3Boto3Storage
 from storages.backends.azure_storage import AzureStorage
 from storages.backends.sftpstorage import SFTPStorage
-from django.conf import settings
-import os
-import re
 from sql.models import Config
-from django.core.cache import cache
 
 
 def get_sys_config():
@@ -36,22 +32,16 @@ class DynamicStorage:
         self.sftp_host = self.config.get("sftp_host", "")
         self.sftp_user = self.config.get("sftp_user", "")
         self.sftp_password = self.config.get("sftp_password", "")
-        self.sftp_port = int(self.config.get("sftp_port", 22))
+        self.sftp_port = self.config.get("sftp_port", "")
         self.sftp_path = self.config.get("sftp_path", "")
 
-        # OSS 存储相关配置信息
-        self.oss_access_key_id = self.config.get("oss_access_key_id", "")
-        self.oss_access_key_secret = self.config.get("oss_access_key_secret", "")
-        self.oss_endpoint = self.config.get("oss_endpoint", "")
-        self.oss_bucket_name = self.config.get("oss_bucket_name", "")
-        self.oss_path = self.config.get("oss_path", "")
-
-        # AWS S3 存储相关配置信息
-        self.s3_access_key = self.config.get("s3_access_key", "")
-        self.s3_secret_key = self.config.get("s3_secret_key", "")
-        self.s3_bucket = self.config.get("s3_bucket", "")
-        self.s3_region = self.config.get("s3_region", "")
-        self.s3_path = self.config.get("s3_path", "")
+        # S3 Compatible 存储相关配置信息
+        self.s3c_access_key_id = self.config.get("s3c_access_key_id", "")
+        self.s3c_access_key_secret = self.config.get("s3c_access_key_secret", "")
+        self.s3c_endpoint = self.config.get("s3c_endpoint", "")
+        self.s3c_bucket_name = self.config.get("s3c_bucket_name", "")
+        self.s3c_region = self.config.get("s3c_region", "")
+        self.s3c_path = self.config.get("s3c_path", "")
 
         # Azure Blob 存储相关配置信息
         self.azure_account_name = self.config.get("azure_account_name", "")
@@ -61,13 +51,24 @@ class DynamicStorage:
 
         self.storage = self._init_storage()
 
+        self.open = self.storage.open
+        self.exists = self.storage.exists
+        self.size = self.storage.size
+        self.delete = self.storage.delete
+        self.url = self.storage.url
+        self.save = self.storage.save
+
+        if hasattr(self.storage, 'close'):
+            self.close = self.storage.close
+        else:
+            self.close = lambda: None
+
     def _init_storage(self):
         """根据配置初始化存储后端"""
         storage_backends = {
             "local": self._init_local_storage,
             "sftp": self._init_sftp_storage,
-            "oss": self._init_oss_storage,
-            "s3": self._init_s3_storage,
+            "s3c": self._init_s3c_storage,
             "azure": self._init_azure_storage,
         }
 
@@ -93,26 +94,23 @@ class DynamicStorage:
             root_path=self.sftp_path,
         )
 
-    def _init_oss_storage(self):
-        # 阿里云OSS 使用 S3 兼容接口，经测试，OSS的endpoint只能使用http://，否则会报aws-chunked encoding is not supported with the specified x-amz-content-sha256 value相关错误
+    def _init_s3c_storage(self):
+        """
+        s3c兼容存储
+        阿里云OSS经测试
+            addressing_style必须为virtual，否则无法连接，
+            endpoint只能使用http://，否则save文件会报aws-chunked encoding is not supported with the specified x-amz-content-sha256 value相关错误
+        """
+
         return S3Boto3Storage(
-            access_key=self.oss_access_key_id,
-            secret_key=self.oss_access_key_secret,
-            bucket_name=self.oss_bucket_name,
-            location=self.oss_path,
-            endpoint_url=self.oss_endpoint,
+            access_key=self.s3c_access_key_id,
+            secret_key=self.s3c_access_key_secret,
+            bucket_name=self.s3c_bucket_name,
+            region_name=self.s3c_region,
+            endpoint_url=self.s3c_endpoint,
+            location=self.s3c_path,
             file_overwrite=False,
             addressing_style="virtual",
-        )
-
-    def _init_s3_storage(self):
-        return S3Boto3Storage(
-            access_key=self.s3_access_key,
-            secret_key=self.s3_secret_key,
-            bucket_name=self.s3_bucket,
-            region_name=self.s3_region,
-            location=self.s3_path,
-            file_overwrite=False,
         )
 
     def _init_azure_storage(self):
@@ -123,63 +121,48 @@ class DynamicStorage:
             location=self.azure_path,
         )
 
-    # 代理存储方法
-    def save(self, name, content):
-        if self.storage_type == "sftp":
-            with self.storage as s:  # 参考官方文档SFTPStorage 使用with as确保SFTP底层ssh连接关闭。
-                return s.save(name, content)
-        else:
-            return self.storage.save(name, content)
-
-    def open(self, name, mode="rb"):
-        return self.storage.open(name, mode)
-
-    def delete(self, name):
-        return self.storage.delete(name)
-
-    def exists(self, name):
-        return self.storage.exists(name)
-
-    def size(self, name):
-        return self.storage.size(name)
-
-    def close(self):
-        if hasattr(self.storage, "close"):
-            return self.storage.close()
-
-    def url(self, name):
-        if hasattr(self.storage, "url"):
-            return self.storage.url(name)
-        return f"/download/{name}"
-
     def check_connection(self):
-        """测试存储连接是否有效"""
+        """测试存储连接是否有效，返回 (状态, 错误信息)"""
+        # 本地存储默认连接有效，无需测试
+        if self.storage_type == "local":
+            return True, "本地存储连接成功"
+
         connection_checks = {
             "sftp": self._check_sftp_connection,
-            "oss": self._check_oss_s3_connection,
-            "s3": self._check_oss_s3_connection,
+            "s3c": self._check_s3c_connection,
             "azure": self._check_azure_connection,
         }
 
         check_func = connection_checks.get(self.storage_type)
         if check_func:
             return check_func()
-        # 本地存储默认连接有效
-        return True
+
+        # 不支持的存储类型
+        return False, f"不支持的存储类型: {self.storage_type}"
 
     def _check_sftp_connection(self):
-        with self.storage as s:
-            s.listdir(".")
-        return True
+        """检查 SFTP 连接"""
+        try:
+            with self.storage as s:
+                s.listdir(".")
+            return True, "SFTP 连接成功"
+        except Exception as e:
+            return False, f"SFTP 连接失败: {str(e)}"
 
-    def _check_oss_s3_connection(self):
-        client = self.storage.connection.meta.client
-        client.head_bucket(Bucket=self.storage.bucket_name)
-        return True
+    def _check_s3c_connection(self):
+        """检查 S3 兼容存储连接"""
+        try:
+            client = self.storage.connection.meta.client
+            client.head_bucket(Bucket=self.storage.bucket_name)
+            return True, "S3 存储连接成功"
+        except Exception as e:
+            return False, f"S3 存储连接失败: {str(e)}"
 
     def _check_azure_connection(self):
-        container_client = self.storage.client.get_container_client(
-            self.storage.azure_container
-        )
-        container_client.get_container_properties()
-        return True
+        """检查 Azure Blob 存储连接"""
+        try:
+            container_client = self.storage.client
+            container_client.get_container_properties()
+            return True, "Azure Blob 存储连接成功"
+        except Exception as e:
+            return False, f"Azure Blob 存储连接失败: {str(e)}"

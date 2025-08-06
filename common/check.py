@@ -158,16 +158,12 @@ def file_storage_connect(request):
         "sftp_user": request.POST.get("sftp_user", ""),
         "sftp_password": request.POST.get("sftp_password", ""),
         "sftp_path": request.POST.get("sftp_path", ""),
-        "oss_access_key_id": request.POST.get("access_key_id", ""),
-        "oss_access_key_secret": request.POST.get("access_key_secret", ""),
-        "oss_endpoint": request.POST.get("endpoint", ""),
-        "oss_bucket_name": request.POST.get("bucket_name", ""),
-        "oss_path": request.POST.get("oss_path", ""),
-        "s3_access_key": request.POST.get("s3_access_key", ""),
-        "s3_secret_key": request.POST.get("s3_secret_key", ""),
-        "s3_bucket": request.POST.get("s3_bucket", ""),
-        "s3_region": request.POST.get("s3_region", ""),
-        "s3_path": request.POST.get("s3_path", ""),
+        "s3c_access_key_id": request.POST.get("s3c_access_key_id", ""),
+        "s3c_access_key_secret": request.POST.get("s3c_access_key_secret", ""),
+        "s3c_endpoint": request.POST.get("s3c_endpoint", ""),
+        "s3c_bucket_name": request.POST.get("s3c_bucket_name", ""),
+        "s3c_region": request.POST.get("s3c_region", ""),
+        "s3c_path": request.POST.get("s3c_path", ""),
         "azure_account_name": request.POST.get("azure_account_name", ""),
         "azure_account_key": request.POST.get("azure_account_key", ""),
         "azure_container": request.POST.get("azure_container", ""),
@@ -177,11 +173,21 @@ def file_storage_connect(request):
     try:
         # 使用统一接口测试连接
         storage = DynamicStorage(config_dict=config_dict)
-        storage.check_connection()
+        success, message = storage.check_connection()
+
+        if not success:
+            result["status"] = 1
+            result["msg"] = "存储连接测试失败"
+            # 记录详细错误信息到日志
+            logging.error(f"存储连接测试失败: {message}")
+        else:
+            # 记录成功信息到日志
+            logging.info(f"存储连接测试成功: {message}")
 
     except Exception as e:
         result["status"] = 1
-        result["msg"] = f"连接测试失败: {str(e)}"
-        logging.error(f"存储连接测试异常: {e}", exc_info=True)
+        result["msg"] = "存储连接测试异常"
+        error_msg = f"连接测试异常: {str(e)}"
+        logging.error(error_msg, exc_info=True)
 
     return HttpResponse(json.dumps(result), content_type="application/json")
