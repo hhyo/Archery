@@ -58,7 +58,7 @@ class DynamicStorage:
         self.url = self.storage.url
         self.save = self.storage.save
 
-        if hasattr(self.storage, 'close'):
+        if hasattr(self.storage, "close"):
             self.close = self.storage.close
         else:
             self.close = lambda: None

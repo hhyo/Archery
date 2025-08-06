@@ -179,10 +179,12 @@ def file_storage_connect(request):
             result["status"] = 1
             result["msg"] = "存储连接测试失败"
             # 记录详细错误信息到日志
-            logging.error(f"存储连接测试失败: {message}")
+            logging.error(f"存储连接测试失败")
+            #logging.error(f"存储连接测试失败: {message}")
         else:
             # 记录成功信息到日志
-            logging.info(f"存储连接测试成功: {message}")
+            logging.info(f"存储连接测试成功")
+            #logging.info(f"存储连接测试成功: {message}")
 
     except Exception as e:
         result["status"] = 1

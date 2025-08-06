@@ -43,44 +43,63 @@ class TestDynamicStorage(unittest.TestCase):
             "azure_path": "azure-data/",
         }
 
-    @parameterized.expand([
-        ("local", "FileSystemStorage", {
-            "location": "/tmp/files/",
-            "base_url": "/tmp/files/",
-        }),
-        ("sftp", "SFTPStorage", {
-            "host": "sftp.example.com",
-            "params": {
-                "username": "user",
-                "password": "pass",
-                "port": 22,
-            },
-            "root_path": "/uploads/",
-        }),
-        ("s3c", "S3Boto3Storage", {
-            "access_key": "AKIA...",
-            "secret_key": "secret",
-            "bucket_name": "my-bucket",
-            "region_name": "us-east-1",
-            "endpoint_url": "http://s3.example.com",
-            "location": "data/",
-            "file_overwrite": False,
-            "addressing_style": "virtual",
-        }),
-        ("azure", "AzureStorage", {
-            "account_name": "myaccount",
-            "account_key": "azurekey",
-            "azure_container": "container",
-            "location": "azure-data/",
-        }),
-    ])
+    @parameterized.expand(
+        [
+            (
+                "local",
+                "FileSystemStorage",
+                {
+                    "location": "/tmp/files/",
+                    "base_url": "/tmp/files/",
+                },
+            ),
+            (
+                "sftp",
+                "SFTPStorage",
+                {
+                    "host": "sftp.example.com",
+                    "params": {
+                        "username": "user",
+                        "password": "pass",
+                        "port": 22,
+                    },
+                    "root_path": "/uploads/",
+                },
+            ),
+            (
+                "s3c",
+                "S3Boto3Storage",
+                {
+                    "access_key": "AKIA...",
+                    "secret_key": "secret",
+                    "bucket_name": "my-bucket",
+                    "region_name": "us-east-1",
+                    "endpoint_url": "http://s3.example.com",
+                    "location": "data/",
+                    "file_overwrite": False,
+                    "addressing_style": "virtual",
+                },
+            ),
+            (
+                "azure",
+                "AzureStorage",
+                {
+                    "account_name": "myaccount",
+                    "account_key": "azurekey",
+                    "azure_container": "container",
+                    "location": "azure-data/",
+                },
+            ),
+        ]
+    )
+
     def test_storage_initialization(self, storage_type, storage_class, expected_kwargs):
         """参数化测试存储后端初始化"""
         config_dict = getattr(self, f"{storage_type}_config")
 
         with patch(f"sql.storage.{storage_class}") as mock_storage:
             DynamicStorage(config_dict=config_dict)
-            
+
             # 验证正确的存储类被调用
             mock_storage.assert_called_once()
 
@@ -88,13 +107,15 @@ class TestDynamicStorage(unittest.TestCase):
             actual_kwargs = mock_storage.call_args[1]
             self.assertDictEqual(actual_kwargs, expected_kwargs)
 
-    @parameterized.expand([
-        ("save", "test.txt", "content"),
-        ("open", "test.txt", "rb"),
-        ("delete", "test.txt", None),
-        ("exists", "test.txt", None),
-        ("size", "test.txt", None),
-    ])
+    @parameterized.expand(
+        [
+            ("save", "test.txt", "content"),
+            ("open", "test.txt", "rb"),
+            ("delete", "test.txt", None),
+            ("exists", "test.txt", None),
+            ("size", "test.txt", None),
+        ]
+    )
 
     def test_method_proxying(self, method, filename, content):
         """测试方法代理到底层存储"""
@@ -122,7 +143,9 @@ class TestDynamicStorage(unittest.TestCase):
         mock_storage_with_close = MagicMock()
         mock_storage_with_close.close = MagicMock()
 
-        with patch.object(DynamicStorage, "_init_storage", return_value=mock_storage_with_close):
+        with patch.object(
+            DynamicStorage, "_init_storage", return_value=mock_storage_with_close
+        ):
             storage = DynamicStorage(config_dict=self.sftp_config)
             storage.close()
             mock_storage_with_close.close.assert_called_once()
@@ -131,7 +154,9 @@ class TestDynamicStorage(unittest.TestCase):
         mock_storage_without_close = MagicMock()
         delattr(mock_storage_without_close, "close")
 
-        with patch.object(DynamicStorage, "_init_storage", return_value=mock_storage_without_close):
+        with patch.object(
+            DynamicStorage, "_init_storage", return_value=mock_storage_without_close
+        ):
             storage = DynamicStorage(config_dict=self.local_config)
             try:
                 storage.close()  # 不应报错
