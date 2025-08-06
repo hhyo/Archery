@@ -106,7 +106,7 @@ class DynamicStorage:
             access_key=self.s3c_access_key_id,
             secret_key=self.s3c_access_key_secret,
             bucket_name=self.s3c_bucket_name,
-            region_name=self.s3c_region,
+            **({"region_name": self.s3c_region} if self.s3c_region else {}),
             endpoint_url=self.s3c_endpoint,
             location=self.s3c_path,
             file_overwrite=False,
