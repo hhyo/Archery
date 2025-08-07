@@ -1,8 +1,12 @@
+import logging
 from django.core.files.storage import FileSystemStorage
 from storages.backends.s3boto3 import S3Boto3Storage
 from storages.backends.azure_storage import AzureStorage
 from storages.backends.sftpstorage import SFTPStorage
 from sql.models import Config
+import json
+
+logger = logging.getLogger("default")
 
 
 def get_sys_config():
@@ -34,6 +38,7 @@ class DynamicStorage:
         self.sftp_password = self.config.get("sftp_password", "")
         self.sftp_port = self.config.get("sftp_port", "")
         self.sftp_path = self.config.get("sftp_path", "")
+        self.sftp_custom_params_str = self.config.get("sftp_custom_params", "")
 
         # S3 Compatible 存储相关配置信息
         self.s3c_access_key_id = self.config.get("s3c_access_key_id", "")
@@ -42,12 +47,14 @@ class DynamicStorage:
         self.s3c_bucket_name = self.config.get("s3c_bucket_name", "")
         self.s3c_region = self.config.get("s3c_region", "")
         self.s3c_path = self.config.get("s3c_path", "")
+        self.s3c_custom_params_str = self.config.get("s3c_custom_params", "")
 
         # Azure Blob 存储相关配置信息
         self.azure_account_name = self.config.get("azure_account_name", "")
         self.azure_account_key = self.config.get("azure_account_key", "")
         self.azure_container = self.config.get("azure_container", "")
         self.azure_path = self.config.get("azure_path", "")
+        self.azure_custom_params_str = self.config.get("azure_custom_params", "")
 
         self.storage = self._init_storage()
 
@@ -78,21 +85,40 @@ class DynamicStorage:
         raise ValueError(f"不支持的存储类型: {self.storage_type}")
 
     def _init_local_storage(self):
-        return FileSystemStorage(
-            location=str(self.local_path),
-            base_url=f"{self.local_path}",
-        )
+        # 基础参数
+        local_params = {
+            "location": str(self.local_path),
+            "base_url": f"{self.local_path}",
+        }
+
+        return FileSystemStorage(**local_params)
 
     def _init_sftp_storage(self):
-        return SFTPStorage(
-            host=self.sftp_host,
-            params={
+        # 基础参数
+        sftp_params = {
+            "host": self.sftp_host,
+            "params": {
                 "username": self.sftp_user,
                 "password": self.sftp_password,
                 "port": self.sftp_port,
             },
-            root_path=self.sftp_path,
-        )
+            "root_path": self.sftp_path,
+        }
+
+        if self.sftp_custom_params_str.strip():
+            try:
+                self.sftp_custom_params = json.loads(self.sftp_custom_params_str)
+            except json.JSONDecodeError:
+                # 无效 JSON 时使用空字典
+                self.sftp_custom_params = {}
+        else:
+            # 空字符串直接设为空字典
+            self.sftp_custom_params = {}
+
+        # 添加自定义参数
+        sftp_params.update(self.sftp_custom_params)
+
+        return SFTPStorage(**sftp_params)
 
     def _init_s3c_storage(self):
         """
@@ -102,24 +128,55 @@ class DynamicStorage:
             endpoint只能使用http://，否则save文件会报aws-chunked encoding is not supported with the specified x-amz-content-sha256 value相关错误
         """
 
-        return S3Boto3Storage(
-            access_key=self.s3c_access_key_id,
-            secret_key=self.s3c_access_key_secret,
-            bucket_name=self.s3c_bucket_name,
+        # 基础参数
+        s3c_params = {
+            "access_key": self.s3c_access_key_id,
+            "secret_key": self.s3c_access_key_secret,
+            "bucket_name": self.s3c_bucket_name,
             **({"region_name": self.s3c_region} if self.s3c_region else {}),
-            endpoint_url=self.s3c_endpoint,
-            location=self.s3c_path,
-            file_overwrite=False,
-            addressing_style="virtual",
-        )
+            "endpoint_url": self.s3c_endpoint,
+            "location": self.s3c_path,
+            "file_overwrite": False,
+        }
+
+        if self.s3c_custom_params_str.strip():
+            try:
+                self.s3c_custom_params = json.loads(self.s3c_custom_params_str)
+            except json.JSONDecodeError:
+                # 无效 JSON 时使用空字典
+                self.s3c_custom_params = {}
+        else:
+            # 空字符串直接设为空字典
+            self.s3c_custom_params = {}
+
+        # 添加自定义参数
+        s3c_params.update(self.s3c_custom_params)
+
+        return S3Boto3Storage(**s3c_params)
 
     def _init_azure_storage(self):
-        return AzureStorage(
-            account_name=self.azure_account_name,
-            account_key=self.azure_account_key,
-            azure_container=self.azure_container,
-            location=self.azure_path,
-        )
+        # 基础参数
+        azure_params = {
+            "account_name": self.azure_account_name,
+            "account_key": self.azure_account_key,
+            "azure_container": self.azure_container,
+            "location": self.azure_path,
+        }
+
+        if self.azure_custom_params_str.strip():
+            try:
+                self.azure_custom_params = json.loads(self.azure_custom_params_str)
+            except json.JSONDecodeError:
+                # 无效 JSON 时使用空字典
+                self.azure_custom_params = {}
+        else:
+            # 空字符串直接设为空字典
+            self.azure_custom_params = {}
+
+        # 添加自定义参数
+        azure_params.update(self.azure_custom_params)
+
+        return AzureStorage(**azure_params)
 
     def check_connection(self):
         """测试存储连接是否有效，返回 (状态, 错误信息)"""

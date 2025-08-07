@@ -495,6 +495,16 @@
                                                placeholder="SFTP服务存储路径">
                                         </div>
                                     </div>
+                                    <div class="form-group">
+                                        <label for="sftp-custom-params" class="col-sm-4 control-label">自定义参数</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="sftp_custom_params"
+                                                   key="sftp_custom_params"
+                                                   value="{{ config.sftp_custom_params }}"
+                                                   placeholder="输入JSON格式的自定义参数，例如：{&quot;key&quot;: &quot;value&quot;}">
+                                        </div>
+                                    </div>
                                 </div>
                                 <!-- S3兼容的后端存储配置 -->
                                 <div id="storage-s3c" class="storage-config" style="display: none;">
@@ -552,6 +562,16 @@
                                                placeholder="存储路径，开头没有/">
                                         </div>
                                     </div>
+                                    <div class="form-group">
+                                        <label for="s3c-custom-params" class="col-sm-4 control-label">自定义参数</label>
+                                        <div class="col-sm-5">
+                                            <input type="textarea" class="form-control"
+                                                   id="s3c_custom_params"
+                                                   key="s3c_custom_params"
+                                                   value="{{ config.s3c_custom_params }}"
+                                                   placeholder="输入JSON格式的自定义参数，例如：{&quot;key&quot;: &quot;value&quot;}">
+                                        </div>
+                                    </div>
                                 </div>
                                 <!-- Azure配置 -->
                                 <div id="storage-azure" class="storage-config" style="display: none;">
@@ -589,6 +609,16 @@
                                                key="azure_path"
                                                value="{{ config.azure_path }}"
                                                placeholder="Azure 存储路径，开头没有 / ，如存储到tmp目录: tmp/">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="azure-custom-params" class="col-sm-4 control-label">自定义参数</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="azure_custom_params"
+                                                   key="azure_custom_params"
+                                                   value="{{ config.azure_custom_params }}"
+                                                   placeholder="输入JSON格式的自定义参数，例如：{&quot;key&quot;: &quot;value&quot;}">
                                         </div>
                                     </div>
                                 </div>
@@ -1834,6 +1864,7 @@
                     sftp_password: $("#sftp_password").val(),
                     sftp_port: $("#sftp_port").val(),
                     sftp_path: $("#sftp_path").val(),
+                    sftp_custom_params: $("#sftp_custom_params").val(),
                 }
             } else if (SqlfileStorageType === 's3c') {
                 var formData = {
@@ -1845,6 +1876,7 @@
                     s3c_bucket_name: $("#s3c_bucket_name").val(),
                     s3c_region: $("#s3c_region").val(),
                     s3c_path: $("#s3c_path").val(),
+                    s3c_custom_params: $("#s3c_custom_params").val(),
                 }
             } else if (SqlfileStorageType === 'local') {
                 var formData = {
@@ -1859,6 +1891,7 @@
                     azure_account_key: $("#azure_account_key").val(),
                     azure_container: $("#azure_container").val(),
                     azure_path: $("#azure_path").val(),
+                    azure_custom_params: $("#azure_custom_params").val(),
                 }
             }
             $.ajax({

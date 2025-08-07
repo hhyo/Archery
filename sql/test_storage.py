@@ -2,12 +2,20 @@ from unittest.mock import patch, MagicMock, call
 import unittest
 from parameterized import parameterized
 from sql.storage import DynamicStorage
-
+import json
 
 class TestDynamicStorage(unittest.TestCase):
     """
     测试 DynamicStorage 类的行为
     """
+
+    # 存储类型到类的映射
+    storage_classes = {
+        "local": "FileSystemStorage",
+        "sftp": "SFTPStorage",
+        "s3c": "S3Boto3Storage",
+        "azure": "AzureStorage",
+    }
 
     def setUp(self):
         """通用配置数据"""
@@ -77,7 +85,6 @@ class TestDynamicStorage(unittest.TestCase):
                     "endpoint_url": "http://s3.example.com",
                     "location": "data/",
                     "file_overwrite": False,
-                    "addressing_style": "virtual",
                 },
             ),
             (
@@ -199,21 +206,27 @@ class TestDynamicStorage(unittest.TestCase):
     def test_check_connection_sftp(self):
         """测试 SFTP 连接检查"""
         with patch("sql.storage.SFTPStorage") as mock_sftp_class:
+            # 完整的上下文管理器模拟
+            mock_context = MagicMock()
+            mock_context.listdir.return_value = ([], [])
+            
             mock_sftp_instance = MagicMock()
+            mock_sftp_instance.__enter__.return_value = mock_context
+            mock_sftp_instance.__exit__.return_value = None
             mock_sftp_class.return_value = mock_sftp_instance
 
             # 成功场景
             storage = DynamicStorage(config_dict=self.sftp_config)
             success, msg = storage.check_connection()
-            mock_sftp_instance.__enter__().listdir.assert_called_once_with(".")
+            mock_context.listdir.assert_called_once_with(".")
             self.assertTrue(success)
             self.assertEqual(msg, "SFTP 连接成功")
 
             # 失败场景
-            mock_sftp_instance.__enter__().listdir.side_effect = Exception("连接失败")
+            mock_context.listdir.side_effect = Exception("SFTP连接失败")
             success, msg = storage.check_connection()
             self.assertFalse(success)
-            self.assertIn("连接失败", msg)
+            self.assertIn("SFTP连接失败", msg)
 
     def test_check_connection_s3c(self):
         """测试 S3 兼容存储连接检查"""
@@ -261,3 +274,70 @@ class TestDynamicStorage(unittest.TestCase):
             success, msg = storage.check_connection()
             self.assertFalse(success)
             self.assertIn("容器不存在", msg)
+
+    @parameterized.expand(
+        [
+            ("sftp", "sftp_custom_params", '{"timeout": 30}'),
+            ("s3c", "s3c_custom_params", '{"addressing_style": "virtual"}'),
+            ("azure", "azure_custom_params", '{"max_connections": 10}'),
+        ]
+    )
+    def test_custom_json_params(self, storage_type, param_name, json_value):
+        """自定义JSON参数处理测试"""
+        config_dict = getattr(self, f"{storage_type}_config").copy()
+        config_dict[param_name] = json_value
+
+        with patch(f"sql.storage.{self.storage_classes[storage_type]}") as mock_storage:
+            DynamicStorage(config_dict=config_dict)
+            call_args = mock_storage.call_args[1]
+            expected_value = json.loads(json_value)
+            for key, value in expected_value.items():
+                self.assertEqual(call_args[key], value)
+
+    @parameterized.expand(
+        [
+            ("sftp", "sftp_custom_params"),
+            ("s3c", "s3c_custom_params"),
+            ("azure", "azure_custom_params"),
+        ]
+    )
+    def test_invalid_json_params(self, storage_type, param_name):
+        """测试无效JSON参数处理"""
+        config_dict = getattr(self, f"{storage_type}_config").copy()
+        config_dict[param_name] = "invalid{json"
+
+        with patch(f"sql.storage.{self.storage_classes[storage_type]}") as mock_storage:
+            try:
+                storage = DynamicStorage(config_dict=config_dict)
+                # 验证基础参数仍然正确设置
+                if storage_type == "sftp":
+                    self.assertEqual(storage.sftp_path, self.sftp_config["sftp_path"])
+                elif storage_type == "s3c":
+                    self.assertEqual(storage.s3c_bucket_name, self.s3c_config["s3c_bucket_name"])
+                else:
+                    self.assertEqual(storage.azure_container, self.azure_config["azure_container"])
+            except json.JSONDecodeError:
+                self.fail("Invalid JSON should be handled gracefully")
+
+    @parameterized.expand(
+        [
+            ("sftp", "sftp_password", ""),
+            ("s3c", "s3c_access_key_secret", ""),
+            ("azure", "azure_account_key", ""),
+        ]
+    )
+    def test_empty_config_values(self, storage_type, param_name, empty_value):
+        """测试空配置参数处理"""
+        config_dict = getattr(self, f"{storage_type}_config").copy()
+        config_dict[param_name] = empty_value
+
+        with patch(f"sql.storage.{self.storage_classes[storage_type]}") as mock_storage:
+            DynamicStorage(config_dict=config_dict)
+            call_args = mock_storage.call_args[1]
+
+            if storage_type == "sftp":
+                self.assertEqual(call_args["params"]["password"], "")
+            elif storage_type == "s3c":
+                self.assertEqual(call_args["secret_key"], "")
+            else:
+                self.assertEqual(call_args["account_key"], "")
