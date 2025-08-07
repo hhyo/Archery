@@ -46,4 +46,10 @@ httpx
 OpenAI
 elasticsearch==8.14.0
 opensearch_py==2.6.0
+dmPython==2.5.*
+# Dameng Python driver - assuming it can be installed from the local path
+# This might require the dmPython directory to be a valid Python package.
+# If setup.py is in python/dmPython, pip install -e python/dmPython might work.
+# For now, just listing it. Actual installation might need specific commands.
+# dmPython # Placeholder, actual installation will be via setup.py
 

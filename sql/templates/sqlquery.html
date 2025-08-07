@@ -1047,6 +1047,11 @@
                 if (sql === 'explain') {
                     sqlContent = 'explain ' + sqlContent
                 }
+            } else if (optgroup === "Dameng") {
+                //查看执行计划
+                if (sql === 'explain') {
+                    sqlContent = 'explain for ' + sqlContent
+                }
             }
             //提交请求
             $.ajax({
