@@ -150,6 +150,18 @@ def file_storage_connect(request):
         result["msg"] = f"参数类型错误: {str(e)}"
         return HttpResponse(json.dumps(result), content_type="application/json")
 
+    # 根据存储类型获取对应的自定义参数
+    custom_param_key = f"{storage_type}_custom_params"
+    custom_params_str = request.POST.get(f"{custom_param_key}", "").strip()
+    custom_params = {}
+    if custom_params_str:
+        try:
+            custom_params = json.loads(custom_params_str)
+        except json.JSONDecodeError:
+            result["status"] = 1
+            result["msg"] = "自定义参数格式错误，请输入有效的JSON格式"
+            return HttpResponse(json.dumps(result), content_type="application/json")
+
     # 构建配置字典
     config_dict = {
         "storage_type": storage_type,
@@ -158,16 +170,19 @@ def file_storage_connect(request):
         "sftp_user": request.POST.get("sftp_user", ""),
         "sftp_password": request.POST.get("sftp_password", ""),
         "sftp_path": request.POST.get("sftp_path", ""),
+        "sftp_custom_params": request.POST.get("sftp_custom_params", ""),
         "s3c_access_key_id": request.POST.get("s3c_access_key_id", ""),
         "s3c_access_key_secret": request.POST.get("s3c_access_key_secret", ""),
         "s3c_endpoint": request.POST.get("s3c_endpoint", ""),
         "s3c_bucket_name": request.POST.get("s3c_bucket_name", ""),
         "s3c_region": request.POST.get("s3c_region", ""),
         "s3c_path": request.POST.get("s3c_path", ""),
+        "s3c_custom_params": request.POST.get("s3c_custom_params", ""),
         "azure_account_name": request.POST.get("azure_account_name", ""),
         "azure_account_key": request.POST.get("azure_account_key", ""),
         "azure_container": request.POST.get("azure_container", ""),
         "azure_path": request.POST.get("azure_path", ""),
+        "azure_custom_params": request.POST.get("azure_custom_params", ""),
     }
 
     try:
