@@ -4,6 +4,7 @@ from parameterized import parameterized
 from sql.storage import DynamicStorage
 import json
 
+
 class TestDynamicStorage(unittest.TestCase):
     """
     测试 DynamicStorage 类的行为
@@ -209,7 +210,7 @@ class TestDynamicStorage(unittest.TestCase):
             # 完整的上下文管理器模拟
             mock_context = MagicMock()
             mock_context.listdir.return_value = ([], [])
-            
+
             mock_sftp_instance = MagicMock()
             mock_sftp_instance.__enter__.return_value = mock_context
             mock_sftp_instance.__exit__.return_value = None
@@ -313,9 +314,13 @@ class TestDynamicStorage(unittest.TestCase):
                 if storage_type == "sftp":
                     self.assertEqual(storage.sftp_path, self.sftp_config["sftp_path"])
                 elif storage_type == "s3c":
-                    self.assertEqual(storage.s3c_bucket_name, self.s3c_config["s3c_bucket_name"])
+                    self.assertEqual(
+                        storage.s3c_bucket_name, self.s3c_config["s3c_bucket_name"]
+                    )
                 else:
-                    self.assertEqual(storage.azure_container, self.azure_config["azure_container"])
+                    self.assertEqual(
+                        storage.azure_container, self.azure_config["azure_container"]
+                    )
             except json.JSONDecodeError:
                 self.fail("Invalid JSON should be handled gracefully")
 
