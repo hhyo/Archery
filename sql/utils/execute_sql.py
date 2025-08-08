@@ -42,7 +42,7 @@ def execute(workflow_id, user=None):
         operator_display=user.display if user else "系统",
     )
     execute_engine = get_engine(instance=workflow_detail.instance)
-    if workflow_detail.is_offline_export == "yes":
+    if workflow_detail.is_offline_export:
         return OffLineDownLoad().execute_offline_download(workflow=workflow_detail)
     else:
         return execute_engine.execute_workflow(workflow=workflow_detail)

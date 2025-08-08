@@ -264,6 +264,9 @@ class AuditV2:
         ):
             # 影响行数超规模, 需要人工审核
             return False
+        if self.workflow.is_offline_export:
+            # 数据导出工单, 不需要审核
+            return False
         return True
 
     def generate_audit_setting(self) -> AuditSetting:

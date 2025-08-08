@@ -374,16 +374,7 @@ def sqlquery(request):
     # 收藏语句
     user = request.user
     group_list = user_groups(user)
-    # 获取所有配置项
-    all_config = Config.objects.all().values("item", "value")
-    sys_config = {}
-    for items in all_config:
-        sys_config[items["item"]] = items["value"]
-    # 前端需要对 max_export_rows 进行判断,先进行变量的判断是否存在以及是否为空,默认值10000
-    max_export_rows_str = sys_config.get("max_export_rows", "10000")
-    sys_config["max_export_rows"] = (
-        int(max_export_rows_str) if max_export_rows_str else 10000
-    )
+    storage_type = SysConfig().get("storage_type")
 
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values(
         "id", "alias"
@@ -397,7 +388,7 @@ def sqlquery(request):
         "can_download": can_download,
         "engines": engine_map,
         "group_list": group_list,
-        "config": sys_config,
+        "storage_type": storage_type,
         "can_offline_download": can_offline_download,
     }
     return render(request, "sqlquery.html", context)
@@ -754,10 +745,8 @@ def sqlexportsubmit(request):
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values(
         "id", "alias"
     )
-    can_download = 1 if user.has_perm("sql.query_download") or user.is_superuser else 0
-    can_offline_download = (
-        1 if user.has_perm("sql.offline_download") or user.is_superuser else 0
-    )
+    can_download = user.has_perm("sql.query_download") or user.is_superuser
+    can_offline_download = user.has_perm("sql.offline_download") or user.is_superuser
     context = {
         "favorites": favorites,
         "can_download": can_download,

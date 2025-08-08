@@ -16,11 +16,12 @@ import pandas as pd
 from django.http import JsonResponse, FileResponse
 
 
-from sql.models import SqlWorkflow, AuditEntry, Config
+from sql.models import SqlWorkflow, AuditEntry
 from sql.engines import EngineBase
 from sql.engines.models import ReviewSet, ReviewResult
 from sql.storage import DynamicStorage
 from sql.engines import get_engine
+from common.config import SysConfig
 
 logger = logging.getLogger("default")
 
@@ -36,91 +37,90 @@ class OffLineDownLoad(EngineBase):
         :param workflow: 工单实例
         :return: 下载结果
         """
-        if workflow.is_offline_export == "yes":
-            # 创建一个临时目录用于存放文件
-            temp_dir = tempfile.mkdtemp()
-            # 获取系统配置
-            config = get_sys_config()
-            # 先进行 max_execution_time 变量的判断是否存在以及是否为空,默认值60
-            max_execution_time_str = config.get("max_export_rows", "60")
-            max_execution_time = (
-                int(max_execution_time_str) if max_execution_time_str else 60
-            )
-            # 获取前端提交的 SQL 和其他工单信息
-            full_sql = workflow.sqlworkflowcontent.sql_content
-            full_sql = sqlparse.format(full_sql, strip_comments=True)
-            full_sql = sqlparse.split(full_sql)[0]
-            sql = full_sql.strip()
-            instance = workflow.instance
-            execute_result = ReviewSet(full_sql=sql)
-            check_engine = get_engine(instance=instance)
-
-            storage = DynamicStorage()
-            start_time = time.time()
-
-            try:
-                # 执行 SQL 查询
-                results = check_engine.query(
-                    db_name=workflow.db_name,
-                    sql=sql,
-                    max_execution_time=max_execution_time * 1000,
+        if workflow.is_offline_export:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                # 获取系统配置
+                config = SysConfig()
+                # 先进行 max_execution_time 变量的判断是否存在以及是否为空,默认值60
+                max_execution_time_str = config.get("max_export_rows", "60")
+                max_execution_time = (
+                    int(max_execution_time_str) if max_execution_time_str else 60
                 )
-                if results.error:
-                    raise Exception(results.error)
-                if results:
-                    columns = results.column_list
-                    result = results.rows
-                    actual_rows = results.affected_rows
+                # 获取前端提交的 SQL 和其他工单信息
+                full_sql = workflow.sqlworkflowcontent.sql_content
+                full_sql = sqlparse.format(full_sql, strip_comments=True)
+                full_sql = sqlparse.split(full_sql)[0]
+                sql = full_sql.strip()
+                instance = workflow.instance
+                execute_result = ReviewSet(full_sql=sql)
+                check_engine = get_engine(instance=instance)
 
-                # 保存查询结果为 CSV or JSON or XML or XLSX or SQL 文件
-                get_format_type = workflow.export_format
-                file_name = save_to_format_file(
-                    get_format_type, result, workflow, columns, temp_dir
-                )
+                start_time = time.time()
 
-                # 将导出的文件保存到存储
-                tmp_file = os.path.join(temp_dir, file_name)
-                with open(tmp_file, "rb") as f:
-                    storage.save(file_name, f)
-
-                end_time = time.time()  # 记录结束时间
-                elapsed_time = round(end_time - start_time, 3)
-                execute_result.rows = [
-                    ReviewResult(
-                        stage="Executed",
-                        errlevel=0,
-                        stagestatus="执行正常",
-                        errormessage=f"保存文件: {file_name}",
-                        sql=full_sql,
-                        execute_time=elapsed_time,
-                        affected_rows=actual_rows,
+                try:
+                    # 执行 SQL 查询
+                    storage = DynamicStorage()
+                    results = check_engine.query(
+                        db_name=workflow.db_name,
+                        sql=sql,
+                        max_execution_time=max_execution_time * 1000,
                     )
-                ]
+                    if results.error:
+                        raise Exception(results.error)
+                    if results:
+                        columns = results.column_list
+                        result = results.rows
+                        actual_rows = results.affected_rows
 
-                change_workflow = SqlWorkflow.objects.get(id=workflow.id)
-                change_workflow.file_name = file_name
-                change_workflow.save()
-
-                return execute_result
-            except Exception as e:
-                # 返回工单执行失败的状态和错误信息
-                execute_result.rows = [
-                    ReviewResult(
-                        stage="Execute failed",
-                        error=1,
-                        errlevel=2,
-                        stagestatus="异常终止",
-                        errormessage=f"{e}",
-                        sql=full_sql,
+                    # 保存查询结果为 CSV or JSON or XML or XLSX or SQL 文件
+                    get_format_type = workflow.export_format
+                    file_name = save_to_format_file(
+                        get_format_type, result, workflow, columns, temp_dir
                     )
-                ]
-                execute_result.error = e
-                return execute_result
-            finally:
-                # 关闭存储连接（主要是sftp情况save后需要关闭连接）
-                storage.close()
-                # 清理本地文件和临时目录
-                shutil.rmtree(temp_dir)
+
+                    # 将导出的文件保存到存储
+                    tmp_file = os.path.join(temp_dir, file_name)
+                    with open(tmp_file, "rb") as f:
+                        storage.save(file_name, f)
+
+                    end_time = time.time()  # 记录结束时间
+                    elapsed_time = round(end_time - start_time, 3)
+                    execute_result.rows = [
+                        ReviewResult(
+                            stage="Executed",
+                            errlevel=0,
+                            stagestatus="执行正常",
+                            errormessage=f"保存文件: {file_name}",
+                            sql=full_sql,
+                            execute_time=elapsed_time,
+                            affected_rows=actual_rows,
+                        )
+                    ]
+
+                    change_workflow = SqlWorkflow.objects.get(id=workflow.id)
+                    change_workflow.file_name = file_name
+                    change_workflow.save()
+
+                    return execute_result
+                except Exception as e:
+                    # 返回工单执行失败的状态和错误信息
+                    execute_result.rows = [
+                        ReviewResult(
+                            stage="Execute failed",
+                            error=1,
+                            errlevel=2,
+                            stagestatus="异常终止",
+                            errormessage=f"{e}",
+                            sql=full_sql,
+                        )
+                    ]
+                    execute_result.error = e
+                    return execute_result
+                finally:
+                    # 关闭存储连接（主要是sftp情况save后需要关闭连接）
+                    storage.close()
+                    # 清理本地文件和临时目录
+                    shutil.rmtree(temp_dir)
 
     def pre_count_check(self, workflow):
         """
@@ -129,7 +129,7 @@ class OffLineDownLoad(EngineBase):
         :return: 检查结果字典
         """
         # 获取系统配置
-        config = get_sys_config()
+        config = SysConfig()
         # 获取前端提交的 SQL 和其他工单信息
         full_sql = workflow.sql_content
         full_sql = sqlparse.format(full_sql, strip_comments=True)
@@ -192,18 +192,6 @@ class OffLineDownLoad(EngineBase):
         return check_result
 
 
-def get_sys_config():
-    """
-    获取系统配置信息。
-    :return: 系统配置字典
-    """
-    all_config = Config.objects.all().values("item", "value")
-    sys_config = {}
-    for items in all_config:
-        sys_config[items["item"]] = items["value"]
-    return sys_config
-
-
 def save_to_format_file(
     format_type=None, result=None, workflow=None, columns=None, temp_dir=None
 ):
@@ -243,17 +231,6 @@ def save_to_format_file(
     return zip_file_name
 
 
-def datetime_serializer(obj):
-    """
-    自定义 JSON 序列化函数，用于处理 datetime 对象。
-    :param obj: 待序列化的对象
-    :return: 序列化后的字符串
-    """
-    if isinstance(obj, (datetime.date, datetime.datetime)):
-        return obj.isoformat()
-    raise TypeError("Type %s not serializable" % type(obj))
-
-
 def save_csv(file_path, result, columns):
     """
     保存CSV文件，将查询结果写入CSV文件。
@@ -284,7 +261,6 @@ def save_json(file_path, result, columns):
             [dict(zip(columns, row)) for row in result],
             json_file,
             indent=2,
-            default=datetime_serializer,
             ensure_ascii=False,
         )
 
@@ -399,8 +375,8 @@ def offline_file_download(request):
     workflow_id = request.GET.get("workflow_id", " ")
     action = "离线下载"
     extra_info = f"工单id：{workflow_id}，文件：{file_name}"
-    config = get_sys_config()
-    storage_type = config["storage_type"]
+    config = SysConfig()
+    storage_type = config.get("storage_type")
     storage = DynamicStorage()
 
     try:
@@ -422,6 +398,7 @@ def offline_file_download(request):
                     return response
                 except Exception as e:
                     extra_info = extra_info + f"，error:{str(e)}"
+                    logger.error(extra_info)
                     return JsonResponse(
                         {"error": f"文件下载失败：请联系管理员。"}, status=500
                     )
@@ -433,12 +410,14 @@ def offline_file_download(request):
                     return JsonResponse({"type": "redirect", "url": presigned_url})
                 except Exception as e:
                     extra_info = extra_info + f"，error:{str(e)}"
+                    logger.error(extra_info)
                     return JsonResponse(
                         {"error": f"文件下载失败：请联系管理员。"}, status=500
                     )
 
     except Exception as e:
         extra_info = extra_info + f"，error:{str(e)}"
+        logger.error(extra_info)
         return JsonResponse({"error": "内部错误，请联系管理员。"}, status=500)
 
     finally:

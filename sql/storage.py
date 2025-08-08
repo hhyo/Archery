@@ -3,18 +3,10 @@ from django.core.files.storage import FileSystemStorage
 from storages.backends.s3boto3 import S3Boto3Storage
 from storages.backends.azure_storage import AzureStorage
 from storages.backends.sftpstorage import SFTPStorage
-from sql.models import Config
+from common.config import SysConfig
 import json
 
 logger = logging.getLogger("default")
-
-
-def get_sys_config():
-    all_config = Config.objects.all().values("item", "value")
-    sys_config = {}
-    for items in all_config:
-        sys_config[items["item"]] = items["value"]
-    return sys_config
 
 
 class DynamicStorage:
@@ -24,7 +16,7 @@ class DynamicStorage:
         """根据存储服务进行文件的上传下载"""
 
         # 获取系统配置
-        self.config = config_dict or get_sys_config()
+        self.config = config_dict or SysConfig()
 
         # 存储类型
         self.storage_type = self.config.get("storage_type", "local")
