@@ -379,7 +379,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         try:
             user_instances(user, tag_codes=["can_write"]).get(id=instance.id)
         except instance.DoesNotExist:
-            if workflow_data["is_offline_export"] == "yes":
+            if workflow_data["is_offline_export"]:
                 pass
             else:
                 raise serializers.ValidationError({"errors": "你所在组未关联该实例！"})
@@ -388,7 +388,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         try:
             check_engine = get_engine(instance=instance)
             sql_export = OffLineDownLoad()
-            if workflow_data["is_offline_export"] == "yes":
+            if workflow_data["is_offline_export"]:
                 instance.sql_content = sql_content
                 instance.db_name = workflow_data["db_name"]
                 check_result = sql_export.pre_count_check(workflow=instance)
@@ -405,7 +405,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         )
         sys_config = SysConfig()
         if not sys_config.get("enable_backup_switch") and check_engine.auto_backup:
-            if workflow_data["is_offline_export"] == "yes":
+            if workflow_data["is_offline_export"]:
                 pass
             else:
                 is_backup = True

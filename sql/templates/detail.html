@@ -9,11 +9,11 @@
                href="{{ workflow_detail.demand_url }}">{{ workflow_detail.workflow_name }}</a>
         </h4>
         <!--只允许发起人提交其他实例-->
-        {% if user.username == workflow_detail.engineer and workflow_detail.is_offline_export != "yes" %}
+        {% if user.username == workflow_detail.engineer and not workflow_detail.is_offline_export %}
             <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
         {% endif %}
         {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
-            {% if workflow_detail.is_offline_export != "yes" %}
+            {% if not workflow_detail.is_offline_export %}
                 <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
             {% endif %}
         {% endif %}
@@ -227,7 +227,7 @@
             <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
         </form>
     {% endif %}
-    {% if workflow_detail.status == 'workflow_finish' and workflow_detail.is_offline_export == 'yes' %}
+    {% if workflow_detail.status == 'workflow_finish' and workflow_detail.is_offline_export %}
         <form id="form-download" class="form-horizontal">
             <button type="button" id="btnDownload" data-loading-text="下载中..."
                      class="btn btn-info">
@@ -258,7 +258,7 @@
         {% if user.username == workflow_detail.engineer %}
             <!--只允许发起人修改工单-->
             {% csrf_token %}
-            {% if workflow_detail.is_offline_export == 'yes' %}
+            {% if workflow_detail.is_offline_export %}
                 <!-- 离线导出工单跳转到导出提交页 -->
                 <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
                    href="/sqlexportsubmit/?source=resubmit">重新修改</a>
@@ -476,7 +476,7 @@
         // 执行确认
         $("#btnExecuteOnly").click(function () {
             if ("{{ workflow_detail.is_backup }}" === 'False' &&
-            "{{workflow_detail.is_offline_export}}" !== "yes") {
+            "{{workflow_detail.is_offline_export}}" === 0) {
                 var isContinue = confirm("该工单未选择备份，将不会自动备份数据，请确认是否立即执行？");
             } else {
                 var isContinue = confirm("请确认是否立即执行？");

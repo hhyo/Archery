@@ -466,7 +466,7 @@
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
             }
-            var isOfflineExport = $("#btn-submitsql").is(':hidden') ? "no" : "yes";
+            var isOfflineExport = $("#btn-submitsql").is(':hidden') ? 0 : 1;
             // 移除单行注释和多行注释后再统计语句数量
             let processedSql = sqlContent.replace(/--.*$/gm, ''); // 移除单行注释
             processedSql = processedSql.replace(/\/\*[\s\S]*?\*\//gm, ''); // 移除多行注释
@@ -508,7 +508,7 @@
             } else if (!trimmedSQL.startsWith("SELECT") && !trimmedSQL.startsWith("WITH")) {
                 alert("SQL必须是查询语句！");
                 return result = false;
-            } else if (isOfflineExport === "yes" && totalSqlCnt > 1) {
+            } else if (isOfflineExport === 1 && totalSqlCnt > 1) {
                 alert("检测到多个SQL语句，只能提交一个SQL，请选中要提交导出工单的SQL重试。");
                 return result = false;
             }
@@ -634,7 +634,7 @@
                         workflow: {
                             workflow_name: formData.workflow_name,
                             export_format: formData.export_format,
-                            is_offline_export: 'yes',
+                            is_offline_export: 1,
                             group_id: $("#group_name option:selected").attr("group-id"),
                             instance: $("#instance_name option:selected").attr("instance-id"),
                             db_name: formData.db_name,

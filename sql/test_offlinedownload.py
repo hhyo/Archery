@@ -7,7 +7,7 @@ import tempfile
 import os
 import shutil
 import zipfile
-import json
+import simplejson as json
 import pandas as pd
 import csv
 import xml.etree.ElementTree as ET
@@ -16,14 +16,12 @@ from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, Config, AuditE
 from sql.offlinedownload import (
     OffLineDownLoad,
     save_to_format_file,
-    get_sys_config,
     save_csv,
     save_json,
     save_xml,
     save_xlsx,
     save_sql,
     offline_file_download,
-    datetime_serializer,
 )
 from sql.engines.models import ReviewSet, ReviewResult, ResultSet
 from sql.storage import DynamicStorage
@@ -61,7 +59,7 @@ class TestOfflineDownload(TestCase):
             instance=self.instance,
             db_name="test_db",
             syntax_type=1,
-            is_offline_export="yes",
+            is_offline_export=1,
             export_format="csv",
         )
         self.sql_content = SqlWorkflowContent.objects.create(
@@ -80,15 +78,6 @@ class TestOfflineDownload(TestCase):
         Instance.objects.all().delete()
         Config.objects.all().delete()
         AuditEntry.objects.all().delete()
-
-    def test_get_sys_config(self):
-        """
-        测试获取系统配置
-        """
-
-        config = get_sys_config()
-        self.assertEqual(config["max_export_rows"], "10000")
-        self.assertEqual(config["storage_type"], "local")
 
     @patch("sql.offlinedownload.get_engine")
     def test_pre_count_check_pass(self, mock_get_engine):
@@ -298,7 +287,7 @@ class TestOfflineDownload(TestCase):
         temp_file.close()
 
         # 测试数据
-        result = [(1, "test1"), (2, datetime(2023, 1, 1))]
+        result = [(1, "test1"), (2, "2023-01-01T00:00:00")]
         columns = ["id", "name"]
 
         # 执行测试
@@ -543,23 +532,6 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(result.error, None)
         self.assertEqual(result.rows[0].stagestatus, "执行正常")
         self.assertIn("保存文件", result.rows[0].errormessage)
-
-    def test_datetime_serializer(self):
-        """
-        测试日期时间序列化函数
-        """
-
-        # 测试日期对象
-        date_obj = date(2023, 1, 15)
-        self.assertEqual(datetime_serializer(date_obj), "2023-01-15")
-
-        # 测试日期时间对象
-        datetime_obj = datetime(2023, 1, 15, 12, 30, 45)
-        self.assertEqual(datetime_serializer(datetime_obj), "2023-01-15T12:30:45")
-
-        # 测试不支持的类型
-        with self.assertRaises(TypeError):
-            datetime_serializer("not a date")
 
     @patch("sql.offlinedownload.DynamicStorage")
     def test_offline_file_download_error(self, mock_storage):

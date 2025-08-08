@@ -350,14 +350,13 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     is_manual = models.IntegerField(
         "是否原生执行", choices=((0, "否"), (1, "是")), default=0
     )
-    is_offline_export = models.CharField(
+    is_offline_export = models.IntegerField(
         "是否为离线导出工单",
-        max_length=3,
         choices=(
-            ("no", "否"),
-            ("yes", "是"),
+            (0, "否"),
+            (1, "是"),
         ),
-        default="no",
+        default=0,
     )
 
     # 导出格式
