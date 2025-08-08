@@ -1,0 +1,187 @@
+/* 校验提示样式 */
+.validation-notice {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(30, 30, 40, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    max-width: 320px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: all 0.4s ease;
+    z-index: 1000;
+    display: 'none';
+    overflow: hidden;
+}
+
+.validation-notice.visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #3498db;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.notice-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.icon-loading {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(52, 152, 219, 0.3);
+    border-top-color: #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.icon-success {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #2ecc71;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+}
+
+.icon-error {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #e74c3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+    position: relative;
+}
+
+.icon-success::before {
+    content: "";
+    width: 10px;
+    height: 18px;
+    border-bottom: 3px solid white;
+    border-right: 3px solid white;
+    transform: rotate(45deg);
+    margin-top: -4px;
+}
+
+.icon-error::before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 3px;
+    background-color: white;
+}
+
+.notice-content {
+    flex: 1;
+}
+
+.notice-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #3498db;
+}
+
+.notice-message {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #ddd;
+}
+
+.close-notice {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-notice:hover {
+    color: #fff;
+}
+
+.status-success {
+    border-left: 4px solid #2ecc71;
+}
+
+.status-success .notice-title {
+    color: #2ecc71;
+}
+
+.status-error {
+    border-left: 4px solid #e74c3c;
+}
+
+.status-error .notice-title {
+    color: #e74c3c;
+}
+
+.status-warning {
+    border-left: 4px solid #f39c12;
+}
+
+.status-warning .notice-title {
+    color: #f39c12;
+}
+
+.progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(1, 159, 250, 0.178);
+    width: 100%;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: rgba(1, 159, 250, 0.76);
+}
+
+.success-message {
+    display: none;
+    background: rgba(46, 204, 113, 0.15);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.success-message.visible {
+    display: block;
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

@@ -468,6 +468,9 @@ class TestNotify(TestCase):
                 "is_manual": 0,
                 "instance": self.ins.id,
                 "create_time": self.wf.create_time.isoformat(),
+                "is_offline_export": 0,
+                "export_format": None,
+                "file_name": None,
             },
         )
         self.assertEqual(

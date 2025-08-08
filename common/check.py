@@ -10,6 +10,7 @@ from common.utils.permission import superuser_required
 from sql.engines import get_engine
 from sql.models import Instance
 from common.utils.sendmsg import MsgSender
+from sql.storage import DynamicStorage
 
 logger = logging.getLogger("default")
 
@@ -130,4 +131,80 @@ def instance(request):
         result["status"] = 1
         result["msg"] = "无法连接实例,\n{}".format(str(e))
     # 返回结果
+    return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+@superuser_required
+def file_storage_connect(request):
+    result = {"status": 0, "msg": "ok", "data": []}
+    storage_type = request.POST.get("storage_type")
+
+    # 检查 max_export_rows 参数
+    max_export_rows = request.POST.get("max_export_rows", "10000")
+    max_export_rows = max_export_rows if max_export_rows else "10000"
+    try:
+        if not max_export_rows.isdigit():
+            raise TypeError("max_export_rows 必须是整数")
+    except TypeError as e:
+        result["status"] = 1
+        result["msg"] = f"参数类型错误: {str(e)}"
+        return HttpResponse(json.dumps(result), content_type="application/json")
+
+    # 根据存储类型获取对应的自定义参数
+    custom_param_key = f"{storage_type}_custom_params"
+    custom_params_str = request.POST.get(f"{custom_param_key}", "").strip()
+    custom_params = {}
+    if custom_params_str:
+        try:
+            custom_params = json.loads(custom_params_str)
+        except json.JSONDecodeError:
+            result["status"] = 1
+            result["msg"] = "自定义参数格式错误，请输入有效的JSON格式"
+            return HttpResponse(json.dumps(result), content_type="application/json")
+
+    # 构建配置字典
+    config_dict = {
+        "storage_type": storage_type,
+        "sftp_host": request.POST.get("sftp_host", ""),
+        "sftp_port": request.POST.get("sftp_port", 22),
+        "sftp_user": request.POST.get("sftp_user", ""),
+        "sftp_password": request.POST.get("sftp_password", ""),
+        "sftp_path": request.POST.get("sftp_path", ""),
+        "sftp_custom_params": request.POST.get("sftp_custom_params", ""),
+        "s3c_access_key_id": request.POST.get("s3c_access_key_id", ""),
+        "s3c_access_key_secret": request.POST.get("s3c_access_key_secret", ""),
+        "s3c_endpoint": request.POST.get("s3c_endpoint", ""),
+        "s3c_bucket_name": request.POST.get("s3c_bucket_name", ""),
+        "s3c_region": request.POST.get("s3c_region", ""),
+        "s3c_path": request.POST.get("s3c_path", ""),
+        "s3c_custom_params": request.POST.get("s3c_custom_params", ""),
+        "azure_account_name": request.POST.get("azure_account_name", ""),
+        "azure_account_key": request.POST.get("azure_account_key", ""),
+        "azure_container": request.POST.get("azure_container", ""),
+        "azure_path": request.POST.get("azure_path", ""),
+        "azure_custom_params": request.POST.get("azure_custom_params", ""),
+    }
+
+    try:
+        # 使用统一接口测试连接
+        storage = DynamicStorage(config_dict=config_dict)
+        success, message = storage.check_connection()
+
+        if not success:
+            result["status"] = 1
+            result["msg"] = "存储连接测试失败"
+            # 记录详细错误信息到日志
+            logging.error(f"存储连接测试失败")
+            # logging.error(f"存储连接测试失败: {message}")
+        else:
+            # 记录成功信息到日志
+            logging.info(f"存储连接测试成功")
+            # logging.info(f"存储连接测试成功: {message}")
+
+    except Exception as e:
+        result["status"] = 1
+        result["msg"] = "存储连接测试异常"
+        error_msg = f"连接测试异常: {str(e)}"
+        logging.error(error_msg, exc_info=True)
+
     return HttpResponse(json.dumps(result), content_type="application/json")

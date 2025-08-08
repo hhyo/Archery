@@ -37,11 +37,14 @@
             </div>
         </div>
         <div class="form-group ">
-            <button id="btn_add" type="button" class="btn btn-default"
-                    onclick="window.location.href='/submitsql/'">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                提交SQL
-            </button>
+            {% if storage_type %}
+                {% if can_offline_download == 1 %}
+                    <button id="btn_exportsubmit" type="button" class="btn btn-default" onclick="window.location.href='/sqlexportsubmit/'">
+                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                        提交导出工单
+                    </button>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
     <!-- 审核列表的表格-->
@@ -174,7 +177,7 @@
                             end_date = ''
                         }
                         return {
-                            "syntax_type":[0,1,2], //获取类型为数据变更工单
+                            "syntax_type":[3], //获取类型为数据导出工单
                             limit: params.limit,
                             offset: params.offset,
                             navStatus: $("#navStatus").val(),
@@ -236,17 +239,6 @@
                     field: 'status',
                     formatter: function (value, row, index) {
                         return sqlworkflowStatus_formatter(value)
-                    }
-                }, {
-                    title: '备份',
-                    field: 'is_backup',
-                    visible: true, // 默认显示
-                    formatter: function (value, row, index) {
-                        if (String(value) === 'true') {
-                            return '是'
-                        } else {
-                            return '否'
-                        }
                     }
                 }, {
                     title: '发起时间',

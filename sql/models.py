@@ -327,8 +327,8 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_name = models.CharField("数据库", max_length=64)
     syntax_type = models.IntegerField(
-        "工单类型 0、未知，1、DDL，2、DML",
-        choices=((0, "其他"), (1, "DDL"), (2, "DML")),
+        "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单",
+        choices=((0, "其他"), (1, "DDL"), (2, "DML"), (3, "离线导出工单")),
         default=0,
     )
     is_backup = models.BooleanField(
@@ -349,6 +349,37 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     finish_time = models.DateTimeField("结束时间", null=True, blank=True)
     is_manual = models.IntegerField(
         "是否原生执行", choices=((0, "否"), (1, "是")), default=0
+    )
+    is_offline_export = models.IntegerField(
+        "是否为离线导出工单",
+        choices=(
+            (0, "否"),
+            (1, "是"),
+        ),
+        default=0,
+    )
+
+    # 导出格式
+    export_format = models.CharField(
+        "导出格式",
+        max_length=10,
+        choices=(
+            ("csv", "CSV"),
+            ("xlsx", "Excel"),
+            ("sql", "SQL"),
+            ("json", "JSON"),
+            ("xml", "XML"),
+        ),
+        # default="csv",
+        null=True,
+        blank=True,
+    )
+
+    file_name = models.CharField(
+        "文件名",
+        max_length=255,  # 适当调整最大长度
+        null=True,  # 允许为空
+        blank=True,  # 允许为空字符串
     )
 
     def __str__(self):
@@ -1007,6 +1038,9 @@ class Permission(models.Model):
             ("archive_mgt", "管理归档申请"),
             ("audit_user", "审计权限"),
             ("query_download", "在线查询下载权限"),
+            ("offline_download", "离线下载权限"),
+            ("menu_sqlexportworkflow", "菜单 数据导出"),
+            ("sqlexport_submit", "提交数据导出"),
         )
 
 

@@ -9,11 +9,13 @@
                href="{{ workflow_detail.demand_url }}">{{ workflow_detail.workflow_name }}</a>
         </h4>
         <!--只允许发起人提交其他实例-->
-        {% if user.username == workflow_detail.engineer %}
+        {% if user.username == workflow_detail.engineer and not workflow_detail.is_offline_export %}
             <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
         {% endif %}
         {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
-            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+            {% if not workflow_detail.is_offline_export %}
+                <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+            {% endif %}
         {% endif %}
     </div>
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
@@ -225,6 +227,14 @@
             <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
         </form>
     {% endif %}
+    {% if workflow_detail.status == 'workflow_finish' and workflow_detail.is_offline_export %}
+        <form id="form-download" class="form-horizontal">
+            <button type="button" id="btnDownload" data-loading-text="下载中..."
+                     class="btn btn-info">
+                下载文件
+            </button>
+        </form>
+    {% endif %}
     <!--查看回滚按钮-->
     {% if is_can_rollback %}
         {% if  workflow_detail.status == 'workflow_finish' or  workflow_detail.status == 'workflow_exception' %}
@@ -248,8 +258,15 @@
         {% if user.username == workflow_detail.engineer %}
             <!--只允许发起人修改工单-->
             {% csrf_token %}
-            <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
-               href="/editsql/">重新修改</a>
+            {% if workflow_detail.is_offline_export %}
+                <!-- 离线导出工单跳转到导出提交页 -->
+                <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
+                   href="/sqlexportsubmit/?source=resubmit">重新修改</a>
+            {% else %}
+                <!-- 非离线导出工单跳转到上线变更提交页 -->
+                <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
+                   href="/editsql/">重新修改</a>
+            {% endif %}
         {% endif %}
     {% endif %}
 
@@ -458,7 +475,8 @@
 
         // 执行确认
         $("#btnExecuteOnly").click(function () {
-            if ("{{ workflow_detail.is_backup }}" === 'False') {
+            if ("{{ workflow_detail.is_backup }}" === 'False' &&
+            "{{workflow_detail.is_offline_export}}" === 0) {
                 var isContinue = confirm("该工单未选择备份，将不会自动备份数据，请确认是否立即执行？");
             } else {
                 var isContinue = confirm("请确认是否立即执行？");
@@ -964,5 +982,62 @@
             });
         });
     </script>
+    <!--下载导出文件-->
+    <script>
+        $('#btnDownload').click(async function() {
+            const $btn = $(this);
+            $btn.prop('disabled', true);
+            const originalText = $btn.html();
+            $btn.html('<i class="fa fa-spinner fa-spin"></i> 准备下载...');
+                
+            try {
+                const workflow_id = "{{ workflow_detail.id }}";
+                const file_name = "{{ workflow_detail.file_name }}";
+                const filePath = `/downloadfile/?file_name=${encodeURIComponent(file_name)}&workflow_id=${workflow_id}`;
+            
+                // 轻量级类型检查
+                const typeCheck = await fetch(filePath, {
+                    method: 'HEAD',
+                    cache: 'no-store'
+                });
+            
+                if (typeCheck.headers.get('content-type')?.includes('application/json')) {
+                    // 处理OSS重定向
+                    const res = await fetch(filePath);
+                    const data = await res.json();
+                    // 优先处理错误响应
+                    if (data.error) {
+                        throw new Error(data.error);  // 抛出后端返回的错误信息
+                    }
+                    // 处理重定向
+                    if (data.type === 'redirect') {
+                        window.location.href = data.url;
+                        return;
+                    }
+                    throw new Error('未知的响应格式');
+                }
+            
+                // 处理文件下载
+                const a = document.createElement('a');
+                a.href = filePath;
+                a.download = file_name;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+            
+            } catch (error) {
+                console.error('下载失败:', error);
+                alert(`下载错误: ${error.message || '服务器连接失败'}`);
+            } finally {
+                // 恢复按钮
+                if (!$btn.prop('disabled')) return;
+                setTimeout(() => {
+                    $btn.prop('disabled', false);
+                    $btn.html(originalText);
+                }, 3000);
+            }
+        });
+    </script>
 
 {% endblock %}
+
