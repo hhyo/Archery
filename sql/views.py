@@ -379,7 +379,7 @@ def sqlquery(request):
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values(
         "id", "alias"
     )
-    can_download = user.has_perm("sql.query_download") or user.is_superuser
+    can_download = 1 if user.has_perm("sql.query_download") or user.is_superuser else 0
     can_offline_download = user.has_perm("sql.offline_download") or user.is_superuser
     context = {
         "favorites": favorites,
