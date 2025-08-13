@@ -221,6 +221,9 @@ class AuditV2:
         return False
 
     def is_auto_review(self) -> bool:
+        if self.workflow.is_offline_export:
+            # 数据导出工单, 不要自动审核
+            return False
         if self.is_auto_reject():
             return False
         if self.workflow_type != WorkflowType.SQL_REVIEW:
@@ -263,9 +266,6 @@ class AuditV2:
             self.sys_config.get("auto_review_max_update_rows", 50)
         ):
             # 影响行数超规模, 需要人工审核
-            return False
-        if self.workflow.is_offline_export:
-            # 数据导出工单, 不需要审核
             return False
         return True
 

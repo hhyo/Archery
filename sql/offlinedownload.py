@@ -37,90 +37,89 @@ class OffLineDownLoad(EngineBase):
         :param workflow: 工单实例
         :return: 下载结果
         """
-        if workflow.is_offline_export:
-            with tempfile.TemporaryDirectory() as temp_dir:
-                # 获取系统配置
-                config = SysConfig()
-                # 先进行 max_execution_time 变量的判断是否存在以及是否为空,默认值60
-                max_execution_time_str = config.get("max_export_rows", "60")
-                max_execution_time = (
-                    int(max_execution_time_str) if max_execution_time_str else 60
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # 获取系统配置
+            config = SysConfig()
+            # 先进行 max_execution_time 变量的判断是否存在以及是否为空,默认值60
+            max_execution_time_str = config.get("max_export_rows", "60")
+            max_execution_time = (
+                int(max_execution_time_str) if max_execution_time_str else 60
+            )
+            # 获取前端提交的 SQL 和其他工单信息
+            full_sql = workflow.sqlworkflowcontent.sql_content
+            full_sql = sqlparse.format(full_sql, strip_comments=True)
+            full_sql = sqlparse.split(full_sql)[0]
+            sql = full_sql.strip()
+            instance = workflow.instance
+            execute_result = ReviewSet(full_sql=sql)
+            check_engine = get_engine(instance=instance)
+
+            start_time = time.time()
+
+            try:
+                # 执行 SQL 查询
+                storage = DynamicStorage()
+                results = check_engine.query(
+                    db_name=workflow.db_name,
+                    sql=sql,
+                    max_execution_time=max_execution_time * 1000,
                 )
-                # 获取前端提交的 SQL 和其他工单信息
-                full_sql = workflow.sqlworkflowcontent.sql_content
-                full_sql = sqlparse.format(full_sql, strip_comments=True)
-                full_sql = sqlparse.split(full_sql)[0]
-                sql = full_sql.strip()
-                instance = workflow.instance
-                execute_result = ReviewSet(full_sql=sql)
-                check_engine = get_engine(instance=instance)
+                if results.error:
+                    raise Exception(results.error)
+                if results:
+                    columns = results.column_list
+                    result = results.rows
+                    actual_rows = results.affected_rows
 
-                start_time = time.time()
+                # 保存查询结果为 CSV or JSON or XML or XLSX or SQL 文件
+                get_format_type = workflow.export_format
+                file_name = save_to_format_file(
+                    get_format_type, result, workflow, columns, temp_dir
+                )
 
-                try:
-                    # 执行 SQL 查询
-                    storage = DynamicStorage()
-                    results = check_engine.query(
-                        db_name=workflow.db_name,
-                        sql=sql,
-                        max_execution_time=max_execution_time * 1000,
+                # 将导出的文件保存到存储
+                tmp_file = os.path.join(temp_dir, file_name)
+                with open(tmp_file, "rb") as f:
+                    storage.save(file_name, f)
+
+                end_time = time.time()  # 记录结束时间
+                elapsed_time = round(end_time - start_time, 3)
+                execute_result.rows = [
+                    ReviewResult(
+                        stage="Executed",
+                        errlevel=0,
+                        stagestatus="执行正常",
+                        errormessage=f"保存文件: {file_name}",
+                        sql=full_sql,
+                        execute_time=elapsed_time,
+                        affected_rows=actual_rows,
                     )
-                    if results.error:
-                        raise Exception(results.error)
-                    if results:
-                        columns = results.column_list
-                        result = results.rows
-                        actual_rows = results.affected_rows
+                ]
 
-                    # 保存查询结果为 CSV or JSON or XML or XLSX or SQL 文件
-                    get_format_type = workflow.export_format
-                    file_name = save_to_format_file(
-                        get_format_type, result, workflow, columns, temp_dir
+                change_workflow = SqlWorkflow.objects.get(id=workflow.id)
+                change_workflow.file_name = file_name
+                change_workflow.save()
+
+                return execute_result
+            except Exception as e:
+                # 返回工单执行失败的状态和错误信息
+                execute_result.rows = [
+                    ReviewResult(
+                        stage="Execute failed",
+                        error=1,
+                        errlevel=2,
+                        stagestatus="异常终止",
+                        errormessage=f"{e}",
+                        sql=full_sql,
                     )
-
-                    # 将导出的文件保存到存储
-                    tmp_file = os.path.join(temp_dir, file_name)
-                    with open(tmp_file, "rb") as f:
-                        storage.save(file_name, f)
-
-                    end_time = time.time()  # 记录结束时间
-                    elapsed_time = round(end_time - start_time, 3)
-                    execute_result.rows = [
-                        ReviewResult(
-                            stage="Executed",
-                            errlevel=0,
-                            stagestatus="执行正常",
-                            errormessage=f"保存文件: {file_name}",
-                            sql=full_sql,
-                            execute_time=elapsed_time,
-                            affected_rows=actual_rows,
-                        )
-                    ]
-
-                    change_workflow = SqlWorkflow.objects.get(id=workflow.id)
-                    change_workflow.file_name = file_name
-                    change_workflow.save()
-
-                    return execute_result
-                except Exception as e:
-                    # 返回工单执行失败的状态和错误信息
-                    execute_result.rows = [
-                        ReviewResult(
-                            stage="Execute failed",
-                            error=1,
-                            errlevel=2,
-                            stagestatus="异常终止",
-                            errormessage=f"{e}",
-                            sql=full_sql,
-                        )
-                    ]
-                    execute_result.error = e
-                    return execute_result
-                finally:
-                    # 关闭存储连接（主要是sftp情况save后需要关闭连接）
-                    storage.close()
-                    # 清理本地文件和临时目录
-                    shutil.rmtree(temp_dir)
+                ]
+                execute_result.error = e
+                return execute_result
+            finally:
+                # 关闭存储连接（主要是sftp情况save后需要关闭连接）
+                storage.close()
+                # 清理本地文件和临时目录
+                shutil.rmtree(temp_dir)
 
     def pre_count_check(self, workflow):
         """
