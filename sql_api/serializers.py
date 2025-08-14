@@ -24,6 +24,7 @@ from common.utils.const import WorkflowType, WorkflowStatus
 from common.config import SysConfig
 import traceback
 import logging
+from sql.offlinedownload import OffLineDownLoad
 
 logger = logging.getLogger("default")
 
@@ -378,14 +379,23 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         try:
             user_instances(user, tag_codes=["can_write"]).get(id=instance.id)
         except instance.DoesNotExist:
-            raise serializers.ValidationError({"errors": "你所在组未关联该实例！"})
+            if workflow_data["is_offline_export"]:
+                pass
+            else:
+                raise serializers.ValidationError({"errors": "你所在组未关联该实例！"})
 
         # 再次交给engine进行检测，防止绕过
         try:
             check_engine = get_engine(instance=instance)
-            check_result = check_engine.execute_check(
-                db_name=workflow_data["db_name"], sql=sql_content
-            )
+            sql_export = OffLineDownLoad()
+            if workflow_data["is_offline_export"]:
+                instance.sql_content = sql_content
+                instance.db_name = workflow_data["db_name"]
+                check_result = sql_export.pre_count_check(workflow=instance)
+            else:
+                check_result = check_engine.execute_check(
+                    db_name=workflow_data["db_name"], sql=sql_content
+                )
         except Exception as e:
             raise serializers.ValidationError({"errors": str(e)})
 
@@ -395,7 +405,10 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         )
         sys_config = SysConfig()
         if not sys_config.get("enable_backup_switch") and check_engine.auto_backup:
-            is_backup = True
+            if workflow_data["is_offline_export"]:
+                pass
+            else:
+                is_backup = True
 
         workflow_data.update(
             status="workflow_manreviewing",

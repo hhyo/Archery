@@ -226,6 +226,9 @@ class AuditV2:
         if self.workflow_type != WorkflowType.SQL_REVIEW:
             # 当前自动审核仅对 sql 上线工单有用
             return False
+        if self.workflow.is_offline_export:
+            # 数据导出工单, 不要自动审核
+            return False
         auto_review_enabled = self.sys_config.get("auto_review", False)
         if not auto_review_enabled:
             return False
