@@ -531,11 +531,14 @@
             if (optgroup === 'MsSQL') {
                 // 检查是否以select开头（不区分大小写）
                 if (/^\s*select\s+/i.test(sqlContent)) {
-                    // 检查是否是select distinct
-                    if (/^\s*select\s+distinct\s+/i.test(sqlContent)) {
-                        sqlContent = sqlContent.replace(/^(\s*select\s+distinct\s+)/i, '$1top 100 percent ');
-                    } else {
-                        sqlContent = sqlContent.replace(/^(\s*select\s+)/i, '$1top 100 percent ');
+                    // 检查select/select distinct之后是否已经有top
+                    if (!/^\s*select\s+(distinct\s+)?top\s/i.test(sqlContent)) {
+                        // 检查是否是select distinct
+                        if (/^\s*select\s+distinct\s+/i.test(sqlContent)) {
+                            sqlContent = sqlContent.replace(/^(\s*select\s+distinct\s+)/i, '$1top 100 percent ');
+                        } else {
+                            sqlContent = sqlContent.replace(/^(\s*select\s+)/i, '$1top 100 percent ');
+                        }
                     }
                 }
             }

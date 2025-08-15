@@ -137,12 +137,18 @@ class OffLineDownLoad(EngineBase):
         sql = full_sql.strip()
 
         # 如果是SQL Server数据库，在第一个select后追加top 100 percent 以应对查询有order by的count嵌套统计问题。
-        if workflow.db_type == 'mssql':
-            # 使用正则表达式在第一个select后添加top 100 percent
-            # 匹配第一个select关键字（忽略大小写），如果后面没有紧跟top关键字则添加
-            pattern = r'(\bselect\b)(?!\s+top\b)'
-            replacement = r'\1 top 100 percent'
-            sql = re.sub(pattern, replacement, sql, count=1, flags=re.IGNORECASE)
+        if workflow.db_type == "mssql":
+            # 检查是否已经有TOP
+            if not re.search(r"^\s*select\s+(?:distinct\s+)?top\b", sql, re.IGNORECASE):
+                # 替换 select distinct
+                pattern = r"(^\s*select\s+distinct)\b"
+                replacement = r"\1 top 100 percent"
+                sql, n = re.subn(pattern, replacement, sql, count=1, flags=re.IGNORECASE)
+                if n == 0:
+                    # 替换 select
+                    pattern = r"(^\s*select)\b"
+                    replacement = r"\1 top 100 percent"
+                    sql = re.sub(pattern, replacement, sql, count=1, flags=re.IGNORECASE)
 
         count_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
         clean_sql = sql.strip().lower()
