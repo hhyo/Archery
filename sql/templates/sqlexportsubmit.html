@@ -527,6 +527,18 @@
             }
 
             var sqlContent = sqlContent.trim().replace(/;$/, '');
+            // 如果是mssql数据库，需要在select后添加top 100 percent以应对子查询语法错误
+            if (optgroup === 'MsSQL') {
+                // 检查是否以select开头（不区分大小写）
+                if (/^\s*select\s+/i.test(sqlContent)) {
+                    // 检查是否是select distinct
+                    if (/^\s*select\s+distinct\s+/i.test(sqlContent)) {
+                        sqlContent = sqlContent.replace(/^(\s*select\s+distinct\s+)/i, '$1top 100 percent ');
+                    } else {
+                        sqlContent = sqlContent.replace(/^(\s*select\s+)/i, '$1top 100 percent ');
+                    }
+                }
+            }
             var sqlContent = 'select count(1) from (' + sqlContent + '\n) t'
              
             //提交请求
@@ -603,12 +615,18 @@
                     $("#btn-submitsql").prop("disabled", true);
                 }
             } else {
+                let errorMessage = data.msg;
+                // 检查错误消息是否包含特定错误代码(SqlServer的8155错误)
+                if (errorMessage && (errorMessage.includes('42000') && errorMessage.includes('8155'))) {
+                    errorMessage = '请为使用表达式、常量或函数的列设置列名(别名)';
+                }
+
                 showStatusNotice({
                     noticeIconClass: 'icon-error',
                     statusClass: 'status-error',
                     title: '校验失败',
                     message: '错误：{msg}',
-                    params: { msg: data.msg },
+                    params: { msg: errorMessage },
                     delay: 5000
                 });
             }

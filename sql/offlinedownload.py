@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import logging
 import os
+import re
 import tempfile
 import csv
 import hashlib
@@ -134,6 +135,15 @@ class OffLineDownLoad(EngineBase):
         full_sql = sqlparse.format(full_sql, strip_comments=True)
         full_sql = sqlparse.split(full_sql)[0]
         sql = full_sql.strip()
+
+        # 如果是SQL Server数据库，在第一个select后追加top 100 percent 以应对查询有order by的count嵌套统计问题。
+        if workflow.db_type == 'mssql':
+            # 使用正则表达式在第一个select后添加top 100 percent
+            # 匹配第一个select关键字（忽略大小写），如果后面没有紧跟top关键字则添加
+            pattern = r'(\bselect\b)(?!\s+top\b)'
+            replacement = r'\1 top 100 percent'
+            sql = re.sub(pattern, replacement, sql, count=1, flags=re.IGNORECASE)
+
         count_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
         clean_sql = sql.strip().lower()
         instance = workflow
