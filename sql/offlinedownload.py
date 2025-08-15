@@ -143,12 +143,16 @@ class OffLineDownLoad(EngineBase):
                 # 替换 select distinct
                 pattern = r"(^\s*select\s+distinct)\b"
                 replacement = r"\1 top 100 percent"
-                sql, n = re.subn(pattern, replacement, sql, count=1, flags=re.IGNORECASE)
+                sql, n = re.subn(
+                    pattern, replacement, sql, count=1, flags=re.IGNORECASE
+                )
                 if n == 0:
                     # 替换 select
                     pattern = r"(^\s*select)\b"
                     replacement = r"\1 top 100 percent"
-                    sql = re.sub(pattern, replacement, sql, count=1, flags=re.IGNORECASE)
+                    sql = re.sub(
+                        pattern, replacement, sql, count=1, flags=re.IGNORECASE
+                    )
 
         count_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
         clean_sql = sql.strip().lower()
