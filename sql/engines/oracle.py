@@ -271,7 +271,7 @@ class OracleEngine(EngineBase):
                         WHERE
                             bcs.OWNER=:db_name
                             AND bcs.TABLE_NAME=:tb_name
-                        ORDER BY bcs.COLUMN_NAME"""
+                        ORDER BY bcs.COLUMN_ID"""
         _desc_data = self.query(
             db_name=db_name,
             sql=desc_sql,
