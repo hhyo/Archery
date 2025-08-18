@@ -315,12 +315,17 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
         sql_lower = sql.lower()
         # 对查询sql增加limit限制
         if re.match(r"^select", sql_lower):
-            if sql_lower.find(" top ") == -1:
-                if sql_lower.find(" distinct ") > 0:
-                    return sql_lower.replace(
-                        "distinct", "distinct top {}".format(limit_num)
-                    )
-                return sql_lower.replace("select", "select top {}".format(limit_num))
+            # 检查第一个select语句中是否已经有top关键字
+            # 使用更精确的正则表达式来匹配select后面紧跟的内容
+            has_top_match = re.search(r'^\s*select\s+(?:distinct\s+)?top\b', sql_lower)
+            if not has_top_match:
+                # 检查是否有distinct在第一个select中
+                distinct_match = re.search(r'^\s*select\s+distinct\b', sql_lower)
+                if distinct_match:
+                    # 只替换第一个distinct
+                    return re.sub(r'\bselect\s+distinct\b', 'select distinct top {}'.format(limit_num), sql_lower, count=1)
+                # 只替换第一个select
+                return re.sub(r'\bselect\b', 'select top {}'.format(limit_num), sql_lower, count=1)
         return sql.strip()
 
     def query(
