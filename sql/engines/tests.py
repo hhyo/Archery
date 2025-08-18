@@ -1694,8 +1694,18 @@ end;"""
 
         # 模拟查询返回结果
         mock_result = ResultSet()
-        mock_result.column_list = ["列名", "列注释", "字段类型", "字段默认值", "是否为空", "所属索引", "约束类型"]
-        mock_result.rows = [("ID", "主键ID", "NUMBER(10)", "1", " NOT NULL", "PK_USER", "P")]
+        mock_result.column_list = [
+            "列名",
+            "列注释",
+            "字段类型",
+            "字段默认值",
+            "是否为空",
+            "所属索引",
+            "约束类型",
+        ]
+        mock_result.rows = [
+            ("ID", "主键ID", "NUMBER(10)", "1", " NOT NULL", "PK_USER", "P")
+        ]
         _query.return_value = mock_result
 
         # 调用被测试方法
@@ -1718,8 +1728,18 @@ end;"""
 
         # 模拟查询返回结果
         mock_result = ResultSet()
-        mock_result.column_list = ["索引名称", "唯一性", "索引类型", "压缩属性", "表空间", "状态", "分区"]
-        mock_result.rows = [("PK_USERS", "UNIQUE", "NORMAL", "DISABLED", "USERS_TBS", "VALID", "NO")]
+        mock_result.column_list = [
+            "索引名称",
+            "唯一性",
+            "索引类型",
+            "压缩属性",
+            "表空间",
+            "状态",
+            "分区",
+        ]
+        mock_result.rows = [
+            ("PK_USERS", "UNIQUE", "NORMAL", "DISABLED", "USERS_TBS", "VALID", "NO")
+        ]
         _query.return_value = mock_result
 
         # 调用被测试方法
@@ -1734,6 +1754,7 @@ end;"""
 
         # 验证query方法被正确调用
         _query.assert_called_once()
+
 
 class MongoTest(TestCase):
     def setUp(self) -> None:
