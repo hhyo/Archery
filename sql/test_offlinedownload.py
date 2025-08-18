@@ -152,6 +152,47 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(result.rows[0].errormessage, "违规语句！")
 
     @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_mssql_top_100_percent(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - SQL Server, 自动添加 top 100 percent
+        """
+
+        # 模拟数据库查询结果
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.rows = [(100,)]
+        mock_result_set.error = None
+        mock_engine.query.return_value = mock_result_set
+        mock_get_engine.return_value = mock_engine
+
+        offline_download = OffLineDownLoad()
+        self.workflow.db_type = "mssql"
+
+        # case1: simple select
+        self.workflow.sql_content = "select * from test_table order by id"
+        offline_download.pre_count_check(self.workflow)
+        mock_engine.query.assert_called_with(
+            db_name="test_db",
+            sql="SELECT COUNT(*) FROM (select top 100 percent * from test_table order by id) t",
+        )
+
+        # case2: select with distinct
+        self.workflow.sql_content = "select distinct name from test_table order by name"
+        offline_download.pre_count_check(self.workflow)
+        mock_engine.query.assert_called_with(
+            db_name="test_db",
+            sql="SELECT COUNT(*) FROM (select distinct top 100 percent name from test_table order by name) t",
+        )
+
+        # case3: already has top
+        self.workflow.sql_content = "select top 10 * from test_table order by id"
+        offline_download.pre_count_check(self.workflow)
+        mock_engine.query.assert_called_with(
+            db_name="test_db",
+            sql="SELECT COUNT(*) FROM (select top 10 * from test_table order by id) t",
+        )
+
+    @patch("sql.offlinedownload.get_engine")
     @patch("sql.offlinedownload.DynamicStorage")
     @patch("sql.offlinedownload.save_to_format_file")
     @patch("builtins.open", new_callable=mock_open)
