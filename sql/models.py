@@ -618,6 +618,7 @@ class QueryLog(models.Model):
     instance_name = models.CharField("实例名称", max_length=50)
     db_name = models.CharField("数据库名称", max_length=64)
     sqllog = models.TextField("执行的查询语句")
+    original_sql = models.TextField("原始查询语句")
     effect_row = models.BigIntegerField("返回行数")
     cost_time = models.CharField("执行耗时", max_length=10, default="")
     # TODO 改为user 外键
