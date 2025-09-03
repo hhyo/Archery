@@ -19,6 +19,7 @@ from sql.utils.resource_group import user_instances
 from sql.utils.tasks import add_kill_conn_schedule, del_schedule
 from .models import QueryLog, Instance
 from sql.engines import get_engine
+from sql.utils.sql_utils import SqlglotUtils
 
 logger = logging.getLogger("default")
 
@@ -36,6 +37,7 @@ def query(request):
     tb_name = request.POST.get("tb_name")
     limit_num = int(request.POST.get("limit_num", 0))
     schema_name = request.POST.get("schema_name", None)
+    is_offline_export = int(request.POST.get("is_offline_export", 0))
     user = request.user
 
     result = {"status": 0, "msg": "ok", "data": {}}
@@ -68,6 +70,7 @@ def query(request):
             result["msg"] = query_check_info.get("msg")
             return HttpResponse(json.dumps(result), content_type="application/json")
         sql_content = query_check_info["filtered_sql"]
+        original_sql = sql_content.strip()
 
         # 查询权限校验，并且获取limit_num
         priv_check_info = query_priv_check(
@@ -82,9 +85,22 @@ def query(request):
             return HttpResponse(json.dumps(result), content_type="application/json")
         # explain的limit_num设置为0
         limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
-
-        # 对查询sql增加limit限制或者改写语句
-        sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
+        dialect = SqlglotUtils.get_dialect(instance.db_type)
+        if is_offline_export:
+            # 离线导出，统计总数，需要包装count查询语句
+            sql_content = SqlglotUtils.wrap_query_with_count(sql_content, dialect)
+        else:
+            # 页面查询，增加行数限制
+            # 支持sqlglot方言转换的，使用方言添加行数限制
+            if dialect:
+                sql_content = SqlglotUtils.add_limit_to_query(
+                    sql_content, limit_num, dialect
+                )
+            else:
+                # 不支持sqlglot方言的，使用引擎filter_sql函数处理
+                sql_content = query_engine.filter_sql(
+                    sql=sql_content, limit_num=limit_num
+                )
 
         # 先获取查询连接，用于后面查询复用连接以及终止会话
         query_engine.get_connection(db_name=db_name)
@@ -176,6 +192,7 @@ def query(request):
             db_name=db_name,
             instance_name=instance.instance_name,
             sqllog=sql_content,
+            original_sql=original_sql,
             effect_row=limit_num,
             cost_time=query_result.query_time,
             priv_check=priv_check,
@@ -273,6 +290,7 @@ def _querylog(request):
         "instance_name",
         "db_name",
         "sqllog",
+        "original_sql",
         "effect_row",
         "cost_time",
         "user_display",

@@ -9,9 +9,11 @@ import re
 import xml
 import mybatis_mapper2sql
 import sqlparse
+import sqlglot
 
 from sql.engines.models import SqlItem
 from sql.utils.extract_tables import extract_tables as extract_tables_by_sql_parse
+from sqlglot import expressions as exp
 
 __author__ = "hhyo"
 
@@ -414,3 +416,177 @@ def filter_db_list(db_list, db_name_regex: str, is_match_regex: bool, key="value
         if (is_match_regex and is_match) or (not is_match_regex and not is_match):
             filtered_list.append(db)
     return filtered_list
+
+
+class SqlglotUtils:
+    """
+    使用sqlglot自定义的工具类
+    """
+
+    # 数据库类型到 sqlglot 方言的映射
+    DB_TYPE_TO_DIALECT = {
+        "mysql": "mysql",
+        "mssql": "tsql",
+        "pgsql": "postgres",
+        "oracle": "oracle",
+        "clickhouse": "clickhouse",
+        "doris": "doris",
+        "phoenix": "mysql",
+        "odps": "hive",
+        "elasticsearch": "postgres",
+        "opensearch": "postgres",
+        "cassandra": "postgres",
+    }
+
+    @classmethod
+    def get_dialect(cls, db_type):
+        """
+        获取数据库类型对应的 sqlglot 方言
+
+        参数:
+            db_type (str): 数据库引擎类型
+
+        返回:
+            str: sqlglot 方言标识符（如 'mysql'）
+        """
+        return cls.DB_TYPE_TO_DIALECT.get(db_type.lower())
+
+    @classmethod
+    def add_limit_to_query(cls, sql, limit_value, dialect):
+        """
+        为 SQL 查询添加行数限制（通用方法，包括 CTE）
+
+        参数:
+            sql (str): 原始 SQL 查询
+            limit_value (int): 限制行数
+            db_type (str): 数据库引擎类型
+
+        返回:
+            str: 添加了行数限制的新 SQL
+        """
+
+        # 只解析处理select和with的查询
+        if re.match(r"^select|^with", sql, re.I) is None:
+            return sql
+
+        try:
+            # 解析原始 SQL
+            parsed_sql = sqlglot.parse_one(sql, read=dialect)
+            if dialect.lower() == "tsql" and isinstance(parsed_sql, exp.Union):
+                # 处理sqlglot里tsql的union查询的bug
+                # 先将union查询转换为mysql语法解析
+                tmp_sql = parsed_sql.sql(dialect="mysql")
+                parsed_sql = sqlglot.parse_one(tmp_sql, read="mysql")
+            # 已经带行数限制的sql获取值 并和传入的行数限制比较 取小。
+            existing_limit = parsed_sql.args.get("limit")
+            if existing_limit:
+                # 先尝试从 Fetch 模式获取 count
+                if "count" in existing_limit.args:
+                    origin_value = existing_limit.args.get("count").this
+                # 再尝试从 Limit 模式获取 expression
+                elif (
+                    hasattr(existing_limit, "expression") and existing_limit.expression
+                ):
+                    origin_value = existing_limit.expression.this
+                else:
+                    origin_value = None
+
+                if origin_value:
+                    limit_value = min(limit_value, int(origin_value))
+
+            # 添加行数限制
+            if dialect.lower() == "oracle":
+                # 对于 Oracle 为了兼容 11g及以下 使用 ROWNUM
+                # Oracle添加rownum要在原始sql再加层select *避免隐式干扰
+                # 构建外层查询：SELECT * FROM (主查询) AS inner_query
+                inner_alias = exp.TableAlias(this=exp.Identifier(this="inner_query"))
+                inner_subquery = exp.Subquery(this=parsed_sql, alias=inner_alias)
+                parsed_sql = exp.Select().select("*").from_(inner_subquery)
+
+                limit_sql = parsed_sql.where(
+                    exp.LTE(
+                        this=exp.Identifier(this="ROWNUM"),
+                        expression=exp.Literal(this=str(limit_value), is_string=False),
+                    )
+                )
+            elif dialect.lower() == "tsql" and isinstance(parsed_sql, exp.Union):
+                # 处理sqlglot里tsql的union查询的bug
+                # 处理tsql的union查询
+                # 重新包装select *并将order by移至外层
+                order_by_content = parsed_sql.args.get("order")
+                if order_by_content:
+                    print(order_by_content)
+                    parsed_sql.args.pop("order", None)
+                inner_alias = exp.TableAlias(this=exp.Identifier(this="inner_query"))
+                inner_subquery = exp.Subquery(this=parsed_sql, alias=inner_alias)
+                parsed_sql = exp.Select().select("*").from_(inner_subquery)
+
+                # 添加limit限制并拼接原始order by子句
+                limit_sql = parsed_sql.limit(
+                    exp.Literal(this=str(limit_value), is_string=False)
+                )
+                if order_by_content:
+                    limit_sql = limit_sql.order_by(order_by_content)
+
+            else:
+                # 其他数据库使用默认的限制关键字
+                limit_sql = parsed_sql.limit(
+                    exp.Literal(this=str(limit_value), is_string=False)
+                )
+
+            # 生成目标方言的 SQL
+            limit_sql = limit_sql.sql(pretty=True, dialect=dialect)
+            return limit_sql
+        except Exception as e:
+            raise ValueError(f"SQL 解析失败") from e
+
+    @classmethod
+    def wrap_query_with_count(cls, sql, dialect):
+        """
+        将 SQL 查询包装为 COUNT 统计
+
+        参数:
+            sql (str): 原始 SQL 查询
+            db_type (str): 数据库引擎类型
+
+        返回:
+            str: 包装后的 SQL
+        """
+
+        try:
+            # 解析原始 SQL
+            parsed_sql = sqlglot.parse_one(sql, read=dialect)
+            if dialect.lower() == "tsql" and isinstance(parsed_sql, exp.Union):
+                # 处理sqlglot里tsql的union查询的bug
+                # 先将union查询转换为mysql语法解析
+                tmp_sql = parsed_sql.sql(dialect="mysql")
+                parsed_sql = sqlglot.parse_one(tmp_sql, read="mysql")
+            # 提取 CTE 部分
+            cte = parsed_sql.args.get("with")
+            # 创建主查询的副本
+            main_query = parsed_sql.copy()
+            # 如果是 CTE 查询，需要从主查询中移除 CTE
+            if cte:
+                main_query.args.pop("with", None)
+            # 移除排序（外层count统计不需要）
+            main_query.args.pop("order", None)
+            # 创建子查询别名
+            subquery_alias = exp.TableAlias(this=exp.Identifier(this="inner_query"))
+            # 构建子查询
+            subquery = exp.Subquery(this=main_query, alias=subquery_alias)
+            # 构建外层 COUNT 查询
+            outer_select = (
+                exp.Select()
+                .select(exp.Count(this=exp.Literal(this="*", is_string=False)))
+                .from_(subquery)
+            )
+
+            # 如果有 CTE，添加到外层查询
+            if cte:
+                outer_select.set("with", cte)
+            count_select = outer_select.sql(pretty=True, dialect=dialect)
+
+            # 生成新 SQL
+            return count_select
+        except Exception as e:
+            raise ValueError(f"SQL 解析失败") from e

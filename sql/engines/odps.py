@@ -105,16 +105,8 @@ class ODPSEngine(EngineBase):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
 
-        if not re.match(r"^select", sql, re.I):
+        if not re.match(r"^select|^with", sql, re.I):
             result_set.error = str("仅支持ODPS查询语句")
-
-        # 存在limit，替换limit; 不存在，添加limit
-        if re.search("limit", sql):
-            sql = re.sub("limit.+(\d+)", "limit " + str(limit_num), sql)
-        else:
-            if sql.strip()[-1] == ";":
-                sql = sql[:-1]
-            sql = sql + " limit " + str(limit_num) + ";"
 
         try:
             conn = self.get_connection(db_name)
@@ -136,7 +128,7 @@ class ODPSEngine(EngineBase):
         # 查询语句的检查、注释去除、切分
         result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
         keyword_warning = ""
-        sql_whitelist = ["select"]
+        sql_whitelist = ["select", "with"]
         # 根据白名单list拼接pattern语句
         whitelist_pattern = re.compile("^" + "|^".join(sql_whitelist), re.IGNORECASE)
         # 删除注释语句，进行语法判断，执行第一条有效sql

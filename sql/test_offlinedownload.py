@@ -97,6 +97,7 @@ class TestOfflineDownload(TestCase):
         offline_download = OffLineDownLoad()
         # 修改workflow的sql_content以匹配测试
         self.workflow.sql_content = "SELECT * FROM test_table"
+        self.workflow.db_type = "mysql"
         result = offline_download.pre_count_check(self.workflow)
 
         # 验证结果
@@ -122,6 +123,7 @@ class TestOfflineDownload(TestCase):
         # 执行测试
         offline_download = OffLineDownLoad()
         self.workflow.sql_content = "SELECT * FROM test_table"
+        self.workflow.db_type = "mysql"
         result = offline_download.pre_count_check(self.workflow)
 
         # 验证结果
@@ -141,6 +143,7 @@ class TestOfflineDownload(TestCase):
 
         offline_download = OffLineDownLoad()
         self.workflow.sql_content = "DELETE FROM test_table"
+        self.workflow.db_type = "mysql"
         result = offline_download.pre_count_check(self.workflow)
 
         # 验证结果

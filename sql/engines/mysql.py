@@ -559,14 +559,14 @@ class MysqlEngine(EngineBase):
         except IndexError:
             result["bad_query"] = True
             result["msg"] = "没有有效的SQL语句"
-        if re.match(r"^select|^show|^explain", sql, re.I) is None:
+        if re.match(r"^select|^show|^explain|^with", sql, re.I) is None:
             result["bad_query"] = True
             result["msg"] = "不支持的查询语法类型!"
         if "*" in sql:
             result["has_star"] = True
             result["msg"] = "SQL语句中含有 * "
-        # select语句先使用Explain判断语法是否正确
-        if re.match(r"^select", sql, re.I):
+        # select和with语句先使用Explain判断语法是否正确
+        if re.match(r"^select|^with", sql, re.I):
             explain_result = self.query(db_name=db_name, sql=f"explain {sql}")
             if explain_result.error:
                 result["bad_query"] = True
