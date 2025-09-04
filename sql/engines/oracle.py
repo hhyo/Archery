@@ -271,7 +271,7 @@ class OracleEngine(EngineBase):
                         WHERE
                             bcs.OWNER=:db_name
                             AND bcs.TABLE_NAME=:tb_name
-                        ORDER BY bcs.COLUMN_NAME"""
+                        ORDER BY bcs.COLUMN_ID"""
         _desc_data = self.query(
             db_name=db_name,
             sql=desc_sql,
@@ -283,6 +283,7 @@ class OracleEngine(EngineBase):
         """获取表格索引信息"""
         index_sql = f""" SELECT ais.INDEX_NAME "索引名称",
                                 ais.uniqueness "唯一性",
+                                cols.column_names "索引列名",
                                 ais.index_type "索引类型",
                                 ais.compression "压缩属性",
                                 ais.tablespace_name "表空间",
@@ -295,6 +296,20 @@ class OracleEngine(EngineBase):
                             left join DBA_PART_INDEXES pis
                                 on ais.owner = pis.owner
                                 and ais.index_name = pis.index_name
+                            left JOIN (SELECT 
+                                    ics.index_owner,
+                                    ics.index_name,
+                                    LISTAGG(ics.column_name, ', ') WITHIN GROUP (ORDER BY ics.column_position) AS column_names
+                                FROM 
+                                    dba_ind_columns ics
+                                GROUP BY 
+                                    ics.index_owner, ics.index_name
+                                    UNION ALL
+                                    select lobs.owner, lobs.index_name, lobs.column_name
+                                      from dba_lobs lobs
+                                    ) cols
+                                ON ais.owner = cols.index_owner
+                                AND ais.index_name = cols.index_name
                             WHERE
                                 ais.owner = :db_name
                                 AND ais.table_name = :tb_name"""
