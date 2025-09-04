@@ -365,7 +365,7 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
-        if re.match(r"^select", sql, re.I):
+        if re.match(r"^select|^with", sql, re.I):
             filtered_result = brute_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:

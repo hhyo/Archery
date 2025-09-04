@@ -15,7 +15,7 @@ from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
-from sql.utils.data_masking import data_masking
+from sql.utils.data_masking import data_masking, simple_column_mask
 from common.config import SysConfig
 
 logger = logging.getLogger("default")
@@ -622,6 +622,9 @@ class MysqlEngine(EngineBase):
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
             mask_result = data_masking(self.instance, db_name, sql, resultset)
+        # 因goinception的支持问题，mysql的with语句脱敏使用simple_column_mask
+        elif re.match(r"^with", sql, re.I):
+            mask_result = simple_column_mask(self.instance, resultset)
         else:
             mask_result = resultset
         return mask_result
@@ -663,7 +666,7 @@ class MysqlEngine(EngineBase):
             # 获取提交类型
             syntax_type = get_syntax_type(statement, parser=False, db_type="mysql")
             # 禁用语句
-            if re.match(r"^select", statement.lower()):
+            if re.match(r"^select|^with", statement.lower()):
                 check_result.error_count += 1
                 row.stagestatus = "驳回不支持语句"
                 row.errlevel = 2
