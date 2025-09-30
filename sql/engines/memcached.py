@@ -38,7 +38,9 @@ class MemcachedEngine(EngineBase):
         node_host = self.nodes[db_name]
 
         try:
-            conn = pymemcache.Client(server=(node_host, self.port), connect_timeout=10.0, timeout=10.0)
+            conn = pymemcache.Client(
+                server=(node_host, self.port), connect_timeout=10.0, timeout=10.0
+            )
             return conn
         except Exception as e:
             raise Exception(f"连接Memcached节点 {node_host} 失败: {str(e)}")
@@ -50,7 +52,9 @@ class MemcachedEngine(EngineBase):
             # 使用 version 命令测试
             version = conn.version()
             if version:
-                return ResultSet(rows=[[f"连接成功，版本: {version}"]], column_list=["状态"])
+                return ResultSet(
+                    rows=[[f"连接成功，版本: {version}"]], column_list=["状态"]
+                )
         except Exception as e:
             logger.error(f"测试连接失败: {str(e)}")
             raise Exception(f"测试连接失败: {str(e)}")
@@ -70,7 +74,15 @@ class MemcachedEngine(EngineBase):
         return ResultSet(rows=[])
 
     # 修改后的 query 方法
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, parameters=None, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs,
+    ):
         """实际查询 返回一个ResultSet，采用cmd table驱动模式"""
         result_set = ResultSet(full_sql=sql)
 
@@ -122,12 +134,24 @@ class MemcachedEngine(EngineBase):
         """查询语句的检查、注释去除、切分, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
         # 简单的SQL语法检查
         sql = sql.strip().lower()
-        allowed_commands = ["version", "get", "set", "delete", "gets", "incr", "decr", "touch"]
+        allowed_commands = [
+            "version",
+            "get",
+            "set",
+            "delete",
+            "gets",
+            "incr",
+            "decr",
+            "touch",
+        ]
 
         cmd = sql.split(" ")[0].strip()
         if cmd not in allowed_commands:
-            return {"bad_query": True, "filtered_sql": sql,
-                    "msg": "Only (version, get, set, delete, gets, incr, decr, touch) are supported"}
+            return {
+                "bad_query": True,
+                "filtered_sql": sql,
+                "msg": "Only (version, get, set, delete, gets, incr, decr, touch) are supported",
+            }
 
         return {"bad_query": False, "filtered_sql": sql}
 
@@ -139,7 +163,9 @@ class MemcachedEngine(EngineBase):
             version = conn.version()
             # 尝试解析版本号为tuple
             parts = version.split()
-            version_tuple = tuple(int(part) if part.isdigit() else 0 for part in parts[:3])
+            version_tuple = tuple(
+                int(part) if part.isdigit() else 0 for part in parts[:3]
+            )
             return version_tuple
         except Exception as e:
             logger.error(f"获取Memcached版本失败: {str(e)}")
@@ -240,6 +266,7 @@ class MemcachedEngine(EngineBase):
 
 
 # 命令处理函数
+
 
 def _handle_get(conn: pymemcache.Client, sql: str, cmd_args: List[str]):
     """
