@@ -162,7 +162,7 @@ class MemcachedEngine(EngineBase):
             conn = self.get_connection()
             version = conn.version()
             # 尝试解析版本号为tuple
-            parts = version.split()
+            parts = str(version).split(".")
             version_tuple = tuple(
                 int(part) if part.isdigit() else 0 for part in parts[:3]
             )
