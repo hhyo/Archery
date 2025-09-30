@@ -55,6 +55,7 @@ env = environ.Env(
             "doris",
             "elasticsearch",
             "opensearch",
+            "memcached",
         ],
     ),
     ENABLED_NOTIFIERS=(
@@ -106,6 +107,7 @@ AVAILABLE_ENGINES = {
     "doris": {"path": "sql.engines.doris:DorisEngine"},
     "elasticsearch": {"path": "sql.engines.elasticsearch:ElasticsearchEngine"},
     "opensearch": {"path": "sql.engines.elasticsearch:OpenSearchEngine"},
+    "memcached": {"path": "sql.engines.memcached:MemcachedEngine"},
 }
 
 ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")

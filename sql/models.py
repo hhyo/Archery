@@ -155,6 +155,7 @@ DB_TYPE_CHOICES = (
     ("doris", "Doris"),
     ("elasticsearch", "Elasticsearch"),
     ("opensearch", "OpenSearch"),
+    ("memcached", "Memcached"),
 )
 
 
