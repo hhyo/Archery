@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 import logging
-from typing import List
-
 import pymemcache
-from openai import timeout
 
+from typing import List
 from . import EngineBase
-from .models import ResultSet, ReviewSet, ReviewResult
+from .models import ResultSet, ReviewSet
 
 logger = logging.getLogger("default")
 
