@@ -94,7 +94,7 @@ class MemcachedEngine(EngineBase):
                 raise Exception("空SQL语句")
 
             # 提取命令名称
-            parts = sql.split(" ", -1)
+            parts = sql.split(" ")
             cmd = parts[0]
             cmd_args = parts[1:]
 
@@ -301,8 +301,8 @@ def _handle_set(conn: pymemcache.Client, sql: str, cmd_args: List[str]):
 
     try:
         key = cmd_args[0].strip()
-        expiry = int(cmd_args[2].strip()) if len(cmd_args) > 2 else 0
         value = cmd_args[1].strip()
+        expiry = int(cmd_args[2].strip()) if len(cmd_args) > 2 else 0
         ok = conn.set(key, value, expire=expiry)
         result_set.rows = [["OK"] if ok else ["FAIL"]]
         result_set.column_list = ["状态"]
