@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-""" 
+"""
 @author: hhyo
 @license: Apache Licence
 @file: sql_analyze.py
@@ -66,7 +66,8 @@ def analyze(request):
                 )
             soar_test_dsn = SysConfig().get("soar_test_dsn")
             # 获取实例连接信息
-            online_dsn = f"{instance.user}:{instance.password}@{instance.host}:{instance.port}/{db_name}"
+            user, password = instance.get_username_password()
+            online_dsn = f"{user}:{password}@{instance.host}:{instance.port}/{db_name}"
         else:
             online_dsn = ""
             soar_test_dsn = ""

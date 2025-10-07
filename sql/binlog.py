@@ -134,12 +134,12 @@ def my2sql(request):
 
     # 提交给my2sql进行解析
     my2sql = My2SQL()
-
+    username, password = instance.get_username_password()
     # 准备参数
     args = {
         "host": instance.host,
-        "user": instance.user,
-        "password": instance.password,
+        "user": username,
+        "password": password,
         "port": instance.port,
         "work-type": work_type,
         "start-file": start_file,

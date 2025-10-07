@@ -71,6 +71,7 @@ env = environ.Env(
         ],
     ),
     CURRENT_AUDITOR=(str, "sql.utils.workflow_audit:AuditV2"),
+    PASSWORD_MIXIN_PATH=(str, "sql.plugins.password:DummyMixin"),
 )
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -112,6 +113,8 @@ ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")
 ENABLED_ENGINES = env("ENABLED_ENGINES")
 
 CURRENT_AUDITOR = env("CURRENT_AUDITOR")
+
+PASSWORD_MIXIN_PATH = env("PASSWORD_MIXIN_PATH")
 
 # Application definition
 INSTALLED_APPS = (

@@ -556,6 +556,7 @@ class TestWorkflow(APITestCase):
                 "group_id": 1,
                 "db_name": "test_db",
                 "instance": self.ins.id,
+                "is_offline_export": 0,
             },
             "sql_content": "alter table abc add column note varchar(64);",
         }
@@ -581,6 +582,7 @@ class TestWorkflow(APITestCase):
                 "db_name": "test_db",
                 "engineer": "test_user2",
                 "instance": self.ins.id,
+                "is_offline_export": 0,
             },
             "sql_content": "alter table abc add column note varchar(64);",
         }
@@ -599,6 +601,7 @@ class TestWorkflow(APITestCase):
                 "group_id": 1,
                 "db_name": "test_db",
                 "instance": self.ins.id,
+                "is_offline_export": 0,
             },
             "sql_content": "alter table abc add column note varchar(64);",
         }

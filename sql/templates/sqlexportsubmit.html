@@ -5,7 +5,7 @@
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL上线
+                    数据导出
                 </div>
                 <div class="panel-body">
                     <form id="form-submitsql" class="form-horizontal">
@@ -13,6 +13,21 @@
                         <input type="hidden" id="workflow_id" name="workflow_id"/>
                         <div class="col-md-9 column">
                             <pre id="sql_content_editor" style="min-height:450px"></pre>
+                            <!-- 校验提示 -->
+		      	            <div class="validation-notice" id="validationNotice">
+                                <div class="notice-icon" id="noticeIcon">
+                                </div>
+			                    <div class="notice-content">
+			                        <div class="notice-title">行数统计中...</div>
+			                        <div class="notice-message">正在校验SQL语法并统计结果行数，请稍候...</div>
+			                    </div>
+			                    <button class="close-notice" id="closeNotice" title="关闭">
+			                        &times;
+			                    </button>
+                                <div class="progress-bar">
+                                    <div class="progress-bar-inner"></div>
+                                </div>
+			                </div>
                         </div>
                         <div style="display: none" class="col-md-8 column">
                             <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
@@ -31,11 +46,18 @@
                                        placeholder="请输入上线单名称，如:XX项目会员功能建表"
                                        required>
                             </div>
-                            <div class="form-group">
-                                <input id="demand_url" type="text" autocomplete="off" name="demand_url"
-                                       class="form-control"
-                                       data-name="需求链接" data-placeholder="请提供需求链接，记录工单需求信息！"
-                                       placeholder="请输入需求链接">
+                            <div class="form-group toggleable">
+                                <select id="export_format" name="export_format"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-name="离线导出数据格式" data-placeholder="请选择导出数据格式！"
+                                        title="请选择导出数据格式"
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
+                                    <option value="csv">CSV</option>
+                                    <option value="xlsx">Excel</option>
+                                    <option value="sql">SQL</option>
+                                    <option value="json">JSON</option>
+                                    <option value="xml">XML</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <select id="group_name" name="group_name"
@@ -108,47 +130,12 @@
                                         class="btn btn-danger">SQL检测
                                 </button>
                                 <button type="button" id="btn-submitsql" data-loading-text="提交中..."
-                                        class="btn btn-success disabled" disabled>
-                                    SQL提交
+                                        class="btn btn-success" disabled>
+                                    导出提交
                                 </button>
                             </div>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-12 column">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    检测结果
-                </div>
-
-                <div class="panel-body">
-                    <div class="table-responsive">
-                        <table id="inception-result" data-toggle="table" class="table table-striped table-hover"
-                               style="table-layout:inherit;overflow:hidden;white-space:nowrap;word-break:break-word;text-overflow:ellipsis;display: none"></table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- 审核信息确认 -->
-    <div class="modal fade" id="submitConfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header ">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">提交信息确认</h4>
-                </div>
-                <div class="modal-body">
-                    <p>提交的SQL经检测仍存在<font color="red" size="5"><b id="CheckWarningCount"></b></font>个警告信息和<font
-                            color="red" size="5"><b id="CheckErrorCount"></b></font>个错误信息，请按照平台规范仔细检查！<br>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button id="submitsqlconfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
-                    </button>
                 </div>
             </div>
         </div>
@@ -168,6 +155,103 @@
     <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
+
+    <!-- 校验提示  notice/css/notice.css-->
+    <script>
+	    const validationNotice = document.getElementById('validationNotice');
+	    const closeNotice = document.getElementById('closeNotice');
+	    const successMessage = document.getElementById('successMessage');
+        const noticeIcon = document.getElementById('noticeIcon');
+        const progressBar = document.querySelector('.progress-bar-inner');
+	    validationNotice.style.display = 'none';
+        let timeoutId;
+        
+        // 重置校验通知
+        function resetValidationNotice() {
+            clearTimeout(timeoutId);
+            closeNotice.style.display = 'none';
+            validationNotice.style.display = 'flex';
+            noticeIcon.classList.remove('icon-loading','icon-success','icon-error');
+            noticeIcon.classList.add('icon-loading');
+            validationNotice.className = 'validation-notice visible';
+            validationNotice.querySelector('.notice-title').textContent = "行数统计中...";
+            validationNotice.querySelector('.notice-message').textContent = "正在校验SQL语法并统计结果行数，请稍候...";
+            validationNotice.classList.remove('status-success', 'status-error', 'status-warning');
+        }
+
+        // 关闭提示按钮
+        closeNotice.addEventListener('click', function(e) {
+            e.preventDefault();
+            validationNotice.style.display = 'none';
+        });
+
+        function showStatusNotice(options = {}) {
+            // 解构配置参数并提供默认值
+            const {
+                element = validationNotice,   // 默认使用validationNotice元素
+                noticeIconClass = '',         // 通知图标元素
+                statusClass = 'status-error', // 状态类名
+                title = '校验失败',            // 默认标题
+                message = '',                 // 默认消息
+                params = {},                  // 消息中的替换参数
+                delay = 5000,                 // 默认5秒后消失
+            } = options;
+            
+            clearTimeout(timeoutId);
+
+            // 替换消息中的占位符 {key} => value
+            const formatMessage = (msg, values) => {
+                return msg.replace(/\{(\w+)\}/g, (_, key) => values[key] || '');
+            };
+        
+            const formattedMessage = formatMessage(message, params);
+
+            // 更新显示内容
+            closeNotice.style.display = 'flex';
+            noticeIcon.classList.remove('icon-loading');
+            noticeIcon.classList.add(noticeIconClass);
+            element.classList.add(statusClass);
+            element.querySelector('.notice-title').textContent = title;
+            element.querySelector('.notice-message').textContent = formattedMessage;
+
+            // 进度条
+            progressBar.style.width = '100%';
+            progressBar.style.transition = 'none';
+            void progressBar.offsetWidth;
+            progressBar.style.transition = `width ${delay}ms linear`;
+            progressBar.style.width = '0'
+
+            setAutoClose(delay);
+        }
+
+        // 设置自动隐藏
+        function setAutoClose(delay) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                validationNotice.style.display = 'none';
+                validationNotice.classList.remove('visible');
+            }, delay);
+        }
+
+        // 鼠标悬停暂停
+        validationNotice.addEventListener('mouseenter', () => {
+            if (validationNotice.classList.contains('status-success') || validationNotice.classList.contains('status-error')) {
+                clearTimeout(timeoutId);
+                progressBar.style.transition = 'none';
+                progressBar.style.width = '100%';
+            }
+        });
+        // 鼠标离开重新倒计时关闭
+        validationNotice.addEventListener('mouseleave', () => {
+            if (validationNotice.classList.contains('status-success') || validationNotice.classList.contains('status-error')) {
+                const remainingWidth = progressBar.offsetWidth;
+                const delay = (remainingWidth / validationNotice.offsetWidth) * 5000;
+                progressBar.style.transition = `width ${delay}ms linear`;
+                progressBar.style.width = '0';
+                setAutoClose(delay);
+            }
+        });
+    </script>
 
     <!--初始化时间控件 -->
     <script>
@@ -200,54 +284,6 @@
             $("#run_date_end").val('');
         });
     </script>
-    <!--upload -->
-    <script>
-        //初始化上传控件
-        function init_upload() {
-            $("#sql-upload").fileinput({
-                language: 'zh',
-                allowedFileExtensions: ['sql'],//接收的文件后缀
-                showCaption: true,//是否显示标题
-                initialCaption: '仅支持10M内的SQL文件',
-                defaultPreviewContent: '仅支持10M内的SQL文件',
-                showUpload: false,     //不显示上传按钮
-                showPreview: false,    // 不显示预览,
-                //maxFileSize: 10240
-            }).on('fileloaded', function (event, data, previewId, index) {
-                if (data.size <= 10240 * 1024) {
-                    loadsql();
-                } else {
-                    $('#sql-upload').fileinput('reset');
-                    alert('文件大小超过10M，请重新选择');
-                }
-            }).on('fileclear', function (event) {
-                editor.setValue("");
-            });
-        }
-
-        //读取文件并展示在输入域
-        function loadsql() {
-            //获取文件
-            var file = $("#sql-upload")[0].files[0];
-
-            //创建读取文件的对象
-            var reader = new FileReader();
-
-            //创建文件读取相关的变量
-            var sqlFile;
-
-            //为文件读取成功设置事件
-            reader.onload = function (e) {
-                var sqlFile = e.target.result;
-                var value = editor.getValue() + sqlFile;
-                editor.setValue(value);
-                editor.clearSelection();
-            };
-
-            //正式读取文件
-            reader.readAsText(file);
-        }
-    </script>
     <!--ace -->
     <script>
         // 实例变更获取数据库补全提示
@@ -268,8 +304,9 @@
                     resource_type: "database"
                 },
                 complete: function () {
-                    var pathname = window.location.pathname;
-                    if (pathname === "/editsql/") {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlSource = urlParams.get('source');
+                    if (urlSource === "resubmit") {
                         //填充库名
                         $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
                         if ($("#db_name").val()) {
@@ -371,8 +408,14 @@
     </script>
     <!--check-->
     <script>
-        editor.on('change', function () {
-            $('#btn-submitsql').addClass('disabled').prop("disabled", this);
+        // 监听sql文本，若sql发生变化则禁用提交按钮
+        editor.getSession().on('change', function(e) {
+            $("#btn-submitsql").prop("disabled", true);
+        });
+
+        // 监听选区变化，若选取变化则禁用提交按钮
+        editor.getSession().selection.on('changeSelection', function(e) {
+            $("#btn-submitsql").prop("disabled", true);
         });
 
         function checkRunDate(gap = 60) {
@@ -401,193 +444,187 @@
             return str;
         };
         $("#btn-autoreview").click(function () {
-            //先做表单验证，成功了提交ajax给后端
-            const sqlTips = "-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n";
-            var editorValue=editor.getValue();
-            // 删除默认的提示字符串。
-            editorValueRemove=removeStartsWith(editorValue,sqlTips);
-            if(editorValue!==editorValueRemove)
-            {
-                editor.setValue(editorValueRemove);
-            }
-            $("#sql_content").val(editorValueRemove);
-            $("#sql_content").val(editor.getValue());
-            if (validateForm($("#form-submitsql")) && checkRunDate()) {
-                autoreview();
+            if (sqlquery_validate()) {
+                $("#btn-submitsql").prop("disabled", true);
+                resetValidationNotice()
+                editor.container.style.pointerEvents = "none";
+                editor.container.style.opacity = 0.6;
+                $("#db_name").attr("disabled", true);
+                $("#instance_name").attr("disabled", true);
+                $("#group_name").attr("disabled", true);
+                sqlcount('explain')
             }
         });
+
+        //表单验证
+        function sqlquery_validate() {
+            var result = true;
+            var instance_name = $("#instance_name").val();
+            var db_name = $("#db_name").val();
+            var sqlContent = editor.getValue();
+            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+            if (select_sqlContent) {
+                sqlContent = select_sqlContent
+            }
+            var isOfflineExport = $("#btn-submitsql").is(':hidden') ? 0 : 1;
+            // 移除单行注释和多行注释后再统计语句数量
+            let processedSql = sqlContent.replace(/--.*$/gm, ''); // 移除单行注释
+            processedSql = processedSql.replace(/\/\*[\s\S]*?\*\//gm, ''); // 移除多行注释
+            var totalSqlCnt = processedSql.split(';')
+                .map(stmt => stmt.trim()) // 去除每个语句两端的空白
+                .filter(stmt => stmt.length > 0) // 过滤掉空语句
+                .length; // 统计语句数量
+
+            // 检查SQL开头
+            let trimmedSQL = sqlContent.trim().toUpperCase();
+            // 跳过所有开头的注释（单行/多行）
+            while (true) {
+                // 跳过单行注释 (--)
+                if (trimmedSQL.startsWith("--")) {
+                    const nlIndex = trimmedSQL.indexOf('\n');
+                    trimmedSQL = (nlIndex > -1) 
+                        ? trimmedSQL.substring(nlIndex + 1).trim() 
+                        : "";
+                    continue;
+                }
+                // 跳过多行注释 (/*...*/)
+                if (trimmedSQL.startsWith("/*")) {
+                    const endIndex = trimmedSQL.indexOf("*/");
+                    if (endIndex === -1) break; // 未闭合注释不处理
+                    trimmedSQL = trimmedSQL.substring(endIndex + 2).trim();
+                    continue;
+                }
+                break;
+            }
+            if (!instance_name) {
+                alert("请选择实例！");
+                return result = false;
+            } else if (!db_name) {
+                alert("请选择数据库！");
+                return result = false;
+            } else if (!sqlContent) {
+                alert("SQL内容不能为空！");
+                return result = false;
+            } else if (!trimmedSQL.startsWith("SELECT") && !trimmedSQL.startsWith("WITH")) {
+                alert("SQL必须是查询语句！");
+                return result = false;
+            } else if (isOfflineExport === 1 && totalSqlCnt > 1) {
+                alert("检测到多个SQL语句，只能提交一个SQL，请选中要提交导出工单的SQL重试。");
+                return result = false;
+            }
+            return result;
+        }
+        
+        //count行数统计
+        function sqlcount(sql) {
+            var result = true;
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+            if (select_sqlContent) {
+                sqlContent = select_sqlContent
+            } else {
+                var sqlContent = editor.getValue();
+            }
+
+            var sqlContent = sqlContent.trim().replace(/;$/, '');
+            var sqlContent = 'select count(1) from (' + sqlContent + '\n) t'
+             
+            //提交请求
+            $.ajax({
+                type: "post",
+                url: "/query/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val(),
+                    schema_name: $("#schema_name").val(),
+                    tb_name: $("#table_name").val(),
+                    sql_content: sqlContent,
+                    limit_num: $("#limit_num").val()
+                },
+                complete: function () {
+                    $("#db_name").attr("disabled", false);
+                    $("#instance_name").attr("disabled", false);
+                    $("#group_name").attr("disabled", false);
+                    editor.container.style.pointerEvents = "auto";
+                    editor.container.style.opacity = 1;
+                },
+                success: function (data) {
+                    validate_data(data);
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
 
         //SQL提交
         $("#btn-submitsql").click(function () {
             //获取form对象，判断输入，通过则提交
             $("#sql_content").val(editor.getValue());
             if (validateForm($("#form-submitsql")) && checkRunDate()) {
-                //判断是否需要弹出提示
-                var CheckWarningCount = sessionStorage.getItem('CheckWarningCount');
-                var CheckErrorCount = sessionStorage.getItem('CheckErrorCount');
-                $("#CheckWarningCount").text(CheckWarningCount);
-                $("#CheckErrorCount").text(CheckErrorCount);
-                if (CheckWarningCount > 0 || CheckErrorCount > 0) {
-                    $('#submitConfirm').modal('show');
-                } else {
-                    sqlSubmit()
-                }
+                resetValidationNotice()
+                validationNotice.querySelector('.notice-title').textContent = "工单提交中...";
+                validationNotice.querySelector('.notice-message').textContent = "后台二次校验，请稍候...";
+                editor.container.style.pointerEvents = "none";
+                editor.container.style.opacity = 0.6;
+                sqlSubmit()
             }
         });
 
-        //提交二次确认
-        $("#submitsqlconfirm").click(function () {
-            sqlSubmit()
-        });
-
-        function autoreview() {
-            //将数据通过ajax提交给后端进行检查
-            $.ajax({
-                type: "post",
-                url: "/api/v1/workflow/sqlcheck/",
-                dataType: "json",
-                contentType: 'application/json;',
-                data: JSON.stringify({
-                    full_sql: editor.getValue(),
-                    instance_id: $("#instance_name option:selected").attr("instance-id"),
-                    db_name: $("#db_name").val()
-                }),
-                beforeSend: function (xhr) {
-                    $('#btn-autoreview').button('loading')
-                },
-                complete: function () {
-                    $('#btn-autoreview').button('reset')
-                },
-                success: function (data) {
-                    var result = data;
-                    //初始化表结构显示
-                    // 异步获取要动态生成的列
-                    var columns = [];
-                    $.each(result['column_list'], function (i, column) {
-                        columns.push({"field": i, "title": column, "sortable": true});
+        // 校验返回的结果
+        function validate_data(data) {
+            var result = data.data;
+            if (data.status === 0) {
+                var ActualRows = 0;
+                var maxExportRows = "{{ max_export_rows }}";
+                ActualRows = parseFloat(result['rows'][0][0]);
+                if (ActualRows > maxExportRows) {
+                    $("#btn-submitsql").prop("disabled", true);
+                    showStatusNotice({
+                        noticeIconClass: 'icon-error',
+                        statusClass: 'status-error',
+                        title: '校验失败',
+                        message: '统计查询结果：{ActualRows} 行数据，超过了阈值：{maxExportRows}',
+                        params: { ActualRows: ActualRows, maxExportRows: maxExportRows },
+                        delay: 5000
                     });
-                    $("#inception-result").bootstrapTable('destroy').bootstrapTable({
-                            data: result['rows'],
-                            columns: [{
-                                title: 'ID',
-                                field: 'id',
-                                sortable: true
-                            }, {
-                                title: 'SQL语句',
-                                field: 'sql',
-                                formatter: function (value, row, index) {
-                                    var sql = value.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;');
-                                    if (value.length > 50) {
-                                        return sql.substr(0, 50) + '...';
-                                    } else {
-                                        return sql
-                                    }
-                                }
-                            }, {
-                                title: '扫描/影响行数',
-                                field: 'affected_rows',
-                                sortable: true
-                            }, {
-                                title: '审核状态',
-                                field: 'errlevel',
-                                sortable: true,
-                                formatter: function (value, row, index) {
-                                    if (String(value) === '0') {
-                                        return 'pass'
-                                    } else if (String(value) === '1') {
-                                        return 'warning'
-                                    } else if (String(value) === '2') {
-                                        return 'error'
-                                    }
-                                }
-                            }, {
-                                title: '审核信息',
-                                field: 'errormessage',
-                                formatter: function (value, row, index) {
-                                    if (value === null) {
-                                        return value
-                                    }
-                                    return value.replace(/\n/g, '<br>');
-                                }
-                            }],
-                            rowStyle: function (row, index) {
-                                var style = "";
-                                if (row.errlevel === 1) {
-                                    style = 'warning';
-                                } else if (row.errlevel === 2) {
-                                    style = 'danger';
-                                }
-                                return {classes: style}
-                            },
-                            escape: true,                       // 转义HTML字符串，替换 &, <, >, ", \`, 和 ' 字符。
-                            striped: true,                      //是否显示行间隔色
-                            cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                            sortable: true,                     //是否启用排序
-                            //sortOrder: "desc",                   //排序方式
-                            //sortName: 'errormessage',           //排序字段
-                            pagination: true,                   //是否显示分页（*）
-                            sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-                            pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                            pageSize: 500,                     //每页的记录行数（*）
-                            pageList: [500, 1000, 5000],       //可供选择的每页的行数（*）
-                            search: true,                      //是否显示表格搜索
-                            strictSearch: false,                //是否全匹配搜索
-                            showColumns: true,                  //是否显示所有的列（选择显示的列）
-                            showRefresh: false,                  //是否显示刷新按钮
-                            showExport: true,
-                            exportDataType: "all",
-                            minimumCountColumns: 1,             //最少允许的列数
-                            uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                            showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                            cardView: false,                    //是否显示详细视图
-                            detailView: true,                  //是否显示父子表
-                            //格式化详情
-                            detailFormatter: function (index, row) {
-                                var html = [];
-                                $.each(row, function (key, value) {
-                                    if (key === 'sql') {
-                                        //let sql = window.sqlFormatter.format(key);
-                                        let sql = value;
-                                        //替换标签
-                                        sql = sql.replace(/&/g, "&amp;");
-                                        sql = sql.replace(/</g, "&lt;");
-                                        sql = sql.replace(/>/g, "&gt;");
-                                        sql = sql.replace(/"/g, "&quot;");
-                                        //替换所有的换行符
-                                        sql = sql.replace(/\r\n/g, "<br>");
-                                        sql = sql.replace(/\n/g, "<br>");
-                                        //替换所有的空格
-                                        sql = sql.replace(/\s/g, "&nbsp;");
-                                        html.push('<span>' + sql + '</span>');
-
-                                    }
-                                });
-                                return html.join('');
-                            }
-                        }
-                    );
-                    //记录审核结果
-                    sessionStorage.setItem('CheckWarningCount', result.warning_count);
-                    sessionStorage.setItem('CheckErrorCount', result.error_count);
-                    $("#inception-result").show();
-                    $('#btn-submitsql').button('reset').removeClass('disabled').prop("disabled", false);
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    if (XMLHttpRequest.responseJSON) {
-                        alert(XMLHttpRequest.responseText)
-                    } else {
-                        alert(errorThrown);
-                    }
+                } else if (ActualRows <= maxExportRows) {
+                    $("#btn-submitsql").prop("disabled", false);
+                    showStatusNotice({
+                        noticeIconClass: 'icon-success',
+                        statusClass: 'status-success',
+                        title: '校验成功',
+                        message: '统计查询结果：{ActualRows} 行数据，点击提交导出按钮申请导出。',
+                        params: { ActualRows: ActualRows},
+                        delay: 5000
+                    });
+                } else {
+                    $("#btn-submitsql").prop("disabled", true);
                 }
-            });
-
+            } else {
+                showStatusNotice({
+                    noticeIconClass: 'icon-error',
+                    statusClass: 'status-error',
+                    title: '校验失败',
+                    message: '错误：{msg}',
+                    params: { msg: data.msg },
+                    delay: 5000
+                });
+            }
         }
 
+        // 提交sql
         function sqlSubmit() {
             let formData = $('#form-submitsql').serializeArray().reduce(function (obj, item) {
                 obj[item.name] = item.value;
                 return obj;
             }, {})
+            var sqlContent = editor.getValue();
+            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+            if (select_sqlContent) {
+                sqlContent = select_sqlContent
+            }
             $.ajax({
                 type: "post",
                 url: "/api/v1/workflow/",
@@ -596,16 +633,16 @@
                 data: JSON.stringify({
                         workflow: {
                             workflow_name: formData.workflow_name,
-                            demand_url: formData.demand_url,
+                            export_format: formData.export_format,
+                            is_offline_export: 1,
                             group_id: $("#group_name option:selected").attr("group-id"),
                             instance: $("#instance_name option:selected").attr("instance-id"),
                             db_name: formData.db_name,
-                            is_backup: formData.is_backup === 'True',
+                            is_backup: 'False',
                             run_date_start: formData.run_date_start,
                             run_date_end: formData.run_date_end,
-                            is_offline_export: 0,
                         },
-                        sql_content: formData.sql_content
+                        sql_content: sqlContent
                     }
                 ),
                 beforeSend: function (xhr) {
@@ -613,6 +650,8 @@
                 },
                 complete: function () {
                     $('#btn-submitsql').button('reset')
+                    editor.container.style.pointerEvents = "auto";
+                    editor.container.style.opacity = 1;
                 },
                 success: function (data) {
                     window.location.href = "/detail/"+ data.workflow_id
@@ -638,11 +677,12 @@
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),
-                    tag_code: 'can_write'
+                    tag_code: 'can_read'
                 },
                 complete: function () {
-                    var pathname = window.location.pathname;
-                    if (pathname === "/editsql/") {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlSource = urlParams.get('source');
+                    if (urlSource === "resubmit") {
                         //填充实例信息
                         $('#instance_name').selectpicker('val', sessionStorage.getItem('editClustername'));
                         if ($("#instance_name").val()) {
@@ -700,27 +740,20 @@
     <!--init -->
     <script>
         $(document).ready(function () {
-            // 初始化上传控件
-            init_upload();
             // 清空id, 只允许新增不允许修改
             sessionStorage.removeItem('editWorkflowDetailId');
-            var pathname = window.location.pathname;
-            if (pathname == "/editsql/") {
+            //获取url参数置入对应的初始化内容
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlSource = urlParams.get('source');
+            if (urlSource == "resubmit") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
-                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
-                $("#group_name").val(sessionStorage.getItem('editGroup'));
-                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
-                editor.setValue(sessionStorage.getItem('editSqlContent'));
-                editor.clearSelection();
-                $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
-            } else if (pathname === "/submitotherinstance/") {
-                $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
-                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
-                $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
-            } else if (pathname === "/submitsql/") {
+            } else if (urlSource === "query") {
+                editor.setValue(sessionStorage.getItem('submitSqlContent'));
+                editor.clearSelection();
+            } else {
                 //重置页面内容
                 editor.setValue("");
                 $(".selectpicker").selectpicker('val', '');

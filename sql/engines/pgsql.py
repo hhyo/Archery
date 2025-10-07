@@ -5,6 +5,7 @@
 @file: pgsql.py
 @time: 2019/03/29
 """
+import json
 import re
 import psycopg2
 import logging
@@ -186,28 +187,54 @@ class PgSQLEngine(EngineBase):
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection(db_name=db_name)
+            conn.autocommit = False
             max_execution_time = kwargs.get("max_execution_time", 0)
             cursor = conn.cursor()
             try:
                 cursor.execute(f"SET statement_timeout TO {max_execution_time};")
             except:
                 pass
+            cursor.execute("SET transaction ISOLATION LEVEL READ COMMITTED READ ONLY;")
             if schema_name:
                 cursor.execute(
                     f"SET search_path TO %(schema_name)s;", {"schema_name": schema_name}
                 )
             cursor.execute(sql, parameters)
-            effect_row = cursor.rowcount
+            # effect_row = cursor.rowcount
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
             else:
                 rows = cursor.fetchall()
+            conn.commit()
             fields = cursor.description
+            column_type_codes = [i[1] for i in fields] if fields else []
+            # 定义 JSON 和 JSONB 的 type_code,# 114 是 json，3802 是 jsonb
+            JSON_TYPE_CODE = 114
+            JSONB_TYPE_CODE = 3802
+            # 对 rows 进行循环处理，判断是否是 jsonb 或 json 类型
+            converted_rows = []
+            for row in rows:
+                new_row = []
+                for idx, col_value in enumerate(row):
+                    # 理论上, 下标不会越界的
+                    column_type_code = (
+                        column_type_codes[idx] if idx < len(column_type_codes) else None
+                    )
+                    # 只在列类型为 json 或 jsonb 时转换
+                    if column_type_code in [JSON_TYPE_CODE, JSONB_TYPE_CODE]:
+                        if isinstance(col_value, (dict, list)):
+                            new_row.append(json.dumps(col_value))  # 转为 JSON 字符串
+                        else:
+                            new_row.append(col_value)
+                    else:
+                        new_row.append(col_value)
+                converted_rows.append(tuple(new_row))
 
             result_set.column_list = [i[0] for i in fields] if fields else []
-            result_set.rows = rows
-            result_set.affected_rows = effect_row
+            result_set.rows = converted_rows
+            result_set.affected_rows = len(converted_rows)
         except Exception as e:
+            conn.rollback()
             logger.warning(
                 f"PgSQL命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}"
             )
@@ -301,13 +328,14 @@ class PgSQLEngine(EngineBase):
         db_name = workflow.db_name
         try:
             conn = self.get_connection(db_name=db_name)
+            conn.autocommit = False
             cursor = conn.cursor()
+            cursor.execute("SET transaction ISOLATION LEVEL READ COMMITTED READ WRITE;")
             # 逐条执行切分语句，追加到执行结果中
             for statement in split_sql:
                 statement = statement.rstrip(";")
                 with FuncTimer() as t:
                     cursor.execute(statement)
-                    conn.commit()
                 execute_result.rows.append(
                     ReviewResult(
                         id=line,
@@ -320,7 +348,9 @@ class PgSQLEngine(EngineBase):
                     )
                 )
                 line += 1
+            conn.commit()
         except Exception as e:
+            conn.rollback()
             logger.warning(
                 f"PGSQL命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}"
             )
@@ -361,3 +391,45 @@ class PgSQLEngine(EngineBase):
         if self.conn:
             self.conn.close()
             self.conn = None
+
+    def processlist(self, command_type, **kwargs):
+        """获取连接信息"""
+        sql = """
+            select psa.pid
+                                ,concat('{',array_to_string(pg_blocking_pids(psa.pid),','),'}') block_pids
+                                ,psa.leader_pid
+                                ,psa.datname,psa.usename
+                                ,psa.application_name
+                                ,psa.state
+                                ,psa.client_addr::text client_addr
+                                ,round(GREATEST(EXTRACT(EPOCH FROM (now() - psa.query_start)),0)::numeric,4) elapsed_time_seconds
+                ,GREATEST(now() - psa.query_start, INTERVAL '0 second') AS elapsed_time
+                        ,(case when psa.leader_pid is null then psa.query end) query
+                                ,psa.wait_event_type,psa.wait_event
+                                ,psa.query_start
+                                ,psa.backend_start
+                                ,psa.client_hostname,psa.client_port
+                                ,psa.xact_start transaction_start_time
+                ,psa.state_change,psa.backend_xid,psa.backend_xmin,psa.backend_type
+                                from  pg_stat_activity psa
+                                where 1=1
+                                AND psa.pid <> pg_backend_pid()
+                                $state_not_idle$
+                                order by (case 
+                                    when psa.state='active' then 10 
+                                    when psa.state like 'idle in transaction%' then 5
+                                    when psa.state='idle' then 99 else 100 end)
+                                    ,elapsed_time_seconds desc
+                                ,(case when psa.leader_pid is not null then 1 else 0 end);
+            """
+        # escape
+        command_type = self.escape_string(command_type)
+        if not command_type:
+            command_type = "Not Idle"
+
+        if command_type == "Not Idle":
+            sql = sql.replace("$state_not_idle$", "and psa.state<>'idle'")
+
+        # 所有的模板进行替换
+        sql = sql.replace("$state_not_idle$", "")
+        return self.query("postgres", sql)

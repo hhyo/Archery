@@ -23,6 +23,7 @@ from sql import (
     archiver,
     audit_log,
     user,
+    offlinedownload,
 )
 from sql.utils import tasks
 from common.utils import ding_api
@@ -40,6 +41,7 @@ urlpatterns = [
     path("editsql/", views.submit_sql),
     path("submitotherinstance/", views.submit_sql),
     path("detail/<int:workflow_id>/", views.detail, name="detail"),
+    path("downloadfile/", offlinedownload.offline_file_download),
     path("passed/", sql_workflow.passed),
     path("execute/", sql_workflow.execute),
     path("timingtask/", sql_workflow.timing_task),
@@ -63,6 +65,7 @@ urlpatterns = [
     path("workflow/<int:audit_id>/", views.workflowsdetail),
     path("dbaprinciples/", views.dbaprinciples),
     path("dashboard/", dashboard.pyecharts),
+    path("dashboard/api/", dashboard.DashboardApi),
     path("group/", views.group),
     path("grouprelations/<int:group_id>/", views.groupmgmt),
     path("instance/", views.instance),
@@ -93,6 +96,7 @@ urlpatterns = [
     path("check/go_inception/", check.go_inception),
     path("check/email/", check.email),
     path("check/instance/", check.instance),
+    path("check/file_storage_connect/", check.file_storage_connect),
     path("group/group/", resource_group.group),
     path("group/addrelation/", resource_group.addrelation),
     path("group/relations/", resource_group.associated_objects),
@@ -164,4 +168,6 @@ urlpatterns = [
     path("audit/input/", audit_log.audit_input),
     path("user/list/", user.lists),
     path("user/qrcode/<str:data>/", totp.generate_qrcode),
+    path("sqlexportworkflow/", views.sqlexportworkflow),
+    path("sqlexportsubmit/", views.sqlexportsubmit),
 ]

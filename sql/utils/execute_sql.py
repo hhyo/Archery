@@ -11,6 +11,7 @@ from sql.models import SqlWorkflow
 from sql.notify import notify_for_execute, EventType
 from sql.utils.workflow_audit import Audit
 from sql.engines import get_engine
+from sql.offlinedownload import OffLineDownLoad
 
 logger = logging.getLogger("default")
 
@@ -41,7 +42,10 @@ def execute(workflow_id, user=None):
         operator_display=user.display if user else "系统",
     )
     execute_engine = get_engine(instance=workflow_detail.instance)
-    return execute_engine.execute_workflow(workflow=workflow_detail)
+    if workflow_detail.is_offline_export:
+        return OffLineDownLoad().execute_offline_download(workflow=workflow_detail)
+    else:
+        return execute_engine.execute_workflow(workflow=workflow_detail)
 
 
 def execute_callback(task):

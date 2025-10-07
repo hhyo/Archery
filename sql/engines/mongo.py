@@ -15,6 +15,8 @@ from dateutil.parser import parse
 from bson.objectid import ObjectId
 from bson.int64 import Int64
 
+from sql.utils.data_masking import data_masking
+
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 from common.config import SysConfig
@@ -386,7 +388,7 @@ class MongoEngine(EngineBase):
 
         sql = "rs.isMaster().primary"
         master = self.exec_cmd(sql)
-        if master != "undefined" and master.find("TypeError") >= 0:
+        if master != "undefined":
             sp_host = master.replace('"', "").split(":")
             self.host = sp_host[0]
             self.port = int(sp_host[1])
@@ -805,24 +807,28 @@ class MongoEngine(EngineBase):
     def get_connection(self, db_name=None):
         self.db_name = db_name or self.instance.db_name or "admin"
         auth_db = self.instance.db_name or "admin"
+
+        options = {
+            "host": self.host,
+            "port": self.port,
+            "username": self.user,
+            "password": self.password,
+            "authSource": auth_db,
+            "connect": True,
+            "connectTimeoutMS": 10000,
+        }
+
+        # only set TLS options while the instance enabled the TLS, to avoid
+        # tlsInsecure option being set but the instance is not enabled the TLS
+        # which would cause pymongo.ConfigurationError
+        if self.instance.is_ssl:
+            options["tls"] = True
+            options["tlsInsecure"] = not self.instance.verify_ssl
+
         if self.user and self.password:
-            self.conn = pymongo.MongoClient(
-                self.host,
-                self.port,
-                username=self.user,
-                password=self.password,
-                authSource=auth_db,
-                connect=True,
-                connectTimeoutMS=10000,
-            )
+            self.conn = pymongo.MongoClient(**options)
         else:
-            self.conn = pymongo.MongoClient(
-                self.host,
-                self.port,
-                authSource=auth_db,
-                connect=True,
-                connectTimeoutMS=10000,
-            )
+            self.conn = pymongo.MongoClient(**options)
 
         return self.conn
 
@@ -1086,7 +1092,10 @@ class MongoEngine(EngineBase):
             query_skip = int(query_dict["skip"])
             find_cmd += f".skip({query_skip})"
         if "count" in query_dict:
-            find_cmd += ".count()"
+            if condition:
+                find_cmd = "collection.count_documents(condition)"
+            else:
+                find_cmd = "collection.count_documents({})"
         if "explain" in query_dict:
             find_cmd += ".explain()"
 
@@ -1423,3 +1432,9 @@ class MongoEngine(EngineBase):
         except Exception as e:
             exec_result.error = str(e)
         return exec_result
+
+    def query_masking(self, db_name=None, sql="", resultset=None):
+        """传入 sql语句, db名, 结果集,
+        返回一个脱敏后的结果集"""
+        mask_result = data_masking(self.instance, db_name, sql, resultset)
+        return mask_result

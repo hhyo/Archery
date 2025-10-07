@@ -15,6 +15,7 @@ from sql.engines import get_engine, engine_map
 from common.utils.permission import superuser_required
 from common.utils.convert import Convert
 from sql.utils.tasks import task_info
+from sql.utils.resource_group import user_groups
 
 from .models import (
     Users,
@@ -158,6 +159,53 @@ def sqlworkflow(request):
     )
 
 
+def sqlexportworkflow(request):
+    """SQL数据导出工单列表页面"""
+    user = request.user
+    # 获取所有配置项
+    storage_type = SysConfig().get("storage_type")
+    # 离线下载权限判断
+    can_offline_download = user.is_superuser or user.has_perm("sql.offline_download")
+    # 过滤筛选项的数据
+    filter_dict = dict()
+    # 管理员，可查看所有工单
+    if user.is_superuser or user.has_perm("sql.audit_user"):
+        pass
+    # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
+    elif user.has_perm("sql.sql_review") or user.has_perm(
+        "sql.sql_execute_for_resource_group"
+    ):
+        # 先获取用户所在资源组列表
+        group_list = user_groups(user)
+        group_ids = [group.group_id for group in group_list]
+        filter_dict["group_id__in"] = group_ids
+    # 其他人只能查看自己提交的工单
+    else:
+        filter_dict["engineer"] = user.username
+    instance_id = (
+        SqlWorkflow.objects.filter(**filter_dict).values("instance_id").distinct()
+    )
+    instance = Instance.objects.filter(pk__in=instance_id).order_by(
+        Convert("instance_name", "gbk").asc()
+    )
+    resource_group_id = (
+        SqlWorkflow.objects.filter(**filter_dict).values("group_id").distinct()
+    )
+    resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
+
+    return render(
+        request,
+        "sqlexportworkflow.html",
+        {
+            "status_list": SQL_WORKFLOW_CHOICES,
+            "instance": instance,
+            "resource_group": resource_group,
+            "storage_type": storage_type,
+            "can_offline_download": can_offline_download,
+        },
+    )
+
+
 @permission_required("sql.sql_submit", raise_exception=True)
 def submit_sql(request):
     """提交SQL的页面"""
@@ -233,11 +281,23 @@ def detail(request, workflow_id):
     else:
         run_date = ""
 
+    # 添加当前审核人信息
+    current_reviewers = []
+    for node in review_info.nodes:
+        if node.is_current_node == False:
+            continue
+        for user in node.group.user_set.filter(is_active=1):
+            # 确保 group_name 和 group.name 类型一致
+            group_names = [group.group_name for group in user_groups(user)]
+            if workflow_detail.group_name in group_names:
+                current_reviewers.append(user)
+
     # 获取是否开启手工执行确认
     manual = SysConfig().get("manual")
 
     context = {
         "workflow_detail": workflow_detail,
+        "current_reviewers": current_reviewers,
         "last_operation_info": last_operation_info,
         "is_can_review": is_can_review,
         "is_can_execute": is_can_execute,
@@ -313,19 +373,23 @@ def sqlquery(request):
     )
     # 收藏语句
     user = request.user
+    group_list = user_groups(user)
+    storage_type = SysConfig().get("storage_type")
+
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values(
         "id", "alias"
     )
     can_download = 1 if user.has_perm("sql.query_download") or user.is_superuser else 0
-    return render(
-        request,
-        "sqlquery.html",
-        {
-            "favorites": favorites,
-            "can_download": can_download,
-            "engines": engine_map,
-        },
-    )
+    can_offline_download = user.has_perm("sql.offline_download") or user.is_superuser
+    context = {
+        "favorites": favorites,
+        "can_download": can_download,
+        "engines": engine_map,
+        "group_list": group_list,
+        "storage_type": storage_type,
+        "can_offline_download": can_offline_download,
+    }
+    return render(request, "sqlquery.html", context)
 
 
 @permission_required("sql.menu_queryapplylist", raise_exception=True)
@@ -363,8 +427,20 @@ def queryapplydetail(request, apply_id):
     else:
         last_operation_info = ""
 
+    # 添加当前审核人信息
+    current_reviewers = []
+    for node in review_info.nodes:
+        if node.is_current_node == False:
+            continue
+        for user in node.group.user_set.filter(is_active=1):
+            # 确保 group_name 和 group.name 类型一致
+            group_names = [group.group_name for group in user_groups(user)]
+            if workflow_detail.group_name in group_names:
+                current_reviewers.append(user)
+
     context = {
         "workflow_detail": workflow_detail,
+        "current_reviewers": current_reviewers,
         "review_info": review_info,
         "last_operation_info": last_operation_info,
         "is_can_review": is_can_review,
@@ -488,8 +564,20 @@ def archive_detail(request, id):
     else:
         last_operation_info = ""
 
+    # 添加当前审核人信息
+    current_reviewers = []
+    for node in review_info.nodes:
+        if node.is_current_node == False:
+            continue
+        for user in node.group.user_set.filter(is_active=1):
+            # 确保 group_name 和 group.name 类型一致
+            group_names = [group.group_name for group in user_groups(user)]
+            if archive_config.resource_group.group_name in group_names:
+                current_reviewers.append(user)
+
     context = {
         "archive_config": archive_config,
+        "current_reviewers": current_reviewers,
         "review_info": review_info,
         "last_operation_info": last_operation_info,
         "can_review": can_review,
@@ -636,3 +724,33 @@ def audit_sqlworkflow(request):
             "resource_group": resource_group,
         },
     )
+
+
+@permission_required("sql.sqlexport_submit", raise_exception=True)
+def sqlexportsubmit(request):
+    """SQL导出工单页面"""
+    # 主动创建标签
+    InstanceTag.objects.get_or_create(
+        tag_code="can_read", defaults={"tag_name": "支持查询", "active": True}
+    )
+    # 收藏语句
+    user = request.user
+    group_list = user_groups(user)
+    # 获取所有配置项
+    max_export_rows = SysConfig().get("max_export_rows")
+    max_export_rows = int(max_export_rows) if max_export_rows else 10000
+
+    favorites = QueryLog.objects.filter(username=user.username, favorite=True).values(
+        "id", "alias"
+    )
+    can_download = user.has_perm("sql.query_download") or user.is_superuser
+    can_offline_download = user.has_perm("sql.offline_download") or user.is_superuser
+    context = {
+        "favorites": favorites,
+        "can_download": can_download,
+        "engines": engine_map,
+        "group_list": group_list,
+        "max_export_rows": max_export_rows,
+        "can_offline_download": can_offline_download,
+    }
+    return render(request, "sqlexportsubmit.html", context)
