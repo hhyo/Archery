@@ -452,3 +452,113 @@ create table user(
         self.assertEqual(
             not_match_result, ["no_match"]
         )  # 仅 no_match 不符合 "_db$" 规则
+
+
+class TestSqlglotUtils(TestCase):
+    """测试 SqlglotUtils 类"""
+
+    def test_get_dialect_supported_types(self):
+        """测试支持的数据库类型返回正确的方言"""
+        self.assertEqual(SqlglotUtils.get_dialect("mysql"), "mysql")
+        self.assertEqual(SqlglotUtils.get_dialect("MYSQL"), "mysql")
+
+    def test_get_dialect_unsupported_types(self):
+        """测试不支持的数据库类型返回"""
+        self.assertIsNone(SqlglotUtils.get_dialect("unknown_db"))
+        self.assertIsNone(SqlglotUtils.get_dialect(""))
+
+    def test_add_limit_to_query_mysql(self):
+        """测试为 MySQL SQL 添加行数限制"""
+        sql = "SELECT * FROM users"
+        limited_sql = SqlglotUtils.add_limit_to_query(sql, 10, "mysql")
+        self.assertEqual(limited_sql.strip(), "SELECT\n  *\nFROM users\nLIMIT 10")
+
+    def test_add_limit_to_query_mssql(self):
+        """测试为 MS SQL 添加行数限制"""
+        sql = "SELECT * FROM users"
+        limited_sql = SqlglotUtils.add_limit_to_query(sql, 10, "tsql")
+        self.assertEqual(limited_sql.strip(), "SELECT\nTOP 10\n  *\nFROM users")
+
+    def test_add_limit_to_query_mssql_union(self):
+        """测试为 MS SQL UNION 添加行数限制"""
+        sql = "SELECT * FROM users UNION ALL SELECT * FROM users2"
+        limited_sql = SqlglotUtils.add_limit_to_query(sql, 10, "tsql")
+        self.assertEqual(
+            limited_sql.strip(),
+            "SELECT\nTOP 10\n  *\nFROM (\n  SELECT\n    *\n  FROM users\n  UNION ALL\n  SELECT\n    *\n  FROM users2\n) AS inner_query",
+        )
+
+    def test_add_limit_to_query_mssql_union_order(self):
+        """测试为 MS SQL UNION 添加行数限制"""
+        sql = "SELECT * FROM users UNION ALL SELECT * FROM users2 order by id"
+        limited_sql = SqlglotUtils.add_limit_to_query(sql, 10, "tsql")
+        self.assertEqual(
+            limited_sql.strip(),
+            "SELECT\nTOP 10\n  *\nFROM (\n  SELECT\n    *\n  FROM users\n  UNION ALL\n  SELECT\n    *\n  FROM users2\n) AS inner_query\nORDER BY\n  id",
+        )
+
+    def test_add_limit_to_query_mssql_fetchrows(self):
+        """测试为 MS SQL UNION 添加行数限制"""
+        sql = "SELECT * FROM users FETCH NEXT 30 ROWS ONLY"
+        limited_sql = SqlglotUtils.add_limit_to_query(sql, 10, "tsql")
+        self.assertEqual(limited_sql.strip(), "SELECT\nTOP 10\n  *\nFROM users")
+
+    def test_add_limit_to_query_oracle(self):
+        """测试为 Oracle SQL 添加行数限制"""
+        sql = "SELECT * FROM users"
+        limited_sql = SqlglotUtils.add_limit_to_query(sql, 10, "oracle")
+        # Oracle 使用 ROWNUM 方式限制行数
+        self.assertIn("ROWNUM <= 10", limited_sql)
+        self.assertIn(
+            "SELECT\n  *\nFROM (\n  SELECT\n    *\n  FROM users\n) inner_query\nWHERE\n  ROWNUM <= 10",
+            limited_sql,
+        )
+
+    def test_add_limit_to_query_already_limited(self):
+        """测试已有限制的 SQL 会取较小值"""
+        sql = "SELECT * FROM users LIMIT 5"
+        limited_sql = SqlglotUtils.add_limit_to_query(sql, 10, "mysql")
+        self.assertEqual(limited_sql.strip(), "SELECT\n  *\nFROM users\nLIMIT 5")
+
+    def test_add_limit_to_query_cte(self):
+        """测试为包含 CTE 的 SQL 添加行数限制"""
+        sql = (
+            "WITH user_counts AS (SELECT COUNT(*) FROM users) SELECT * FROM user_counts"
+        )
+        limited_sql = SqlglotUtils.add_limit_to_query(sql, 10, "mysql")
+        self.assertIn("LIMIT 10", limited_sql)
+        self.assertIn("WITH user_counts AS", limited_sql)
+
+    def test_add_limit_to_query_non_select(self):
+        """测试非 SELECT 语句不添加限制"""
+        sql = "UPDATE users SET name = 'test' WHERE id = 1"
+        limited_sql = SqlglotUtils.add_limit_to_query(sql, 10, "mysql")
+        self.assertEqual(limited_sql, sql)  # 应该保持不变
+
+    def test_wrap_query_with_count_mysql(self):
+        """测试为 MySQL SQL 添加 COUNT 包装"""
+        sql = "SELECT * FROM users WHERE age > 18"
+        count_sql = SqlglotUtils.wrap_query_with_count(sql, "mysql")
+        expected_sql = "SELECT\n  COUNT(*)\nFROM (\n  SELECT\n    *\n  FROM users\n  WHERE\n    age > 18\n) AS inner_query"
+        self.assertEqual(count_sql.strip(), expected_sql)
+
+    def test_wrap_query_with_count_postgres(self):
+        """测试为 PostgreSQL SQL 添加 COUNT 包装"""
+        sql = "SELECT * FROM users WHERE age > 18"
+        count_sql = SqlglotUtils.wrap_query_with_count(sql, "postgres")
+        expected_sql = "SELECT\n  COUNT(*)\nFROM (\n  SELECT\n    *\n  FROM users\n  WHERE\n    age > 18\n) AS inner_query"
+        self.assertEqual(count_sql.strip(), expected_sql)
+
+    def test_wrap_query_with_count_cte(self):
+        """测试为包含 CTE 的 SQL 添加 COUNT 包装"""
+        sql = "WITH active_users AS (SELECT * FROM users WHERE active = 1) SELECT * FROM active_users"
+        count_sql = SqlglotUtils.wrap_query_with_count(sql, "mysql")
+        self.assertIn("COUNT(*)", count_sql)
+        self.assertIn("WITH active_users AS", count_sql)
+
+    def test_wrap_query_with_count_order_by(self):
+        """测试包含 ORDER BY 的 SQL 添加 COUNT 包装时会移除排序"""
+        sql = "SELECT * FROM users ORDER BY name"
+        count_sql = SqlglotUtils.wrap_query_with_count(sql, "mysql")
+        self.assertNotIn("ORDER BY name", count_sql)
+        self.assertIn("COUNT(*)", count_sql)

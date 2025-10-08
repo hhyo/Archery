@@ -8,6 +8,7 @@ import shutil
 import datetime
 import xml.etree.ElementTree as ET
 import zipfile
+from numpy import diag
 import sqlparse
 import time
 
@@ -22,6 +23,7 @@ from sql.engines.models import ReviewSet, ReviewResult
 from sql.storage import DynamicStorage
 from sql.engines import get_engine
 from common.config import SysConfig
+from sql.utils.sql_utils import SqlglotUtils
 
 logger = logging.getLogger("default")
 
@@ -134,7 +136,8 @@ class OffLineDownLoad(EngineBase):
         full_sql = sqlparse.format(full_sql, strip_comments=True)
         full_sql = sqlparse.split(full_sql)[0]
         sql = full_sql.strip()
-        count_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
+        dialect = SqlglotUtils.get_dialect(workflow.db_type)
+        count_sql = SqlglotUtils.wrap_query_with_count(sql, dialect)
         clean_sql = sql.strip().lower()
         instance = workflow
         check_result = ReviewSet(full_sql=sql)

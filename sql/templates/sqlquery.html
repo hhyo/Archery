@@ -43,6 +43,42 @@
             </div>
         </div>
     </div>
+    <!-- SQL详情弹出框 -->
+    <div class="modal fade" id="sqlDetailModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content message_align">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                    <h4 class="modal-title text-primary">SQL详情</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="sql-detail-section">
+                        <div class="sql-header">
+                            <h5 style="color: #337ab7;">原语句</h5>
+                            <button class="btn btn-default btn-xs copy-btn" data-target="modal-original-sql">
+                                <span class="glyphicon glyphicon-copy"></span> 复制
+                            </button>
+                        </div>
+                        <pre id="modal-original-sql" class="sql-content"></pre>
+                    </div>
+                    <div class="sql-detail-section" style="margin-top: 20px;">
+                        <div class="sql-header">
+                            <h5 style="color: #5cb85c;">执行语句</h5>
+                            <button class="btn btn-default btn-xs copy-btn" data-target="modal-executed-sql">
+                                <span class="glyphicon glyphicon-copy"></span> 复制
+                            </button>
+                        </div>
+                        <pre id="modal-executed-sql" class="sql-content"></pre>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
@@ -271,6 +307,34 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
 
+    <style>
+    .sql-detail-section {
+        margin-bottom: 15px;
+    }
+    .sql-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    .sql-header h5 {
+        margin: 0;
+        font-weight: bold;
+    }
+    .copy-btn {
+        padding: 2px 8px;
+    }
+    .sql-content {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        max-height: 300px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+    </style>
+
     <!-- 查询历史  -->
     <script>
         //获取查询列表
@@ -324,22 +388,61 @@
                 //格式化详情
                 detailFormatter: function (index, row) {
                     var html = [];
-                    $.each(row, function (key, value) {
-                        if (key === 'sqllog') {
-                            let sql = value;
-                            //替换标签
-                            sql = sql.replace(/&/g, "&amp;");
-                            sql = sql.replace(/</g, "&lt;");
-                            sql = sql.replace(/>/g, "&gt;");
-                            sql = sql.replace(/"/g, "&quot;");
-                            //替换所有的换行符
-                            sql = sql.replace(/\r\n/g, "<br>");
-                            sql = sql.replace(/\n/g, "<br>");
-                            //替换所有的空格
-                            sql = sql.replace(/\s/g, "&nbsp;");
-                            html.push('<span>' + sql + '</span>');
-                        }
-                    });
+                    html.push('<div class="row" style="margin: 0;">');
+                    
+                    // 原语句列
+                    html.push('<div class="col-md-6" style="border-right: 1px solid #ddd; padding: 10px;">');
+                    html.push('<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">');
+                    html.push('<h5 style="margin: 0; color: #337ab7;">原语句</h5>');
+                    html.push('<button class="btn btn-default btn-xs copy-btn-detail" data-sql="' + escapeHtml(row.original_sql) + '">');
+                    html.push('<span class="glyphicon glyphicon-copy"></span> 复制');
+                    html.push('</button>');
+                    html.push('</div>');
+                    if (row.original_sql) {
+                        let sql = row.original_sql;
+                        // 替换标签
+                        sql = sql.replace(/&/g, "&amp;");
+                        sql = sql.replace(/</g, "&lt;");
+                        sql = sql.replace(/>/g, "&gt;");
+                        sql = sql.replace(/"/g, "&quot;");
+                        // 替换所有的换行符
+                        sql = sql.replace(/\r\n/g, "<br>");
+                        sql = sql.replace(/\n/g, "<br>");
+                        // 替换所有的空格
+                        sql = sql.replace(/\s/g, "&nbsp;");
+                        html.push('<div style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; max-height: 300px;">' + sql + '</div>');
+                    } else {
+                        html.push('<div class="text-muted">无原语句</div>');
+                    }
+                    html.push('</div>');
+                
+                    // 执行语句列
+                    html.push('<div class="col-md-6" style="padding: 10px;">');
+                    html.push('<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">');
+                    html.push('<h5 style="margin: 0; color: #5cb85c;">执行语句</h5>');
+                    html.push('<button class="btn btn-default btn-xs copy-btn-detail" data-sql="' + escapeHtml(row.sqllog || '') + '">');
+                    html.push('<span class="glyphicon glyphicon-copy"></span> 复制');
+                    html.push('</button>');
+                    html.push('</div>');
+                    if (row.sqllog) {
+                        let sql = row.sqllog;
+                        // 替换标签
+                        sql = sql.replace(/&/g, "&amp;");
+                        sql = sql.replace(/</g, "&lt;");
+                        sql = sql.replace(/>/g, "&gt;");
+                        sql = sql.replace(/"/g, "&quot;");
+                        // 替换所有的换行符
+                        sql = sql.replace(/\r\n/g, "<br>");
+                        sql = sql.replace(/\n/g, "<br>");
+                        // 替换所有的空格
+                        sql = sql.replace(/\s/g, "&nbsp;");
+                        html.push('<div style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; max-height: 300px;">' + sql + '</div>');
+                    } else {
+                        html.push('<div class="text-muted">无执行语句记录</div>');
+                    }
+                    html.push('</div>');
+                
+                    html.push('</div>');
                     return html.join('');
                 },
                 columns: [{
@@ -368,20 +471,24 @@
                     title: '查询时间',
                     field: 'create_time'
                 }, {
-                    title: '语句',
-                    field: 'sqllog',
+                    title: '原语句',
+                    field: 'original_sql',
                     formatter: function (value, row, index) {
-                        var _sql=row.sqllog
-                        if (_sql.length > 50) {
-                            var sql = _sql.substr(0, 50) + '...';
-                            return sql;
-                        } else {
-                            return value
-                        }
+                        var _sql = row.original_sql;
+                        var displaySql = _sql.length > 50 ? _sql.substr(0, 50) + '...' : _sql;
+                        // 返回可点击的链接
+                        return '<a href="javascript:void(0)" class="show-sql-detail" data-original="' + 
+                               escapeHtml(_sql) + '" data-executed="' + 
+                               escapeHtml(row.sqllog || '') + '">' + 
+                               escapeHtml(displaySql) + '</a>';
                     }
                 }, {
-                    title: '完整语句',
+                    title: '完整的执行语句',
                     field: 'sqllog',
+                    visible: false // 默认不显示
+                }, {
+                    title: '完整的原语句',
+                    field: 'original_sql',
                     visible: false // 默认不显示
                 }, {
                     title: '返回行数',
@@ -496,7 +603,7 @@
             if (db_name) {
                 $("#db_name").selectpicker().trigger("change");
             }
-            let sql = row_data['sqllog'];
+            let sql = row_data['original_sql'];
             let limit_num = $("#limit_num").val();
             editor.setValue(sql);
             editor.clearSelection();
@@ -1510,6 +1617,88 @@
                 default:
                     break;
             }
+        }
+
+        // 添加HTML转义函数
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 添加点击事件处理
+        $(document).on('click', '.show-sql-detail', function() {
+            var originalSql = $(this).data('original');
+            var executedSql = $(this).data('executed');
+
+            // 填充模态框内容
+            $('#modal-original-sql').text(originalSql);
+            $('#modal-executed-sql').text(executedSql || '无执行语句记录');
+
+            // 显示模态框
+            $('#sqlDetailModal').modal('show');
+        });
+
+        // SQL详情弹出框复制按钮的事件处理
+        $(document).on('click', '.copy-btn', function() {
+            const targetId = $(this).data('target');
+            const text = document.getElementById(targetId).textContent;
+            const button = $(this);
+            const originalText = button.html();
+            
+            if (copyToClipboard(text)) {
+                // 复制成功提示
+                button.html('<span class="glyphicon glyphicon-ok"></span> 已复制');
+                
+                // 2秒后恢复原状
+                setTimeout(function() {
+                    button.html(originalText);
+                }, 2000);
+            } else {
+                alert('复制失败，请手动选择文本复制');
+            }
+        });
+
+        // 展开行复制按钮的事件处理
+        $(document).on('click', '.copy-btn-detail', function() {
+            var sql = $(this).data('sql');
+            var button = $(this);
+
+            if (copyToClipboard(sql)) {
+                // 复制成功提示
+                button.html('<span class="glyphicon glyphicon-ok"></span> 已复制');
+
+                // 2秒后恢复原状
+                setTimeout(function() {
+                    button.html('<span class="glyphicon glyphicon-copy"></span> 复制');
+                }, 2000);
+            } else {
+                alert('复制失败，请手动选择文本复制');
+            }
+        });
+
+        // 复制到剪贴板函数
+        function copyToClipboard(text) {
+            // 创建一个临时的textarea元素
+              const textArea = document.createElement('textarea');
+              textArea.value = text;
+              textArea.style.position = 'fixed';
+              document.body.appendChild(textArea);
+              textArea.select();
+              
+              try {
+                const successful = document.execCommand('copy');
+                return successful;
+              } catch (err) {
+                console.error('复制失败:', err);
+                return false;
+              } finally {
+                document.body.removeChild(textArea);
+              }
         }
     </script>
 {% endblock %}

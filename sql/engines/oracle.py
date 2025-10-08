@@ -722,8 +722,8 @@ class OracleEngine(EngineBase):
         return result_set
 
     def query_masking(self, db_name=None, sql="", resultset=None):
-        """简单字段脱敏规则, 仅对select有效"""
-        if re.match(r"^select", sql, re.I):
+        """简单字段脱敏规则, 仅对查询语句有效"""
+        if re.match(r"^select|^with", sql, re.I):
             filtered_result = simple_column_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:

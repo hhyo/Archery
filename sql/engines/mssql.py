@@ -282,12 +282,12 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
         ]
         keyword_warning = ""
         star_patter = r"(^|,|\s)\*(\s|\(|$)"
-        sql_whitelist = ["select", "sp_helptext"]
+        sql_whitelist = ["select", "sp_helptext", "with"]
         # 根据白名单list拼接pattern语句
         whitelist_pattern = "^" + "|^".join(sql_whitelist)
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
-            sql = sql.format(sql, strip_comments=True)
+            sql = sqlparse.format(sql, strip_comments=True)
             sql = sqlparse.split(sql)[0]
             result["filtered_sql"] = sql.strip()
             sql_lower = sql.lower()
@@ -365,7 +365,7 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
-        if re.match(r"^select", sql, re.I):
+        if re.match(r"^select|^with", sql, re.I):
             filtered_result = brute_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:

@@ -527,7 +527,6 @@
             }
 
             var sqlContent = sqlContent.trim().replace(/;$/, '');
-            var sqlContent = 'select count(1) from (' + sqlContent + '\n) t'
              
             //提交请求
             $.ajax({
@@ -540,6 +539,7 @@
                     schema_name: $("#schema_name").val(),
                     tb_name: $("#table_name").val(),
                     sql_content: sqlContent,
+                    is_offline_export: 1,
                     limit_num: $("#limit_num").val()
                 },
                 complete: function () {
