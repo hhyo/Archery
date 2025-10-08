@@ -485,10 +485,7 @@ class MongoEngine(EngineBase):
                             if "." in methodStr:
                                 methodStr = methodStr.split(".")[-1]
                             if methodStr == "insert":
-                                m = re.search(
-                                    r'"nInserted"\s*:\s*(\d+)', 
-                                    r
-                                )
+                                m = re.search(r'"nInserted"\s*:\s*(\d+)', r)
                                 actual_affected_rows = int(m.group(1))
                             elif methodStr in ("insertOne", "insertMany"):
                                 if isinstance(r, dict):
@@ -514,9 +511,9 @@ class MongoEngine(EngineBase):
                                     actual_affected_rows = 0
                             elif methodStr == "update":
                                 m = re.search(
-                                        r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)',
-                                        r,
-                                    )
+                                    r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)',
+                                    r,
+                                )
                                 actual_affected_rows = int(m.group(1))
                             elif methodStr in ("updateOne", "updateMany"):
                                 if isinstance(r, dict):
