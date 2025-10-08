@@ -29,32 +29,6 @@ class DorisEngine(MysqlEngine):
         version = result.rows[0][-1].split("-")[0]
         return tuple([int(n) for n in version.split(".")[:3]])
 
-    '''
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
-        """返回 ResultSet"""
-        result_set = ResultSet(full_sql=sql)
-        try:
-            conn = self.get_connection(db_name=db_name)
-            cursor = conn.cursor()
-            cursor.execute(sql)
-            if int(limit_num) > 0:
-                rows = cursor.fetchmany(size=int(limit_num))
-            else:
-                rows = cursor.fetchall()
-            fields = cursor.description
-
-            result_set.column_list = [i[0] for i in fields] if fields else []
-            result_set.rows = rows
-            result_set.affected_rows = len(rows)
-        except Exception as e:
-            logger.warning(f"Doris语句执行报错，语句：{sql}，错误信息{e}")
-            result_set.error = str(e).split("Stack trace")[0]
-        finally:
-            if close_conn:
-                self.close()
-        return result_set
-    '''
-
     forbidden_databases = [
         "__internal_schema",
         "INFORMATION_SCHEMA",
