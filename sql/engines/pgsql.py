@@ -223,7 +223,9 @@ class PgSQLEngine(EngineBase):
                     # 只在列类型为 json 或 jsonb 时转换
                     if column_type_code in [JSON_TYPE_CODE, JSONB_TYPE_CODE]:
                         if isinstance(col_value, (dict, list)):
-                            new_row.append(json.dumps(col_value, ensure_ascii=False))  # 转为 JSON 字符串
+                            new_row.append(
+                                json.dumps(col_value, ensure_ascii=False)
+                            )  # 转为 JSON 字符串
                         else:
                             new_row.append(col_value)
                     else:
