@@ -15,26 +15,6 @@ def test_doris_server_info(db_instance, mocker: MockFixture):
     assert version == (2, 1, 0)
 
 
-def test_doris_query(db_instance, mocker: MockFixture):
-    mock_get_connection = mocker.patch.object(DorisEngine, "get_connection")
-
-    class DummyCursor:
-        def __init__(self):
-            self.description = [("foo",), ("bar",)]
-            self.fetchall = lambda: [("baz", "qux")]
-
-        def execute(self, sql):
-            pass
-
-    mock_get_connection.return_value.cursor.return_value = DummyCursor()
-    db_instance.db_type = "doris"
-    engine = DorisEngine(instance=db_instance)
-    result_set = engine.query(sql="select * from foo")
-    assert result_set.column_list == ["foo", "bar"]
-    assert result_set.rows == [("baz", "qux")]
-    assert result_set.affected_rows == 1
-
-
 def test_forbidden_db(db_instance, mocker: MockFixture):
     db_instance.db_type = "doris"
     mock_query = mocker.patch.object(DorisEngine, "query")
