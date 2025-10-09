@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 
 from sql.engines.memcached import MemcachedEngine
-from sql.engines.models import ResultSet
+from sql.engines.models import ResultSet, ReviewResult
 from sql.models import Instance
 
 
@@ -86,35 +86,41 @@ class TestMemcachedEngine(unittest.TestCase):
         self.assertEqual(result.rows[0][0], "test_value")
 
     @mock.patch("sql.engines.memcached.pymemcache.Client")
-    def test_query_set_command(self, mock_client):
+    def test_execute_set_command(self, mock_client):
         """测试set命令"""
         # 模拟set命令响应
         mock_conn = mock.MagicMock()
         mock_conn.set.return_value = True
         mock_client.return_value = mock_conn
 
-        result = self.engine.query(sql="set test_key test_value 3600")
+        result = self.engine.execute(sql="set test_key test_value 3600")
 
         # 验证结果
         mock_conn.set.assert_called_once_with("test_key", "test_value", expire=3600)
-        self.assertEqual(result.rows[0][0], "OK")
+        self.assertTrue(
+            isinstance(result.rows[0], ReviewResult), "结果不是ReviewResult类型"
+        )
+        self.assertEqual(result.rows[0].stagestatus, "Success")
 
     @mock.patch("sql.engines.memcached.pymemcache.Client")
-    def test_query_delete_command(self, mock_client):
+    def test_execute_delete_command(self, mock_client):
         """测试delete命令"""
         # 模拟delete命令响应
         mock_conn = mock.MagicMock()
         mock_conn.delete.return_value = True
         mock_client.return_value = mock_conn
 
-        result = self.engine.query(sql="delete test_key")
+        result = self.engine.execute(sql="delete test_key")
 
         # 验证结果
         mock_conn.delete.assert_called_once_with("test_key")
-        self.assertEqual(result.rows[0][0], "OK")
+        self.assertTrue(
+            isinstance(result.rows[0], ReviewResult), "结果不是ReviewResult类型"
+        )
+        self.assertEqual(result.rows[0].stagestatus, "Success")
 
     @mock.patch("sql.engines.memcached.pymemcache.Client")
-    def test_query_version_command(self, mock_client):
+    def test_execute_version_command(self, mock_client):
         """测试version命令"""
         # 模拟version命令响应
         mock_conn = mock.MagicMock()
@@ -147,46 +153,55 @@ class TestMemcachedEngine(unittest.TestCase):
         self.assertEqual(result.rows[0][1], "value1")
 
     @mock.patch("sql.engines.memcached.pymemcache.Client")
-    def test_query_incr_command(self, mock_client):
+    def test_execute_incr_command(self, mock_client):
         """测试incr命令"""
         # 模拟incr命令响应
         mock_conn = mock.MagicMock()
         mock_conn.incr.return_value = 11
         mock_client.return_value = mock_conn
 
-        result = self.engine.query(sql="incr counter 1")
+        result = self.engine.execute(sql="incr counter 1")
 
         # 验证结果
         mock_conn.incr.assert_called_once_with("counter", 1)
-        self.assertEqual(result.rows[0][0], "11")
+        self.assertTrue(
+            isinstance(result.rows[0], ReviewResult), "结果不是ReviewResult类型"
+        )
+        self.assertEqual(result.rows[0].stagestatus, "Success")
 
     @mock.patch("sql.engines.memcached.pymemcache.Client")
-    def test_query_decr_command(self, mock_client):
+    def test_execute_decr_command(self, mock_client):
         """测试decr命令"""
         # 模拟decr命令响应
         mock_conn = mock.MagicMock()
         mock_conn.decr.return_value = 9
         mock_client.return_value = mock_conn
 
-        result = self.engine.query(sql="decr counter 1")
+        result = self.engine.execute(sql="decr counter 1")
 
         # 验证结果
         mock_conn.decr.assert_called_once_with("counter", 1)
-        self.assertEqual(result.rows[0][0], "9")
+        self.assertTrue(
+            isinstance(result.rows[0], ReviewResult), "结果不是ReviewResult类型"
+        )
+        self.assertEqual(result.rows[0].stagestatus, "Success")
 
     @mock.patch("sql.engines.memcached.pymemcache.Client")
-    def test_query_touch_command(self, mock_client):
+    def test_execute_touch_command(self, mock_client):
         """测试touch命令"""
         # 模拟touch命令响应
         mock_conn = mock.MagicMock()
         mock_conn.touch.return_value = True
         mock_client.return_value = mock_conn
 
-        result = self.engine.query(sql="touch test_key 3600")
+        result = self.engine.execute(sql="touch test_key 3600")
 
         # 验证结果
         mock_conn.touch.assert_called_once_with("test_key", expire=3600)
-        self.assertEqual(result.rows[0][0], "OK")
+        self.assertTrue(
+            isinstance(result.rows[0], ReviewResult), "结果不是ReviewResult类型"
+        )
+        self.assertEqual(result.rows[0].stagestatus, "Success")
 
     def test_query_check(self):
         """测试query_check方法"""
@@ -213,6 +228,20 @@ class TestMemcachedEngine(unittest.TestCase):
         mock_conn.version.side_effect = Exception("获取失败")
         version = self.engine.server_version
         self.assertEqual(version, ())
+
+    def test_execute_check(self):
+        """测试execute_check方法"""
+        # 测试支持的命令
+        result = self.engine.execute_check(sql="set test_key 0 3600 test_value")
+        self.assertEqual(1, len(result.rows))
+        self.assertEqual(result.rows[0].stage, "Check")
+        self.assertEqual(result.rows[0].stagestatus, "Success")
+
+        # 测试不支持的命令
+        result = self.engine.execute_check(sql="unknown_command")
+        self.assertEqual(1, len(result.rows))
+        self.assertEqual(result.rows[0].stage, "Check")
+        self.assertEqual(result.rows[0].stagestatus, "Fail")
 
     # 测试不支持的功能方法
     def test_unsupported_functions(self):

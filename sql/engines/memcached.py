@@ -2,9 +2,13 @@
 import logging
 import pymemcache
 
-from typing import List
+from typing import List, Tuple
+
+from django.core.checks.security.base import check_secret_key
+
 from . import EngineBase
-from .models import ResultSet, ReviewSet
+from .models import ResultSet, ReviewSet, ReviewResult
+from sql.models import SqlWorkflow
 
 logger = logging.getLogger("default")
 
@@ -87,35 +91,7 @@ class MemcachedEngine(EngineBase):
 
         try:
             conn = self.get_connection(db_name)
-
-            # 简单解析SQL命令
-            sql = sql.strip().lower()
-            if not sql:
-                raise Exception("空SQL语句")
-
-            # 提取命令名称
-            parts = sql.split(" ")
-            cmd = parts[0]
-            cmd_args = parts[1:]
-
-            # 命令处理函数映射表
-            cmd_handlers = {
-                "get": _handle_get,
-                "set": _handle_set,
-                "delete": _handle_delete,
-                "version": _handle_version,
-                "gets": _handle_gets,
-                "incr": _handle_incr,
-                "decr": _handle_decr,
-                "touch": _handle_touch,
-            }
-
-            # 查找并执行对应的命令处理函数
-            if cmd in cmd_handlers:
-                result_set = cmd_handlers[cmd](conn, sql, cmd_args)
-            else:
-                raise Exception(f"不支持的命令: {cmd}")
-
+            result_set = _handle_cmd(conn, sql)
         except Exception as e:
             logger.error(f"查询执行失败: {str(e)}")
             result_set.error = str(e)
@@ -132,27 +108,113 @@ class MemcachedEngine(EngineBase):
     def query_check(self, db_name=None, sql=""):
         """查询语句的检查、注释去除、切分, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
         # 简单的SQL语法检查
-        sql = sql.strip().lower()
+
+        cmd, cmd_args = _parse_cmd_args(sql)
         allowed_commands = [
             "version",
             "get",
-            "set",
-            "delete",
             "gets",
-            "incr",
-            "decr",
-            "touch",
         ]
 
-        cmd = sql.split(" ")[0].strip()
         if cmd not in allowed_commands:
             return {
                 "bad_query": True,
                 "filtered_sql": sql,
-                "msg": "Only (version, get, set, delete, gets, incr, decr, touch) are supported",
+                "msg": "仅支持 (version, get, gets) 命令",
             }
 
         return {"bad_query": False, "filtered_sql": sql}
+
+    def execute(self, db_name=None, sql="", **kwargs):
+        execute_result = ReviewSet(full_sql=sql)
+
+        try:
+            conn = self.get_connection(db_name)
+            cmd_result = _handle_cmd(conn, sql)
+
+            assert len(cmd_result.rows) == 1, "命令执行结果行数不是1"
+            assert len(cmd_result.rows[0]) == 1, "命令执行结果列数不是1"
+
+            if cmd_result.rows[0][0] == "FAIL":
+                execute_result.rows.append(
+                    ReviewResult(
+                        id=1,
+                        affected_rows=0,
+                        sql=sql,
+                        stage="Execute",
+                        stagestatus="Fail",
+                    )
+                )
+            else:
+                execute_result.rows.append(
+                    ReviewResult(
+                        id=1,
+                        affected_rows=1,
+                        sql=sql,
+                        stage="Execute",
+                        stagestatus="Success",
+                    )
+                )
+
+            execute_result.affected_rows = cmd_result.affected_rows
+            execute_result.error = cmd_result.error
+        except Exception as e:
+            logger.error(f"执行语句失败: {str(e)}")
+            execute_result.error = str(e)
+            execute_result.rows = [{"error": str(e)}]
+
+        return execute_result
+
+    def execute_check(self, db_name=None, sql=""):
+        """执行语句的检查"""
+        check_result = ReviewSet(full_sql=sql)
+
+        allowed_commands = [
+            "set",
+            "delete",
+            "incr",
+            "decr",
+            "touch",
+        ]
+        cmd, cmd_args = _parse_cmd_args(sql)
+
+        if cmd not in allowed_commands:
+            check_result.error_count += 1
+            check_result.error = f"不支持的命令: {cmd}"
+            check_result.rows = [
+                ReviewResult(
+                    id=1,
+                    affected_rows=0,
+                    sql=sql,
+                    stage="Check",
+                    stagestatus="Fail",
+                    errlevel=2,
+                    errormessage=f"不支持的命令: {cmd}",
+                )
+            ]
+        else:
+            check_result.rows = [
+                ReviewResult(
+                    id=1,
+                    affected_rows=1,
+                    sql=sql,
+                    stage="Check",
+                    stagestatus="Success",
+                )
+            ]
+            check_result.checked = True
+
+        return check_result
+
+    def execute_workflow(self, workflow: SqlWorkflow):
+        """执行上线单，返回Review set"""
+        return self.execute(
+            db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content
+        )
+
+    def get_execute_percentage(self):
+        """获取执行进度"""
+        return 100
 
     @property
     def server_version(self):
@@ -234,17 +296,6 @@ class MemcachedEngine(EngineBase):
     def describe_table(self, db_name, tb_name, **kwargs):
         """获取表结构"""
         return ResultSet()
-
-    def execute(self, **kwargs):
-        return ReviewSet()
-
-    def execute_check(self, db_name=None, sql=""):
-        """执行语句的检查"""
-        return ReviewSet()
-
-    def get_execute_percentage(self):
-        """获取执行进度"""
-        return 100
 
     def get_rollback(self, workflow):
         """获取工单回滚语句"""
@@ -384,7 +435,7 @@ def _handle_incr(conn: pymemcache.Client, sql: str, cmd_args: List[str]):
         key = cmd_args[0].strip()
         value = int(cmd_args[1].strip()) if len(cmd_args) > 1 else 1
         result = conn.incr(key, value)
-        result_set.rows = [[str(result) if result is not None else "NOT_FOUND"]]
+        result_set.rows = [[str(result) if result is not None else "FAIL"]]
         result_set.column_list = ["结果"]
     except Exception as e:
         raise Exception(f"incr命令执行失败: {str(e)}")
@@ -405,7 +456,7 @@ def _handle_decr(conn: pymemcache.Client, sql: str, cmd_args: List[str]):
         key = cmd_args[0].strip()
         value = int(cmd_args[1].strip()) if len(cmd_args) > 1 else 1
         result = conn.decr(key, value)
-        result_set.rows = [[str(result) if result is not None else "NOT_FOUND"]]
+        result_set.rows = [[str(result) if result is not None else "FAIL"]]
         result_set.column_list = ["结果"]
     except Exception as e:
         raise Exception(f"decr命令执行失败: {str(e)}")
@@ -435,3 +486,46 @@ def _handle_touch(conn: pymemcache.Client, sql: str, cmd_args: List[str]):
 
     result_set.affected_rows = 1
     return result_set
+
+
+# 命令处理函数映射表
+cmd_handlers = {
+    "get": _handle_get,
+    "set": _handle_set,
+    "delete": _handle_delete,
+    "version": _handle_version,
+    "gets": _handle_gets,
+    "incr": _handle_incr,
+    "decr": _handle_decr,
+    "touch": _handle_touch,
+}
+
+
+def _parse_cmd_args(sql: str) -> Tuple[str, List[str]]:
+    """
+    解析命令参数
+    """
+    cmd = sql.split(" ")[0].strip().lower()
+    cmd_args = sql.split(" ")[1:]
+    return cmd, cmd_args
+
+
+def _handle_cmd(conn: pymemcache.Client, sql: str):
+    """
+    处理命令
+    """
+
+    # 简单解析SQL命令
+    sql = sql.strip().lower()
+    if not sql:
+        raise Exception("空SQL语句")
+
+    # 提取命令名称
+    parts = sql.split(" ")
+    cmd = parts[0]
+    cmd_args = parts[1:]
+
+    if cmd not in cmd_handlers:
+        raise Exception(f"不支持的命令: {cmd}")
+
+    return cmd_handlers[cmd](conn, sql, cmd_args)
