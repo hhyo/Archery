@@ -63,5 +63,12 @@ jobs:
     #   make bootstrap
     #   make release
 
+    # Install MongoDB Shell to test the recognition of the mongo client.
+    - name: Install MongoDB Shell
+      run: |
+        wget https://downloads.mongodb.com/compass/mongodb-mongosh_2.5.2_amd64.deb
+        sudo apt install ./mongodb-mongosh_2.5.2_amd64.deb
+        mongosh --version
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
