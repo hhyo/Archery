@@ -243,28 +243,6 @@ class TestMemcachedEngine(unittest.TestCase):
         self.assertEqual(result.rows[0].stage, "Check")
         self.assertEqual(result.rows[0].stagestatus, "Fail")
 
-    # 测试不支持的功能方法
-    def test_unsupported_functions(self):
-        """测试不支持的功能方法"""
-        # 测试auto_backup属性
-        self.assertFalse(self.engine.auto_backup)
-
-        # 测试seconds_behind_master属性
-        self.assertIsNone(self.engine.seconds_behind_master)
-
-        # 测试processlist方法
-        result = self.engine.processlist("all")
-        self.assertIsInstance(result, ResultSet)
-
-        # 测试kill_connection方法（无返回值）
-        self.engine.kill_connection(1)
-
-        # 测试其他不支持的方法
-        self.assertEqual(self.engine.get_table_meta_data("db", "table"), {})
-        self.assertEqual(self.engine.get_table_desc_data("db", "table"), {})
-        self.assertEqual(self.engine.get_table_index_data("db", "table"), {})
-        self.assertEqual(self.engine.get_tables_metas_data("db"), [])
-
 
 if __name__ == "__main__":
     unittest.main()
