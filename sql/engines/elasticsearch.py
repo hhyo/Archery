@@ -18,11 +18,8 @@ import sqlparse
 from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
-from common.config import SysConfig
-import logging
 
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import TransportError
 
 
 logger = logging.getLogger("default")
@@ -583,7 +580,7 @@ class ElasticsearchEngineBase(EngineBase):
                         sql=doc.sql,
                     )
                 else:
-                    if is_pass == False:
+                    if is_pass is False:
                         is_pass = True
             elif not doc.api_endpoint:
                 if doc.method == "PUT":
@@ -635,10 +632,10 @@ class ElasticsearchEngineBase(EngineBase):
                             sql=doc.sql,
                         )
                     else:
-                        if is_pass == False:
+                        if is_pass is False:
                             is_pass = True
                 elif doc.method == "POST":
-                    if is_pass == False:
+                    if is_pass is False:
                         is_pass = True
                 else:
                     result = ReviewResult(
@@ -669,7 +666,7 @@ class ElasticsearchEngineBase(EngineBase):
                             sql=doc.sql,
                         )
                     else:
-                        if is_pass == False:
+                        if is_pass is False:
                             is_pass = True
                 else:
                     result = ReviewResult(
@@ -683,7 +680,7 @@ class ElasticsearchEngineBase(EngineBase):
                     )
             elif doc.api_endpoint == "_update_by_query":
                 if doc.method == "POST":
-                    if is_pass == False:
+                    if is_pass is False:
                         is_pass = True
                 else:
                     result = ReviewResult(
@@ -706,7 +703,7 @@ class ElasticsearchEngineBase(EngineBase):
                             sql=doc.sql,
                         )
                     else:
-                        if is_pass == False:
+                        if is_pass is False:
                             is_pass = True
                 else:
                     result = ReviewResult(
@@ -839,7 +836,7 @@ class ElasticsearchEngineBase(EngineBase):
                         id=line,
                         errlevel=0,
                         stagestatus="Audit completed",
-                        errormessage=f"前序语句失败, 未执行",
+                        errormessage="前序语句失败, 未执行",
                         sql=doc.sql,
                         affected_rows=0,
                         execute_time=0,
