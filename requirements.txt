@@ -29,7 +29,7 @@ numpy==1.*
 pandas==1.*
 clickhouse-driver==0.*
 djangorestframework==3.13.1
-djangorestframework-simplejwt==5.2.0
+djangorestframework-simplejwt==5.5.1
 django-filter==21.1
 drf-spectacular==0.22.0
 pyotp==2.6.0
