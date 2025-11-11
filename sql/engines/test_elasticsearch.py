@@ -666,3 +666,139 @@ class TestElasticsearchEngine(unittest.TestCase):
         self.assertEqual(result.rows[0].errlevel, 1)
         self.assertIn("Execute Successfully", result.rows[0].stagestatus)
         self.assertIn("Document not found", result.rows[0].errormessage)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_put_mapping_with_properties(self, mockElasticsearch):
+        """测试 PUT _mapping 请求，包含 properties 字段"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = 'PUT /test_index/_mapping {"properties": {"new_field": {"type": "text"}}}'
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("审核通过", result.rows[0].errormessage)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_put_mapping_without_properties(self, mockElasticsearch):
+        """测试 PUT _mapping 请求，不包含 properties 字段"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = 'PUT /test_index/_mapping {"settings": {"number_of_shards": 1}}'
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+        self.assertIn("必须包含properties字段", result.rows[0].errormessage.lower())
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_put_mapping_empty_body(self, mockElasticsearch):
+        """测试 PUT _mapping 请求，请求体为空"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = "PUT /test_index/_mapping"
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+        self.assertIn("必须包含properties字段", result.rows[0].errormessage.lower())
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_post_mapping(self, mockElasticsearch):
+        """测试 POST _mapping 请求（不支持）"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = 'POST /test_index/_mapping {"properties": {"new_field": {"type": "text"}}}'
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+        self.assertIn("需要使用PUT方法", result.rows[0].errormessage)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_delete_mapping(self, mockElasticsearch):
+        """测试 DELETE _mapping 请求（不支持）"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = "DELETE /test_index/_mapping"
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+        self.assertIn("需要使用PUT方法", result.rows[0].errormessage)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_put_mapping_success(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 PUT _mapping 请求执行成功"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = (
+            'PUT /test_index/_mapping {"properties": {"new_field": {"type": "text"}}}'
+        )
+        workflow.db_name = "test_db"
+
+        mock_conn.indices.put_mapping.return_value = {
+            "acknowledged": True,
+            "_shards": {"successful": 1, "failed": 0},
+        }
+
+        result = self.engine.execute_workflow(workflow)
+
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+        self.assertEqual(result.rows[0].affected_rows, 1)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_put_mapping_index_not_found(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 PUT _mapping 请求，索引不存在"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = (
+            'PUT /nonexistent_index/_mapping {"properties": {"new_field": {"type": "text"}}}'
+        )
+        workflow.db_name = "test_db"
+
+        mock_conn.indices.put_mapping.side_effect = Exception(
+            "index_not_found_exception: Index not found"
+        )
+
+        result = self.engine.execute_workflow(workflow)
+
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+        self.assertIn("index not found", result.rows[0].errormessage)
+        self.assertEqual(result.rows[0].affected_rows, 0)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_put_mapping_no_shards(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 PUT _mapping 请求，响应中没有 _shards"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = (
+            'PUT /test_index/_mapping {"properties": {"new_field": {"type": "text"}}}'
+        )
+        workflow.db_name = "test_db"
+
+        mock_conn.indices.put_mapping.return_value = {
+            "acknowledged": True,
+        }
+
+        result = self.engine.execute_workflow(workflow)
+
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+        self.assertEqual(result.rows[0].affected_rows, 0)

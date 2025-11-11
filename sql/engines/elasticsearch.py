@@ -241,9 +241,9 @@ class ElasticsearchEngineBase(EngineBase):
                 result["bad_query"] = True
                 result["msg"] = "没有有效的SQL语句。"
         else:
-            result[
-                "msg"
-            ] = "语句检查失败：语句必须以 'get' 或 'select' 开头。示例查询：GET /dmp__iv/_search、select * from dmp__iv limit 10;"
+            result["msg"] = (
+                "语句检查失败：语句必须以 'get' 或 'select' 开头。示例查询：GET /dmp__iv/_search、select * from dmp__iv limit 10;"
+            )
             result["bad_query"] = True
         return result
 
@@ -459,7 +459,9 @@ class ElasticsearchEngineBase(EngineBase):
             try:
                 json_body = json.loads(query_body)
             except json.JSONDecodeError as json_err:
-                raise ValueError(f"无法转为Json格式。{json_err}。query_body：{query_body}。")
+                raise ValueError(
+                    f"无法转为Json格式。{json_err}。query_body：{query_body}。"
+                )
 
             # 提取方法和路径
             method, path_with_params = method_line.split(maxsplit=1)
@@ -812,7 +814,9 @@ class ElasticsearchEngineBase(EngineBase):
                 else:
                     raise Exception(f"不支持的API类型：{doc.api_endpoint}")
         except Exception as e:
-            logger.warning(f"ES命令执行报错，语句：{doc.sql}， 错误信息：{traceback.format_exc()}")
+            logger.warning(
+                f"ES命令执行报错，语句：{doc.sql}， 错误信息：{traceback.format_exc()}"
+            )
             # 追加当前报错语句信息到执行结果中
             execute_result.error = str(e)
             execute_result.rows.append(
