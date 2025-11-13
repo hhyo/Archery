@@ -116,8 +116,14 @@ class MysqlEngine(EngineBase):
 
     @property
     def seconds_behind_master(self):
+        server_version = self.server_version
+        ##非maria分支且版本号大于8.4，就使用show replica status获取主从延迟
+        if self.server_fork_type != MysqlForkType.MARIADB and server_version >= (8, 4):
+            status_sql = "show replica status"
+        else:
+            status_sql = "show slave status"
         slave_status = self.query(
-            sql="show slave status",
+            sql=status_sql,
             close_conn=False,
             cursorclass=MySQLdb.cursors.DictCursor,
         )
