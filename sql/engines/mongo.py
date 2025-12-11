@@ -485,13 +485,49 @@ class MongoEngine(EngineBase):
                             if "." in methodStr:
                                 methodStr = methodStr.split(".")[-1]
                             if methodStr == "insert":
-                                actual_affected_rows = r.get("nInserted", 0)
+                                m = re.search(r'"nInserted"\s*:\s*(\d+)', r)
+                                actual_affected_rows = int(m.group(1))
                             elif methodStr in ("insertOne", "insertMany"):
-                                actual_affected_rows = r.count("ObjectId")
+                                if isinstance(r, dict):
+                                    # mongosh / driver JSON formats
+                                    if "nInserted" in r:  # BulkWriteResult style
+                                        actual_affected_rows = r["nInserted"]
+                                    elif (
+                                        "insertedIds" in r
+                                    ):  # CLI acknowledged + insertedIds
+                                        actual_affected_rows = len(r["insertedIds"])
+                                    elif "insertedId" in r:  # insertOne single id
+                                        actual_affected_rows = 1
+                                    else:
+                                        actual_affected_rows = 0
+                                elif isinstance(r, str):
+                                    # mongo 4.x CLI string outputs
+                                    m = re.search(r'"nInserted"\s*:\s*(\d+)', r)
+                                    actual_affected_rows = (
+                                        int(m.group(1)) if m else r.count("ObjectId")
+                                    )
+                                    actual_affected_rows = r.count("ObjectId")
+                                else:
+                                    actual_affected_rows = 0
                             elif methodStr == "update":
-                                actual_affected_rows = r.get("nModified", 0)
+                                m = re.search(
+                                    r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)',
+                                    r,
+                                )
+                                actual_affected_rows = int(m.group(1))
                             elif methodStr in ("updateOne", "updateMany"):
-                                actual_affected_rows = r.get("modifiedCount", 0)
+                                if isinstance(r, dict):
+                                    actual_affected_rows = r.get(
+                                        "modifiedCount", r.get("nModified", 0)
+                                    )
+                                elif isinstance(r, str):
+                                    m = re.search(
+                                        r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)',
+                                        r,
+                                    )
+                                    actual_affected_rows = int(m.group(1)) if m else 0
+                                else:
+                                    actual_affected_rows = 0
                             elif methodStr in ("deleteOne", "deleteMany"):
                                 actual_affected_rows = r.get("deletedCount", 0)
                             elif methodStr == "remove":
@@ -1017,6 +1053,7 @@ class MongoEngine(EngineBase):
         """提交查询前的检查"""
 
         sql = sql.strip()
+        sql = re.sub(r"^\s*//.*$", "", sql, flags=re.MULTILINE)
         if sql.startswith("explain"):
             sql = sql[7:] + ".explain()"
             sql = re.sub("[;\s]*.explain\(\)$", ".explain()", sql).strip()

@@ -81,6 +81,8 @@ jobs:
         mysql -h127.0.0.1 -uroot -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
 
     - name: Run Tests
+      env:
+        SECRET_KEY: XViQ1NfutP1RraqhHV3M3akMsB3JWZr9
       run: |
         python manage.py makemigrations
         python manage.py makemigrations sql
