@@ -38,6 +38,10 @@ env = environ.Env(
         dict,
         {"username": "cn", "display": "displayname", "email": "mail"},
     ),
+    OIDC_USER_ATTR_MAP=(
+        dict,
+        {"username": "preferred_username", "display": "name", "email": "email"},
+    ),
     Q_CLUISTER_SYNC=(bool, False),  # qcluster 同步模式, debug 时可以调整为 True
     # CSRF_TRUSTED_ORIGINS=subdomain.example.com,subdomain.example2.com subdomain.example.com
     CSRF_TRUSTED_ORIGINS=(list, []),
@@ -309,6 +313,7 @@ SIMPLE_JWT = {
 ENABLE_OIDC = env("ENABLE_OIDC", False)
 if ENABLE_OIDC:
     INSTALLED_APPS += ("mozilla_django_oidc",)
+    OIDC_USER_ATTR_MAP = env("OIDC_USER_ATTR_MAP")
     AUTHENTICATION_BACKENDS = (
         "common.authenticate.oidc_auth.OIDCAuthenticationBackend",
         "django.contrib.auth.backends.ModelBackend",
