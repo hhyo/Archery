@@ -1,251 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <!-- 自定义操作按钮-->
-    <div id="sqladvisor-toolbar" class="btn-group right" style="display:none;">
-        <button id=sqladvisor class="btn btn-default" style="" type="button">获取优化建议</button>
-    </div>
-    <!-- Nav tabs -->
-    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
-        <li id="slowsql_tab" class="active">
-            <a href="#slowsql" role="tab" data-toggle="tab">慢日志统计</a>
-        </li>
-        <li id="slowsqlinfo_tab">
-            <a href="#slowsqlinfo" role="tab" data-toggle="tab">慢日志明细</a>
-        </li>
-        <div class="form-inline pull-right">
-            <div class="form-group">
-                <select id=instance_name class="form-control selectpicker" name="instances"
-                        title="请选择实例:"
-                        data-live-search="true">
-                </select>
-            </div>
-            <div class="form-group">
-                <select id=db_name class="form-control selectpicker" name="db_name_list"
-                        title="请选择数据库:"
-                        data-live-search="true">
-                </select>
-            </div>
-            <div class="form-group">
-                <div id="reservation" class="form-control"
-                     style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
-                    <i class="fa fa-calendar"></i>&nbsp;
-                    <span></span> <i class="fa fa-caret-down"></i>
-                </div>
-            </div>
-        </div>
-    </ul>
-    <!-- Tab panes -->
-    <div id="tab-content" class="tab-content">
-        <!-- 慢日志统计-->
-        <div id="slowsql" role="tabpanel" class="tab-pane fade in active table-responsive">
-            <table id="slowsql-list" data-toggle="table" class="table table-hover"
-                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
-
-        </div>
-        <!-- 慢日志明细-->
-        <div id="slowsqlinfo" role="tabpanel" class="tab-pane fade table-responsive">
-            <table id="slowsqlinfo-list" data-toggle="table" class="table table-hover"
-                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
-        </div>
-    </div>
-{% endblock content %}
-
-{% block js %}
-    {% load static %}
-    <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
-    <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
-    <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
-    <script src="{% static 'bootstrap-table/export-libs/FileSaver/FileSaver.min.js' %}"></script>
-    <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
-    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
-    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
-    <!-- 选择框和切换控件 -->
+    <!-- Log -->
     <script>
-        // 初始化时间控件
-        $(function () {
-            let start = moment().startOf('day');
-            let end = moment();
-
-            function cb(start, end) {
-                $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
-            }
-
-            $('#reservation').daterangepicker({
-                startDate: start,
-                endDate: end,
-                locale: {
-                    format: "YYYY-MM-DD",// 显示格式
-                    separator: " / ",// 两个日期之间的分割线
-                    // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-                    firstDay: 1
-                },
-                ranges: {
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
-                }
-            }, cb).on('apply.daterangepicker', function (ev, picker) {
-                sessionStorage.removeItem('SQLId');
-                var start_date = picker.startDate.format('YYYY-MM-DD');
-                var end_date = picker.endDate.format('YYYY-MM-DD');
-                sessionStorage.setItem('start_date', start_date);
-                sessionStorage.setItem('end_date', end_date);
-                var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
-                if (slowsql_active_li_id === 'slowsql_tab') {
-                    slowquery_review()
-                } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
-                    slowquery_review_history()
-
-                }
-            });
-            cb(start, end);
-        });
-
-        //实例变动自动获取数据库
-        $("#instance_name").change(function () {
-            sessionStorage.setItem('slow_query_instance_name', $("#instance_name").val());
-            sessionStorage.removeItem('slow_query_db_name');
-            sessionStorage.removeItem('SQLId');
-            get_db_list();
-
-        });
-
-        //获取数据库列表,并且获取日志数据
-        function get_db_list() {
-            //将数据通过ajax提交给获取db_name
-            $.ajax({
-                type: "get",
-                url: "/instance/instance_resource/",
-                dataType: "json",
-                data: {
-                    instance_name: $("#instance_name option:selected").text(),
-                    resource_type: "database"
-                },
-                complete: function () {
-                    var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
-                    if (slowsql_active_li_id === 'slowsql_tab') {
-                        slowquery_review()
-                    } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
-                        slowquery_review_history()
-
-                    }
-                },
-                success: function (data) {
-                    if (data.status == 0) {
-                        var result = data.data;
-                        $("#db_name").empty();
-                        for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
-                            $("#db_name").append(name);
-                        }
-                        $("#db_name").prepend("<option value=\"\" selected=\"selected\">全部数据库</option>");
-                        $('#db_name').selectpicker('render');
-                        $('#db_name').selectpicker('refresh');
-                    } else {
-                        alert(data.msg);
-                    }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
-        }
-
-        //数据库变动自动获取日志
-        $("#db_name").change(function () {
-            sessionStorage.setItem('slow_query_db_name', $("#db_name").val());
-            sessionStorage.removeItem('SQLId');
-            var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
-            if (slowsql_active_li_id === 'slowsql_tab') {
-                slowquery_review()
-            } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
-                slowquery_review_history()
-
-            }
-        });
-
-        //保留如果已选择instance_name，进入页面自动加载
-        $(document).ready(function () {
-            //获取用户实例列表
-            $(function () {
-                $.ajax({
-                    type: "get",
-                    url: "/group/user_all_instances/",
-                    dataType: "json",
-                    data: {
-                        db_type: ['mysql']
-                    },
-                    complete: function () {
-                        //保留如果已选择instance_name，进入页面自动加载
-                        sessionStorage.removeItem('SQLId');
-                        sessionStorage.setItem('slowsql_active_li_id', 'slowsql_tab');
-                        if (sessionStorage.getItem('slow_query_instance_name')) {
-                            var instance_name = sessionStorage.getItem('slow_query_instance_name');
-                            var start_date = sessionStorage.getItem('start_date');
-                            var end_date = sessionStorage.getItem('end_date');
-                            if (start_date && end_date) {
-                                $('#reservation').data('daterangepicker').setStartDate(start_date);
-                                $('#reservation').data('daterangepicker').setEndDate(end_date);
-                            }
-                            $("#instance_name").val(instance_name).trigger("change");
-                        }
-                    },
-                    success: function (data) {
-                        if (data.status === 0) {
-                            let result = data['data'];
-                            $("#instance_name").empty();
-                            $("#target_instance_name").empty();
-                            for (let i = 0; i < result.length; i++) {
-                                let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
-                                $("#instance_name").append(instance);
-                                $("#target_instance_name").append(instance);
-                            }
-                            $('#instance_name').selectpicker('render');
-                            $('#instance_name').selectpicker('refresh');
-                            $('#target_instance_name').selectpicker('render');
-                            $('#target_instance_name').selectpicker('refresh');
-                        } else {
-                            alert(data.msg);
-                        }
-                    },
-                    error: function (XMLHttpRequest, textStatus, errorThrown) {
-                        alert(errorThrown);
-                    }
-                });
-            });
-        });
-
-        //tab切换,保留当前激活的标签id
-        $(function () {
-            $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
-                var active_li_id = $(e.target).parents().attr('id');
-                sessionStorage.setItem('slowsql_active_li_id', active_li_id);
-                //当前激活的标签id
-                if ($("#instance_name").val()) {
-                    if (active_li_id === 'slowsql_tab') {
-                        sessionStorage.removeItem('SQLId');
-                        slowquery_review();
-                    } else if (active_li_id === 'slowsqlinfo_tab') {
-                        slowquery_review_history()
-                    }
-                }
-            });
-        });
-    </script>
-    <!-- sqladvisor -->
-    <script>
-        //点击sql统计跳转到对应sql列表
+        
         $(function () {
             $('#slowsql-list').on('click-row.bs.table', function (e, row, element) {
                 sessionStorage.setItem('SQLId', row.SQLId);
@@ -253,7 +12,7 @@
             });
         });
 
-        //点击优化按钮获取优化信息
+        
         $(function () {
             $("#sqladvisor").click(function () {
                 if ($("#slowsqlinfo-list").bootstrapTable('getSelections')[0]) {
@@ -265,50 +24,50 @@
                     sessionStorage.setItem('advisor_instance_name', advisor_instance_name);
                     location.href = '/slowquery_advisor/';
                 } else {
-                    alert("请先选择需要优化的sql")
+                    alert("请先选择需要Optimize的sql")
                 }
             });
         });
     </script>
-    <!-- 获取列表数据 -->
+    <!-- Get list数据 -->
     <script>
-        // 获取慢日志统计
+        // getSlow Log Statistics
         function slowquery_review() {
             $("#sqladvisor-toolbar").hide();
             var instance_name = $("#instance_name").val();
             if (instance_name) {
-                //初始化table
+                //Initializetable
                 $('#slowsql-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/slowquery/review/",
-                    striped: true,                      //是否显示行间隔色
-                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                    pagination: true,                   //是否显示分页（*）
-                    sortable: true,                     //开启排序
-                    sortName: "MySQLTotalExecutionCounts", //默认排序字段名称
-                    sortOrder: "desc",                   //默认排序方式
-                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                    pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
-                    search: true,                      //是否显示表格搜索
-                    strictSearch: false,                //是否全匹配搜索
-                    showColumns: true,                  //是否显示所有的列（选择显示的列）
-                    showRefresh: true,                  //是否显示刷新按钮
-                    showExport: true,                   //是否显示导出按钮
+                    striped: true,                      //Show row stripes
+                    cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                    pagination: true,                   //Show pagination（*）
+                    sortable: true,                     
+                    sortName: "MySQLTotalExecutionCounts", 
+                    sortOrder: "desc",                   
+                    sidePagination: "server",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                    pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                    pageSize: 30,                     //Records per page（*）
+                    pageList: [30, 50, 100, 1000],       //Selectable rows per page（*）
+                    search: true,                      //Show table search
+                    strictSearch: false,                //Exact match search
+                    showColumns: true,                  //Show all columns（Select columns to display）
+                    showRefresh: true,                  //Show refresh button
+                    showExport: true,                   //Show export button
                     exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                     exportOptions: {
-                        ignoreColumn: [0],  //忽略某些列的索引数组
-                        fileName: 'slowquery_review'  //文件名称设置
+                        ignoreColumn: [0],  
+                        fileName: 'slowquery_review'  //File name setting
                     },
-                    minimumCountColumns: 2,             //最少允许的列数
-                    clickToSelect: true,                //是否启用点击选中行
-                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                    cardView: false,                    //是否显示详细视图
-                    detailView: true,                  //是否显示父子表
+                    minimumCountColumns: 2,             //Minimum columns allowed
+                    clickToSelect: true,                //Enable click to select row
+                    uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                    showToggle: true,                   //Show toggle button for detail/list view
+                    cardView: false,                    //Show detail view
+                    detailView: true,                  //Show parent-child table
                     queryParamsType: 'limit',
                     queryParams: function (params) {
                         var instance_name = $("#instance_name").val();
@@ -330,16 +89,16 @@
                             sortOrder: params.order
                         }
                     },
-                    //格式化详情
+                    
                     detailFormatter: function (index, row) {
                         let html = [];
                         $.each(row, function (key, value) {
                             if (key === 'SQLText') {
                                 let sql = window.sqlFormatter.format(value);
-                                //替换所有的换行符
+                                
                                 sql = sql.replace(/\r\n/g, "<br>");
                                 sql = sql.replace(/\n/g, "<br>");
-                                //替换所有的空格
+                                
                                 sql = sql.replace(/\s/g, "&nbsp;");
                                 html.push('<div class="col-lg-4">' + sql + '</div>');
                             }
@@ -367,17 +126,17 @@
                         return html.join('');
                     },
                     columns: [{
-                        title: '日志统计时间',
+                        title: '日志统计Time',
                         field: 'CreateTime',
                         sortable:true
                     }, {
-                        title: '数据库名',
+                        title: 'Database名',
                         field: 'DBName',
                         sortable:true
                     }, {
                         title: 'SQL语句',
                         field: 'SQLText',
-                        cellStyle:      //突出sql统计信息
+                        cellStyle:      
                             function formatTableUnit(value, row, index) {
                                 return {
                                     css: {
@@ -398,17 +157,17 @@
                     }, {
                         title: '完整SQL语句',
                         field: 'SQLText',
-                        visible: false // 默认不显示
+                        visible: false 
                     }, {
-                        title: '执行总次数',
+                        title: 'Execute总次数',
                         field: 'MySQLTotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '执行总时长(秒)',
+                        title: 'Execute总时长(seconds)',
                         field: 'MySQLTotalExecutionTimes',
                         sortable:true
                     }, {
-                        title: '平均执行时长(秒)',
+                        title: '平均Execute时长(seconds)',
                         field: 'QueryTimeAvg',
                         sortable:true
                     }, {
@@ -416,7 +175,7 @@
                         field: 'ParseTotalRowCounts',
                         sortable:true
                     }, {
-                        title: '返回总行数',
+                        title: 'returns总行数',
                         field: 'ReturnTotalRowCounts',
                         sortable:true
                     }, {
@@ -424,66 +183,66 @@
                         field: 'ParseRowAvg',
                         sortable:true
                     }, {
-                        title: '平均返回行数',
+                        title: '平均returns行数',
                         field: 'ReturnRowAvg',
                         sortable:true
                     }],
-                    locale: 'zh-CN',
+                    locale: currentLocale,
                     onLoadError: onLoadErrorCallback,
                     onSearch: function(e) {
-                        //传搜索参数给服务器
+                        //Pass search params to server
                         //console.info('search='+e);
                         //queryParams(e);
                     },
                     responseHandler: function(res) {
-                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        
                         return res;
                     },onSort: function(sortName,order){
                         //console.info('onSort: name='+sortName+'; order='+order+';');
                     }
                 });
             } else {
-                alert('请选择实例')
+                alert('Select Instance')
             }
         }
 
-        // 获取慢日志明细
+        // getSlow Log Details
         function slowquery_review_history() {
             $("#sqladvisor-toolbar").show();
             var instance_name = $("#instance_name").val();
             if (instance_name) {
-                //初始化table
+                //Initializetable
                 $('#slowsqlinfo-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/slowquery/review_history/",
-                    striped: true,                      //是否显示行间隔色
-                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                    pagination: true,                   //是否显示分页（*）
-                    sortable: true,                     //开启排序
-                    sortName: "ParseRowCounts",         //默认排序字段名称
-                    sortOrder: "desc",                   //默认排序方式
-                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                    pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
-                    search: true,                      //是否显示表格搜索
-                    strictSearch: false,                //是否全匹配搜索
-                    showColumns: true,                  //是否显示所有的列（选择显示的列）
-                    showRefresh: true,                  //是否显示刷新按钮
-                    showExport: true,                   //是否显示导出按钮
+                    striped: true,                      //Show row stripes
+                    cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                    pagination: true,                   //Show pagination（*）
+                    sortable: true,                     
+                    sortName: "ParseRowCounts",         
+                    sortOrder: "desc",                   
+                    sidePagination: "server",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                    pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                    pageSize: 30,                     //Records per page（*）
+                    pageList: [30, 50, 100, 1000],       //Selectable rows per page（*）
+                    search: true,                      //Show table search
+                    strictSearch: false,                //Exact match search
+                    showColumns: true,                  //Show all columns（Select columns to display）
+                    showRefresh: true,                  //Show refresh button
+                    showExport: true,                   //Show export button
                     exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                     exportOptions: {
-                        ignoreColumn: [0],  //忽略某些列的索引数组
-                        fileName: 'slowquery_review_history'  //文件名称设置
+                        ignoreColumn: [0],  
+                        fileName: 'slowquery_review_history'  //File name setting
                     },
-                    minimumCountColumns: 2,             //最少允许的列数
-                    clickToSelect: true,                //是否启用点击选中行
-                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                    cardView: false,                    //是否显示详细视图
-                    detailView: true,                  //是否显示父子表
+                    minimumCountColumns: 2,             //Minimum columns allowed
+                    clickToSelect: true,                //Enable click to select row
+                    uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                    showToggle: true,                   //Show toggle button for detail/list view
+                    cardView: false,                    //Show detail view
+                    detailView: true,                  //Show parent-child table
                     queryParamsType: 'limit',
                     queryParams: function (params) {
                         var instance_name = $("#instance_name").val();
@@ -507,16 +266,16 @@
                             sortOrder: params.order
                         }
                     },
-                    //格式化详情
+                    
                     detailFormatter: function (index, row) {
                         var html = [];
                         $.each(row, function (key, value) {
                             if (key === 'SQLText') {
                                 var sql = window.sqlFormatter.format(value);
-                                //替换所有的换行符
+                                
                                 sql = sql.replace(/\r\n/g, "<br>");
                                 sql = sql.replace(/\n/g, "<br>");
-                                //替换所有的空格
+                                
                                 sql = sql.replace(/\s/g, "&nbsp;");
                                 html.push('<span>' + sql + '</span>');
                             }
@@ -528,15 +287,15 @@
                         field: 'checkbox',
                         checkbox: true
                     }, {
-                        title: '执行开始时间',
+                        title: 'ExecuteStartTime',
                         field: 'ExecutionStartTime',
                         sortable:true
                     }, {
-                        title: '数据库名',
+                        title: 'Database名',
                         field: 'DBName',
                         sortable:true
                     }, {
-                        title: '用户名',
+                        title: 'User名',
                         field: 'HostAddress',
                         sortable:true
                     }, {
@@ -553,49 +312,49 @@
                     }, {
                         title: '完整SQL语句',
                         field: 'SQLText',
-                        visible: false // 默认不显示
+                        visible: false 
                     }, {
-                        title: '执行总次数',
+                        title: 'Execute总次数',
                         field: 'TotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '执行时长(95%)',
+                        title: 'Execute时长(95%)',
                         field: 'QueryTimePct95',
                         sortable:true
                     }, {
-                        title: '执行总时长(秒)',
+                        title: 'Execute总时长(seconds)',
                         field: 'QueryTimes',
                         sortable:true
                     }, {
-                        title: '锁定总时长(秒)',
+                        title: '锁定总时长(seconds)',
                         field: 'LockTimes',
                         sortable:true
                     }, {
-                        title: '解析总行数',
+                        title: 'Parse总行数',
                         field: 'ParseRowCounts',
                         sortable:true
                     }, {
-                        title: '返回总行数',
+                        title: 'returns总行数',
                         field: 'ReturnRowCounts',
                         sortable:true
                     }],
                     singleSelect: true,
-                    toolbar: "#sqladvisor-toolbar", //指明自定义的toolbar
-                    locale: 'zh-CN',
+                    toolbar: "#sqladvisor-toolbar", //Specify customtoolbar
+                    locale: currentLocale,
                     onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
-                        //传搜索参数给服务器
+                        //Pass search params to server
                         queryParams(e)
                     },onSort: function(sortName,order){
                         //console.info('onSort: name='+sortName+'; order='+order+';');
                     },
                     responseHandler: function (res) {
-                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        
                         return res;
                     }
                 });
             } else {
-                alert("请选择实例")
+                alert("Select Instance")
             }
         }
     </script>

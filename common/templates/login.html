@@ -1,29 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login To Archery{{ custom_title_suffix }}</title>
+    <title>{% load i18n %}{% trans "Login To Archery" %}{{ custom_title_suffix }}</title>
     {% load static %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 引入 Bootstrap -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'dist/css/login.css' %}" rel="stylesheet">
-    <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
-    <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
     <!--[if lt IE 9]>
          <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
          <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
       <![endif]-->
     <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" />
+    <style>
+        .language-selector {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+        }
+        .language-selector select {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body style="background-color:#edeff1;">
+{% load i18n %}
+
+<!-- Language Selector -->
+<div class="language-selector">
+    <form action="{% url 'set_language' %}" method="post" id="language-form">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.path }}">
+        <select name="language" onchange="this.form.submit()">
+            {% get_current_language as LANGUAGE_CODE %}
+            {% get_available_languages as LANGUAGES %}
+            {% for lang_code, lang_name in LANGUAGES %}
+                <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                    {{ lang_name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
 <div class="row lsb-login">
     <div class="col-sm-4 login-form-wrapper">
-        <h3 class="text-center">Login To Archery{{ custom_title_suffix }}</h3>
+        <h3 class="text-center">{% trans "Login To Archery" %}{{ custom_title_suffix }}</h3>
         <form class="login-form fade-in-effect" id="login" method="post" role="form">
             {% csrf_token %}
             {% if dingding_enabled %}
                 <div class="form-group">
-                    <a class="btn btn-primary btn-block" role="button" href="/dingding/authenticate/">以钉钉登录</a>
+                    <a class="btn btn-primary btn-block" role="button" href="/dingding/authenticate/">{% trans "Login with DingTalk" %}</a>
                 </div>
             {% elif oidc_enabled %}
                 <div class="form-group">
@@ -31,12 +61,12 @@
                 </div>
             {% elif cas_enabled %}
             <div class="form-group">
-                <a class="btn btn-primary btn-block" role="button" href="/cas/authenticate/">CAS认证登录</a>
+                <a class="btn btn-primary btn-block" role="button" href="/cas/authenticate/">{% trans "CAS Login" %}</a>
             </div>
             {% endif %}
             {% if dingding_enabled or oidc_enabled %}
                 <a data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                  显示传统登录
+                  {% trans "Show traditional login" %}
                 </a>
                 <div class="collapse" id="collapseExample">
                   <div>
@@ -48,58 +78,58 @@
             {% endif %}
             {% if sign_up_enabled %}
                 <div class="form-group">
-                    <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
+                    <a href="#" data-toggle="modal" data-target="#sign-up">{% trans "Register" %}</a>
                 </div>
             {% endif %}
         </form>
     </div>
 </div>
 
-<!-- 注册模态框-->
+<!-- Registration Modal -->
 <div class="modal fade" id="sign-up" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">注册账号</h4>
+                <h4 class="modal-title" id="myModalLabel">{% trans "Create Account" %}</h4>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <input type="text" autocomplete="off"
-                           class="form-control" id="username" placeholder="用户名">
+                           class="form-control" id="username" placeholder="{% trans "Username" %}">
                 </div>
                 <div class="form-group">
                     <input type="text" autocomplete="off"
-                           class="form-control" id="display" placeholder="中文名">
+                           class="form-control" id="display" placeholder="{% trans "Display Name" %}">
                 </div>
                 <div class="form-group">
                     <input type="text" autocomplete="off"
-                           class="form-control" id="email" placeholder="邮箱">
+                           class="form-control" id="email" placeholder="{% trans "Email" %}">
                 </div>
                 <div class="form-group">
                     <input type="password"
-                           class="form-control" id="password" placeholder="密码">
+                           class="form-control" id="password" placeholder="{% trans "Password" %}">
                 </div>
                 <div class="form-group">
                     <input type="password"
                            class="form-control" autocomplete="new-password" id="password2"
-                           placeholder="密码确认">
+                           placeholder="{% trans "Confirm Password" %}">
                 </div>
 
                 <div class="form-group">
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                <button id="btnSign" type="submit" class="btn btn-success">注册</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button id="btnSign" type="submit" class="btn btn-success">{% trans "Register" %}</button>
             </div>
         </div>
     </div>
 </div>
 
 
-<!-- 模态框（Modal） -->
+<!-- Alert Modal -->
 <div class="modal fade" id="wrongpwd-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
      aria-hidden="true">
     <div class="modal-dialog">
@@ -109,28 +139,25 @@
                     &times;
                 </button>
                 <h4 class="modal-title" id="myModalLabel">
-                    提示
+                    {% trans "Notice" %}
                 </h4>
             </div>
             <div class="modal-body" id="wrongpwd-modal-body"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">确定
+                <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "OK" %}
                 </button>
             </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal -->
+        </div>
+    </div>
 </div>
 
-<!--底部部分 -->
+<!-- Footer -->
 <div class="user-bottom-div">
     <p><strong>&copy; Archery</strong>&nbsp;(v{{ archery_version }})</p>
 </div>
-<!-- jQuery (Bootstrap 的 JavaScript 插件需要引入 jQuery，务必先引入jquery js再引入bootstrap js) -->
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
-<!-- 包括所有已编译的插件 -->
 <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
 </body>
-<!-- 解决CSRF-->
 <script>
     $(function () {
         $.ajaxSetup({
@@ -144,7 +171,6 @@
             var cookies = document.cookie.split(';');
             for (var i = 0; i < cookies.length; i++) {
                 var cookie = jQuery.trim(cookies[i]);
-                // Does this cookie string begin with the name we want?
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
@@ -155,15 +181,12 @@
     }
 </script>
 <script>
-    <!-- 退出登录后清空sessionStorage -->
     $(document).ready(function () {
         sessionStorage.clear();
     });
 
-    //回车键提交表单登录
     $(document).ready(function () {
         $(document).keydown(function (event) {
-            //keycode==13为回车键
             console.log($("#sign-up").css("display"))
             if (event.keyCode === 13 && $("#sign-up").css("display") === 'none') {
                 $('#btnLogin').addClass('disabled');
@@ -182,6 +205,9 @@
         password = $('#inputPassword').val();
         authenticateUser(username, password);
     });
+
+    // Translatable messages
+    var MSG_REGISTRATION_SUCCESS = "{% trans 'Registration successful! Please login.' %}";
 
     $('#btnSign').click(function () {
         $('#btnSign').addClass('disabled');
@@ -204,7 +230,7 @@
             success: function (data) {
                 if (data.status === 0) {
                     $("#sign-up").modal('hide');
-                    alert('注册成功, 请输入密码登录!');
+                    alert(MSG_REGISTRATION_SUCCESS);
                 } else {
                     alert(data.msg);
                 }

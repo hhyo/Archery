@@ -1,12 +1,11 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
-                <div class="panel-heading">
-                    SQL优化工具
-                </div>
+                <div class="panel-heading">{% trans "SQL Optimization Tools" %}</div>
                 <div class="panel-body">
                     <form id="form-sqladvisor" action="/sqladvisor/" method="post" class="form-horizontal" role="form">
                         {% csrf_token %}
@@ -16,16 +15,16 @@
                         <div class="text-warning">
                             <dl>
                                 <dd>[MySQL]SQLAdvisor：
-                                    <a href="https://tech.meituan.com/sqladvisor_pr.html">查看介绍</a>
+                                    <a href="https://tech.meituan.com/sqladvisor_pr.html">View Introduction</a>
                                 </dd>
                                 <dd>[MySQL]SOAR：
-                                    <a href="https://github.com/XiaoMi/soar">查看介绍</a>
+                                    <a href="https://github.com/XiaoMi/soar">View Introduction</a>
                                 </dd>
                                 <dd>[MySQL]MySQLTuning：
-                                    <a href="http://dbaplus.cn/blog-77-736-1.html">查看介绍</a>
+                                    <a href="http://dbaplus.cn/blog-77-736-1.html">View Introduction</a>
                                 </dd>
                                 <dd>[ORACLE]SQL Tuning Advisor：
-                                    <a href="https://docs.oracle.com/database/121/TGSQL/tgsql_sqltune.htm#TGSQL540">查看介绍</a>
+                                    <a href="https://docs.oracle.com/database/121/TGSQL/tgsql_sqltune.htm#TGSQL540">View Introduction</a>
                                 </dd>
                             </dl>
                         </div>
@@ -34,8 +33,8 @@
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-live-search="true"
-                                        title="请选择实例:"
-                                        data-placeholder="请选择实例:" required>
+                                        title="{% trans 'Select Instance:' %}"
+                                        data-placeholder="{% trans 'Select Instance:' %}" required>
                                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                                     <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                 </select>
@@ -44,59 +43,59 @@
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true"
-                                        title="请选择数据库:"
-                                        data-placeholder="请选择数据库:" required>
+                                        title="{% trans 'Select Database:' %}"
+                                        data-placeholder="{% trans 'Select Database:' %}" required>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <select id="tools" name="tools"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true"
-                                        title="请选择优化方式:"
-                                        data-placeholder="请选择优化方式:" required>
-                                    <option value="is-empty" disabled="">请选择优化方式:</option>
+                                        title="Select optimization method:"
+                                        data-placeholder="Select optimization method:" required>
+                                    <option value="is-empty" disabled="">Select optimization method:</option>
                                 </select>
                             </div>
                             <div id="div_verbose" class="form-group">
                                 <select id="verbose" name="verbose"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-name="是否查看优化过程"
-                                        data-placeholder="是否查看优化过程:" required>
-                                    <option value="is-empty" disabled="">是否查看优化过程:</option>
-                                    <option value="1" selected="selected">是</option>
-                                    <option value="0">否</option>
+                                        data-name="YesNoViewOptimize过程"
+                                        data-placeholder="YesNoViewOptimize过程:" required>
+                                    <option value="is-empty" disabled="">YesNoViewOptimize过程:</option>
+                                    <option value="1" selected="selected">{% trans "Yes" %}</option>
+                                    <option value="0">{% trans "No" %}</option>
                                 </select>
                             </div>
                             <div id="div_tuning" class="form-group" style="display: none">
                                 <div class="checkbox">
                                     <label>
                                         <input id="sys_parm" type="checkbox" value="">
-                                        显示系统参数
+                                        显示系统Parameter
                                     </label>
                                 </div>
                                 <div class="checkbox">
                                     <label>
                                         <input id="sql_plan" type="checkbox" value="" checked>
-                                        显示执行计划
+                                        显示Execute计划
                                     </label>
                                 </div>
                                 <div class="checkbox">
                                     <label>
                                         <input id="obj_stat" type="checkbox" value="" checked>
-                                        显示相关对象(表、索引)统计信息
+                                        显示相关object(Table、Index)统计Info
                                     </label>
                                 </div>
                                 <div class="checkbox">
                                     <label>
                                         <input id="sql_profile" type="checkbox" value="">
-                                        显示PROFILE跟踪信息(真实执行SQL，谨慎选择)
+                                        显示PROFILE跟踪Info(真实ExecuteSQL，谨慎选择)
                                     </label>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
-                                <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
-                                <input type="button" id="btn-sqladvisor" class="btn btn-success" value="获取优化建议"/>
+                                <input id="btn-format" type="button" class="btn btn-info" value="{% trans 'Format' %}"/>
+                                <input id="btn-explain" type="button" class="btn btn-warning" value="{% trans 'Explain' %}"/>
+                                <input type="button" id="btn-sqladvisor" class="btn btn-success" value="{% trans 'Get Optimization Suggestions' %}"/>
                             </div>
                         </div>
                     </form>
@@ -105,16 +104,14 @@
         </div>
         <div class="col-md-12 column">
             <div class="panel panel-default">
-                <div class="panel-heading">
-                    优化建议
-                </div>
+                <div class="panel-heading">{% trans "Optimization Suggestions" %}</div>
                 <div class="panel-body">
-                    <!-- sqladvisor优化信息 -->
+                    <!-- sqladvisorOptimizeInfo -->
                     <div id="sqladvisor-result" style="display:none;" class="form-group">
                         <div id="sqladvisor-result-col" class="col-md-12">
                         </div>
                     </div>
-                    <!-- 执行计划 -->
+                    <!-- Execute计划 -->
                     <div id="explain_result" style="display:none;" class="form-group table-responsive">
                         <table id="tb_explain" data-toggle="table" class="table table-condensed"
                                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
@@ -129,7 +126,7 @@
                         <div id="soar-result-col" class="col-md-12">
                         </div>
                     </div>
-                    <!-- MySQLtuning信息 -->
+                    <!-- MySQLtuningInfo -->
                     <div id="tuning_result" style="display:none;" class="form-group table-responsive">
                         <div id="div_sys_parm" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
@@ -138,7 +135,7 @@
                             </div>
                             <div class="panel-body">
                                 <p>author：<b id="author"></b>
-                                    <a href="http://dbaplus.cn/blog-77-736-1.html" target="_blank"> 查看文章</a></p>
+                                    <a href="http://dbaplus.cn/blog-77-736-1.html" target="_blank"> View文章</a></p>
                                 <p>db_version：<b id="db_version"></b></p>
                             </div>
                             <div class="panel-heading" style="background-color: dimgray; color: white">
@@ -246,7 +243,10 @@
     <script src="{% static 'ace/ace-init.js' %}"></script>
     <script src="{% static 'dist/js/marked.min.js' %}"></script>
     <script>
-        //判断页面显示
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
+        //check页面显示
         $("#tools").change(function () {
             //SQLAdvisor
             if ($("#tools").val() === '1') {
@@ -271,7 +271,7 @@
             }
         });
 
-        // 表单校验
+        
         function sqladvisor_validate() {
             var result = true;
             var sqlContent = editor.getValue();
@@ -279,21 +279,21 @@
             var db_name = $("#db_name").val();
 
             if (sqlContent === null || sqlContent.trim() === "") {
-                alert("SQL内容不能为空！");
+                alert("SQLContent cannot be empty！");
                 return result = false;
             } else if (instance_name === null || instance_name === $("#instance_name").attr("data-placeholder")) {
-                alert("请选择实例！");
+                alert("Select Instance！");
                 return result = false;
             } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
-                alert("请选择数据库！");
+                alert("Select Database！");
                 return result = false;
             }
             return result;
         }
 
-        // 获取优化建议
+        // getOptimize建议
         $("#btn-sqladvisor").click(function () {
-                //先做表单验证，成功了提交优化请求
+                
                 if (sqladvisor_validate()) {
                     $('input[type=button]').addClass('disabled');
                     $('input[type=button]').prop('disabled', true);
@@ -310,7 +310,7 @@
             }
         );
 
-        //格式化sql
+        
         $("#btn-format").click(function () {
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
                 if (select_sqlContent) {
@@ -325,9 +325,9 @@
             }
         );
 
-        //获取执行计划
+        //getExecute计划
         $("#btn-explain").click(function () {
-                //先做表单验证，成功了提交优化请求
+                
                 if (sqladvisor_validate()) {
                     $('input[type=button]').addClass('disabled');
                     $('input[type=button]').prop('disabled', true);
@@ -336,7 +336,7 @@
             }
         );
 
-        //实例变动获取数据库
+        
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             $("#tools").empty();
@@ -344,10 +344,10 @@
             $('#tools').selectpicker('refresh');
             var obj = document.getElementById("tools");
             if (optgroup === "Oracle") {
-                //oracle优化工具
+                //oracleOptimize工具
                 obj.options.add(new Option("SQLTuningAdvisor", "4", true, true));
             } else if (optgroup === "MySQL") {
-                //mysql优化工具
+                //mysqlOptimize工具
                 obj.options.add(new Option("SQLAdvisor", "1", true, true));
                 obj.options.add(new Option("SQLTuning", "2"));
                 obj.options.add(new Option("SOAR", "3"));
@@ -357,9 +357,9 @@
             get_db_list();
         });
 
-        //获取实例数据库
+        //getInstanceDatabase
         function get_db_list() {
-            //将数据通过ajax提交给获取db_name
+            
             $("#db_name").empty();
             $('#db_name').selectpicker('render');
             $('#db_name').selectpicker('refresh');
@@ -391,10 +391,10 @@
                         }
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
-                        //自动补全提示
+                        
                         setCompleteData(dbs);
 
-                        //适配从慢查询过来的优化请求
+                        
                         var pathname = window.location.pathname;
                         if (pathname === "/slowquery_advisor/") {
                             $("#db_name").selectpicker('val', sessionStorage.getItem('advisor_db_name'));
@@ -446,11 +446,11 @@
                         } else if (result['column_list']) {
                             result = result['rows'];
                             var result_str = JSON.stringify(result);
-                            //替换所有的\n换行符
+                            
                             result_str = result_str.replace(/\\n/g, "<br>");
-                            //替换所有的空格
+                            
                             result_str = result_str.replace(/\s/g, "&nbsp;");
-                            //去掉双引号强制转换符
+                            
                             result_str = result_str.replace(/\\"/g, "\"");
                             alertStyle = "alert-success";
                             finalHtml = '';
@@ -478,7 +478,7 @@
             ;
         }
 
-        //获取查询建议
+        //get查询建议
         function sqladvisor() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
@@ -487,7 +487,7 @@
             var db_name = $("#db_name").val();
             var verbose = $("#verbose").val();
 
-            //将数据通过ajax提交给后端进行检查
+            
             $.ajax({
                 type: "post",
                 url: "/slowquery/optimize_sqladvisor/",
@@ -516,7 +516,7 @@
                             "</tr> </tbody></table> </div>";
 
                         $("#sqladvisor-result-col").html(finalHtml);
-                        //填充内容后展现出来
+                        
                         $("#sqladvisor-result").show();
                         $("#explain_result").hide();
                         $("#tuning_result").hide();
@@ -532,7 +532,7 @@
             });
         }
 
-        //获取执行计划
+        //getExecute计划
         function explain() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
@@ -566,7 +566,7 @@
             ;
         }
 
-        // 展示执行计划
+        
         function display_data(data) {
             var columns = [];
             if (data.status === 0) {
@@ -583,7 +583,7 @@
                         }]
                     })
                 } else if (result['column_list']) {
-                    //异步获取要动态生成的列
+                    
                     $.each(result['column_list'], function (i, column) {
                         columns.push({
                             "field": i,
@@ -595,7 +595,7 @@
                             }
                         });
                     });
-                    //初始化查询结果
+                    //Initialize查询Result
                     $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
                         escape: true,
                         data: result['rows'],
@@ -606,7 +606,7 @@
                         pagination: true,
                         pageSize: 100,
                         pageList: [100, 500],
-                        locale: 'zh-CN'
+                        locale: currentLocale
                     });
                 }
                 $("#explain_result").show();
@@ -619,7 +619,7 @@
             }
         }
 
-        //获取soar报告
+        //getsoar报告
         function soar() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
@@ -627,7 +627,7 @@
             var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
 
-            //将数据通过ajax提交给后端进行检查
+            
             $.ajax({
                 type: "post",
                 url: "/slowquery/optimize_soar/",
@@ -655,13 +655,13 @@
                             smartLists: false,
                             smartypants: false
                         });
-                        //增加的代码，用于个性化输出table
+                        
                         rendererMD.table = function (header, body) {
                             return '<div class="table-responsive"><table class="table table-condensed" style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + header + body + '</table></div>'
                         };
                         $("#soar-result-col").html(marked(report));
                         $("#soar-table").bootstrapTable('refresh');
-                        //填充内容后展现出来
+                        
                         $("#soar-result").show();
                         $("#sqladvisor-result").hide();
                         $("#explain_result").hide();
@@ -677,7 +677,7 @@
             });
         }
 
-        //获取tunning信息
+        //gettunningInfo
         function tunning() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
@@ -715,7 +715,7 @@
                                 }]
                             })
                         } else {
-                            //是否显示系统参数
+                            
                             if (document.getElementById("sys_parm").checked) {
                                 $("#div_sys_parm").show()
                                 //===== BASIC INFORMATION =====
@@ -723,7 +723,7 @@
                                 $("#db_version").text(result['basic_information']['rows'][0]);
 
                                 //===== SYSTEM PARAMETER =====
-                                //异步获取要动态生成的列
+                                
                                 var columns = [];
                                 $.each(result['sys_parameter']['column_list'], function (i, column) {
                                     columns.push({
@@ -731,7 +731,7 @@
                                         "title": column
                                     });
                                 });
-                                //初始化查询结果
+                                //Initialize查询Result
                                 $('#tb_sys_parameter').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['sys_parameter']['rows'],
@@ -739,7 +739,7 @@
                                 });
 
                                 //===== OPTIMIZER SWITCH =====
-                                //异步获取要动态生成的列
+                                
                                 var columns = [];
                                 $.each(result['optimizer_switch']['column_list'], function (i, column) {
                                     columns.push({
@@ -750,7 +750,7 @@
                                         }
                                     });
                                 });
-                                //初始化查询结果
+                                //Initialize查询Result
                                 $('#tb_optimizer_switch').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['optimizer_switch']['rows'],
@@ -760,11 +760,11 @@
                                 $("#div_sys_parm").hide();
                             }
 
-                            //是否显示执行计划
+                            
                             if (document.getElementById("sql_plan").checked) {
                                 $("#div_sql_plan").show()
                                 //===== SQL PLAN =====
-                                //异步获取要动态生成的列
+                                
                                 var columns = [];
                                 $.each(result['plan']['column_list'], function (i, column) {
                                     columns.push({
@@ -772,7 +772,7 @@
                                         "title": column
                                     });
                                 });
-                                //初始化查询结果
+                                //Initialize查询Result
                                 $('#tb_plan').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['plan']['rows'],
@@ -780,7 +780,7 @@
                                 });
 
                                 //===== OPTIMIZER REWRITE SQL =====
-                                //异步获取要动态生成的列
+                                
                                 var columns = [];
                                 $.each(result['optimizer_rewrite_sql']['column_list'], function (i, column) {
                                     if (column === 'Message') {
@@ -798,22 +798,22 @@
                                         })
                                     }
                                 });
-                                //初始化查询结果
+                                //Initialize查询Result
                                 $('#tb_optimizer_rewrite_sql').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['optimizer_rewrite_sql']['rows'],
                                     columns: columns,
-                                    detailView: true,   //是否显示父子表
-                                    //格式化详情
+                                    detailView: true,   //Show parent-child table
+                                    
                                     detailFormatter: function (index, row) {
                                         var html = [];
                                         $.each(row, function (key, value) {
                                             if (index === 0) {
                                                 var sql = window.sqlFormatter.format(value);
-                                                //替换所有的换行符
+                                                
                                                 sql = sql.replace(/\r\n/g, "<br>");
                                                 sql = sql.replace(/\n/g, "<br>");
-                                                //替换所有的空格
+                                                
                                                 sql = sql.replace(/\s/g, "&nbsp;");
                                                 html.push('<span>' + sql + '</span>');
                                             }
@@ -825,7 +825,7 @@
                                 $("#div_sql_plan").hide();
                             }
 
-                            //是否显示相关对象(表、索引)统计信息
+                            
                             if (document.getElementById("obj_stat").checked) {
                                 $("#div_obj_stat").show();
                                 var template = $(div_obj_stat_tmp).html();
@@ -841,7 +841,7 @@
                                         $('#tb_index_info').attr('id', tb_index_info_id);
 
                                         //===== TABLE STRUCTURE =====
-                                        //异步获取要动态生成的列
+                                        
                                         var columns = [];
                                         $.each(result['structure']['column_list'], function (i, column) {
                                             columns.push({
@@ -857,22 +857,22 @@
                                                 }
                                             })
                                         });
-                                        //初始化查询结果
+                                        //Initialize查询Result
                                         $("#" + tb_table_structure_id).bootstrapTable('destroy').bootstrapTable({
                                             escape: true,
                                             data: result['structure']['rows'],
                                             columns: columns,
-                                            detailView: true,   //是否显示父子表
-                                            //格式化详情
+                                            detailView: true,   //Show parent-child table
+                                            
                                             detailFormatter: function (index, row) {
                                                 var html = [];
                                                 $.each(row, function (key, value) {
                                                     if (index === 0) {
                                                         var sql = window.sqlFormatter.format(value);
-                                                        //替换所有的换行符
+                                                        
                                                         sql = sql.replace(/\r\n/g, "<br>");
                                                         sql = sql.replace(/\n/g, "<br>");
-                                                        //替换所有的空格
+                                                        
                                                         sql = sql.replace(/\s/g, "&nbsp;");
                                                         html.push('<span>' + sql + '</span>');
                                                     }
@@ -881,7 +881,7 @@
                                             },
                                         });
                                         //===== TABLE INFO =====
-                                        //异步获取要动态生成的列
+                                        
                                         var columns = [];
                                         $.each(result['table_info']['column_list'], function (i, column) {
                                             columns.push({
@@ -889,14 +889,14 @@
                                                 "title": column
                                             })
                                         });
-                                        //初始化查询结果
+                                        //Initialize查询Result
                                         $("#" + tb_table_info_id).bootstrapTable('destroy').bootstrapTable({
                                             escape: true,
                                             data: result['table_info']['rows'],
                                             columns: columns
                                         });
                                         //===== INDEX INFO =====
-                                        //异步获取要动态生成的列
+                                        
                                         var columns = [];
                                         $.each(result['index_info']['column_list'], function (i, column) {
                                             columns.push({
@@ -904,25 +904,25 @@
                                                 "title": column
                                             })
                                         });
-                                        //初始化查询结果
+                                        //Initialize查询Result
                                         $("#" + tb_index_info_id).bootstrapTable('destroy').bootstrapTable({
                                             escape: true,
                                             data: result['index_info']['rows'],
                                             columns: columns
                                         });
                                     } else {
-                                        $("#div_obj_stat-panel-body").append("<p>解析表出错或者表不存在，无法展示表信息</p>");
+                                        $("#div_obj_stat-panel-body").append("<p>ParseTable出错或者Tablenot exists，None法展示TableInfo</p>");
                                     }
                                 });
                             } else {
                                 $("#div_obj_stat").hide();
                             }
 
-                            //是否显示运行前后状态信息和PROFILE跟踪信息(激活后会真实执行SQL)
+                            
                             if (document.getElementById("sql_profile").checked) {
                                 $("#div_sql_profile").show();
                                 //===== SESSION STATUS (DIFFERENT) =====
-                                //异步获取要动态生成的列
+                                
                                 var columns = [];
                                 $.each(result['session_status']['SESSION_STATUS(DIFFERENT)']['column_list'], function (i, column) {
                                     columns.push({
@@ -930,7 +930,7 @@
                                         "title": column
                                     })
                                 });
-                                //初始化查询结果
+                                //Initialize查询Result
                                 $('#tb_session_status').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['session_status']['SESSION_STATUS(DIFFERENT)']['rows'],
@@ -938,7 +938,7 @@
                                 });
 
                                 //===== SQL PROFILING(DETAIL)=====
-                                //异步获取要动态生成的列
+                                
                                 var columns = [];
                                 $.each(result['session_status']['PROFILING_DETAIL']['column_list'], function (i, column) {
                                     columns.push({
@@ -946,14 +946,14 @@
                                         "title": column
                                     })
                                 });
-                                //初始化查询结果
+                                //Initialize查询Result
                                 $('#tb_sql_profiling_detail').bootstrapTable('destroy').bootstrapTable({
                                     data: result['session_status']['PROFILING_DETAIL']['rows'],
                                     columns: columns
                                 });
 
                                 //===== SQL PROFILING(SUMMARY)=====
-                                //异步获取要动态生成的列
+                                
                                 var columns = [];
                                 $.each(result['session_status']['PROFILING_SUMMARY']['column_list'], function (i, column) {
                                     columns.push({
@@ -961,7 +961,7 @@
                                         "title": column
                                     })
                                 });
-                                //初始化查询结果
+                                //Initialize查询Result
                                 $('#tb_sql_profiling_summary').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['session_status']['PROFILING_SUMMARY']['rows'],
@@ -991,7 +991,7 @@
         }
 
         $(document).ready(function () {
-            //获取用户实例列表
+            //getUserInstancelist
             $(function () {
                 $.ajax({
                     type: "get",
@@ -1001,7 +1001,7 @@
                         db_type: ['mysql', 'oracle']
                     },
                     complete: function () {
-                        //适配从慢查询过来的优化请求
+                        
                         var pathname = window.location.pathname;
                         if (pathname == "/slowquery_advisor/") {
                             var sql_content = sessionStorage.getItem('advisor_sql_content');
@@ -1016,7 +1016,7 @@
                                 }
                             }
                         }
-                        //填充实例名
+                        
                         $("#instance_name").selectpicker('val', sessionStorage.getItem('sql_tuning_instance_name'));
                         if ($("#instance_name").val()) {
                             $("#instance_name").selectpicker().trigger("change");

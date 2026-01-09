@@ -1,0 +1,648 @@
+# Archery Spanish translations
+# Copyright (C) 2024
+# This file is distributed under the same license as the Archery package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Archery 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-07 12:00+0000\n"
+"PO-Revision-Date: 2024-01-07 12:00+0000\n"
+"Last-Translator: Diego <diego@archery.local>\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Language names
+msgid "English"
+msgstr "Ingles"
+
+msgid "Spanish"
+msgstr "Castellano"
+
+msgid "Chinese Simplified"
+msgstr "Chino Simplificado"
+
+# Login page
+msgid "Login To Archery"
+msgstr "Iniciar Sesion en Archery"
+
+msgid "Login with DingTalk"
+msgstr "Iniciar con DingTalk"
+
+msgid "CAS Login"
+msgstr "Iniciar con CAS"
+
+msgid "Show traditional login"
+msgstr "Mostrar login tradicional"
+
+msgid "Register"
+msgstr "Registrarse"
+
+msgid "Create Account"
+msgstr "Crear Cuenta"
+
+msgid "Username"
+msgstr "Usuario"
+
+msgid "Display Name"
+msgstr "Nombre a Mostrar"
+
+msgid "Email"
+msgstr "Correo"
+
+msgid "Password"
+msgstr "Contrasena"
+
+msgid "Confirm Password"
+msgstr "Confirmar Contrasena"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Notice"
+msgstr "Aviso"
+
+msgid "OK"
+msgstr "Aceptar"
+
+msgid "Login"
+msgstr "Ingresar"
+
+msgid "Registration successful! Please login."
+msgstr "Registro exitoso! Por favor inicia sesion."
+
+# Base template / Navigation
+msgid "SQL Review Platform"
+msgstr "Plataforma de Revision SQL"
+
+msgid "Hello"
+msgstr "Hola"
+
+msgid "System Info"
+msgstr "Info del Sistema"
+
+msgid "Admin Panel"
+msgstr "Panel de Admin"
+
+msgid "Two-Factor Auth"
+msgstr "Autenticacion 2FA"
+
+msgid "Change Password"
+msgstr "Cambiar Contrasena"
+
+msgid "Logout"
+msgstr "Cerrar Sesion"
+
+# Menu items
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "SQL Review"
+msgstr "Revision SQL"
+
+msgid "SQL Deployment"
+msgstr "Despliegue SQL"
+
+msgid "SQL Analysis"
+msgstr "Analisis SQL"
+
+msgid "SQL Query"
+msgstr "Consulta SQL"
+
+msgid "Online Query"
+msgstr "Consulta Online"
+
+msgid "Data Export"
+msgstr "Exportar Datos"
+
+msgid "Data Dictionary"
+msgstr "Diccionario de Datos"
+
+msgid "Permission Management"
+msgstr "Gestion de Permisos"
+
+msgid "SQL Optimization"
+msgstr "Optimizacion SQL"
+
+msgid "Optimization Tools"
+msgstr "Herramientas de Optimizacion"
+
+msgid "Slow Query Log"
+msgstr "Log de Queries Lentas"
+
+msgid "Instance Management"
+msgstr "Gestion de Instancias"
+
+msgid "Instance List"
+msgstr "Lista de Instancias"
+
+msgid "Session Management"
+msgstr "Gestion de Sesiones"
+
+msgid "Database Management"
+msgstr "Gestion de Bases de Datos"
+
+msgid "Account Management"
+msgstr "Gestion de Cuentas"
+
+msgid "Parameter Configuration"
+msgstr "Configuracion de Parametros"
+
+msgid "Tools & Plugins"
+msgstr "Herramientas y Plugins"
+
+msgid "System Management"
+msgstr "Gestion del Sistema"
+
+msgid "Configuration"
+msgstr "Configuracion"
+
+msgid "Resource Groups"
+msgstr "Grupos de Recursos"
+
+msgid "Other Settings"
+msgstr "Otras Configuraciones"
+
+msgid "User Management"
+msgstr "Gestion de Usuarios"
+
+msgid "Permission Groups"
+msgstr "Grupos de Permisos"
+
+msgid "All Backend Data"
+msgstr "Todos los Datos del Backend"
+
+msgid "System Audit"
+msgstr "Auditoria del Sistema"
+
+msgid "General Audit"
+msgstr "Auditoria General"
+
+msgid "SQL Deployment Audit"
+msgstr "Auditoria de Despliegue SQL"
+
+msgid "Query Audit"
+msgstr "Auditoria de Consultas"
+
+msgid "Documentation"
+msgstr "Documentacion"
+
+# Two-factor authentication
+msgid "Two-Factor Verification"
+msgstr "Verificacion de Dos Factores"
+
+msgid "TOTP"
+msgstr "TOTP"
+
+msgid "SMS"
+msgstr "SMS"
+
+msgid "Close"
+msgstr "Cerrar"
+
+msgid "Verify Current Password"
+msgstr "Verificar Contrasena Actual"
+
+msgid "Enter password to verify"
+msgstr "Ingresa la contrasena para verificar"
+
+msgid "Confirm"
+msgstr "Confirmar"
+
+msgid "Scan to Bind"
+msgstr "Escanear para Vincular"
+
+msgid "Bind Phone Number"
+msgstr "Vincular Numero de Telefono"
+
+msgid "Use Google Authenticator to scan"
+msgstr "Usa Google Authenticator para escanear"
+
+msgid "Enter phone number to bind"
+msgstr "Ingresa el numero de telefono a vincular"
+
+msgid "Enter 6-digit verification code"
+msgstr "Ingresa el codigo de verificacion de 6 digitos"
+
+msgid "Get Verification Code"
+msgstr "Obtener Codigo de Verificacion"
+
+msgid "Bind"
+msgstr "Vincular"
+
+msgid "Enabled"
+msgstr "Activado"
+
+msgid "Disabled"
+msgstr "Desactivado"
+
+msgid "All Data"
+msgstr "Todos los Datos"
+
+msgid "Workflow Log"
+msgstr "Registro de Workflow"
+
+msgid "Workflow Name"
+msgstr "Nombre de Workflow"
+
+msgid "Full Workflow Name"
+msgstr "Nombre Completo de Workflow"
+
+msgid "Initiator"
+msgstr "Iniciador"
+
+msgid "Workflow Status"
+msgstr "Estado del Workflow"
+
+msgid "Initiated Time"
+msgstr "Tiempo de Inicio"
+
+msgid "Target Instance"
+msgstr "Instancia de Destino"
+
+msgid "Operations"
+msgstr "Operaciones"
+
+msgid "Operation Log"
+msgstr "Registro de Operación"
+
+msgid "Operator"
+msgstr "Operador"
+
+msgid "Operation Time"
+msgstr "Tiempo de Operación"
+
+msgid "Operation Info"
+msgstr "Información de Operación"
+
+msgid "Submit Export Workflow"
+msgstr "Enviar Workflow de Exportación"
+
+msgid "All Instances"
+msgstr "Todas las Instancias"
+
+msgid "Enable Status"
+msgstr "Estado de Activación"
+
+msgid "Apply for Archive"
+msgstr "Solicitar Archivado"
+
+msgid "Add Configuration"
+msgstr "Agregar Configuración"
+
+msgid "Apply for Data Archive"
+msgstr "Solicitar Archivado de Datos"
+
+msgid "Brief description of the archive"
+msgstr "Descripción breve del archivado"
+
+msgid "Please select group:"
+msgstr "Por favor seleccione grupo:"
+
+msgid "Please select source instance:"
+msgstr "Por favor seleccione instancia origen:"
+
+msgid "Please select instance:"
+msgstr "Por favor seleccione instancia:"
+
+msgid "Please select source database:"
+msgstr "Por favor seleccione base de datos origen:"
+
+msgid "Please select database:"
+msgstr "Por favor seleccione base de datos:"
+
+msgid "Please select table to archive:"
+msgstr "Por favor seleccione tabla a archivar:"
+
+msgid "Please select archive mode:"
+msgstr "Por favor seleccione modo de archivado:"
+
+msgid "Archive to file"
+msgstr "Archivar a archivo"
+
+msgid "Archive to another instance"
+msgstr "Archivar a otra instancia"
+
+msgid "Delete directly"
+msgstr "Eliminar directamente"
+
+msgid "Keep source data after archiving:"
+msgstr "Mantener datos origen después del archivado:"
+
+msgid "Keep source data after archiving"
+msgstr "Mantener datos origen después del archivado"
+
+msgid "Keep"
+msgstr "Mantener"
+
+msgid "Please select destination instance:"
+msgstr "Por favor seleccione instancia destino:"
+
+msgid "Please select destination database:"
+msgstr "Por favor seleccione base de datos destino:"
+
+msgid "Please select corresponding database:"
+msgstr "Por favor seleccione base de datos correspondiente:"
+
+msgid "Please select destination table:"
+msgstr "Por favor seleccione tabla destino:"
+
+msgid "Enter archive condition (WHERE clause of SQL statement)"
+msgstr "Ingrese condición de archivado (cláusula WHERE de la sentencia SQL)"
+
+msgid "Sleep seconds after archiving 10000 rows"
+msgstr "Segundos de pausa después de archivar 10000 filas"
+
+msgid "Approval Process:"
+msgstr "Proceso de Aprobación:"
+
+msgid "Note: Source and destination table structures must be consistent, otherwise archiving will fail"
+msgstr "Nota: Las estructuras de las tablas origen y destino deben ser consistentes, de lo contrario el archivado fallará"
+
+msgid "Submit Application"
+msgstr "Enviar Solicitud"
+
+
+msgid "Feishu App ID"
+msgstr "ID de Aplicación Feishu"
+
+msgid "Feishu AppSecret"
+msgstr "AppSecret de Feishu"
+
+msgid "Generic Webhook URL"
+msgstr "URL de Webhook Genérico"
+
+msgid "Generic webhook URL, called on every status change of each workflow"
+msgstr "URL de webhook genérico, llamado en cada cambio de estado de cada workflow"
+
+msgid "SMS Service"
+msgstr "Servicio SMS"
+
+msgid "SMS Service Provider"
+msgstr "Proveedor de Servicio SMS"
+
+msgid "SMS Provider"
+msgstr "Proveedor SMS"
+
+msgid "Aliyun Access Key ID, used to identify User"
+msgstr "ID de Clave de Acceso Aliyun, usado para identificar Usuario"
+
+msgid "Aliyun Access Key Secret, used to verify User identity"
+msgstr "Secreto de Clave de Acceso Aliyun, usado para verificar identidad de Usuario"
+
+msgid "SMS signature, must be approved status"
+msgstr "Firma SMS, debe estar en estado aprobado"
+
+msgid "SMS template code, must be approved status"
+msgstr "Código de plantilla SMS, debe estar en estado aprobado"
+
+msgid "Variable name in SMS template, e.g.: code"
+msgstr "Nombre de variable en plantilla SMS, ej.: code"
+
+msgid "Used to identify API caller identity"
+msgstr "Usado para identificar identidad del llamador de API"
+
+msgid "Key used for encrypting signature and server-side verification"
+msgstr "Clave usada para cifrar firma y verificación del lado del servidor"
+
+msgid "SMS template ID, must be approved status"
+msgstr "ID de plantilla SMS, debe estar en estado aprobado"
+
+msgid "SMS Application ID"
+msgstr "ID de Aplicación SMS"
+
+msgid "Login button display name, e.g. Login With KeyCloak"
+msgstr "Nombre a mostrar en botón de login, ej. Iniciar Sesión con KeyCloak"
+
+msgid "Note 1: If OPENAI_API_KEY is not configured, related features will not be enabled"
+msgstr "Nota 1: Si OPENAI_API_KEY no está configurado, las funciones relacionadas no se habilitarán"
+
+msgid "Note 2: DEFAULT_CHAT_MODEL defaults to gpt-3.5-turbo, DEFAULT_QUERY_TEMPLATE defaults to system-defined template"
+msgstr "Nota 2: DEFAULT_CHAT_MODEL por defecto es gpt-3.5-turbo, DEFAULT_QUERY_TEMPLATE por defecto es plantilla definida por el sistema"
+
+msgid "Default Django template for generating SQL statements, empty template will cause generation to fail, requires db_type/table_schema/user_input"
+msgstr "Plantilla Django por defecto para generar sentencias SQL, plantilla vacía causará fallo en generación, requiere db_type/table_schema/user_input"
+
+msgid "Other Configuration"
+msgstr "Otra Configuración"
+
+msgid "System homepage path, default is SQL workflow page: sqlworkflow"
+msgstr "Ruta de página principal del sistema, por defecto es página de workflow SQL: sqlworkflow"
+
+msgid "my2sql call path, e.g. /opt/archery/src/plugins/my2sql"
+msgstr "Ruta de llamada my2sql, ej. /opt/archery/src/plugins/my2sql"
+
+msgid "Permission groups automatically assigned to new users on first login"
+msgstr "Grupos de permisos asignados automáticamente a nuevos usuarios en primer login"
+
+msgid "Resource groups automatically assigned to new users on first login"
+msgstr "Grupos de recursos asignados automáticamente a nuevos usuarios en primer login"
+
+msgid "API User Whitelist"
+msgstr "Lista Blanca de Usuarios API"
+
+msgid "Account lockout time after failed login (seconds)"
+msgstr "Tiempo de bloqueo de cuenta después de login fallido (segundos)"
+
+msgid "Number of failed login attempts before account lockout"
+msgstr "Número de intentos fallidos de login antes de bloqueo de cuenta"
+
+msgid "Enable user registration"
+msgstr "Habilitar registro de usuarios"
+
+msgid "Enable watermark"
+msgstr "Habilitar marca de agua"
+
+msgid "Enforce 2FA on login"
+msgstr "Forzar 2FA en login"
+
+msgid "Enable announcements"
+msgstr "Habilitar anuncios"
+
+msgid "Announcement content"
+msgstr "Contenido de anuncio"
+
+msgid "Append this content to website title and login page, useful for distinguishing multiple Archery instances"
+msgstr "Agregar este contenido al título del sitio web y página de login, útil para distinguir múltiples instancias de Archery"
+
+msgid "Rules:"
+msgstr "Reglas:"
+
+msgid "Selecting multiple permission groups creates multi-level approval, flowing in selection order, all users in a group can approve"
+msgstr "Seleccionar múltiples grupos de permisos crea aprobación multi-nivel, fluyendo en orden de selección, todos los usuarios en un grupo pueden aprobar"
+
+msgid "Current Approval Process:"
+msgstr "Proceso de Aprobación Actual:"
+
+
+msgid "Apply for Database Query Permission"
+msgstr "Solicitar Permiso de Consulta de Base de Datos"
+
+msgid "Brief description of permission usage"
+msgstr "Descripción breve del uso del permiso"
+
+msgid "Permission level:"
+msgstr "Nivel de permiso:"
+
+msgid "Please select table:"
+msgstr "Por favor seleccione tabla:"
+
+msgid "Please select authorization period:"
+msgstr "Por favor seleccione período de autorización:"
+
+msgid "One day"
+msgstr "Un día"
+
+msgid "One week"
+msgstr "Una semana"
+
+msgid "One month"
+msgstr "Un mes"
+
+msgid "Long term (one year)"
+msgstr "Largo plazo (un año)"
+
+msgid "Please select query row limit:"
+msgstr "Por favor seleccione límite de filas de consulta:"
+
+msgid "Note: After permission approval, you can perform online queries. Please wait patiently."
+msgstr "Nota: Después de la aprobación del permiso, puede realizar consultas en línea. Por favor espere pacientemente."
+
+msgid "{0} items selected"
+msgstr "{0} elementos seleccionados"
+
+msgid "Table list:"
+msgstr "Lista de tablas:"
+
+msgid "Database list:"
+msgstr "Lista de bases de datos:"
+
+msgid "Permission Level"
+msgstr "Nivel de Permiso"
+
+msgid "Result Set"
+msgstr "Conjunto de Resultados"
+
+msgid "Valid Until"
+msgstr "Válido Hasta"
+
+msgid "Applicant"
+msgstr "Solicitante"
+
+msgid "Application Time"
+msgstr "Tiempo de Solicitud"
+
+msgid "Information incomplete or approval process not configured"
+msgstr "Información incompleta o proceso de aprobación no configurado"
+
+msgid "Please select permission type"
+msgstr "Por favor seleccione tipo de permiso"
+
+msgid "Parse Threads:"
+msgstr "Hilos de Análisis:"
+
+msgid "Default 4"
+msgstr "Por defecto 4"
+
+msgid "Parse Range Control:"
+msgstr "Control de Rango de Análisis:"
+
+msgid "Parse row count per page, default 30"
+msgstr "Cantidad de filas a analizar por página, por defecto 30"
+
+msgid "Start parse file:"
+msgstr "Archivo de inicio de análisis:"
+
+msgid "Start parse position (optional)"
+msgstr "Posición de inicio de análisis (opcional)"
+
+msgid "End parse file (optional):"
+msgstr "Archivo de fin de análisis (opcional):"
+
+msgid "End parse position (optional)"
+msgstr "Posición de fin de análisis (opcional)"
+
+msgid "Start parse time (not recommended)"
+msgstr "Tiempo de inicio de análisis (no recomendado)"
+
+msgid "End parse time (optional)"
+msgstr "Tiempo de fin de análisis (opcional)"
+
+msgid "Object Filter:"
+msgstr "Filtro de Objetos:"
+
+msgid "Database filter (optional):"
+msgstr "Filtro de base de datos (opcional):"
+
+msgid "Table filter (optional):"
+msgstr "Filtro de tabla (opcional):"
+
+msgid "Type filter (optional):"
+msgstr "Filtro de tipo (opcional):"
+
+msgid "SQL Statements"
+msgstr "Sentencias SQL"
+
+msgid "Frontend display count is controlled by parse range parameter. If 'Save to file' is checked, complete SQL file will be asynchronously saved to downloads directory. Notification will be sent to operator after execution ends (if message notification is enabled)."
+msgstr "La cantidad mostrada en el frontend es controlada por el parámetro de rango de análisis. Si 'Guardar a archivo' está marcado, el archivo SQL completo se guardará de forma asíncrona en el directorio de descargas. Se enviará una notificación al operador cuando termine la ejecución (si la notificación de mensajes está habilitada)."
+
+msgid "Full SQL"
+msgstr "SQL Completo"
+
+msgid "Please select instance and start parse file!"
+msgstr "¡Por favor seleccione instancia y archivo de inicio de análisis!"
+
+
+msgid "Extra Info"
+msgstr "Información Extra"
+
+msgid "Full Extra Info"
+msgstr "Información Extra Completa"
+
+msgid "Query Time"
+msgstr "Tiempo de Consulta"
+
+msgid "Statement"
+msgstr "Sentencia"
+
+msgid "Full Statement"
+msgstr "Sentencia Completa"
+
+msgid "Rows Returned"
+msgstr "Filas Devueltas"
+
+msgid "Duration (seconds)"
+msgstr "Duración (segundos)"
+
+
+msgid "Change Approval Process:"
+msgstr "Cambiar Proceso de Aprobación:"
+
+msgid "Please select approver permission group"
+msgstr "Por favor seleccione grupo de permisos de aprobador"
+
+msgid "Approver"
+msgstr "Aprobador"
+
+msgid "Approver:"
+msgstr "Aprobador:"
+
+msgid "Change"
+msgstr "Cambiar"
+
+
+msgid "Archive Mode"
+msgstr "Modo de Archivado"
+
+msgid "Source Data"
+msgstr "Datos Origen"
+
+msgid "Sleep (seconds)"
+msgstr "Pausa (segundos)"
+
+msgid "Delete"
+msgstr "Eliminar"

@@ -1,17 +1,18 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <ul class="breadcrumb">
-        <li><a href="/queryapplylist/">申请列表</a></li>
-        <li class="active">权限管理</li>
+        <li><a href="/queryapplylist/">Application List</a></li>
+        <li class="active">Permission Management</li>
     </ul>
-    <!-- 自定义操作按钮-->
+    <!-- Custom buttons -->
     <div id="toolbar" class="bootstrap-select">
         <div class="form-group">
             <select id=user_display class="form-control selectpicker show-tick bs-select-hidden "
                     name="user_display_list"
                     data-live-search="true">
-                <option value="all" selected="selected">全部</option>
+                <option value="all" selected="selected">{% trans "All" %}</option>
                 {% if user.is_superuser %}
                     {% for user in user_list %}
                         <option value="{{ user.user_display }}">{{ user.user_display }}</option>
@@ -22,56 +23,56 @@
             </select>
         </div>
     </div>
-    <!-- 权限信息的表格-->
+    <!-- PermissionInfo的Table格-->
     <div class="table-responsive">
         <table id="privileges-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
-    <!-- 变更操作 -->
+    <!-- Change Operation -->
     <div class="modal fade" id="modify_privileges" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">权限变更</h4>
+                    <h4 class="modal-title" id="myModalLabel">Permission变更</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><span class="text-danger">*</span> 请输入结果限制</label>
+                        <label><span class="text-danger">*</span> Please enterResult限制</label>
                         <input type="text" class="form-control" id="limit_num"
-                               placeholder="用于限制在线查询结果的显示行数">
+                               placeholder="用于限制Online查询Result的显示行数">
                     </div>
                     <div class="form-group">
                         <input hidden id="privilege_id">
-                        <label><span class="text-danger">*</span> 请选择有效期</label>
-                        <input type="date" class="form-control" id="valid_date" placeholder="过期后权限自动回收">
+                        <label><span class="text-danger">*</span> Please selectYes效期</label>
+                        <input type="date" class="form-control" id="valid_date" placeholder="过期后Permission自动回收">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" onclick="modifyqueryprivileges(2)">确定修改</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-danger" onclick="modifyqueryprivileges(2)">Confirm修改</button>
                 </div>
             </div>
         </div>
     </div>
-    <!-- 删除操作确认 -->
+    <!-- DeleteOperations确认 -->
     <div class="modal fade" id="deleted_privileges">
         <div class="modal-dialog">
             <div class="modal-content message_align">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">提示信息</h4>
+                    <h4 class="modal-title text-danger">TipInfo</h4>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="privilege_id">
-                    <p>删除后用户将无法查询数据，确定删除吗？</p>
+                    <p>Delete后User将None法查询数据，ConfirmDelete吗？</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button type="button" onclick="modifyqueryprivileges(1)" class="btn btn-danger">确定删除</button>
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" onclick="modifyqueryprivileges(1)" class="btn btn-danger">ConfirmDelete</button>
                 </div>
             </div>
         </div>
@@ -84,42 +85,45 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
-        //初始化列表
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
+        //Initializelist
         function queryuserprivileges() {
-            //初始化table
+            //Initializetable
             $('#privileges-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/query/userprivileges/",
-                striped: true,                      //是否显示行间隔色
-                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                pagination: true,                   //是否显示分页（*）
-                sortable: true,                     //是否启用排序
-                sortOrder: "asc",                   //排序方式
-                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 20,                     //每页的记录行数（*）
-                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                search: true,                      //是否显示表格搜索
-                strictSearch: false,                //是否全匹配搜索
-                showColumns: true,                  //是否显示所有的列（选择显示的列）
-                showRefresh: true,                  //是否显示刷新按钮
-                minimumCountColumns: 2,             //最少允许的列数
-                clickToSelect: true,                //是否启用点击选中行
-                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                cardView: false,                    //是否显示详细视图
-                detailView: false,                  //是否显示父子表
-                showExport: true,                   //是否显示导出按钮
+                striped: true,                      //Show row stripes
+                cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                pagination: true,                   //Show pagination（*）
+                sortable: true,                     //Enable sorting
+                sortOrder: "asc",                   //Sort order
+                sidePagination: "server",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                pageSize: 20,                     //Records per page（*）
+                pageList: [20, 30, 50, 100],       //Selectable rows per page（*）
+                search: true,                      //Show table search
+                strictSearch: false,                //Exact match search
+                showColumns: true,                  //Show all columns（Select columns to display）
+                showRefresh: true,                  //Show refresh button
+                minimumCountColumns: 2,             //Minimum columns allowed
+                clickToSelect: true,                //Enable click to select row
+                uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                showToggle: true,                   //Show toggle button for detail/list view
+                cardView: false,                    //Show detail view
+                detailView: false,                  //Show parent-child table
+                showExport: true,                   //Show export button
                 exportOptions: {
-                    ignoreColumn: [0, -1],  //忽略某些列的索引数组
-                    fileName: 'userprivileges'  //文件名称设置
+                    ignoreColumn: [0, -1],  
+                    fileName: 'userprivileges'  //File name setting
                 },
-                locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",               //指明自定义的toolbar
+                locale: currentLocale,                    //Localization
+                toolbar: "#toolbar",               //Specify customtoolbar
                 queryParamsType: 'limit',
-                //请求服务数据时所传参数
+                //Parameters when requesting data
                 queryParams:
                     function (params) {
                         return {
@@ -130,16 +134,16 @@
                         }
                     },
                 columns: [{
-                    title: '用户',
+                    title: 'User',
                     field: 'user_display'
                 }, {
-                    title: '实例',
+                    title: 'Instance',
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: 'Database',
                     field: 'db_name'
                 }, {
-                    title: '权限级别',
+                    title: 'Permission级别',
                     field: 'priv_type',
                     formatter: function (value, row, index) {
                         if (String(value) === '1') {
@@ -149,16 +153,16 @@
                         }
                     }
                 }, {
-                    title: '表',
+                    title: 'Table',
                     field: 'table_name'
                 }, {
-                    title: '结果集',
+                    title: 'Result集',
                     field: 'limit_num'
                 }, {
-                    title: '有效时间',
+                    title: 'Yes效Time',
                     field: 'valid_date'
                 }, {
-                    title: '操作',
+                    title: 'Operations',
                     field: 'privilege_id',
                     formatter: function (value, row, index) {
                         {% if perms.sql.query_mgtpriv %}
@@ -169,7 +173,7 @@
                                 "<button class=\"btn btn-danger btn-xs\" privilege_id=\"" + row.privilege_id + "\"\n" +
                                 "limit_num=\"" + row.limit_num + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
-                                "data-toggle=\"modal\" data-target=\"#deleted_privileges\">删除权限\n" + "</button>"
+                                "data-toggle=\"modal\" data-target=\"#deleted_privileges\">DeletePermission\n" + "</button>"
                         {% endif %}
                     }
                 }],
@@ -177,30 +181,30 @@
                 },
                 onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
-                    //传搜索参数给服务器
+                    //Pass search params to server
                     queryParams(e)
                 },
                 responseHandler: function (res) {
-                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    
                     return res;
                 }
             });
 
         }
 
-        //用户筛选
+        //User筛选
         $("#user_display").change(function () {
             queryuserprivileges()
         });
 
-        //给modal赋值
+        
         function setInfo(obj) {
             $("#privilege_id").val($(obj).attr("privilege_id"));
             $("#limit_num").val($(obj).attr("limit_num"));
             $("#valid_date").val($(obj).attr("valid_date"));
         }
 
-        //变更权限
+        
         function modifyqueryprivileges(type) {
             var privilege_id = $("#privilege_id").val();
             var valid_date = $("#valid_date").val();
@@ -236,11 +240,11 @@
                     }
                 })
             } else {
-                alert("请填写完整")
+                alert("Please fill in完整")
             }
         }
 
-        //初始化数据
+        //Initialize数据
         $(document).ready(function () {
             queryuserprivileges();
         });

@@ -1,11 +1,12 @@
-{# review_info 应为 ReviewInfo 对象, 本模板为所有用到 audit 工作流的审批共用 #}
+{% load i18n %}
+{# review_info should be ReviewInfo object, 本模板为所Yes用到 audit 工作流的审批共用 #}
 {% for n in review_info.nodes %}
     {% if n.is_auto_pass %}
-        <span class="text-success">无需审批</span>
+        <span class="text-success">No approval needed</span>
     {% elif n.is_passed_node %}
         <span class="text-success">{{ n.group.name }}</span>
     {% elif n.is_current_node %}
-    <!-- 当前节点 -->
+    <!-- when前节点 -->
         <u class="text-danger">
             {{ n.group.name }}(
                 <span class="text-primary">{{ current_reviewers|join:", " }}</span>

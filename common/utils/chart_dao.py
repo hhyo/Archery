@@ -36,7 +36,7 @@ class ChartDao(object):
             then 'DDL'
           when syntax_type = 2
             then 'DML'
-          else '其他'
+          else 'Other'
           end as syntax_type,
           count(*)
         from sql_workflow 
@@ -204,23 +204,23 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
         sql = """
             SELECT
                 CASE
-                        a.STATUS 
+                        a.STATUS
                         WHEN 'workflow_finish' THEN
-                        '已正常结束' 
+                        'Finished'
                         WHEN 'workflow_autoreviewwrong' THEN
-                        '自动审核不通过' 
+                        'Auto Review Failed'
                         WHEN 'workflow_abort' THEN
-                        '人工终止流程' 
+                        'Aborted'
                         WHEN 'workflow_exception' THEN
-                        '执行有异常' 
+                        'Exception'
                         WHEN 'workflow_review_pass' THEN
-                        '审核通过' 
+                        'Review Passed'
                         WHEN 'workflow_queuing' THEN
-                        '排队中' 
+                        'Queuing'
                         WHEN 'workflow_executing' THEN
-                        '确认中' 
+                        'Executing'
                         WHEN 'workflow_manreviewing' THEN
-                        '等待审核人审核' ELSE '未知状态' 
+                        'Waiting for Review' ELSE 'Unknown'
                     END AS status_desc,
                     COUNT( 1 ) AS count 
                 FROM sql_workflow a

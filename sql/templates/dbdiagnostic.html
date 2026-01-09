@@ -1,28 +1,29 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <!-- 自定义操作按钮-->
+    <!-- Custom buttons -->
     <div id="process-toolbar" class="btn-group right" style="display:none;">
-        <button id="kill_process" class="btn btn-default" type="button">终止会话</button>
+        <button id="kill_process" class="btn btn-default" type="button">{% trans "Kill Session" %}</button>
     </div>
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
         <li id="process_tab" class="active">
-            <a href="#process" role="tab" data-toggle="tab">进程状态</a>
+            <a href="#process" role="tab" data-toggle="tab">Process Status</a>
         </li>
         <li id="space_tab">
-            <a href="#space" role="tab" data-toggle="tab">Top表空间</a>
+            <a href="#space" role="tab" data-toggle="tab">TopTablespace</a>
         </li>
         <li id="trx_tab">
-            <a href="#trx" role="tab" data-toggle="tab">事务信息</a>
+            <a href="#trx" role="tab" data-toggle="tab">Transaction Info</a>
         </li>
         <li id="trxandlocks_tab">
-            <a href="#trxandlocks" role="tab" data-toggle="tab">锁信息</a>
+            <a href="#trxandlocks" role="tab" data-toggle="tab">Lock Info</a>
         </li>
         <div class="form-inline pull-right">
             <div class="form-group ">
                 <select id="instance_name" class="form-control selectpicker" name="instance_name_list"
-                        title="请选择实例:"
+                        title="{% trans 'Select Instance:' %}"
                         data-live-search="true">
                         <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                         <optgroup id="optgroup-mongo" label="MongoDB"></optgroup>
@@ -33,7 +34,7 @@
                 </select>
             </div>
             <div id="command-div" class="form-group">
-                <select id="command" class="form-control selectpicker" name="command_type" title="command类型">
+                <select id="command" class="form-control selectpicker" name="command_type" title="commandType">
                     <!--option value="All">All</option>
                     <option value="Query" selected="selected">Query</option>
                     <option value="Not Sleep">Not Sleep</option-->
@@ -43,47 +44,47 @@
     </ul>
     <!-- Tab panes -->
     <div id="tab-content" class="tab-content">
-        <!-- 进程状态的表格-->
+        <!-- Process Status的Table格-->
         <div id="process" role="tabpanel" class="tab-pane fade in active table-responsive">
             <table id="process-list" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
-        <!-- Top表空间的表格-->
+        <!-- TopTablespace的Table格-->
         <div id="space" role="tabpanel" class="tab-pane fade table-responsive">
             <table id="tablespace-list" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
-        <!-- 事务信息的表格-->
+        <!-- Transaction Info的Table格-->
         <div id="trx" role="tabpanel" class="tab-pane fade table-responsive">
             <table id="trx-list" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
-        <!-- 锁信息的表格-->
+        <!-- Lock Info的Table格-->
         <div id="trxandlocks" role="tabpanel" class="tab-pane fade table-responsive">
             <table id="trxandlocks-list" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
     </div>
-    <!-- 配置信息确认 -->
+    <!-- ConfigInfo确认 -->
     <div class="modal fade" id="killComfirm">
         <div class="modal-dialog">
             <div class="modal-content message_align">
                 <div class="modal-header ">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">确定要终止所选会话吗？</h4>
+                    <h4 class="modal-title text-danger">Confirm要Terminate所选会话吗？</h4>
                 </div>
                 <div class="modal-body">
                     <input type="text" id="request_params" hidden>
                     <b id="kill_sql"></b>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button type="button" onclick="kill_session()" class="btn btn-danger" data-dismiss="modal">确定终止
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" onclick="kill_session()" class="btn btn-danger" data-dismiss="modal">ConfirmTerminate
                     </button>
                 </div>
             </div>
@@ -98,6 +99,9 @@
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script src="{% static 'dbdiagnostic/js/db_info.js' %}"></script>
     <script>
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
 
         var processListColumns  = [];
         var tablespaceListColumns = [];
@@ -105,8 +109,8 @@
         var processListDetailFormatCallback = NaN;
         var lockListDetailFormatCallback = NaN;
 
-        // get_process_list函数表格的格式化信息
-        // 0.数据库类型； 1.类型过滤； 2.字段映射；  3.详细信息的处理函数
+        // get_process_list函数Table格的格式化Info
+        // 0.Database Type； 1.Type过滤； 2.Column映射；  3.详细Info的处理函数
         var processListTableInfos = []
 
         if (typeof pgsqlDiagnosticInfo !== "undefined" && Array.isArray(pgsqlDiagnosticInfo.fieldsProcesslist)) {
@@ -129,44 +133,44 @@
         }
          
 
-        // 问题诊断--进程列表
+        
         function get_process_list() {
             $("#command-div").show();
             $("#process-toolbar").show();
             if ($("#instance_name").val()) {
-                //初始化table
+                //Initializetable
                 $('#process-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/db_diagnostic/process/",
-                    striped: true,                      //是否显示行间隔色
-                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                    pagination: true,                   //是否显示分页（*）
-                    sortable: true,                     //是否启用排序
-                    sortOrder: "desc",                   //排序方式
-                    sortName: 'time',                   //排序字段
-                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                    pageSize: 100,                     //每页的记录行数（*）
-                    pageList: [20, 30, 50, 100, 1000],       //可供选择的每页的行数（*）
-                    search: true,                      //是否显示表格搜索
-                    strictSearch: false,                //是否全匹配搜索
-                    showColumns: true,                  //是否显示所有的列（选择显示的列）
-                    showRefresh: true,                  //是否显示刷新按钮
+                    striped: true,                      //Show row stripes
+                    cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                    pagination: true,                   //Show pagination（*）
+                    sortable: true,                     //Enable sorting
+                    sortOrder: "desc",                   //Sort order
+                    sortName: 'time',                   
+                    sidePagination: "client",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                    pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                    pageSize: 100,                     //Records per page（*）
+                    pageList: [20, 30, 50, 100, 1000],       //Selectable rows per page（*）
+                    search: true,                      //Show table search
+                    strictSearch: false,                //Exact match search
+                    showColumns: true,                  //Show all columns（Select columns to display）
+                    showRefresh: true,                  //Show refresh button
                     showExport: true,
                     exportDataType: "all",
-                    minimumCountColumns: 2,             //最少允许的列数
-                    clickToSelect: true,                //是否启用点击选中行
-                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                    cardView: false,                    //是否显示详细视图
-                    detailView: true,                  //是否显示父子表
-                    //格式化详情
+                    minimumCountColumns: 2,             //Minimum columns allowed
+                    clickToSelect: true,                //Enable click to select row
+                    showToggle: true,                   //Show toggle button for detail/list view
+                    cardView: false,                    //Show detail view
+                    detailView: true,                  //Show parent-child table
+                    
                     detailFormatter: processListDetailFormatCallback,
-                    locale: 'zh-CN',                    //本地化
-                    toolbar: "#process-toolbar",               //指明自定义的toolbar
+                    locale: currentLocale,                    //Localization
+                    toolbar: "#process-toolbar",               //Specify customtoolbar
                     queryParamsType: 'limit',
-                    //请求服务数据时所传参数
+                    //Parameters when requesting data
                     queryParams: function (params) {
                         return {
                             instance_name: $("#instance_name").val(),
@@ -176,32 +180,32 @@
                     columns: processListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
-                            alert("数据加载失败！" + data.msg);
+                            alert("数据加载Failed！" + data.msg);
                         }
                     },
                     onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
-                        //传搜索参数给服务器
+                        //Pass search params to server
                         queryParams(e)
                     },
                     responseHandler: function (res) {
-                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        
                         return res;
                     }
                 });
             }
         }
 
-        // get_space_list函数表格的格式化信息
-        // 0.数据库类型； 1.字段映射
+        // get_space_list函数Table格的格式化Info
+        // 0.Database Type； 1.Column映射
         let tablespaceListTableInfos = [
             [
                 'mysql',
                 [{
-                     title: '数据库',
+                     title: 'Database',
                      field: 'table_schema'
                  }, {
-                     title: '表名',
+                     title: 'Table名',
                      field: 'table_name'
                  }, {
                      title: '存储引擎',
@@ -216,7 +220,7 @@
                      title: '数据空间(MB)',
                      field: 'data_size'
                  }, {
-                     title: '索引空间(MB)',
+                     title: 'Index空间(MB)',
                      field: 'index_size'
                  }, {
                      title: '碎片空间(MB)',
@@ -229,13 +233,13 @@
             [
                 'oracle',
                 [{
-                    title: '表空间名',
+                    title: 'Tablespace名',
                     field: 'TABLESPACE_NAME'
                 }, {
-                    title: '表空间类型',
+                    title: 'TablespaceType',
                     field: 'TABLESPACE_TYPE'
                 }, {
-                    title: '状态',
+                    title: 'Status',
                     field: 'STATUS'
                 }, {
                     title: '总空间(MB)',
@@ -252,43 +256,43 @@
         let dorisTableInfo = ['doris',tablespaceListTableInfos[0][1]]
         tablespaceListTableInfos.push(dorisTableInfo)
 
-        // 问题诊断--表空间列表
+        
         function get_space_list() {
             $("#command-div").hide();
             $("#process-toolbar").hide();
             if ($("#instance_name").val()) {
-                //初始化table
+                //Initializetable
                 $('#tablespace-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/db_diagnostic/tablespace/",
-                    striped: true,                      //是否显示行间隔色
-                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                    pagination: true,                   //是否显示分页（*）
-                    sortable: true,                     //是否启用排序
+                    striped: true,                      //Show row stripes
+                    cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                    pagination: true,                   //Show pagination（*）
+                    sortable: true,                     //Enable sorting
                     sortName: 'total_size',
-                    sortOrder: "desc",                   //排序方式
-                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                    pageSize: 20,                     //每页的记录行数（*）
-                    pageList: [14, 30, 50, 100, 500, 2000],       //可供选择的每页的行数（*）
-                    search: true,                      //是否显示表格搜索
-                    strictSearch: false,                //是否全匹配搜索
-                    showColumns: true,                  //是否显示所有的列（选择显示的列）
-                    showRefresh: true,                  //是否显示刷新按钮
-                    minimumCountColumns: 2,             //最少允许的列数
-                    clickToSelect: true,                //是否启用点击选中行
-                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    sortOrder: "desc",                   //Sort order
+                    sidePagination: "server",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                    pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                    pageSize: 20,                     //Records per page（*）
+                    pageList: [14, 30, 50, 100, 500, 2000],       //Selectable rows per page（*）
+                    search: true,                      //Show table search
+                    strictSearch: false,                //Exact match search
+                    showColumns: true,                  //Show all columns（Select columns to display）
+                    showRefresh: true,                  //Show refresh button
+                    minimumCountColumns: 2,             //Minimum columns allowed
+                    clickToSelect: true,                //Enable click to select row
+                    uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                    showToggle: true,                   //Show toggle button for detail/list view
                     showExport: true,
                     exportDataType: "all",
-                    cardView: false,                    //是否显示详细视图
-                    detailView: false,                  //是否显示父子表
-                    locale: 'zh-CN',                    //本地化
-                    toolbar: "#toolbar",               //指明自定义的toolbar
+                    cardView: false,                    //Show detail view
+                    detailView: false,                  //Show parent-child table
+                    locale: currentLocale,                    //Localization
+                    toolbar: "#toolbar",               //Specify customtoolbar
                     queryParamsType: 'limit',
-                    //请求服务数据时所传参数
+                    //Parameters when requesting data
                     queryParams: function (params) {
                         return {
                             offset: params.offset,
@@ -299,73 +303,73 @@
                     columns: tablespaceListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
-                            alert("数据加载失败！" + data.msg);
+                            alert("数据加载Failed！" + data.msg);
                         }
                     },
                     onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
-                        //传搜索参数给服务器
+                        //Pass search params to server
                         queryParams(e)
                     },
                     responseHandler: function (res) {
-                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        
                         return res;
                     }
                 });
             }
         }
 
-        // 问题诊断--事务列表
+        
         function get_trx_list() {
             $("#command-div").hide();
             $("#process-toolbar").hide();
             if ($("#instance_name").val()) {
-                //初始化table
+                //Initializetable
                 $('#trx-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/db_diagnostic/innodb_trx/",
-                    striped: true,                      //是否显示行间隔色
-                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                    pagination: true,                   //是否显示分页（*）
-                    sortable: false,                     //是否启用排序
-                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                    pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                    search: true,                      //是否显示表格搜索
-                    strictSearch: false,                //是否全匹配搜索
-                    showColumns: true,                  //是否显示所有的列（选择显示的列）
-                    showRefresh: true,                  //是否显示刷新按钮
-                    minimumCountColumns: 2,             //最少允许的列数
-                    clickToSelect: true,                //是否启用点击选中行
-                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    striped: true,                      //Show row stripes
+                    cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                    pagination: true,                   //Show pagination（*）
+                    sortable: false,                     //Enable sorting
+                    sidePagination: "client",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                    pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                    pageSize: 30,                     //Records per page（*）
+                    pageList: [20, 30, 50, 100],       //Selectable rows per page（*）
+                    search: true,                      //Show table search
+                    strictSearch: false,                //Exact match search
+                    showColumns: true,                  //Show all columns（Select columns to display）
+                    showRefresh: true,                  //Show refresh button
+                    minimumCountColumns: 2,             //Minimum columns allowed
+                    clickToSelect: true,                //Enable click to select row
+                    uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                    showToggle: true,                   //Show toggle button for detail/list view
                     showExport: true,
                     exportDataType: "all",
-                    cardView: false,                    //是否显示详细视图
-                    detailView: true,                  //是否显示父子表
-                    //格式化详情
+                    cardView: false,                    //Show detail view
+                    detailView: true,                  //Show parent-child table
+                    
                     detailFormatter: function (index, row) {
                         var html = [];
                         $.each(row, function (key, value) {
                             if (key === 'info') {
                                 var sql = window.sqlFormatter.format(value);
-                                //替换所有的换行符
+                                
                                 sql = sql.replace(/\r\n/g, "<br>");
                                 sql = sql.replace(/\n/g, "<br>");
-                                //替换所有的空格
+                                
                                 sql = sql.replace(/\s/g, "&nbsp;");
                                 html.push('<span>' + sql + '</span>');
                             }
                         });
                         return html.join('');
                     },
-                    locale: 'zh-CN',                    //本地化
-                    toolbar: "#toolbar",               //指明自定义的toolbar
+                    locale: currentLocale,                    //Localization
+                    toolbar: "#toolbar",               //Specify customtoolbar
                     queryParamsType: 'limit',
-                    //请求服务数据时所传参数
+                    //Parameters when requesting data
                     queryParams: function (params) {
                         return {
                             instance_name: $("#instance_name").val()
@@ -431,37 +435,37 @@
                     }, {
                         title: '完整INFO',
                         field: 'info',
-                        visible: false // 默认不显示
+                        visible: false 
                     }],
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
-                            alert("数据加载失败！" + data.msg);
+                            alert("数据加载Failed！" + data.msg);
                         }
                     },
                     onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
-                        //传搜索参数给服务器
+                        //Pass search params to server
                         queryParams(e)
                     }
                 });
             }
         }
 
-        // get_trxandlocks_list函数表格的格式化信息
-        // 0.数据库类型； 1.字段映射，2.详细信息的处理函数
+        // get_trxandlocks_list函数Table格的格式化Info
+        // 0.Database Type； 1.Column映射，2.详细Info的处理函数
         let lockListTableInfos = [
             [
                 'mysql',
                 [{
-                    title: '等待的状态',
-                    field: '等待的状态'
+                    title: '等待的Status',
+                    field: '等待的Status'
                 }, {
-                    title: '等待事务开始时间',
-                    field: '等待事务开始时间',
+                    title: '等待事务StartTime',
+                    field: '等待事务StartTime',
                     sortable: true
                 }, {
-                    title: '等待事务等待开始时间',
-                    field: '等待事务等待开始时间'
+                    title: '等待事务等待StartTime',
+                    field: '等待事务等待StartTime'
                 }, {
                     title: '等待事务ID',
                     field: '等待事务ID',
@@ -472,8 +476,8 @@
                     title: '等待事务的sql',
                     field: '等待事务的sql',
                 }, {
-                    title: '等待的表信息',
-                    field: '等待的表信息',
+                    title: '等待的TableInfo',
+                    field: '等待的TableInfo',
                 }, {
                     title: '等待的锁id',
                     field: '等待的锁id'
@@ -484,20 +488,20 @@
                     title: '运行的事务线程id',
                     field: '运行的事务线程id',
                 }, {
-                    title: '运行的表信息',
-                    field: '运行的表信息'
+                    title: '运行的TableInfo',
+                    field: '运行的TableInfo'
                 }, {
                     title: '运行的锁id',
                     field: '运行的锁id'
                 }, {
-                    title: '运行事务的状态',
-                    field: '运行事务的状态'
+                    title: '运行事务的Status',
+                    field: '运行事务的Status'
                 }, {
-                    title: '运行事务的时间',
-                    field: '运行事务的时间',
+                    title: '运行事务的Time',
+                    field: '运行事务的Time',
                 }, {
-                    title: '运行事务的等待开始时间',
-                    field: '运行事务的等待开始时间',
+                    title: '运行事务的等待StartTime',
+                    field: '运行事务的等待StartTime',
                 }, {
                     title: '运行事务的sql',
                     field: '运行事务的sql',
@@ -507,10 +511,10 @@
                     $.each(row, function (key, value) {
                         if (key === '等待事务的sql') {
                             var sql = window.sqlFormatter.format(value);
-                            //替换所有的换行符
+                            
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
-                            //替换所有的空格
+                            
                             sql = sql.replace(/\s/g, "&nbsp;");
                             html.push('<span>' + sql + '</span>');
                         }
@@ -560,10 +564,10 @@
                     $.each(row, function (key, value) {
                         if (key === 'RELATED_SQL_FULL') {
                             var sql = window.sqlFormatter.format(value);
-                            //替换所有的换行符
+                            
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
-                            //替换所有的空格
+                            
                             sql = sql.replace(/\s/g, "&nbsp;");
                             html.push('<span>' + sql + '</span>');
                         }
@@ -573,44 +577,44 @@
             ]
         ]
 
-        // 问题诊断--锁等待列表
+        
         function get_trxandlocks_list() {
             $("#command-div").hide();
             $("#process-toolbar").hide();
             if ($("#instance_name").val()) {
-                //初始化table
+                //Initializetable
                 $('#trxandlocks-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/db_diagnostic/trxandlocks/",
-                    striped: true,                      //是否显示行间隔色
-                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                    pagination: true,                   //是否显示分页（*）
-                    sortable: true,                     //是否启用排序
+                    striped: true,                      //Show row stripes
+                    cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                    pagination: true,                   //Show pagination（*）
+                    sortable: true,                     //Enable sorting
                     sortName: 'total_size',
-                    sortOrder: "desc",                   //排序方式
-                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                    pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                    search: true,                      //是否显示表格搜索
-                    strictSearch: false,                //是否全匹配搜索
-                    showColumns: true,                  //是否显示所有的列（选择显示的列）
-                    showRefresh: true,                  //是否显示刷新按钮
-                    minimumCountColumns: 2,             //最少允许的列数
-                    clickToSelect: true,                //是否启用点击选中行
-                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    sortOrder: "desc",                   //Sort order
+                    sidePagination: "client",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                    pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                    pageSize: 30,                     //Records per page（*）
+                    pageList: [20, 30, 50, 100],       //Selectable rows per page（*）
+                    search: true,                      //Show table search
+                    strictSearch: false,                //Exact match search
+                    showColumns: true,                  //Show all columns（Select columns to display）
+                    showRefresh: true,                  //Show refresh button
+                    minimumCountColumns: 2,             //Minimum columns allowed
+                    clickToSelect: true,                //Enable click to select row
+                    uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                    showToggle: true,                   //Show toggle button for detail/list view
                     showExport: true,
                     exportDataType: "all",
-                    cardView: false,                    //是否显示详细视图
-                    detailView: true,                  //是否显示父子表
+                    cardView: false,                    //Show detail view
+                    detailView: true,                  //Show parent-child table
                     detailFormatter: lockListDetailFormatCallback,
-                    locale: 'zh-CN',                    //本地化
-                    toolbar: "#toolbar",               //指明自定义的toolbar
+                    locale: currentLocale,                    //Localization
+                    toolbar: "#toolbar",               //Specify customtoolbar
                     queryParamsType: 'limit',
-                    //请求服务数据时所传参数
+                    //Parameters when requesting data
                     queryParams: function (params) {
                         return {
                             instance_name: $("#instance_name").val()
@@ -619,12 +623,12 @@
                     columns: lockListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
-                            alert("数据加载失败！" + data.msg);
+                            alert("数据加载Failed！" + data.msg);
                         }
                     },
                     onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
-                        //传搜索参数给服务器
+                        //Pass search params to server
                         queryParams(e)
                     }
                 });
@@ -632,12 +636,12 @@
         }
 
 
-        //点击终止会话按钮弹出确认框,并且构建终止会话请求
+        
         $(function () {
             $("#kill_process").click(function () {
                 var AllSelections = $("#process-list").bootstrapTable('getSelections');
                 if (AllSelections.length > 0) {
-                    //获取选择的线程id
+                    //get选择的线程id
                     var AllSelectionIds = [];
                     for (var i = 0; i < AllSelections.length; i++) {
                         if (AllSelections[i]['id']){
@@ -650,7 +654,7 @@
                     }
                     var instance_name = $("#instance_name").val();
 
-                    //发送请求构造会话数据
+                    
                     $.ajax({
                         type: "post",
                         url: "/db_diagnostic/create_kill_session/",
@@ -666,10 +670,10 @@
                         success: function (data) {
                             if (data.status === 0) {
                                 var result = data.data;
-                                //给对话框赋值
+                                
                                 $("#request_params").val(result);
                                 $("#kill_sql").text(result);
-                                //打开对话框
+                                
                                 $("#killComfirm").modal();
                             } else {
                                 alert(data.msg);
@@ -677,16 +681,16 @@
                         }
                     })
                 } else {
-                    alert("请先选择要终止的会话")
+                    alert("请先选择要Terminate的会话")
                 }
             });
         });
 
-        //终止会话
+        //Terminate会话
         function kill_session() {
             var AllSelections = $("#process-list").bootstrapTable('getSelections');
             if (AllSelections.length > 0) {
-                //获取选择的线程id
+                //get选择的线程id
                 var AllSelectionIds = [];
                 for (var i = 0; i < AllSelections.length; i++) {
                     if (AllSelections[i]['id']){
@@ -700,7 +704,7 @@
                 var instance_name = $("#instance_name").val();
                 var request_params = $("#request_params").val();
                 if (request_params) {
-                    //发送请求构造会话数据
+                    
                     $.ajax({
                         type: "post",
                         url: "/db_diagnostic/kill_session/",
@@ -711,7 +715,7 @@
                         },
                         traditional: true,
                         complete: function () {
-                            //刷新页面
+                            //Refresh页面
                             get_process_list();
                             $("#command-div").show();
                             $("#process-toolbar").show();
@@ -722,18 +726,18 @@
                         }
                     })
                 } else {
-                    alert("所选会话已终止！")
+                    alert("所选会话Terminated！")
                 }
             } else {
-                alert("请先选择要终止的会话")
+                alert("请先选择要Terminate的会话")
             }
         }
 
         var allInstances = NaN;
         $(document).ready(function () {
-                //获取用户实例列表
+                //getUserInstancelist
                 $(function () {
-                    // 会话管理-支持的数据库类型
+                    
                     supportedDbType=['mysql','mongo', 'oracle','redis','pgsql','doris']
                     $.ajax({
                         type: "get",
@@ -743,7 +747,7 @@
                             db_type: supportedDbType
                         },
                         complete: function () {
-                            //如果已选择instance_name，进入页面自动填充，并且重置激活id
+                            
                             sessionStorage.setItem('diagnostic_active_li_id', 'process_tab');
                             if (sessionStorage.getItem('diagnostic_instance_name')) {
                                 $("#instance_name").val(sessionStorage.getItem('diagnostic_instance_name')).trigger("change");
@@ -776,12 +780,12 @@
                 });
             }
         );
-        //tab切换,保留当前激活的标签id
+        //tab切换,保留when前激活的标签id
         $(function () {
             $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
                 var active_li_id = $(e.target).parents().attr('id');
                 sessionStorage.setItem('diagnostic_active_li_id', active_li_id);
-                //当前激活的标签id
+                //when前激活的标签id
                 if ($("#instance_name").val()) {
                     if (active_li_id === 'process_tab') {
                         get_process_list();
@@ -796,9 +800,9 @@
             });
         });
 
-        //实例变动时保存实例信息
+        
         $("#instance_name").change(function () {
-            // 不同类型的数据库有不同的操作
+            
             $("#command").empty();
             
             let command_types = NaN;
@@ -850,7 +854,7 @@
 
         });
 
-        //请求类型变动时自动刷新
+        
         $("#command").change(function () {
             get_process_list();
         });

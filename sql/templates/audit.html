@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="navStatus" class="form-control selectpicker">
-                <option value="" selected="selected">动作</option>
+                <option value="" selected="selected">Action</option>
                     {% for action_type in action_types %}
                     <option value={{ action_type }}>{{ action_type }}</option>
                     {% endfor %}
@@ -19,7 +20,7 @@
         </div>
 
     </div>
-    <!-- 表格-->
+    <!-- Table -->
     <div class="table-responsive">
         <table id="group-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -34,7 +35,10 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
-        // 初始化时间控件
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
+        // Initialize time picker
         $(function () {
             let start = moment().subtract(6, 'days');
             let end = moment();
@@ -43,7 +47,7 @@
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html('All Data');
                 }
             }
 
@@ -52,26 +56,26 @@
                 endDate: end,
                 showDropdowns: true,
                 locale: {
-                    format: "YYYY-MM-DD",// 显示格式
-                    separator: " / ",// 两个日期之间的分割线
-                    // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十月", "十一月", "十二月"],
+                    format: "YYYY-MM-DD",// Display Format
+                    separator: " / ",
+                    
+                    applyLabel: "Confirm",
+                    cancelLabel: "Cancel",
+                    fromLabel: "Start",
+                    toLabel: "End",
+                    customRangeLabel: "Custom",
+                    daysOfWeek: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+                    monthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [null, null],
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    "All": [null, null],
+                    "Today": [moment().startOf('day'), moment()],
+                    "Yesterday": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    "Last 7 Days": [moment().subtract('days', 6), moment()],
+                    "Last 30 Days": [moment().subtract('days', 29), moment()],
+                    "This Month": [moment().startOf("month"), moment().endOf("month")],
+                    "Last Month": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 grouplist()
@@ -81,42 +85,42 @@
 
     </script>
     <script>
-        //获取列表
+        //Get list
         function grouplist() {
-            //采取异步请求
-            //初始化table
+            //Async request
+            //Initializetable
             $('#group-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/audit/log/",
-                striped: true,                      //是否显示行间隔色
-                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                pagination: true,                   //是否显示分页（*）
-                sortable: true,                     //是否启用排序
-                sortOrder: "asc",                   //排序方式
-                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 20,                     //每页的记录行数（*）
-                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                showExport: true,                   //是否显示导出按钮
+                striped: true,                      //Show row stripes
+                cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                pagination: true,                   //Show pagination（*）
+                sortable: true,                     //Enable sorting
+                sortOrder: "asc",                   //Sort order
+                sidePagination: "server",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                pageSize: 20,                     //Records per page（*）
+                pageList: [20, 30, 50, 100],       //Selectable rows per page（*）
+                showExport: true,                   //Show export button
                 exportOptions: {
                     fileName: "audit_log_" + dateFormat("yyyyMMddhhmmss",new Date())
                 },
-                search: true,                      //是否显示表格搜索
-                strictSearch: false,                //是否全匹配搜索
-                showColumns: true,                  //是否显示所有的列（选择显示的列）
-                showRefresh: true,                  //是否显示刷新按钮
-                minimumCountColumns: 2,             //最少允许的列数
-                clickToSelect: true,                //是否启用点击选中行
-                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                cardView: false,                    //是否显示详细视图
-                detailView: true,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",               //指明自定义的toolbar
+                search: true,                      //Show table search
+                strictSearch: false,                //Exact match search
+                showColumns: true,                  //Show all columns（Select columns to display）
+                showRefresh: true,                  //Show refresh button
+                minimumCountColumns: 2,             //Minimum columns allowed
+                clickToSelect: true,                //Enable click to select row
+                uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                showToggle: true,                   //Show toggle button for detail/list view
+                cardView: false,                    //Show detail view
+                detailView: true,                  //Show parent-child table
+                locale: currentLocale,                    //Localization
+                toolbar: "#toolbar",               //Specify customtoolbar
                 queryParamsType: 'limit',
-                //请求服务数据时所传参数
+                //Parameters when requesting data
                 queryParams:
                     function (params) {
                         let start_date = $("#reservation").data('daterangepicker').startDate;
@@ -137,20 +141,20 @@
                             end_date: end_date,
                         }
                     },
-                //格式化详情
+                
                 detailFormatter: function (index, row) {
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === 'extra_info') {
-                            //替换标签
+                            
                             value = value.replace(/&/g, "&amp;");
                             value = value.replace(/</g, "&lt;");
                             value = value.replace(/>/g, "&gt;");
                             value = value.replace(/"/g, "&quot;");
-                            //替换所有的换行符
+                            
                             value = value.replace(/\r\n/g, "<br>");
                             value = value.replace(/\n/g, "<br>");
-                            //替换所有的空格
+                            
                             value = value.replace(/\s/g, "&nbsp;");
                             html.push('<span>' + value + '</span>');
                         }
@@ -158,20 +162,20 @@
                     return html.join('');
                 },
                 columns: [{
-                    title: '用户',
+                    title: 'User',
                     field: 'user_name',
                     formatter: function (value, row, index) {
                         return "<a target=\"_blank\" href=\"/admin/sql/users/" + row.user_id + "/change/\">" + value + "</a>"
                     }
                 },{
-                    title: '中文名',
+                    title: gettext('Display Name'),
                     field: 'user_display'
                 },{
-                    title: '动作',
+                    title: 'Action',
                     field: 'action'
-                
+
                 },{
-                    title: '额外信息',
+                    title: gettext('Extra Info'),
                     field: 'extra_info',
                     formatter: function (value, row, index) {
                         var _info=row.extra_info
@@ -185,18 +189,18 @@
                         }
                     }
                 },{
-                    title: '完整额外信息',
+                    title: gettext('Full Extra Info'),
                     field: 'extra_info',
                     visible: false
                 },{
-                    title: '操作时间',
+                    title: 'Operation Time',
                     field: 'action_time'
                 }],
                 onLoadSuccess: function () {
                 },
                 onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
-                    //传搜索参数给服务器
+                    //Pass search params to server
                     queryParams(e)
                 }
             });
@@ -205,7 +209,7 @@
         $("#navStatus").change(function () {
             grouplist();
         });
-        //初始化数据
+        //Initialize data
         $(document).ready(function () {
             grouplist();
         });

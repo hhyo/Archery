@@ -1,27 +1,28 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <ul class="breadcrumb">
-        <li><a href="/group/">资源组</a></li>
-        <li class="active">关联对象</li>
+        <li><a href="/group/">Resource Group</a></li>
+        <li class="active">Associated Objects</li>
     </ul>
-    <!-- 自定义操作按钮-->
+    <!-- Custom buttons -->
     <div id="toolbar" class="form-inline">
         <div class="form-group">
             <select id="type" class="form-control selectpicker">
-                <option value="" selected="selected">全部</option>
-                <option value=0>用户</option>
-                <option value=1>实例</option>
+                <option value="" selected="selected">{% trans "All" %}</option>
+                <option value=0>User</option>
+                <option value=1>{% trans "Instances" %}</option>
             </select>
         </div>
         <div class="form-group ">
             <button id="btn_add" type="button" class="btn btn-default" data-toggle="modal" data-target="#add">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                新增关联对象
+                Add Associated Object
             </button>
         </div>
     </div>
-    <!-- 表格-->
+    <!-- Table -->
     <div class="table-responsive">
         <table id="group-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -34,32 +35,32 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">新增关联对象</h4>
+                    <h4 class="modal-title" id="myModalLabel">Add Associated Object</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <input type="text" class="form-control" id="group_name" value="{{ group.group_name }}" disabled
-                               placeholder="组">
+                               placeholder="Group">
                     </div>
                     <div class="form-group">
                         <select id="object_type" name="object_type"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                data-name="关联对象类型" data-placeholder="请选择关联对象类型:" data-live-search="true" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择关联对象类型:</option>
-                            <option value=0>用户</option>
-                            <option value=1>实例</option>
+                                data-name="Associated ObjectsType" data-placeholder="Please selectAssociated ObjectsType:" data-live-search="true" required>
+                            <option value="is-empty" disabled="" selected="selected">Please selectAssociated ObjectsType:</option>
+                            <option value=0>User</option>
+                            <option value=1>{% trans "Instances" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="object_info" name="object_info" data-live-search="true" multiple="multiple"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择关联对象:</option>
+                            <option value="is-empty" disabled="" selected="selected">Please selectAssociated Objects:</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-success" onclick="addRelation()">提交</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-success" onclick="addRelation()">{% trans "Submit" %}</button>
                 </div>
             </div>
         </div>
@@ -70,42 +71,45 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
-        //获取列表
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
+        //Get list
         function groupmgmt() {
-            //采取异步请求
-            //初始化table
+            //Async request
+            //Initializetable
             $('#group-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/group/relations/",
-                striped: true,                      //是否显示行间隔色
-                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                pagination: true,                   //是否显示分页（*）
-                sortable: true,                     //是否启用排序
-                sortOrder: "asc",                   //排序方式
-                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 20,                     //每页的记录行数（*）
-                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                showExport: true,                   //是否显示导出按钮
+                striped: true,                      //Show row stripes
+                cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                pagination: true,                   //Show pagination（*）
+                sortable: true,                     //Enable sorting
+                sortOrder: "asc",                   //Sort order
+                sidePagination: "server",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                pageSize: 20,                     //Records per page（*）
+                pageList: [20, 30, 50, 100],       //Selectable rows per page（*）
+                showExport: true,                   //Show export button
                 exportOptions: {
-                    fileName: 'group'  //文件名称设置
+                    fileName: 'group'  //File name setting
                 },
-                search: true,                      //是否显示表格搜索
-                strictSearch: false,                //是否全匹配搜索
-                showColumns: true,                  //是否显示所有的列（选择显示的列）
-                showRefresh: true,                  //是否显示刷新按钮
-                minimumCountColumns: 2,             //最少允许的列数
-                clickToSelect: true,                //是否启用点击选中行
-                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                cardView: false,                    //是否显示详细视图
-                detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",               //指明自定义的toolbar
+                search: true,                      //Show table search
+                strictSearch: false,                //Exact match search
+                showColumns: true,                  //Show all columns（Select columns to display）
+                showRefresh: true,                  //Show refresh button
+                minimumCountColumns: 2,             //Minimum columns allowed
+                clickToSelect: true,                //Enable click to select row
+                uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                showToggle: true,                   //Show toggle button for detail/list view
+                cardView: false,                    //Show detail view
+                detailView: false,                  //Show parent-child table
+                locale: currentLocale,                    //Localization
+                toolbar: "#toolbar",               //Specify customtoolbar
                 queryParamsType: 'limit',
-                //请求服务数据时所传参数
+                //Parameters when requesting data
                 queryParams:
                     function (params) {
                         return {
@@ -117,7 +121,7 @@
                         }
                     },
                 columns: [{
-                    title: '关联对象描述',
+                    title: 'Associated ObjectsDescription',
                     field: 'object_name',
                     formatter: function (value, row, index) {
                         switch (row.object_type) {
@@ -132,22 +136,22 @@
                         }
                     }
                 }, {
-                    title: '关联对象类型',
+                    title: 'Associated ObjectsType',
                     field: 'object_type',
                     formatter: function (value, row, index) {
                         switch (value) {
                             case 0:
-                                return "用户";
+                                return "User";
                                 break;
                             case 1:
-                                return "实例";
+                                return "Instance";
                                 break;
                             default:
                                 return "未知"
                         }
                     }
                 }, {
-                    title: '资源组',
+                    title: 'Resource Group',
                     field: 'group_name'
                 }
                 ],
@@ -155,21 +159,21 @@
                 },
                 onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
-                    //传搜索参数给服务器
+                    //Pass search params to server
                     queryParams(e)
                 }
             });
 
         }
 
-        //选择控件初始化
+        
         $("#object_info").selectpicker({
-            actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
+            actionsBox: true, 
             countSelectedText: "已选中{0}项",
             selectedTextFormat: "count > 5"
         });
 
-        // 获取未关联对象信息
+        // get未Associated ObjectsInfo
         $("#object_type").change(function () {
             var group_id = parseInt({{ group.group_id }});
             var object_type = $("#object_type").val();
@@ -203,7 +207,7 @@
             });
         });
 
-        // 信息关联对象
+        
         function addRelation() {
             var group_id = parseInt({{ group.group_id }});
             var object_type = $("#object_type").val();
@@ -235,17 +239,17 @@
                     }
                 });
             } else {
-                alert('请填写完整！')
+                alert('Please fill in完整！')
             }
 
         }
 
-        //状态筛选变动自动刷新
+        //Status筛选变动自动Refresh
         $("#type").change(function () {
             groupmgmt();
         });
 
-        //初始化数据
+        //Initialize数据
         $(document).ready(function () {
             groupmgmt();
         });

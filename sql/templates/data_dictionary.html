@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <!-- 自定义操作按钮-->
+    <!-- Custom buttons -->
     <div class="form-group ">
         <form action="/data_dictionary/export/">
             <div id="toolbar" class="form-inline">
                 <div class="form-group">
                     <select id="instance_name" class="form-control selectpicker "
                             name="instance_name"
-                            title="请选择实例"
+                            title="Select Instance"
                             data-live-search="true">
                         <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                         <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
@@ -18,16 +19,14 @@
                 <div class="form-group">
                     <select id="db_name" class="form-control selectpicker "
                             name="db_name"
-                            title="请选择数据库"
+                            title="Select Database"
                             data-live-search="true">
                     </select>
                 </div>
                 {% if perms.sql.data_dictionary_export %}
                     <div class="form-group">
                         <button id="btn_export_dict" type="submit" disabled="disabled" class="btn btn-default">
-                            <span class="glyphicon glyphicon-export" aria-hidden="true"></span>
-                            导出
-                        </button>
+                            <span class="glyphicon glyphicon-export" aria-hidden="true"></span>{% trans "Export" %}</button>
                     </div>
                 {% endif %}
             </div>
@@ -46,24 +45,24 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal"><span
                             aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                    <h4 class="modal-title">表元数据展示</h4>
+                    <h4 class="modal-title">Table元数据展示</h4>
                 </div>
                 <div class="modal-body" id="modal-body-mysql" >
                     <div class="panel panel-default">
-                        <div class="panel-heading">表信息</div>
+                        <div class="panel-heading">TableInfo</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                     <tr>
-                                        <th>表名</th>
+                                        <th>Table名</th>
                                         <td id="table_name"></td>
                                         <th>引擎</th>
                                         <td id="engine"></td>
                                         <th>行格式</th>
                                         <td id="row_format"></td>
-                                        <th>表行数</th>
+                                        <th>Table行数</th>
                                         <td id="table_rows"></td>
                                     </tr>
                                     <tr>
@@ -73,27 +72,27 @@
                                         <td id="max_data_length"></td>
                                         <th>数据长度（K）</th>
                                         <td id="data_length"></td>
-                                        <th>索引长度（K）</th>
+                                        <th>Index长度（K）</th>
                                         <td id="index_length"></td>
                                     </tr>
                                     <tr>
-                                        <th>数据总大小（K）</th>
+                                        <th>数据总Size（K）</th>
                                         <td id="data_total"></td>
-                                        <th>碎片大小</th>
+                                        <th>碎片Size</th>
                                         <td id="data_free"></td>
-                                        <th>当前自增值</th>
+                                        <th>when前自增Value</th>
                                         <td id="auto_increment"></td>
-                                        <th>表的校验码</th>
+                                        <th>Table的Validate码</th>
                                         <td id="table_collation"></td>
                                     </tr>
                                     <tr>
-                                        <th>创建时间</th>
+                                        <th>{% trans "Created Time" %}</th>
                                         <td id="create_time"></td>
-                                        <th>更新时间</th>
+                                        <th>Update Time</th>
                                         <td id="update_time"></td>
-                                        <th>检查时间</th>
+                                        <th>CheckTime</th>
                                         <td id="check_time"></td>
-                                        <th>表说明</th>
+                                        <th>TableDescription</th>
                                         <td id="table_comment"></td>
                                     </tr>
                                     </tbody>
@@ -102,7 +101,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">列信息</div>
+                        <div class="panel-heading">列Info</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="field-list-mysql" data-toggle="table" class="table table-striped table-hover"
@@ -112,7 +111,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-heading">IndexInfo</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="index-list-mysql" data-toggle="table" class="table table-striped table-hover"
@@ -122,7 +121,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">建表语句</div>
+                        <div class="panel-heading">建Table语句</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="create-table-sql" data-toggle="table" class="table table-striped table-hover"
@@ -134,40 +133,40 @@
                 </div> <!--modal-body-->
                 <div class="modal-body" id="modal-body-mssql" >
                     <div class="panel panel-default">
-                        <div class="panel-heading">表信息</div>
+                        <div class="panel-heading">TableInfo</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                     <tr>
-                                        <th>表名</th>
+                                        <th>Table名</th>
                                         <td id="table_name"></td>
-                                        <th>表行数</th>
+                                        <th>Table行数</th>
                                         <td id="table_rows"></td>
                                     </tr>
                                     <tr>
                                         <th>数据长度（K）</th>
                                         <td id="data_length"></td>
-                                        <th>索引长度（K）</th>
+                                        <th>Index长度（K）</th>
                                         <td id="index_length"></td>
                                     </tr>
                                     <tr>
-                                        <th>数据总大小（K）</th>
+                                        <th>数据总Size（K）</th>
                                         <td id="data_total"></td>
-                                        <th>碎片大小</th>
+                                        <th>碎片Size</th>
                                         <td id="data_free"></td>
                                     </tr>
                                     <tr>
-                                        <th>创建时间</th>
+                                        <th>{% trans "Created Time" %}</th>
                                         <td id="create_time"></td>
-                                        <th>更新时间</th>
+                                        <th>Update Time</th>
                                         <td id="update_time"></td>
                                     </tr>
                                     <tr>
-                                        <th>当前自增值</th>
+                                        <th>when前自增Value</th>
                                         <td id="auto_increment"></td>
-                                        <th>表说明</th>
+                                        <th>TableDescription</th>
                                         <td id="table_comment"></td>
                                     </tr>
                                     </tbody>
@@ -176,7 +175,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">列信息</div>
+                        <div class="panel-heading">列Info</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="field-list-mssql" data-toggle="table" class="table table-striped table-hover"
@@ -186,7 +185,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-heading">IndexInfo</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="index-list-mssql" data-toggle="table" class="table table-striped table-hover"
@@ -198,51 +197,51 @@
                 </div> <!--modal-body-->
                 <div class="modal-body" id="modal-body-oracle" >
                     <div class="panel panel-default">
-                        <div class="panel-heading">表信息</div>
+                        <div class="panel-heading">TableInfo</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                         <tr>
-                                            <th>表名</th>
+                                            <th>Table名</th>
                                             <td id="TABLE_NAME"></td>
-                                            <th>表类型</th>
+                                            <th>TableType</th>
                                             <td id="TABLE_TYPE"></td>
 
                                         </tr>
                                         <tr>
-                                            <th>段类型</th>
+                                            <th>段Type</th>
                                             <td id="SEGMENT_TYPE"></td>
                                             <th>压缩</th>
                                             <td id="COMPRESSION"></td>
                                         </tr>
                                         <tr></tr>
-                                            <th>表空间</th>
+                                            <th>Tablespace</th>
                                             <td id="TABLESPACE_NAME"></td>
-                                            <th>表中的记录数</th>
+                                            <th>Table中的记录数</th>
                                             <td id="NUM_ROWS"></td>
                                         </tr>
                                         <tr>
-                                            <th>表中数据所占的数据块数</th>
+                                            <th>Table中数据所占的数据块数</th>
                                             <td id="BLOCKS"></td>
-                                            <th>表中的空块数</th>
+                                            <th>Table中的空块数</th>
                                             <td id="EMPTY_BLOCKS"></td>
                                         </tr>
                                         <tr>
                                             <th>数据块中平均的使用空间</th>
                                             <td id="AVG_SPACE"></td>
-                                            <th>表中行连接和行迁移的数量</th>
+                                            <th>Table中行连接和行迁移的Count</th>
                                             <td id="CHAIN_CNT"></td>
                                         </tr>
                                         <tr>
                                             <th>每条记录的平均长度</th>
                                             <td id="AVG_ROW_LEN"></td>
-                                            <th>上次统计信息搜集的时间</th>
+                                            <th>上次统计Info搜集的Time</th>
                                             <td id="LAST_ANALYZED"></td>
                                         </tr>
                                         <tr>
-                                            <th>表注释</th>
+                                            <th>TableNote释</th>
                                             <td id="COMMENTS"></td>
 
                                         </tr>
@@ -252,7 +251,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">列信息</div>
+                        <div class="panel-heading">列Info</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="field-list-oracle" data-toggle="table" class="table table-striped table-hover"
@@ -262,7 +261,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-heading">IndexInfo</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="index-list-oracle" data-toggle="table" class="table table-striped table-hover"
@@ -281,9 +280,12 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
         var instance_result ="";
         $(document).ready(function () {
-            //获取用户实例列表
+            //getUserInstancelist
             $(function () {
                 $.ajax({
                     type: "get",
@@ -329,7 +331,7 @@
             });
         });
 
-        //实例变动获取库
+        
         $("#instance_name").change(function () {
             $('#db_name').empty();
             $.ajax({
@@ -357,7 +359,7 @@
                 complete: function () {
                     $('#db_name').selectpicker('render');
                     $('#db_name').selectpicker('refresh');
-                    // 管理员激活导出按钮
+                    
                     if ("{{ request.user.is_superuser }}" === 'True') {
                         $('#btn_export_dict').removeClass('disabled');
                         $('#btn_export_dict').prop('disabled', false);
@@ -366,12 +368,12 @@
             });
         });
 
-        //库变动获取表
+        
         $("#db_name").change(function () {
             get_table_list()
         });
 
-        // 获取表
+        // getTable
         function get_table_list() {
             var instance_name = $("#instance_name").val();
             var db_name = $('#db_name').val();
@@ -379,7 +381,7 @@
             var inst_db_type_ind = instance_result.findIndex((value)=>value.instance_name==instance_name);
             var inst_db_type = instance_result[inst_db_type_ind]['db_type']
             if (instance_name === "" || db_name === "") {
-                alert("请先选择实例和数据库！");
+                alert("请先选择Instance和Database！");
             } else {
                 $.ajax({
                     type: "get",
@@ -392,7 +394,7 @@
                     },
                     success: function (data) {
                         if (data.status === 0) {
-                            // 激活导出按钮
+                            
                             $('#btn_export_dict').removeClass('disabled');
                             $('#btn_export_dict').prop('disabled', false);
                             $('#jumpbox').empty();
@@ -432,13 +434,13 @@
             }
         }
 
-        // 根据传入的参数显示哪一种数据库的modal body
+        
         function showModalBody(db_type) {
             $(".modal-body").hide();
             $("#modal-body-" + db_type).show();
         }
 
-        // 展示表信息
+        
         function showTableInfo(ins_name, db_name, tb_name) {
             // console.log(ins_name, db_name, tb_name);
             var inst_db_type_ind = instance_result.findIndex((value)=>value.instance_name==ins_name);
@@ -467,16 +469,16 @@
                                     field: 1,
                                     formatter: function (value, row, index) {
                                         var sql = window.sqlFormatter.format(value);
-                                        //替换所有的换行符
+                                        
                                         sql = sql.replace(/\r\n/g, "<br>");
                                         sql = sql.replace(/\n/g, "<br>");
-                                        //替换所有的空格
+                                        
                                         sql = sql.replace(/\s/g, " ");
                                         return sql;
 
                                     }
                                 }],
-                                locale: 'zh-CN'
+                                locale: currentLocale
                             });
                         } else if (inst_db_type === 'oracle') {
                             showModalBody('oracle');
@@ -506,8 +508,8 @@
                             exportDataType: "all",
                             exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                             exportOptions: {
-                                //ignoreColumn: [0],  //忽略某些列的索引数组
-                                fileName: 'field'  //文件名称设置
+                                //ignoreColumn: [0],  
+                                fileName: 'field'  //File name setting
                             },
                             showColumns: true,
                             showToggle: true,
@@ -516,7 +518,7 @@
                             pagination: true,
                             pageSize: 30,
                             pageList: [30, 50, 100, 500, 1000],
-                            locale: 'zh-CN'
+                            locale: currentLocale
                         });
                         var columns_index = [];
                         $.each(result['index']['column_list'], function (i, column) {
@@ -538,7 +540,7 @@
                             pagination: true,
                             pageSize: 30,
                             pageList: [30, 50, 100, 500, 1000],
-                            locale: 'zh-CN'
+                            locale: currentLocale
                         });
 
 

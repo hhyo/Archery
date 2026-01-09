@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load i18n %}
 {% load cache %}
 
 {% block content %}
@@ -15,13 +15,13 @@
                             </div>
                             <div class="col-xs-9 text-right">
                                 <div class="huge">{{ count_stats.sql_wf_cnt }}</div>
-                                <div>SQL上线工单</div>
+                                <div>{% trans "SQL Deployment Tickets" %}</div>
                             </div>
                         </div>
                     </div>
                     <a href="/sqlworkflow/">
                         <div class="panel-footer">
-                            <span class="pull-left">更多</span>
+                            <span class="pull-left">{% trans "More" %}</span>
                             <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
                             <div class="clearfix"></div>
                         </div>
@@ -37,13 +37,13 @@
                             </div>
                             <div class="col-xs-9 text-right">
                                 <div class="huge">{{ count_stats.query_wf_cnt }}</div>
-                                <div>SQL查询工单</div>
+                                <div>{% trans "SQL Query Tickets" %}</div>
                             </div>
                         </div>
                     </div>
                     <a href="/queryapplylist/">
                         <div class="panel-footer">
-                            <span class="pull-left">更多</span>
+                            <span class="pull-left">{% trans "More" %}</span>
                             <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
                             <div class="clearfix"></div>
                         </div>
@@ -59,13 +59,13 @@
                             </div>
                             <div class="col-xs-9 text-right">
                                 <div class="huge">{{ count_stats.user_cnt }}</div>
-                                <div>有效平台用户</div>
+                                <div>{% trans "Active Users" %}</div>
                             </div>
                         </div>
                     </div>
                     <a href="/admin/sql/users/">
                         <div class="panel-footer">
-                            <span class="pull-left">更多</span>
+                            <span class="pull-left">{% trans "More" %}</span>
                             <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
                             <div class="clearfix"></div>
                         </div>
@@ -81,13 +81,13 @@
                             </div>
                             <div class="col-xs-9 text-right">
                                 <div class="huge">{{ count_stats.ins_cnt }}</div>
-                                <div>实例数量</div>
+                                <div>{% trans "Instances" %}</div>
                             </div>
                         </div>
                     </div>
                     <a href="/instance/">
                         <div class="panel-footer">
-                            <span class="pull-left">更多</span>
+                            <span class="pull-left">{% trans "More" %}</span>
                             <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
                             <div class="clearfix"></div>
                         </div>
@@ -99,7 +99,7 @@
             <div class="col-lg-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> 数据库实例类型统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "Database Instance Type Statistics" %}
                     </div>
                     <div class="panel-body">
                         <div class="row">
@@ -115,13 +115,13 @@
             </div>
         </div>
     </body>
-    </div>    
+    </div>
         <hr>
         <div id="toolbar" class="form-inline">
             <div class='form-group'>
                 <div id="reservation" class="form-control"
                     style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
-                    统计时间范围：<i class="fa fa-calendar"></i>&nbsp;
+                    {% trans "Statistics Time Range:" %}<i class="fa fa-calendar"></i>&nbsp;
                     <span></span> <i class="fa fa-caret-down"></i>
                 </div>
             </div>
@@ -133,7 +133,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL查询统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "SQL Query Statistics" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-line1" class="panel-body">
@@ -144,7 +144,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线数量
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "SQL Deployment Count" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-bar1" class="panel-body">
@@ -156,7 +156,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线用户
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "SQL Deployment Users" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-bar2" class="panel-body">
@@ -167,17 +167,17 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线工单
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "SQL Deployment Tickets" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-bar5" class="panel-body">
                         {{ chart.bar5|safe }}
                     </div>
                     <!-- /.panel-body -->
-                </div>    
+                </div>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> 24h慢查询db维度统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "24h Slow Query by Database" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-bar3" class="panel-body">
@@ -191,7 +191,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "SQL Deployment Statistics" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-pie1" class="panel-body">
@@ -202,7 +202,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> DB检索行数
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "DB Rows Scanned" %}
                     </div>
                     <div id="chart-pie5" class="panel-body">
                         {{ chart.pie5|safe }}
@@ -212,7 +212,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL查询用户
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "SQL Query Users" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-pie4" class="panel-body">
@@ -222,16 +222,16 @@
                 </div>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线工单类型
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "SQL Deployment Ticket Types" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-pie2" class="panel-body">{{ chart.pie2|safe }}</div>
                     <!-- /.panel-body -->
                 </div>
-    
+
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> 24h慢查询db/user维度统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% trans "24h Slow Query by DB/User" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-pie3" class="panel-body">
@@ -248,13 +248,19 @@
 
 {% block js %}
     {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
+    {% if LANGUAGE_CODE == 'es' %}
+    <script src="{% static 'daterangepicker/js/moment-es.js' %}"></script>
+    {% elif LANGUAGE_CODE == 'zh-hans' %}
+    <script src="{% static 'daterangepicker/js/moment-zh-cn.js' %}"></script>
+    {% endif %}
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script type="text/javascript">
-        // 初始化时间控件
+        // Initialize date range picker
         $(function () {
             let start = moment().subtract('days', 6);
             let end = moment().subtract('days', -1);
@@ -263,7 +269,7 @@
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html(gettext('All Data'));
                 }
             }
 
@@ -272,26 +278,25 @@
                 endDate: end,
                 showDropdowns: true,
                 locale: {
-                    format: "YYYY-MM-DD",// 显示格式
-                    separator: " / ",// 两个日期之间的分割线
-                    // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    format: "YYYY-MM-DD",
+                    separator: " / ",
+                    applyLabel: gettext("Apply"),
+                    cancelLabel: gettext("Cancel"),
+                    fromLabel: gettext("From"),
+                    toLabel: gettext("To"),
+                    customRangeLabel: gettext("Custom Range"),
+                    daysOfWeek: [gettext("Su"), gettext("Mo"), gettext("Tu"), gettext("We"), gettext("Th"), gettext("Fr"), gettext("Sa")],
+                    monthNames: [gettext("January"), gettext("February"), gettext("March"), gettext("April"), gettext("May"), gettext("June"), gettext("July"), gettext("August"), gettext("September"), gettext("October"), gettext("November"), gettext("December")],
                     firstDay: 1
                 },
                 ranges: {
-                    "最近7日": [moment().subtract('days', 6), moment().subtract('days', -1)],
-                    "最近30日": [moment().subtract('days', 29), moment().subtract('days', -1)],
-                    "最近365日": [moment().subtract('days', 364), moment().subtract('days', -1)],
-                    "本月": [moment().startOf("month"), moment().endOf("month").subtract('days', -1)],
-                    "本年": [moment().startOf("year"), moment().endOf("year").subtract('days', -1)],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month").subtract('days', -1)],
-                    "上一年": [moment().subtract(1, "year").startOf("year"), moment().subtract(1, "year").endOf("year").subtract('days', -1)]
+                    [gettext("Last 7 Days")]: [moment().subtract('days', 6), moment().subtract('days', -1)],
+                    [gettext("Last 30 Days")]: [moment().subtract('days', 29), moment().subtract('days', -1)],
+                    [gettext("Last 365 Days")]: [moment().subtract('days', 364), moment().subtract('days', -1)],
+                    [gettext("This Month")]: [moment().startOf("month"), moment().endOf("month").subtract('days', -1)],
+                    [gettext("This Year")]: [moment().startOf("year"), moment().endOf("year").subtract('days', -1)],
+                    [gettext("Last Month")]: [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month").subtract('days', -1)],
+                    [gettext("Last Year")]: [moment().subtract(1, "year").startOf("year"), moment().subtract(1, "year").endOf("year").subtract('days', -1)]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 let startDate = picker.startDate.format('YYYY-MM-DD');
@@ -315,17 +320,17 @@
         });
 
         function updateChart(response) {
-            $('#chart-line1').html(response.chart.line1);   // SQL查询统计
-            $('#chart-bar1').html(response.chart.bar1);     // SQL上线数量
-            $('#chart-bar2').html(response.chart.bar2);     // SQL上线用户
-            $('#chart-bar3').html(response.chart.bar3);     // 慢查询db维度统计
-            $('#chart-bar4').html(response.chart.bar4);     // 数据库实例环境统计
-            $('#chart-bar5').html(response.chart.bar5);     // SQL上线工单
-            $('#chart-pie1').html(response.chart.pie1);     // SQL上线统计
-            $('#chart-pie2').html(response.chart.pie2);     // 数据库实例类型统计
-            $('#chart-pie3').html(response.chart.pie3);     // 慢查询db/user维度统计
-            $('#chart-pie4').html(response.chart.pie4);     // SQL查询用户
-            $('#chart-pie5').html(response.chart.pie5);     // DB检索行数
+            $('#chart-line1').html(response.chart.line1);
+            $('#chart-bar1').html(response.chart.bar1);
+            $('#chart-bar2').html(response.chart.bar2);
+            $('#chart-bar3').html(response.chart.bar3);
+            $('#chart-bar4').html(response.chart.bar4);
+            $('#chart-bar5').html(response.chart.bar5);
+            $('#chart-pie1').html(response.chart.pie1);
+            $('#chart-pie2').html(response.chart.pie2);
+            $('#chart-pie3').html(response.chart.pie3);
+            $('#chart-pie4').html(response.chart.pie4);
+            $('#chart-pie5').html(response.chart.pie5);
         }
 
     </script>

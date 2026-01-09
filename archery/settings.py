@@ -60,9 +60,6 @@ env = environ.Env(
             "odps",
             "cassandra",
             "doris",
-            "elasticsearch",
-            "opensearch",
-            "memcached",
         ],
     ),
     ENABLED_NOTIFIERS=(
@@ -112,9 +109,6 @@ AVAILABLE_ENGINES = {
     "phoenix": {"path": "sql.engines.phoenix:PhoenixEngine"},
     "odps": {"path": "sql.engines.odps:ODPSEngine"},
     "doris": {"path": "sql.engines.doris:DorisEngine"},
-    "elasticsearch": {"path": "sql.engines.elasticsearch:ElasticsearchEngine"},
-    "opensearch": {"path": "sql.engines.elasticsearch:OpenSearchEngine"},
-    "memcached": {"path": "sql.engines.memcached:MemcachedEngine"},
 }
 
 ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")
@@ -144,6 +138,7 @@ INSTALLED_APPS = (
 
 MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",  # i18n language selector
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -177,15 +172,32 @@ TEMPLATES = [
 WSGI_APPLICATION = "archery.wsgi.application"
 
 # Internationalization
-LANGUAGE_CODE = "zh-hans"
+from django.utils.translation import gettext_lazy as _
 
-TIME_ZONE = "Asia/Shanghai"
+# Available languages (English default, Spanish)
+LANGUAGES = [
+    ("en", _("English")),
+    ("es", _("Spanish")),
+    ("zh-hans", _("Chinese Simplified")),
+]
+
+# DAF LANGUAGE_CODE = "zh-hans"
+LANGUAGE_CODE = "en"  # default language
+
+# DAF TIME_ZONE = "Asia/Shanghai"
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = False
+# DAF USE_TZ = False
+USE_TZ = True
 
-# 时间格式化
+# Locale paths for translation files
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, "locale"),
+]
+
+# Date/time formatting
 USE_L10N = False
 DATETIME_FORMAT = "Y-m-d H:i:s"
 DATE_FORMAT = "Y-m-d"

@@ -1,54 +1,53 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% load format_tags %}
 {% block title %}{{ workflow_detail.title }}-{{ block.super }}{% endblock %}
 {% block content %}
-    <h4 style="display: inline;">工单名称：<span>{{ workflow_detail.title }}</span></h4>
+    <h4 style="display: inline;">Ticket Name：<span>{{ workflow_detail.title }}</span></h4>
     &nbsp;&nbsp;&nbsp;
-    <!--只允许发起人提交其他实例-->
+    <!--Only submitter can submit to other instances-->
     {% if user.username == workflow_detail.engineer %}
-        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
+        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">Deploy to other instances</a>
     {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sql_content }}"/>
     <hr>
     <h4>
-        审批流
+        Approval Flow
     </h4>
     <h5>
     {% include "workflow_display.html" %}
     <h4>
-        其他信息
+        Other Info
     </h4>
     <table data-toggle="table" class="table table-striped table-hover"
            style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         <thead>
         <tr>
             <th>
-                申请人
+                {% trans "Applicant" %}
+            </th>
+            <th>{% trans "Instances" %}</th>
+            <th>
+                {% trans "Permission Level" %}
             </th>
             <th>
-                实例
+                Database
             </th>
             <th>
-                权限级别
+                {% trans "Result Set" %}
             </th>
             <th>
-                数据库
+                {% trans "Valid Date" %}
             </th>
             <th>
-                结果集
+                {% trans "Apply Time" %}
             </th>
             <th>
-                有效时间
+                {% trans "Current Status" %}
             </th>
             <th>
-                申请时间
-            </th>
-            <th>
-                当前状态
-            </th>
-            <th>
-                组
+                Group
             </th>
         </tr>
         </thead>
@@ -77,13 +76,13 @@
             </td>
             <td>
                 {% if workflow_detail.status == 0 %}
-                    <b style="color: red">待审核</b>
+                    <b style="color: red">{% trans "Pending Review" %}</b>
                 {% elif workflow_detail.status == 1 %}
-                    <b style="color: green">审核通过</b>
+                    <b style="color: green">{% trans "Approved" %}</b>
                 {% elif workflow_detail.status == 2 %}
-                    <b style="color: red">审核不通过</b>
+                    <b style="color: red">{% trans "Review Rejected" %}</b>
                 {% elif workflow_detail.status == 3 %}
-                    <b style="color: red">审核取消</b>
+                    <b style="color: red">{% trans "Review Cancelled" %}</b>
                 {% endif %}
             </td>
             <td>
@@ -96,9 +95,9 @@
     <div class="panel panel-default">
         <div class="panel-heading">
             {% if workflow_detail.priv_type == 1 %}
-                数据库清单
+                {% trans "Database List" %}
             {% elif workflow_detail.priv_type == 2 %}
-                表清单
+                {% trans "Table List" %}
             {% endif %}
         </div>
         <div class="panel-body">
@@ -109,13 +108,13 @@
             {% endif %}
         </div>
     </div>
-    <!--最后操作信息-->
+    <!-- Last operation info -->
     {% if last_operation_info %}
         <table data-toggle="table" class="table table-striped table-hover">
             <thead>
             <tr>
                 <th>
-                    操作信息
+                    Operation Info
                 </th>
             </tr>
             </thead>
@@ -131,14 +130,14 @@
     {% endif %}
     {% if workflow_detail.status == 0 %}
         {% if is_can_review %}
-            <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
-                      placeholder="请填写审核备注" rows=3></textarea>
+            <textarea id="remark" name="remark" class="form-control" data-name="{% trans 'Review Remarks' %}"
+                      placeholder="Please fill inReviewRemarks" rows=3></textarea>
             <br>
             <form action="/query/privaudit/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="apply_id" value="{{ workflow_detail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="1">
-                <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="审核通过"/>
+                <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="{% trans 'Approved' %}"/>
             </form>
 
             <form id="form-cancel" action="/query/privaudit/" method="post" style="display:inline-block;">
@@ -146,7 +145,7 @@
                 <input type="hidden" name="apply_id" value="{{ workflow_detail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="2">
                 <input type="hidden" id="audit_remark" name="audit_remark" value="">
-                <input type="button" id="btnReject" class="btn btn-default" value="终止流程"/>
+                <input type="button" id="btnReject" class="btn btn-default" value="{% trans 'Terminate Process' %}"/>
             </form>
         {% endif %}
     {% endif %}
@@ -154,7 +153,7 @@
 
 {% block js %}
     <script>
-        // 按钮禁用
+        
         function loading(obj) {
             $(obj).button('loading').delay(2500).queue(function () {
                 $(obj).button('reset');
@@ -162,9 +161,9 @@
             });
         }
 
-        // 校验备注
+        
         $("#btnReject").click(function () {
-            //获取form对象，判断输入，通过则提交
+            //Get form object, check input, approve and submit
             $("#audit_remark").val($("#remark").val());
             var formCancel = $("#form-cancel");
             if ($("#audit_remark").val()) {
@@ -174,7 +173,7 @@
                 });
                 formCancel.submit();
             } else {
-                alert('请填写审核备注')
+                alert('Please fill inReviewRemarks')
             }
         })
     </script>

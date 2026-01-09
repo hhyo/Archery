@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <!-- 自定义操作按钮-->
+    <!-- Custom buttons -->
     <div id="toolbar" class="btn-group right">
-        <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
+        <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">Submit Rollback Request</a>
     </div>
     <table id="tb-rollback" data-toggle="table" class="table table-condensed"
            style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
@@ -14,50 +15,53 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
         $('#tb-rollback').bootstrapTable('destroy').bootstrapTable({
             escape: true,
             method: 'get',
             contentType: "application/x-www-form-urlencoded",
             url: "/sqlworkflow/backup_sql/",
-            striped: true,                      //是否显示行间隔色
-            cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-            pagination: true,                   //是否显示分页（*）
-            sortable: true,                     //是否启用排序
-            sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-            pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-            pageSize: 20,                       //每页的记录行数（*）
-            pageList: [10, 30, 50, 100, 500],        //可供选择的每页的行数（*）
-            showExport: true,                   //是否显示导出按钮
+            striped: true,                      //Show row stripes
+            cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+            pagination: true,                   //Show pagination（*）
+            sortable: true,                     //Enable sorting
+            sidePagination: "client",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+            pageNumber: 1,                      //Initialize load first page，Default first page,and record
+            pageSize: 20,                       //Records per page（*）
+            pageList: [10, 30, 50, 100, 500],        //Selectable rows per page（*）
+            showExport: true,                   //Show export button
             exportOptions: {
-                ignoreColumn: [0],  //忽略某些列的索引数组
+                ignoreColumn: [0],  
             },
-            search: true,                       //是否显示表格搜索
-            strictSearch: false,                //是否全匹配搜索
-            showColumns: true,                  //是否显示所有的列（选择显示的列）
-            showRefresh: true,                  //是否显示刷新按钮
-            minimumCountColumns: 1,             //最少允许的列数
-            clickToSelect: false,                //是否启用点击选中行
-            uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-            showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
-            cardView: false,                    //是否显示详细视图
-            toolbar: "#toolbar",               //指明自定义的toolbar
-            detailView: true,                  //是否显示父子表
-            //格式化详情
+            search: true,                       //Show table search
+            strictSearch: false,                //Exact match search
+            showColumns: true,                  //Show all columns（Select columns to display）
+            showRefresh: true,                  //Show refresh button
+            minimumCountColumns: 1,             //Minimum columns allowed
+            clickToSelect: false,                //Enable click to select row
+            uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+            showToggle: false,                   //Show toggle button for detail/list view
+            cardView: false,                    //Show detail view
+            toolbar: "#toolbar",               //Specify customtoolbar
+            detailView: true,                  //Show parent-child table
+            
             detailFormatter: function (index, row) {
                 var html = [];
                 $.each(row, function (index, key) {
                         if (index === 1) {
                             //let sql = window.sqlFormatter.format(key);
                             let sql = key;
-                            //替换标签
+                            
                             sql = sql.replace(/&/g, "&amp;");
                             sql = sql.replace(/</g, "&lt;");
                             sql = sql.replace(/>/g, "&gt;");
                             sql = sql.replace(/"/g, "&quot;");
-                            //替换所有的换行符
+                            
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
-                            //替换所有的空格
+                            
                             sql = sql.replace(/\s/g, "&nbsp;");
                             html.push('<span>' + sql + '</span>');
                         }
@@ -66,16 +70,16 @@
                 return html.join('');
             },
             queryParamsType: 'limit',
-            //请求服务数据时所传参数
+            //Parameters when requesting data
             queryParams:
                 function (params) {
                     return {
                         workflow_id: "{{ workflow_detail.id }}",
                     }
                 },
-            locale: 'zh-CN',                    //本地化
+            locale: currentLocale,                    //Localization
             columns: [{
-                title: '执行语句',
+                title: gettext('Execute Statement'),
                 field: 0,
                 formatter: function (value, row, index) {
                     if (value.length > 50) {
@@ -85,11 +89,11 @@
                     }
                 }
             }, {
-                title: '完整执行语句',
+                title: gettext('Complete Execute Statement'),
                 field: 0,
                 visible: false
             }, {
-                title: '回滚语句',
+                title: gettext('Rollback Statement'),
                 field: 1,
                 formatter: function (value, row, index) {
                     var sql=row[1];
@@ -100,14 +104,14 @@
                     }
                 }
             }, {
-                title: '完整回滚语句',
+                title: gettext('Complete Rollback Statement'),
                 field: 1,
-                visible: false // 默认不显示
+                visible: false
             }],
             onLoadSuccess: function (data) {
-                // 设置回滚语句，供快速提交
+                
                 if (data.status !== 0) {
-                    alert("数据加载失败！" + data.msg);
+                    alert(gettext("Data loading failed!") + " " + data.msg);
                 } else {
                     let backup_sql = '';
                     for (let sql of data.rows) {

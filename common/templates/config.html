@@ -1,32 +1,31 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% load format_tags %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
             <div class="panel panel-default">
-                <div class="panel-heading">
-                    选择操作
-                </div>
+                <div class="panel-heading">{% trans "Select Operation" %}</div>
                 <div class="panel-body">
                     <div id="div-config" class="form-group">
-                        <h5 class="control-label text-bold">配置项：</h5>
+                        <h5 class="control-label text-bold">{% trans "Configuration:" %}</h5>
                         <div class="form-group">
                             <select id="config" name="confg"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="配置项" data-placeholder="请选择配置项:" required />
-                                <option value="is-empty" disabled="">请选择配置项:</option>
-                                <option value="0" selected="selected">系统设置</option>
-                                <option value="1">工单审核流配置</option>
+                                    data-name="Configuration" data-placeholder="{% trans 'Select Configuration:' %}" required />
+                                <option value="is-empty" disabled="">{% trans "Select Configuration:" %}</option>
+                                <option value="0" selected="selected">{% trans "System Settings" %}</option>
+                                <option value="1">{% trans "Workflow Audit Configuration" %}</option>
                             </select>
                         </div>
                     </div>
                     <div id="div-workflow" class="form-group" style="display: none">
-                        <h5 class="control-label text-bold">工单类型：</h5>
+                        <h5 class="control-label text-bold">{% trans "Workflow Type:" %}</h5>
                         <div class="form-group">
                             <select id="workflow_type" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="工单类型" data-placeholder="请选择工单类型:" required />
+                                    data-name="Ticket Type" data-placeholder="{% trans 'Select Workflow Type:' %}" required />
                                 {% for c in workflow_choices %}
                                 {% if forloop.first %}
                                 <option value="{{ c.value }}" selected="selected">
@@ -38,11 +37,11 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <h5 class="control-label text-bold">组：</h5>
+                        <h5 class="control-label text-bold">{% trans "Group:" %}</h5>
                         <div class="form-group">
                             <select id="group" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="组" data-placeholder="请选择组:" data-live-search="true" required />
+                                    data-name="Group" data-placeholder="{% trans 'Select Group:' %}" data-live-search="true" required />
                                 {% for group in group_list %}
                                     <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                 {% endfor %}
@@ -54,13 +53,11 @@
         </div>
         <div class="col-md-9 column">
             <div class="panel panel-default">
-                <div class="panel-heading">
-                    操作
-                </div>
+                <div class="panel-heading">{% trans "Operations" %}</div>
                 <div class="panel-body">
                     <div id="div-system-config" class="form-group" style="display: none">
-                        <h4 style="color: darkgrey; display: inline;"><b>goInception配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <h6 style="color:red">注1：备份库的信息仅用于平台获取回滚语句，需要和审核工具自身的配置保持一致，此处配置变更不会修改审核工具自身的配置</h6>
+                        <h4 style="color: darkgrey; display: inline;"><b>{% trans "goInception Configuration" %}</b></h4>&nbsp;&nbsp;&nbsp;
+                        <h6 style="color:red">Note1：Backup DB info is only for getting rollback SQL，needs to match audit tool config，changes here wont modify audit tool config</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div id="div-go-inception-config">
@@ -72,9 +69,9 @@
                                                id="go_inception_host"
                                                key="go_inception_host"
                                                value="{{ config.go_inception_host }}"
-                                               placeholder="goInception地址" />
+                                               placeholder="{% trans 'goInception Address' %}" />
                                     </div>
-                                    <button id='check_goincption' class='btn-sm btn-info'>测试连接</button>&nbsp;
+                                    <button id='check_goincption' class='btn-sm btn-info'>{% trans "Test Connection" %}</button>&nbsp;
                                 </div>
                                 <div class="form-group">
                                     <label for="go_inception_port"
@@ -84,7 +81,7 @@
                                                id="go_inception_port"
                                                key="go_inception_port"
                                                value="{{ config.go_inception_port }}"
-                                               placeholder="goInception端口" />
+                                               placeholder="goInceptionPort" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -95,7 +92,7 @@
                                                id="go_inception_user"
                                                key="go_inception_user"
                                                value="{{ config.go_inception_user }}"
-                                               placeholder="goInception用户（未启用认证可不填）" />
+                                               placeholder="{% trans 'goInception User (leave empty if auth not enabled)' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -106,7 +103,7 @@
                                                id="go_inception_password"
                                                key="go_inception_password"
                                                value="{{ config.go_inception_password }}"
-                                               placeholder="goInception密码（未启用认证可不填）" />
+                                               placeholder="{% trans 'goInception Password (leave empty if auth not enabled)' %}" />
                                     </div>
                                 </div>
                             </div>
@@ -118,7 +115,7 @@
                                            id="inception_remote_backup_host"
                                            key="inception_remote_backup_host"
                                            value="{{ config.inception_remote_backup_host }}"
-                                           placeholder="备份库地址" />
+                                           placeholder="{% trans 'Backup Host' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -129,7 +126,7 @@
                                            id="inception_remote_backup_port"
                                            key="inception_remote_backup_port"
                                            value="{{ config.inception_remote_backup_port }}"
-                                           placeholder="备份库端口" />
+                                           placeholder="{% trans 'Backup Port' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -140,7 +137,7 @@
                                            id="inception_remote_backup_user"
                                            key="inception_remote_backup_user"
                                            value="{{ config.inception_remote_backup_user }}"
-                                           placeholder="备份库用户" />
+                                           placeholder="{% trans 'Backup User' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -151,14 +148,14 @@
                                            id="inception_remote_backup_password"
                                            key="inception_remote_backup_password"
                                            value="{{ config.inception_remote_backup_password }}"
-                                           placeholder="备份库用户密码" />
+                                           placeholder="{% trans 'Backup Password' %}" />
                                 </div>
                             </div>
                         </div>
                         <br>
-                        <h4 style="color: darkgrey"><b>功能模块配置</b></h4>
+                        <h4 style="color: darkgrey"><b>{% trans "Feature Module Configuration" %}</b></h4>
                         <hr/>
-                        <h5 style="color: darkgrey"><b>SQL上线</b></h5>
+                        <h5 style="color: darkgrey"><b>{% trans "SQL Deployment" %}</b></h5>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -169,7 +166,7 @@
                                            id="critical_ddl_regex"
                                            key="critical_ddl_regex"
                                            value="{{ config.critical_ddl_regex }}"
-                                           placeholder="正则条件，匹配的语句会禁止提交" />
+                                           placeholder="{% trans 'Regex pattern - matched statements will be blocked from submission' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -180,7 +177,7 @@
                                            id="auto_review_wrong"
                                            key="auto_review_wrong"
                                            value="{{ config.auto_review_wrong }}"
-                                           placeholder="自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回" />
+                                           placeholder="{% trans 'Auto-reject level: 1=reject on warning, 2 or empty=reject on error only, other=no reject' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -193,7 +190,7 @@
                                                    key="enable_backup_switch"
                                                    value="{{ config.enable_backup_switch }}"
                                                    type="checkbox" />
-                                            是否开启备份选项(默认关闭, 强制要求备份)
+                                            {% trans "Enable backup option (disabled by default, requires backup)" %}
                                         </label>
                                     </div>
                                 </div>
@@ -208,7 +205,7 @@
                                                    key="auto_review"
                                                    value="{{ config.auto_review }}"
                                                    type="checkbox" />
-                                            是否开启SQL上线自动审批
+                                            {% trans "Enable SQL deployment auto-approval" %}
                                         </label>
                                     </div>
                                 </div>
@@ -221,7 +218,7 @@
                                         <select id="auto_review_tag" key="auto_review_tag"
                                                 class="form-control selectpicker" data-live-search="true"
                                                 multiple data-selected-text-format="count > 5"
-                                                data-none-selected-text="自动审批的实例标签">
+                                                data-none-selected-text="{% trans 'Auto-approval instance tags' %}">
                                             {% for tag in instance_tags %}
                                                 {% if tag.tag_code|is_in:config.auto_review_tag %}
                                                     <option value="{{ tag.tag_code }}"
@@ -240,7 +237,7 @@
                                         <select id="auto_review_db_type" key="auto_review_db_type"
                                                 class="form-control selectpicker" data-live-search="true"
                                                 multiple data-selected-text-format="count > 5"
-                                                data-none-selected-text="自动审批的数据库类型">
+                                                data-none-selected-text="{% trans 'Auto-approval database types' %}">
                                             {% for type in db_type %}
                                                 {% if type|is_in:config.auto_review_db_type %}
                                                     <option value="{{ type }}" selected>{{ type }}</option>
@@ -259,7 +256,7 @@
                                                id="auto_review_regex"
                                                key="auto_review_regex"
                                                value="{{ config.auto_review_regex }}"
-                                               placeholder="正则条件，匹配的语句需要人工审批" />
+                                               placeholder="{% trans 'Regex pattern - matched statements require manual approval' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -270,7 +267,7 @@
                                                id="auto_review_max_update_rows"
                                                key="auto_review_max_update_rows"
                                                value="{{ config.auto_review_max_update_rows }}"
-                                               placeholder="自动审批允许工单最大更新行数" />
+                                               placeholder="{% trans 'Max update rows allowed for auto-approval' %}" />
                                     </div>
                                 </div>
                             </div>
@@ -284,7 +281,7 @@
                                                    key="manual"
                                                    value="{{ config.manual }}"
                                                    type="checkbox" />
-                                            是否开启SQL上线手工执行确认
+                                            {% trans "Enable SQL deployment manual execution confirmation" %}
                                         </label>
                                     </div>
                                 </div>
@@ -299,7 +296,7 @@
                                                    key="ddl_dml_separation"
                                                    value="{{ config.ddl_dml_separation }}"
                                                    type="checkbox" />
-                                            是否禁止DDL和DML在SQL上线同时提交(MySQL)
+                                            {% trans "Prohibit DDL and DML from being submitted together (MySQL)" %}
                                         </label>
                                     </div>
                                 </div>
@@ -313,7 +310,7 @@
                                                   key="ban_self_audit"
                                                   value="{{ config.ban_self_audit }}"
                                                   type="checkbox" />
-                                        <label for="ban_self_audit" title="ON：禁止自审。OFF：允许自己审批自己的工单">禁止自审工单(管理员除外)</label>
+                                        <label for="ban_self_audit" title="{% trans 'ON: Prohibit self-review. OFF: Allow self-approval' %}">{% trans "Prohibit self-review (except admins)" %}</label>
                                     </div>
                                 </div>
                             </div>
@@ -327,14 +324,14 @@
                                                    key="real_row_count"
                                                    value="{{ config.real_row_count }}"
                                                    type="checkbox">
-                                            是否获取DML真实影响行数(MySQL、MongoDB)
+                                            {% trans "Get actual DML affected rows (MySQL, MongoDB)" %}
                                         </label>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <h5 style="color: darkgrey"><b>SQL查询</b></h5>
-                        <h6 style="color:red">注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析</h6>
+                        <h5 style="color: darkgrey"><b>{% trans "SQL Query" %}</b></h5>
+                        <h6 style="color:red">{% trans "Note: Data masking requires goInception configuration for SQL syntax parsing" %}</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -346,7 +343,7 @@
                                             <input id="data_masking"
                                                    key="data_masking"
                                                    value="{{ config.data_masking }}" type="checkbox" />
-                                            是否开启动态脱敏
+                                            {% trans "Enable dynamic data masking" %}
                                         </label>
                                     </div>
                                 </div>
@@ -360,7 +357,7 @@
                                             <input id="query_check"
                                                    key="query_check"
                                                    value="{{ config.query_check }}" type="checkbox" />
-                                            是否开启脱敏校验(无法脱敏的语句会抛错)
+                                            {% trans "Enable masking validation (statements that cannot be masked will throw error)" %}
                                         </label>
                                     </div>
                                 </div>
@@ -374,7 +371,7 @@
                                             <input id="disable_star"
                                                    key="disable_star"
                                                    value="{{ config.disable_star }}" type="checkbox" />
-                                            禁止在查询时使用 *
+                                            {% trans "Prohibit using * in queries" %}
                                         </label>
                                     </div>
                                 </div>
@@ -386,7 +383,7 @@
                                     <input type="number" class="form-control" id="max_execution_time"
                                            key="max_execution_time"
                                            value="{{ config.max_execution_time }}"
-                                           placeholder="在线查询超时时间阈值，单位秒，默认60" />
+                                           placeholder="{% trans 'Online query timeout threshold in seconds, default 60' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -396,12 +393,12 @@
                                     <input type="number" class="form-control" id="admin_query_limit"
                                            key="admin_query_limit"
                                            value="{{ config.admin_query_limit }}"
-                                           placeholder="管理员/DBA查询结果集限制" />
+                                           placeholder="{% trans 'Admin/DBA query result set limit' %}" />
                                 </div>
                             </div>
 
-                            <!-- 数据导出配置 -->
-                            <h5 style="color: darkgrey"><b>数据导出配置</b></h5>
+                            <!-- Data Export Config -->
+                            <h5 style="color: darkgrey"><b>{% trans "Data Export Configuration" %}</b></h5>
                             <hr/>
                             <div id="offline_download_export_msg">
                                 <div class="form-group">
@@ -411,102 +408,102 @@
                                         <input type="number" class="form-control" id="max_export_rows"
                                                key="max_export_rows"
                                                value="{{ config.max_export_rows }}"
-                                               placeholder="导出数据量阈值限制，单位: 行，默认值: 10000">
+                                               placeholder="{% trans 'Export row limit, default: 10000' %}">
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- 存储类型选择 -->
-                            <h5 style="color: darkgrey"><b>存储类型选择</b></h5>
+                            <!-- Storage Type Selection -->
+                            <h5 style="color: darkgrey"><b>{% trans "Storage Type Selection" %}</b></h5>
                             <hr/>
                             <div class="form-group">
-                                <label for="storage_type" class="col-sm-4 control-label">存储类型</label>
+                                <label for="storage_type" class="col-sm-4 control-label">{% trans "Storage Type" %}</label>
                                 <div class="col-sm-5">
                                     <select id="storage_type" 
                                             key="storage_type"
                                             class="form-control selectpicker show-tick form-control bs-select-hidden"
                                             data-live-search="true"
                                             onchange="showStorageConfig()">
-                                        <option value="local">本地存储</option>
+                                        <option value="local">{% trans "Local Storage" %}</option>
                                         <option value="sftp">SFTP</option>
-                                        <option value="s3c">S3兼容存储</option>
+                                        <option value="s3c">{% trans "S3 Compatible Storage" %}</option>
                                         <option value="azure">Azure Blob</option>
                                     </select>
                                 </div>
-                                <button id='check_storage_conn' class='btn-sm btn-info'>测试连接</button>
+                                <button id='check_storage_conn' class='btn-sm btn-info'>{% trans "Test Connection" %}</button>
                             </div>
 
-                            <!-- 动态配置区域 -->
+                            <!-- Dynamic config area -->
                             <div id="dynamic-config">
-                                <!-- 本地存储配置 -->
+                                <!-- Local storage config -->
                                 <div id="storage-local" class="storage-config" style="display: none;">
                                     <div class="form-group">
-                                        <label for="local-path" class="col-sm-4 control-label">本地存储路径</label>
+                                        <label for="local-path" class="col-sm-4 control-label">{% trans "Local Storage Path" %}</label>
                                         <div class="col-sm-5">
                                             <input type="text" class="form-control" disabled
-                                                   placeholder="项目根目录/downloads/DataExportFile/">
+                                                   placeholder="{% trans 'Project root/downloads/DataExportFile/' %}">
                                         </div>
                                     </div>
                                 </div>
-                                <!-- SFTP配置 -->
+                                <!-- SFTP Config -->
                                 <div id="storage-sftp" class="storage-config" style="display: none;">
                                     <div class="form-group">
-                                        <label for="sftp-host" class="col-sm-4 control-label">SFTP主机</label>
+                                        <label for="sftp-host" class="col-sm-4 control-label">{% trans "SFTP Host" %}</label>
                                         <div class="col-sm-5">
                                         <input type="text" class="form-control" id="sftp_host"
                                                key="sftp_host"
                                                value="{{ config.sftp_host }}"
-                                               placeholder="SFTP服务访问IP">
+                                               placeholder="{% trans 'SFTP service IP address' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="sftp-port" class="col-sm-4 control-label">SFTP端口</label>
+                                        <label for="sftp-port" class="col-sm-4 control-label">{% trans "SFTP Port" %}</label>
                                         <div class="col-sm-5">
                                         <input type="number" class="form-control" id="sftp_port"
                                                key="sftp_port"
                                                value="{{ config.sftp_port }}"
-                                               placeholder="SFTP服务端口">
+                                               placeholder="{% trans 'SFTP service port' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="sftp-user" class="col-sm-4 control-label">SFTP用户名</label>
+                                        <label for="sftp-user" class="col-sm-4 control-label">{% trans "SFTP Username" %}</label>
                                         <div class="col-sm-5">
                                         <input type="text" class="form-control" id="sftp_user"
                                                key="sftp_user"
                                                value="{{ config.sftp_user }}"
-                                               placeholder="SFTP用户名">
+                                               placeholder="{% trans 'SFTP username' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="sftp-password" class="col-sm-4 control-label">SFTP密码</label>
+                                        <label for="sftp-password" class="col-sm-4 control-label">{% trans "SFTP Password" %}</label>
                                         <div class="col-sm-5">
                                         <input type="password" class="form-control" id="sftp_password"
                                                key="sftp_password"
                                                value="{{ config.sftp_password }}"
-                                               placeholder="SFTP密码">
+                                               placeholder="{% trans 'SFTP password' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="sftp-password" class="col-sm-4 control-label">SFTP路径</label>
+                                        <label for="sftp-password" class="col-sm-4 control-label">{% trans "SFTP Path" %}</label>
                                         <div class="col-sm-5">
                                         <input type="text" class="form-control" id="sftp_path"
                                                key="sftp_path"
                                                value="{{ config.sftp_path }}"
-                                               placeholder="SFTP服务存储路径">
+                                               placeholder="{% trans 'SFTP storage path' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="sftp-custom-params" class="col-sm-4 control-label">自定义参数</label>
+                                        <label for="sftp-custom-params" class="col-sm-4 control-label">{% trans "Custom Parameters" %}</label>
                                         <div class="col-sm-5">
                                             <input type="text" class="form-control"
                                                    id="sftp_custom_params"
                                                    key="sftp_custom_params"
                                                    value="{{ config.sftp_custom_params }}"
-                                                   placeholder="输入JSON格式的自定义参数，例如：{&quot;key&quot;: &quot;value&quot;}">
+                                                   placeholder="{% trans 'Enter JSON format custom parameters, e.g.: {\"key\": \"value\"}' %}">
                                         </div>
                                     </div>
                                 </div>
-                                <!-- S3兼容的后端存储配置 -->
+                                <!-- S3 compatible backend storage config -->
                                 <div id="storage-s3c" class="storage-config" style="display: none;">
                                     <div class="form-group">
                                         <label for="s3c-access-key-id" class="col-sm-4 control-label">Access Key</label>
@@ -541,7 +538,7 @@
                                         <input type="text" class="form-control" id="s3c_region"
                                                key="s3c_region"
                                                value="{{ config.s3c_region }}"
-                                               placeholder="Region 非必填">
+                                               placeholder="{% trans 'Region (optional)' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -559,47 +556,47 @@
                                         <input type="text" class="form-control" id="s3c_path"
                                                key="s3c_path"
                                                value="{{ config.s3c_path }}"
-                                               placeholder="存储路径，开头没有/">
+                                               placeholder="{% trans 'Storage path, no leading /' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="s3c-custom-params" class="col-sm-4 control-label">自定义参数</label>
+                                        <label for="s3c-custom-params" class="col-sm-4 control-label">CustomParameter</label>
                                         <div class="col-sm-5">
                                             <input type="textarea" class="form-control"
                                                    id="s3c_custom_params"
                                                    key="s3c_custom_params"
                                                    value="{{ config.s3c_custom_params }}"
-                                                   placeholder="输入JSON格式的自定义参数，例如：{&quot;key&quot;: &quot;value&quot;}">
+                                                   placeholder="{% trans 'Enter JSON format custom parameters, e.g.: {\"key\": \"value\"}' %}">
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Azure配置 -->
+                                <!-- AzureConfig -->
                                 <div id="storage-azure" class="storage-config" style="display: none;">
                                     <div class="form-group">
-                                        <label for="azure-container" class="col-sm-4 control-label">Azure容器</label>
+                                        <label for="azure-container" class="col-sm-4 control-label">{% trans "Azure Container" %}</label>
                                         <div class="col-sm-5">
                                         <input type="text" class="form-control" id="azure_container"
                                                key="azure_container"
                                                value="{{ config.azure_container }}"
-                                               placeholder="Azure账号名">
+                                               placeholder="{% trans 'Azure account name' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="azure-account-name" class="col-sm-4 control-label">Azure账号名</label>
+                                        <label for="azure-account-name" class="col-sm-4 control-label">{% trans "Azure Account Name" %}</label>
                                         <div class="col-sm-5">
                                         <input type="text" class="form-control" id="azure_account_name"
                                                key="azure_account_name"
                                                value="{{ config.azure_account_name }}"
-                                               placeholder="Azure账号名">
+                                               placeholder="{% trans 'Azure account name' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="azure-account-key" class="col-sm-4 control-label">Azure账号密钥</label>
+                                        <label for="azure-account-key" class="col-sm-4 control-label">{% trans "Azure Account Key" %}</label>
                                         <div class="col-sm-5">
                                         <input type="password" class="form-control" id="azure_account_key"
                                                key="azure_account_key"
                                                value="{{ config.azure_account_key }}"
-                                               placeholder="Azure账号密钥">
+                                               placeholder="{% trans 'Azure account key' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -608,42 +605,42 @@
                                         <input type="text" class="form-control" id="azure_path"
                                                key="azure_path"
                                                value="{{ config.azure_path }}"
-                                               placeholder="Azure 存储路径，开头没有 / ，如存储到tmp目录: tmp/">
+                                               placeholder="{% trans 'Azure storage path, no leading /, e.g. tmp/' %}">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="azure-custom-params" class="col-sm-4 control-label">自定义参数</label>
+                                        <label for="azure-custom-params" class="col-sm-4 control-label">CustomParameter</label>
                                         <div class="col-sm-5">
                                             <input type="text" class="form-control"
                                                    id="azure_custom_params"
                                                    key="azure_custom_params"
                                                    value="{{ config.azure_custom_params }}"
-                                                   placeholder="输入JSON格式的自定义参数，例如：{&quot;key&quot;: &quot;value&quot;}">
+                                                   placeholder="{% trans 'Enter JSON format custom parameters, e.g.: {\"key\": \"value\"}' %}">
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                         <script>
-                            // 根据选择的存储类型显示配置项
+                            
                             function showStorageConfig() {
                                 const storageType = document.getElementById('storage_type').value;
-                                // 隐藏所有存储类型配置
+                                
                                 document.querySelectorAll('.storage-config').forEach(elem => {
                                     elem.style.display = 'none';
                                 });
-                                // 显示当前选中的存储类型配置
+                                
                                 document.getElementById(`storage-${storageType}`).style.display = 'block';
                             }
 
-                            // 页面加载时初始化
+                            
                             window.onload = function() {
                                 document.getElementById('storage_type').value = "{{ config.storage_type }}";
                                 showStorageConfig();
                             };
                         </script>
 
-                            <h5 style="color: darkgrey"><b>SQL优化</b></h5>
+                            <h5 style="color: darkgrey"><b>SQLOptimize</b></h5>
                             <hr/>
                             <div class="form-group">
                                 <label for="sqladvisor"
@@ -652,7 +649,7 @@
                                     <div class="switch switch-small">
                                         <input type="text" class="form-control" id="sqladvisor" key="sqladvisor"
                                                value="{{ config.sqladvisor }}"
-                                               placeholder="SQLADVISOR路径" />
+                                               placeholder="{% trans 'SQLADVISOR path' %}" />
                                     </div>
                                 </div>
                             </div>
@@ -663,7 +660,7 @@
                                     <div class="switch switch-small">
                                         <input type="text" class="form-control" id="soar" key="soar"
                                                value="{{ config.soar }}"
-                                               placeholder="SOAR路径" />
+                                               placeholder="{% trans 'SOAR path' %}" />
                                     </div>
                                 </div>
                             </div>
@@ -674,19 +671,19 @@
                                     <div class="switch switch-small">
                                         <input type="text" class="form-control" id="soar_test_dsn" key="soar_test_dsn"
                                                value="{{ config.soar_test_dsn }}"
-                                               placeholder="SOAR测试实例：user:pwd@host:port/db" />
+                                               placeholder="SOARTestInstance：user:pwd@host:port/db" />
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <br>
-                        <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <h6 style="color:red">注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
-                        <h6 style="color:red">注2：企业微信自建应用开启后，若未配置企业微信UserID，则默认取用户的username作为UserId</h6>
-                        <h6 style="color:red">注3：企业微信群机器人需要配置资源组webhook地址（企业微信群机器人是通知到群；企业微信自建应用是通过应用通知到指定人）</h6>
+                        <h4 style="color: darkgrey;display: inline"><b>{% trans "Notification Configuration" %}</b></h4>&nbsp;&nbsp;&nbsp;
+                        <h6 style="color:red">{% trans "Note 1: DingTalk Webhook requires configuring group Webhook address. Webhook cannot notify specific users." %}</h6>
+                        <h6 style="color:red">{% trans "Note 2: After enabling WeChat Work app, if WeChat Work UserID is not configured, username will be used as UserId by default." %}</h6>
+                        <h6 style="color:red">{% trans "Note 3: WeChat Work group bot requires configuring group webhook address. Group bot notifies groups; WeChat Work app can notify specific users." %}</h6>
                         <hr/>
                         <div class="form-horizontal">
-                        <h5 style="color: darkgrey"><b>工单通知</b></h5>
+                        <h5 style="color: darkgrey"><b>{% trans "Ticket Notification" %}</b></h5>
                             <hr/>
                             <div class="form-group">
                                 <label for="archery_base_url"
@@ -696,7 +693,7 @@
                                            id="archery_base_url"
                                            key="archery_base_url"
                                            value="{{ config.archery_base_url }}"
-                                           placeholder="系统HOST地址, 用于通知链接，如https://archery.com" />
+                                           placeholder="{% trans 'System HOST address for notification links, e.g. https://archery.com' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -706,7 +703,7 @@
                                     <select id="ddl_notify_auth_group" key="ddl_notify_auth_group"
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-live-search="true"
-                                            data-none-selected-text="DDL工单通知权限组"
+                                            data-none-selected-text="{% trans 'DDL ticket notification permission groups' %}"
                                             multiple data-selected-text-format="count > 3"
                                             required>
                                         {% for auth_group in auth_group_list %}
@@ -727,7 +724,7 @@
                                     <select id="notify_phase_control" key="notify_phase_control"
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-live-search="true"
-                                            data-none-selected-text="工单通知分阶段控制"
+                                            data-none-selected-text="{% trans 'Ticket notification stage control' %}"
                                             multiple required>
                                     </select>
                                 </div>
@@ -739,9 +736,9 @@
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="mail" key="mail" value="{{ config.mail }}"
-                                                   type="checkbox" /> 是否开启邮件通知
+                                                   type="checkbox" /> {% trans "Enable email notification" %}
                                         </label>
-                                        <button id='check_email' class='btn-sm btn-info'>测试连接</button>
+                                        <button id='check_email' class='btn-sm btn-info'>{% trans "Test Connection" %}</button>
                                     </div>
                                 </div>
                             </div>
@@ -754,7 +751,7 @@
                                             <label>
                                                 <input id="mail_ssl" key="mail_ssl"
                                                        value="{{ config.mail_ssl }}"
-                                                       type="checkbox" /> 是否使用SSL
+                                                       type="checkbox" /> {% trans "Use SSL" %}
                                             </label>
                                         </div>
                                     </div>
@@ -767,7 +764,7 @@
                                                id="mail_smtp_server"
                                                key="mail_smtp_server"
                                                value="{{ config.mail_smtp_server }}"
-                                               placeholder="邮件smtp地址" />
+                                               placeholder="{% trans 'Email SMTP address' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -778,7 +775,7 @@
                                                id="mail_smtp_port"
                                                key="mail_smtp_port"
                                                value="{{ config.mail_smtp_port }}"
-                                               placeholder="邮件smtp端口" />
+                                               placeholder="{% trans 'Email SMTP port' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -789,7 +786,7 @@
                                                id="mail_smtp_user"
                                                key="mail_smtp_user"
                                                value="{{ config.mail_smtp_user }}"
-                                               placeholder="邮箱账号" />
+                                               placeholder="{% trans 'Email account' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -800,7 +797,7 @@
                                                id="mail_smtp_password"
                                                key="mail_smtp_password"
                                                value="{{ config.mail_smtp_password }}"
-                                               placeholder="邮箱账号密码" />
+                                               placeholder="{% trans 'Email account password' %}" />
                                     </div>
                                 </div>
                             </div>
@@ -811,7 +808,7 @@
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="ding" key="ding" value="{{ config.ding }}"
-                                                   type="checkbox" /> 是否开启钉钉Webhook通知
+                                                   type="checkbox" /> {% trans "Enable DingTalk Webhook notification" %}
                                         </label>
                                     </div>
                                 </div>
@@ -824,7 +821,7 @@
                                         <label>
                                             <input id="ding_to_person" key="ding_to_person"
                                                    value="{{ config.ding_to_person }}"
-                                                   type="checkbox" /> 是否开启钉钉个人消息通知
+                                                   type="checkbox" /> {% trans "Enable DingTalk personal message notification" %}
                                         </label>
                                     </div>
                                 </div>
@@ -832,9 +829,9 @@
                             <div id="div-ding-config" style="display: none">
                                 <div class="form-group">
                                     <i class="ace-icon fa fa-hand-o-right"></i>
-                                    创建钉钉Archery微应用参考：<a target="_blank"
-                                                        href="https://ding-doc.dingtalk.com/doc#/bgb96b/aw3h75  ">钉钉企业接入开发文档</a>
-                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户
+                                    {% trans "Create DingTalk Archery mini-app reference:" %} <a target="_blank"
+                                                        href="https://ding-doc.dingtalk.com/doc#/bgb96b/aw3h75">{% trans "DingTalk Enterprise Development Documentation" %}</a>
+                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>SyncUser
                                 </button>
                                 </div>
                                 <div class="form-group">
@@ -845,7 +842,7 @@
                                                id="ding_agent_id"
                                                key="ding_agent_id"
                                                value="{{ config.ding_agent_id }}"
-                                               placeholder="微应用Archery的AgentId" />
+                                               placeholder="{% trans 'Archery mini-app AgentId' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -856,7 +853,7 @@
                                                id="ding_app_key"
                                                key="ding_app_key"
                                                value="{{ config.ding_app_key }}"
-                                               placeholder="微应用Archery的AppKey" />
+                                               placeholder="{% trans 'Archery mini-app AppKey' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -867,7 +864,7 @@
                                                id="ding_app_secret"
                                                key="ding_app_secret"
                                                value="{{ config.ding_app_secret }}"
-                                               placeholder="微应用Archery的AppSecret" />
+                                               placeholder="{% trans 'Archery mini-app AppSecret' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -878,7 +875,7 @@
                                                id="ding_archery_username"
                                                key="ding_archery_username"
                                                value="{{ config.ding_archery_username }}"
-                                               placeholder="Archery.username对应钉钉里的字段" />
+                                               placeholder="{% trans 'Column in DingTalk corresponding to Archery.username' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -888,20 +885,20 @@
                                         <textarea class="form-control"
                                                   id="ding_dept_ids"
                                                   key="ding_dept_ids"
-                                                  placeholder="钉钉部门id，使用逗号分隔">{{ config.ding_dept_ids }}</textarea />
+                                                  placeholder="{% trans 'DingTalk department IDs, comma separated' %}">{{ config.ding_dept_ids }}</textarea />
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label for="wx"
-                                       class="col-sm-4 control-label">企业微信自建应用</label>
+                                       class="col-sm-4 control-label">{% trans "WeChat Work App" %}</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="wx" key="wx"
                                                    value="{{ config.wx }}"
-                                                   type="checkbox" /> 是否开启企业微信自建应用通知
+                                                   type="checkbox" /> {% trans "Enable WeChat Work app notification" %}
                                         </label>
                                     </div>
                                 </div>
@@ -909,9 +906,9 @@
                             <div id="div-wx-config" style="display: none">
                                 <div class="form-group">
                                     <i class="ace-icon fa fa-hand-o-right"></i>
-                                    创建企业微信应用参考：<a target="_blank"
-                                                  href="https://work.weixin.qq.com/api/doc#90000/90135/90226">企业微信接入开发文档</a>
-                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
+                                    {% trans "Create WeChat Work app reference:" %} <a target="_blank"
+                                                  href="https://work.weixin.qq.com/api/doc#90000/90135/90226">{% trans "WeChat Work Development Documentation" %}</a>
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>SyncUser#}
                                     </button>
                                 </div>
                                 <div class="form-group">
@@ -922,7 +919,7 @@
                                                id="wx_corpid"
                                                key="wx_corpid"
                                                value="{{ config.wx_corpid }}"
-                                               placeholder="企业微信的企业ID" />
+                                               placeholder="{% trans 'WeChat Work Corp ID' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -933,7 +930,7 @@
                                                id="wx_agent_id"
                                                key="wx_agent_id"
                                                value="{{ config.wx_agent_id }}"
-                                               placeholder="应用的AgentId" />
+                                               placeholder="{% trans 'App AgentId' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -944,45 +941,45 @@
                                                id="wx_app_secret"
                                                key="wx_app_secret"
                                                value="{{ config.wx_app_secret }}"
-                                               placeholder="应用的Secret" />
+                                               placeholder="{% trans 'App Secret' %}" />
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label for="qywx_webhook"
-                                       class="col-sm-4 control-label">企业微信群机器人</label>
+                                       class="col-sm-4 control-label">{% trans "WeChat Work Group Bot" %}</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="qywx_webhook" key="qywx_webhook"
                                                    value="{{ config.qywx_webhook }}"
-                                                   type="checkbox" /> 是否开启企业微信群机器人通知
+                                                   type="checkbox" /> {% trans "Enable WeChat Work group bot notification" %}
                                         </label>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label for="feishu_webhook"
-                                       class="col-sm-4 control-label">飞书Webhook</label>
+                                       class="col-sm-4 control-label">{% trans "Feishu Webhook" %}</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="feishu_webhook" key="feishu_webhook"
                                                    value="{{ config.feishu_webhook }}"
-                                                   type="checkbox" /> 是否开启飞书Webhook通知
+                                                   type="checkbox" /> {% trans "Enable Feishu Webhook notification" %}
                                         </label>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label for="feishu"
-                                       class="col-sm-4 control-label">飞书</label>
+                                       class="col-sm-4 control-label">{% trans "Feishu" %}</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="feishu" key="feishu"
                                                    value="{{ config.feishu }}"
-                                                   type="checkbox" /> 是否开启飞书通知
+                                                   type="checkbox" /> {% trans "Enable Feishu notification" %}
                                         </label>
                                     </div>
                                 </div>
@@ -990,55 +987,55 @@
                             <div id="div-feishu-config" style="display: none">
                                 <div class="form-group">
                                     <i class="ace-icon fa fa-hand-o-right"></i>
-                                    创建飞书应用参考：<a target="_blank"
-                                                href="https://open.feishu.cn/document/uQjL04CN/ukzM04SOzQjL5MDN">飞书接入开发文档</a>
-                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
+                                    {% trans "Create Feishu app reference:" %} <a target="_blank"
+                                                href="https://open.feishu.cn/document/uQjL04CN/ukzM04SOzQjL5MDN">{% trans "Feishu Development Documentation" %}</a>
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>SyncUser#}
                                     </button>
                                 </div>
                                 <div class="form-group">
                                     <label for="feishu_appid"
-                                           class="col-sm-4 control-label">飞书应用AppID</label>
+                                           class="col-sm-4 control-label">{% trans "Feishu App ID" %}</label>
                                     <div class="col-sm-5">
                                         <input type="text" class="form-control"
                                                id="feishu_appid"
                                                key="feishu_appid"
                                                value="{{ config.feishu_appid }}"
-                                               placeholder="飞书应用AppID" />
+                                               placeholder="{% trans 'Feishu App ID' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="feishu_app_secret"
-                                           class="col-sm-4 control-label">飞书AppSecret</label>
+                                           class="col-sm-4 control-label">{% trans "Feishu AppSecret" %}</label>
                                     <div class="col-sm-5">
                                         <input type="text" class="form-control"
                                                id="feishu_app_secret"
                                                key="feishu_app_secret"
                                                value="{{ config.feishu_app_secret }}"
-                                               placeholder="飞书AppSecret" />
+                                               placeholder="{% trans 'Feishu AppSecret' %}" />
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label for="generic_webhook_url"
-                                       class="col-sm-4 control-label">通用Webhook地址</label>
+                                       class="col-sm-4 control-label">{% trans "Generic Webhook URL" %}</label>
                                 <div class="col-sm-5">
                                     <input class="form-control"
                                            id="generic_webhook_url"
                                            key="generic_webhook_url"
                                            value="{{ config.generic_webhook_url }}"
-                                           placeholder="通用 webhook 地址, 每个工单的每个状态转变均会调用" />
+                                           placeholder="{% trans 'Generic webhook URL, called on every status change of each workflow' %}" />
                                 </div>
                             </div>
-                            <h5 style="color: darkgrey"><b>短信服务</b></h5>
+                            <h5 style="color: darkgrey"><b>{% trans "SMS Service" %}</b></h5>
                             <hr/>
                             <div class="form-group">
                                 <label for="sms_provider"
-                                       class="col-sm-4 control-label">短信服务提供商</label>
+                                       class="col-sm-4 control-label">{% trans "SMS Service Provider" %}</label>
                                 <div class="col-sm-5">
                                     <select id="sms_provider" key="sms_provider"
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-live-search="true"
-                                            data-none-selected-text="短信服务商"
+                                            data-none-selected-text="{% trans 'SMS Provider' %}"
                                             required>
                                     </select>
                                 </div>
@@ -1052,7 +1049,7 @@
                                                id="aliyun_access_key_id"
                                                key="aliyun_access_key_id"
                                                value="{{ config.aliyun_access_key_id }}"
-                                               placeholder="阿里云访问密钥ID，用于标识用户" />
+                                               placeholder="{% trans 'Aliyun Access Key ID, used to identify User' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -1063,7 +1060,7 @@
                                                id="aliyun_access_key_secret"
                                                key="aliyun_access_key_secret"
                                                value="{{ config.aliyun_access_key_secret }}"
-                                               placeholder="阿里云访问密钥（AccessKey），用于验证用户的密钥" />
+                                               placeholder="{% trans 'Aliyun Access Key Secret, used to verify User identity' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -1074,7 +1071,7 @@
                                                id="aliyun_sign_name"
                                                key="aliyun_sign_name"
                                                value="{{ config.aliyun_sign_name }}"
-                                               placeholder="短信签名，需为审核通过状态" />
+                                               placeholder="{% trans 'SMS signature, must be approved status' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -1085,7 +1082,7 @@
                                                id="aliyun_template_code"
                                                key="aliyun_template_code"
                                                value="{{ config.aliyun_template_code }}"
-                                               placeholder="短信模板Code，需为审核通过状态" />
+                                               placeholder="{% trans 'SMS template code, must be approved status' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -1096,7 +1093,7 @@
                                                id="aliyun_variable_name"
                                                key="aliyun_variable_name"
                                                value="{{ config.aliyun_variable_name }}"
-                                               placeholder="短信模板中的变量名，如：code" />
+                                               placeholder="{% trans 'Variable name in SMS template, e.g.: code' %}" />
                                     </div>
                                 </div>
                             </div>
@@ -1109,7 +1106,7 @@
                                                id="tencent_secret_id"
                                                key="tencent_secret_id"
                                                value="{{ config.tencent_secret_id }}"
-                                               placeholder="用于标识API调用者的身份" />
+                                               placeholder="{% trans 'Used to identify API caller identity' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -1120,7 +1117,7 @@
                                                id="tencent_secret_key"
                                                key="tencent_secret_key"
                                                value="{{ config.tencent_secret_key }}"
-                                               placeholder="用于加密签名字符串和服务器端验证签名字符串的密钥" />
+                                               placeholder="{% trans 'Key used for encrypting signature and server-side verification' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -1131,7 +1128,7 @@
                                                id="tencent_sign_name"
                                                key="tencent_sign_name"
                                                value="{{ config.tencent_sign_name }}"
-                                               placeholder="短信签名，需为审核通过状态" />
+                                               placeholder="{% trans 'SMS signature, must be approved status' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -1142,7 +1139,7 @@
                                                id="tencent_template_id"
                                                key="tencent_template_id"
                                                value="{{ config.tencent_template_id }}"
-                                               placeholder="短信模板ID，需为审核通过状态" />
+                                               placeholder="{% trans 'SMS template ID, must be approved status' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -1153,14 +1150,14 @@
                                                id="tencent_sdk_appid"
                                                key="tencent_sdk_appid"
                                                value="{{ config.tencent_sdk_appid }}"
-                                               placeholder="短信应用ID" />
+                                               placeholder="{% trans 'SMS Application ID' %}" />
                                     </div>
                                 </div>
                             </div>
                         <br>
                         </div>
 
-                        <h4 style="color: darkgrey; display: inline;"><b>OIDC 配置</b></h4>
+                        <h4 style="color: darkgrey; display: inline;"><b>OIDC Config</b></h4>
                         <hr/>
 
                         <div class="form-horizontal">
@@ -1172,14 +1169,14 @@
                                            id="oidc_btn_name"
                                            key="oidc_btn_name"
                                            value="{{ config.oidc_btn_name }}"
-                                           placeholder="登录按钮显示名称，比如Login With KeyCloak" />
+                                           placeholder="{% trans 'Login button display name, e.g. Login With KeyCloak' %}" />
                                 </div>
                             </div>
                         </div>
                         
-                        <h4 style="color: darkgrey; display: inline;"><b>OPENAI 配置</b></h4>
-                        <h6 style="color:red">注1：若无OPENAI_API_KEY配置，则不开启相关功能</h6>
-                        <h6 style="color:red">注2：DEFAULT_CHAT_MODEL 默认配置为gpt-3.5-turbo，DEFAULT_QUERY_TEMPLATE 默认配置为系统定义的模板</h6>
+                        <h4 style="color: darkgrey; display: inline;"><b>OPENAI Config</b></h4>
+                        <h6 style="color:red">{% trans "Note 1: If OPENAI_API_KEY is not configured, related features will not be enabled" %}</h6>
+                        <h6 style="color:red">{% trans "Note 2: DEFAULT_CHAT_MODEL defaults to gpt-3.5-turbo, DEFAULT_QUERY_TEMPLATE defaults to system-defined template" %}</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -1219,12 +1216,12 @@
                                     <input type="text" class="form-control" id="default_query_template"
                                            key="default_query_template"
                                            value="{{ config.default_query_template }}"
-                                           placeholder="默认生成SQL语句的Django模板, 无模板会导致生成结果失败, 需提供db_type/table_schema/user_input" />
+                                           placeholder="{% trans 'Default Django template for generating SQL statements, empty template will cause generation to fail, requires db_type/table_schema/user_input' %}" />
                                 </div>
                             </div>
                         </div>
 
-                        <h4 style="color: darkgrey"><b>其他配置</b></h4>
+                        <h4 style="color: darkgrey"><b>{% trans "Other Configuration" %}</b></h4>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -1235,7 +1232,7 @@
                                            id="index_path_url"
                                            key="index_path_url"
                                            value="{{ config.index_path_url }}"
-                                           placeholder="系统首页路径，默认SQL工单页面：sqlworkflow" />
+                                           placeholder="{% trans 'System homepage path, default is SQL workflow page: sqlworkflow' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1246,7 +1243,7 @@
                                            id="my2sql"
                                            key="my2sql"
                                            value="{{ config.my2sql }}"
-                                           placeholder="my2sql调用路径，类似/opt/archery/src/plugins/my2sql" />
+                                           placeholder="{% trans 'my2sql call path, e.g. /opt/archery/src/plugins/my2sql' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1256,7 +1253,7 @@
                                     <select id="default_auth_group" key="default_auth_group"
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-live-search="true"
-                                            data-none-selected-text="新用户首次登录自动关联权限组"
+                                            data-none-selected-text="{% trans 'Permission groups automatically assigned to new users on first login' %}"
                                             multiple data-selected-text-format="count > 3"
                                             required>
                                         {% for auth_group in auth_group_list %}
@@ -1277,7 +1274,7 @@
                                     <select id="default_resource_group" key="default_resource_group"
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-live-search="true"
-                                            data-none-selected-text="新用户首次登录自动关联资源组"
+                                            data-none-selected-text="{% trans 'Resource groups automatically assigned to new users on first login' %}"
                                             multiple data-selected-text-format="count > 3"
                                             required>
                                         {% for resource_group in group_list %}
@@ -1298,7 +1295,7 @@
                                     <select id="api_user_whitelist" key="api_user_whitelist"
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-live-search="true"
-                                            data-none-selected-text="API用户白名单"
+                                            data-none-selected-text="{% trans 'API User Whitelist' %}"
                                             multiple data-selected-text-format="count > 5"
                                             required>
                                     </select>
@@ -1312,7 +1309,7 @@
                                            id="lock_time_threshold"
                                            key="lock_time_threshold"
                                            value="{{ config.lock_time_threshold }}"
-                                           placeholder="账户登录失败锁定时间(秒)" />
+                                           placeholder="{% trans 'Account lockout time after failed login (seconds)' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1323,7 +1320,7 @@
                                            id="lock_cnt_threshold"
                                            key="lock_cnt_threshold"
                                            value="{{ config.lock_cnt_threshold }}"
-                                           placeholder="账户登录失败几次锁账户" />
+                                           placeholder="{% trans 'Number of failed login attempts before account lockout' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1334,7 +1331,7 @@
                                         <label>
                                             <input id="sign_up_enabled" key="sign_up_enabled"
                                                    value="{{ config.sign_up_enabled }}"
-                                                   type="checkbox" /> 是否开启注册功能
+                                                   type="checkbox" /> {% trans "Enable user registration" %}
                                         </label>
                                     </div>
                                 </div>
@@ -1347,7 +1344,7 @@
                                         <label>
                                             <input id="watermark_enabled" key="watermark_enabled"
                                                    value="{{ config.watermark_enabled }}"
-                                                   type="checkbox" /> 是否开启水印功能
+                                                   type="checkbox" /> {% trans "Enable watermark" %}
                                         </label>
                                     </div>
                                 </div>
@@ -1360,7 +1357,7 @@
                                         <label>
                                             <input id="enforce_2fa" key="enforce_2fa"
                                                    value="{{ config.enforce_2fa }}"
-                                                   type="checkbox" /> 登录是否强制使用2FA
+                                                   type="checkbox" /> {% trans "Enforce 2FA on login" %}
                                         </label>
                                     </div>
                                 </div>
@@ -1373,7 +1370,7 @@
                                         <label>
                                             <input id="announcement_content_enabled" key="announcement_content_enabled"
                                                    value="{{ config.announcement_content_enabled }}"
-                                                   type="checkbox"> 是否开启公告
+                                                   type="checkbox"> {% trans "Enable announcements" %}
                                         </label>
                                     </div>
                                 </div>
@@ -1386,7 +1383,7 @@
                                            id="announcement_content"
                                            key="announcement_content"
                                            value="{{ config.announcement_content }}"
-                                           placeholder="公告内容">
+                                           placeholder="{% trans 'Announcement content' %}">
                                             
                                 </div>
                             </div>
@@ -1398,33 +1395,33 @@
                                            id="custom_title_suffix"
                                            key="custom_title_suffix"
                                            value="{{ config.custom_title_suffix }}"
-                                           placeholder="在网站标题及登录页面追加此内容, 可用于多archery实例的区分">
+                                           placeholder="{% trans 'Append this content to website title and login page, useful for distinguishing multiple Archery instances' %}">
                                 </div>
                             </div>
                         </div>
                         <hr />
                         <div class="form-group">
                             <div class="col-sm-offset-4 col-sm-10">
-                                <button id="saveconfig" type="button" class="btn btn-primary">保存配置</button>
+                                <button id="saveconfig" type="button" class="btn btn-primary">SaveConfig</button>
                             </div>
                         </div>
                     </div>
                     <div id="div-workflow-config" class="form-inline form-group" style="display: none">
                         <h5 class="control-label text-bold" style="color: red">
-                            规则：<b>选择多个权限组即审批流程为多级审核，按照选择顺序进行流转，权限组内用户都可审核</b></h5>
+                            {% trans "Rules:" %} <b>{% trans "Selecting multiple permission groups creates multi-level approval, flowing in selection order, all users in a group can approve" %}</b></h5>
                         <br>
-                        <h5 class="control-label text-bold">当前审批流程：<b id="workflow_auditors"></b></h5>
+                        <h5 class="control-label text-bold">{% trans "Current Approval Process:" %} <b id="workflow_auditors"></b></h5>
                         <br>
-                        <div><h5 style="float:left;" class="control-label text-bold">变更审批流程：</h5></div>
+                        <div><h5 style="float:left;" class="control-label text-bold">{% trans "Change Approval Process:" %}</h5></div>
                         <div class="form-group form-inline">
                             <div class="form-group">
                                 <input type="text" class="form-control" id="workflow_auditors_text"
                                        disabled="disabled" style="width: 283px">
                             </div>
                             <div class="form-group">
-                                <select id="group_auditors" name="group" title="请选择审批权限组"
+                                <select id="group_auditors" name="group" title="{% trans 'Please select approver permission group' %}"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="审批人" data-placeholder="审批人:" data-live-search="true"
+                                        data-name="{% trans 'Approver' %}" data-placeholder="{% trans 'Approver:' %}" data-live-search="true"
                                         required>
                                     {% for auth_group in auth_group_list %}
                                         <option value="{{ auth_group.name }}">{{ auth_group.name }}
@@ -1433,8 +1430,8 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <button id="btn-workflow-config" class="btn btn-default">变更</button>
-                            <button id="btn-workflow-config-clean" class="btn btn-default">刷新</button>
+                            <button id="btn-workflow-config" class="btn btn-default">{% trans "Change" %}</button>
+                            <button id="btn-workflow-config-clean" class="btn btn-default">{% trans "Refresh" %}</button>
                         </div>
                     </div>
                 </div>
@@ -1450,10 +1447,10 @@
     <script>
 
         $(document).ready(function (){
-            // notify_phase_control参数处理
+            // Handle notify_phase_control parameter
             let cfg_value = "{{ config.notify_phase_control }}";
             let phases = ['Apply', 'Pass', 'Execute', 'Cancel'];
-            // notify_phase_control未设置时默认全部开启
+            // Default all enabled when notify_phase_control not set
             if (cfg_value === "") {
                 for (let i in phases) {
                     let phase = "<option value=\"" + phases[i]+ "\" selected>" + phases[i] + "</option>"
@@ -1474,7 +1471,7 @@
             $("#notify_phase_control").selectpicker('render');
             $("#notify_phase_control").selectpicker('refresh');
 
-            // api_user_whitelist参数处理
+            // Handle api_user_whitelist parameter
             let api_config = "{{ config.api_user_whitelist }}";
             $.ajax({
                 type: "post",
@@ -1505,14 +1502,14 @@
             });
 
             
-            // sms_provider参数处理
+            // Handle sms_provider parameter
             function provider_display(provider) {
                 if (provider === 'disabled') {
-                    return '关闭'
+                    return 'Close'
                 } else if (provider === 'aliyun') {
-                    return '阿里云'
+                    return 'Aliyun'
                 } else if (provider === 'tencent') {
-                    return '腾讯云'
+                    return 'Tencent Cloud'
                 }
             }
             let sms_provider = "{{ config.sms_provider }}";
@@ -1538,7 +1535,7 @@
             }
         })
 
-        //配置项切换
+        //Configuration switch
         $("#config").change(function () {
             sessionStorage.setItem('config_type', $("#config").val());
             if ($("#config").val() === '0') {
@@ -1560,7 +1557,7 @@
             }
         });
 
-        // 系统设置checkbox事件
+        
         $('input[type="checkbox"]').on('switchChange.bootstrapSwitch', function (event, state) {
             let id = $(this).attr("id");
             if (state) {
@@ -1597,9 +1594,9 @@
             }
         });
 
-        // 修改系统设置
+        
         $("#saveconfig").click(function () {
-            // 当开启钉钉通知到个人时，企业id和secret等必须填写
+            // When DingTalk personal notification is enabled, company id and secret must be filled
             if ($("#ding_to_person").val() == 'true') {
                 var v1 = $("#ding_agent_id").val();
                 var v2 = $("#ding_app_key").val();
@@ -1607,7 +1604,7 @@
                 var v4 = $("#ding_dept_ids").val();
                 var v5 = $("#ding_archery_username").val();
                 if (v1 == "" || v2 == "" || v3 == "" || v4 == "" | v5 == "") {
-                    alert("当开启钉钉通知到个人时，企业id和secret等必须填写!");
+                    alert("When DingTalk personal notification is enabled, company id and secret must be filled!");
                     return;
                 }
             }
@@ -1649,12 +1646,12 @@
             });
         });
 
-        // 切换组触发工单类型切换事件
+        
         $("#group").change(function () {
             $("#workflow_type").trigger('change')
         });
 
-        // 点击用户填充到workflow_auditors_text
+        
         $("#group_auditors").change(function () {
             var auth_group = $(this).find(':selected').attr("disabled", "disabled").val();
             var auditors = $("#workflow_auditors_text").val();
@@ -1667,20 +1664,20 @@
             $('#group_auditors').selectpicker('refresh');
         });
 
-        // 重置权限组选择框状态
+        
         $("#group_auditors").on("reset", function () {
             $('#group_auditors').selectpicker('val', []);
             $(this).children().removeAttr("disabled");
             $(this).selectpicker("refresh");
         });
 
-        // 清空审核人信息
+        
         $("#btn-workflow-config-clean").click(function () {
             $('#group_auditors').trigger("reset");
             $("#workflow_auditors_text").val('');
         });
 
-        // 切换工单类型获取对应组负责人
+        
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
             $('#group_auditors').trigger("reset");
@@ -1712,7 +1709,7 @@
             }
         });
 
-        // 变更组工单审批流程
+        
         $("#btn-workflow-config").click(function () {
             if ($("#group").val() && $("#workflow_type").val() && $("#workflow_auditors_text").val()) {
                 $(this).addClass('disabled');
@@ -1733,7 +1730,7 @@
                     },
                     success: function (data) {
                         if (data.status === 0) {
-                            //alert('修改成功');
+                            //alert('Changed successfully');
                             $("#workflow_type").trigger("change")
                         } else {
                             alert(data.msg);
@@ -1744,12 +1741,12 @@
                     }
                 });
             } else {
-                alert('请选择组、工单类型和审批流程！')
+                alert('Please select group, ticket type and approval process!')
             }
 
         });
 
-        // 检测inception
+        
         $("#check_incption").click(function () {
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
@@ -1771,7 +1768,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('Inception测试连接成功，请点击页面下方的保存按钮生效！')
+                        alert('Inception test connection successful, please click Save button at bottom of page to take effect!')
                     } else {
                         alert(data.msg);
                     }
@@ -1782,7 +1779,7 @@
             });
         });
 
-        // 检测goInception
+        
         $("#check_goincption").click(function () {
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
@@ -1806,7 +1803,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('goInception和备份库测试连接成功，请点击页面下方的保存按钮生效！')
+                        alert('goInception and backup database test connection successful, please click Save button at bottom of page to take effect!')
                     } else {
                         alert(data.msg);
                     }
@@ -1817,7 +1814,7 @@
             });
         });
 
-        // 检测邮件
+        
         $("#check_email").click(function () {
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
@@ -1839,7 +1836,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('测试邮件已成功发送给当前用户，注意查收，请点击页面下方的保存按钮生效！')
+                        alert('Test email successfully sent to current user, please check and click Save button at bottom of page to take effect!')
                     } else {
                         alert(data.msg);
                     }
@@ -1850,7 +1847,7 @@
             });
         });
         
-        // 检查后端存储的连通性
+        // Check backend storage connectivity
         $("#check_storage_conn").click(function () {
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
@@ -1905,7 +1902,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('连接测试成功，请点击页面下方的保存按钮生效！')
+                        alert('Connection test successful, please click Save button at bottom of page to take effect!')
                     } else {
                         alert(data.msg);
                     }
@@ -1916,16 +1913,16 @@
             });
         });
 
-        // 同步钉钉用户信息
+        
         $("#sync_ding_user").click(function () {
-            // 先检查配置信息
+            
             var v1 = $("#ding_agent_id").val();
             var v2 = $("#ding_app_key").val();
             var v3 = $("#ding_app_secret").val();
             var v4 = $("#ding_dept_ids").val();
             var v5 = $("#ding_archery_username").val();
             if (v1 == "" || v2 == "" || v3 == "" || v4 == "" | v5 == "") {
-                alert("请先保存相关配置信息！");
+                alert("Please save related configuration information first!");
                 return;
             }
             $(this).addClass('disabled');
@@ -1941,7 +1938,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('已添加定时同步任务并且触发同步，点击确认查看任务状态');
+                        alert('Scheduled sync task added and sync triggered, click OK to view task status');
                         window.open('/admin/django_q/schedule/?q=sync_ding_user_id')
                     } else {
                         alert(data.msg);
@@ -1954,7 +1951,7 @@
         });
 
 
-        // 短信服务商切换
+        
         $("#sms_provider").change(function () {
             let provider = this.value;
             if (provider === 'disabled') {
@@ -1969,7 +1966,7 @@
             }
         })
 
-        //自动填充操作项
+        
         $(document).ready(function () {
             if (sessionStorage.getItem('config_type')) {
                 $("#config").val(sessionStorage.getItem('config_type')).trigger("change")
