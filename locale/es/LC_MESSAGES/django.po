@@ -646,3 +646,43 @@ msgstr "Pausa (segundos)"
 
 msgid "Delete"
 msgstr "Eliminar"
+
+# Dashboard chart translations
+msgid "Finished"
+msgstr "Finalizado"
+
+msgid "Auto Review Failed"
+msgstr "Revisión Automática Fallida"
+
+msgid "Aborted"
+msgstr "Abortado"
+
+msgid "Exception"
+msgstr "Excepción"
+
+msgid "Review Passed"
+msgstr "Revisión Aprobada"
+
+msgid "Queuing"
+msgstr "En Cola"
+
+msgid "Executing"
+msgstr "Ejecutando"
+
+msgid "Waiting for Review"
+msgstr "Esperando Revisión"
+
+msgid "Scheduled"
+msgstr "Programado"
+
+msgid "Unknown"
+msgstr "Desconocido"
+
+msgid "DDL"
+msgstr "DDL"
+
+msgid "DML"
+msgstr "DML"
+
+msgid "Other"
+msgstr "Otro"

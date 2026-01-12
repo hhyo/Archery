@@ -36,10 +36,10 @@ class ChartDao(object):
             then 'DDL'
           when syntax_type = 2
             then 'DML'
-          else '其他'
+          else 'other'
           end as syntax_type,
           count(*)
-        from sql_workflow 
+        from sql_workflow
         where create_time >= '{}' and create_time <= '{}'
         group by syntax_type;""".format(
             start_date, end_date
@@ -203,28 +203,10 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
     def query_sql_prod_bill(self, start_date, end_date):
         sql = """
             SELECT
-                CASE
-                        a.STATUS 
-                        WHEN 'workflow_finish' THEN
-                        '已正常结束' 
-                        WHEN 'workflow_autoreviewwrong' THEN
-                        '自动审核不通过' 
-                        WHEN 'workflow_abort' THEN
-                        '人工终止流程' 
-                        WHEN 'workflow_exception' THEN
-                        '执行有异常' 
-                        WHEN 'workflow_review_pass' THEN
-                        '审核通过' 
-                        WHEN 'workflow_queuing' THEN
-                        '排队中' 
-                        WHEN 'workflow_executing' THEN
-                        '确认中' 
-                        WHEN 'workflow_manreviewing' THEN
-                        '等待审核人审核' ELSE '未知状态' 
-                    END AS status_desc,
-                    COUNT( 1 ) AS count 
+                a.STATUS AS status_desc,
+                COUNT( 1 ) AS count
                 FROM sql_workflow a
-                    INNER JOIN sql_instance b ON ( a.instance_id = b.id ) 
+                    INNER JOIN sql_instance b ON ( a.instance_id = b.id )
                 WHERE a.create_time >= '{}' and a.create_time <= '{}'
                 GROUP BY a.STATUS
                 ORDER BY 1;

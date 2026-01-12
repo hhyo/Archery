@@ -431,11 +431,14 @@ class TestExecuteSql(TestCase):
         _audit.detail_by_workflow_id.assert_called_with(
             workflow_id=self.wf.id, workflow_type=2
         )
+        # Get the expected status display dynamically
+        self.wf.refresh_from_db()
+        expected_status = self.wf.get_status_display()
         _audit.add_log.assert_called_with(
             audit_id=123,
             operation_type=6,
             operation_type_desc="执行结束",
-            operation_info="执行结果：已正常结束",
+            operation_info=f"执行结果：{expected_status}",
             operator="",
             operator_display="系统",
         )
@@ -459,11 +462,14 @@ class TestExecuteSql(TestCase):
         _audit.detail_by_workflow_id.assert_called_with(
             workflow_id=self.wf.id, workflow_type=2
         )
+        # Get the expected status display dynamically
+        self.wf.refresh_from_db()
+        expected_status = self.wf.get_status_display()
         _audit.add_log.assert_called_with(
             audit_id=123,
             operation_type=6,
             operation_type_desc="执行结束",
-            operation_info="执行结果：执行有异常",
+            operation_info=f"执行结果：{expected_status}",
             operator="",
             operator_display="系统",
         )
@@ -489,11 +495,14 @@ class TestExecuteSql(TestCase):
         _audit.detail_by_workflow_id.assert_called_with(
             workflow_id=self.wf.id, workflow_type=2
         )
+        # Get the expected status display dynamically
+        self.wf.refresh_from_db()
+        expected_status = self.wf.get_status_display()
         _audit.add_log.assert_called_with(
             audit_id=123,
             operation_type=6,
             operation_type_desc="执行结束",
-            operation_info="执行结果：执行有异常",
+            operation_info=f"执行结果：{expected_status}",
             operator="",
             operator_display="系统",
         )

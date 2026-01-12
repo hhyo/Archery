@@ -646,3 +646,43 @@ msgstr "Sleep (seconds)"
 
 msgid "Delete"
 msgstr "Delete"
+
+# Dashboard chart translations
+msgid "Finished"
+msgstr "Finished"
+
+msgid "Auto Review Failed"
+msgstr "Auto Review Failed"
+
+msgid "Aborted"
+msgstr "Aborted"
+
+msgid "Exception"
+msgstr "Exception"
+
+msgid "Review Passed"
+msgstr "Review Passed"
+
+msgid "Queuing"
+msgstr "Queuing"
+
+msgid "Executing"
+msgstr "Executing"
+
+msgid "Waiting for Review"
+msgstr "Waiting for Review"
+
+msgid "Scheduled"
+msgstr "Scheduled"
+
+msgid "Unknown"
+msgstr "Unknown"
+
+msgid "DDL"
+msgstr "DDL"
+
+msgid "DML"
+msgstr "DML"
+
+msgid "Other"
+msgstr "Other"

@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 
 from sql.models import SqlWorkflow, QueryPrivilegesApply, Users, Instance
 
@@ -15,6 +16,32 @@ from pyecharts import options as opts
 from pyecharts.charts import Pie, Bar, Line
 
 CurrentConfig.ONLINE_HOST = "/static/echarts/"
+
+
+def translate_workflow_status(status_code):
+    """Translate workflow status codes to localized strings"""
+    status_translations = {
+        'workflow_finish': _('Finished'),
+        'workflow_autoreviewwrong': _('Auto Review Failed'),
+        'workflow_abort': _('Aborted'),
+        'workflow_exception': _('Exception'),
+        'workflow_review_pass': _('Review Passed'),
+        'workflow_queuing': _('Queuing'),
+        'workflow_executing': _('Executing'),
+        'workflow_manreviewing': _('Waiting for Review'),
+        'workflow_timingtask': _('Scheduled'),
+    }
+    return status_translations.get(status_code, _('Unknown'))
+
+
+def translate_syntax_type(syntax_code):
+    """Translate syntax type codes to localized strings"""
+    syntax_translations = {
+        'DDL': _('DDL'),
+        'DML': _('DML'),
+        'other': _('Other'),
+    }
+    return syntax_translations.get(syntax_code, syntax_code)
 
 
 @permission_required("sql.menu_dashboard", raise_exception=True)
@@ -105,7 +132,7 @@ def get_chart_data(start_date, end_date):
 
     # SQL语法类型
     data = chart_dao.syntax_type(start_date, end_date)
-    attr = [row[0] for row in data["rows"]]
+    attr = [translate_syntax_type(row[0]) for row in data["rows"]]
     value = [row[1] for row in data["rows"]]
     pie2 = create_pie_chart(attr, value)
 
@@ -173,7 +200,7 @@ def get_chart_data(start_date, end_date):
 
     # SQL上线工单
     data = chart_dao.query_sql_prod_bill(start_date, end_date)
-    attr = [row[0] for row in data["rows"]]
+    attr = [translate_workflow_status(row[0]) for row in data["rows"]]
     value = [row[1] for row in data["rows"]]
     bar5 = create_bar_chart(attr, value)
 

@@ -189,8 +189,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-# DAF USE_TZ = False
-USE_TZ = True
+USE_TZ = False
 
 # Locale paths for translation files
 LOCALE_PATHS = [
