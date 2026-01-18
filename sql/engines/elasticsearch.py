@@ -540,6 +540,7 @@ class ElasticsearchEngineBase(EngineBase):
 
         # api-endpoint为_update时，只能post，不能put，错误写法，报错。
         # api-endpoint为_update_by_query时，只能post，不能put，错误写法，报错。
+        # api-endpoint为_delete_by_query时，只能post，不能put，错误写法，报错。
         """
         check_result = ReviewSet(full_sql=sql)
         rowid = 1
@@ -695,12 +696,26 @@ class ElasticsearchEngineBase(EngineBase):
                         affected_rows=0,
                         execute_time=0,
                     )
-            elif doc.api_endpoint not in ["", "_doc", "_update_by_query", "_update"]:
+            elif doc.api_endpoint == "_delete_by_query":
+                if doc.method == "POST":
+                    if is_pass == False:
+                        is_pass = True
+                else:
+                    result = ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage=f"不支持此操作，{doc.api_endpoint}需要使用POST方法。解析结果：{doc_desc}",
+                        sql=doc.sql,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+            elif doc.api_endpoint not in ["", "_doc", "_update_by_query", "_update", "_delete_by_query"]:
                 result = ReviewResult(
                     id=rowid,
                     errlevel=2,
                     stagestatus="驳回不支持语句",
-                    errormessage="API操作端点(API Endpoint)仅支持: 空, _doc、_update、_update_by_query。",
+                    errormessage="API操作端点(API Endpoint)仅支持: 空, _doc、_update、_update_by_query、_delete_by_query。",
                     sql=doc.sql,
                 )
             else:
@@ -772,6 +787,10 @@ class ElasticsearchEngineBase(EngineBase):
                     execute_result.rows.append(reviewResult)
                 elif doc.api_endpoint == "_update_by_query":
                     reviewResult = self.__update_by_query(conn, doc)
+                    reviewResult.id = line
+                    execute_result.rows.append(reviewResult)
+                elif doc.api_endpoint == "_delete_by_query":
+                    reviewResult = self.__delete_by_query(conn, doc)
                     reviewResult.id = line
                     execute_result.rows.append(reviewResult)
                 elif doc.api_endpoint == "_doc":
@@ -873,6 +892,28 @@ class ElasticsearchEngineBase(EngineBase):
             try:
                 response = conn.update_by_query(
                     index=doc.index_name, body=doc.doc_data_body
+                )
+                successful_count = response.get("total", 0)
+                response_str = str(response)
+            except Exception as e:
+                raise e
+        return ReviewResult(
+            errlevel=errlevel,
+            stagestatus="Execute Successfully",
+            errormessage=response_str,
+            sql=doc.sql,
+            affected_rows=successful_count,
+            execute_time=t.cost,
+        )
+
+    def __delete_by_query(self, conn, doc):
+        """ES的 update_by_query方法"""
+        errlevel = 0
+        with FuncTimer() as t:
+            try:
+                response = conn.delete_by_query(
+                    index=doc.index_name, body=doc.doc_data_body,
+                    params={'scroll_size': '3000', 'slices': '2'}
                 )
                 successful_count = response.get("total", 0)
                 response_str = str(response)
