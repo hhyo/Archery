@@ -349,6 +349,7 @@ def archive(archive_id):
     )
     args = {
         "no-version-check": True,
+        "no-check-charset": True,
         "source": source,
         "where": condition,
         "progress": 5000,
@@ -356,6 +357,8 @@ def archive(archive_id):
         "charset": "utf8",
         "limit": 10000,
         "txn-size": 1000,
+        "bulk-delete": True,
+        "bulk-insert": True,
         "sleep": sleep,
     }
 
