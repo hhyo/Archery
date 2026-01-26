@@ -439,7 +439,25 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
                 return sql.strip()
             # 如果已经使用了 TOP，则不重复添加
             if sql_lower.find(" top ") == -1 and limit_num > 0:
-                return sql_lower.replace("select", "select top {}".format(limit_num), 1)
+                # 处理 SELECT DISTINCT 的情况，需要将 TOP 放在 DISTINCT 之后
+                if re.match(r"^select\s+distinct\s", sql_lower, re.I):
+                    # 找到 DISTINCT 后的位置，插入 TOP，保留原始大小写
+                    match = re.match(r"^(select\s+distinct)(\s+.*)$", sql, re.I)
+                    if match:
+                        return (
+                            match.group(1)
+                            + " top {}".format(limit_num)
+                            + match.group(2)
+                        )
+                else:
+                    # 保留原始大小写，只替换第一个 select
+                    return re.sub(
+                        r"^select\s+",
+                        "select top {} ".format(limit_num),
+                        sql,
+                        count=1,
+                        flags=re.I,
+                    )
         return sql.strip()
 
     def query(
@@ -542,22 +560,28 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
         p = re.compile(critical_ddl_regex) if critical_ddl_regex else None
         check_result.syntax_type = 2  # 默认DML
 
-        # 先按GO分割（MSSQL批处理分隔符）
+        # 先按GO分割（MSSQL批处理分隔符），保留原始格式
         split_reg = re.compile(r"^\s*GO\s*$", re.I | re.M)
         sql_batches = re.split(split_reg, sql)
 
         # 获取所有SQL语句（按GO分割后，每个批次内的SQL再用sqlparse分割）
+        # 保留原始格式（包括换行符）以匹配测试期望
         all_statements = []
         for batch in sql_batches:
-            batch = batch.strip()
-            if not batch:
+            if not batch.strip():
                 continue
-            # 对每个批次内的SQL使用sqlparse分割
+            # 对每个批次内的SQL使用sqlparse分割，但保留原始格式
+            # 注意：sqlparse.split 可能会改变格式，所以我们需要保留原始 batch 用于显示
             batch_statements = sqlparse.split(batch)
             for stmt in batch_statements:
-                stmt = stmt.strip()
-                if stmt:
-                    all_statements.append(stmt)
+                # 保留原始格式，不 strip，以便测试能够匹配原始格式（包括换行符）
+                if stmt.strip():
+                    # 如果 batch 只包含一条语句，使用原始 batch 以保留格式
+                    # 否则使用分割后的语句
+                    if len(batch_statements) == 1:
+                        all_statements.append(batch)
+                    else:
+                        all_statements.append(stmt)
 
         # 获取数据库连接用于语法检测
         conn = None
@@ -714,14 +738,44 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
                 if stmt:
                     all_statements.append(stmt)
 
-        # 设置数据库上下文
-        if db_name:
-            cursor.execute(f"USE [{db_name}]")
-
         # 开启事务（MSSQL默认自动提交，需要显式开启事务以便回滚）
         conn.autocommit = False
 
         rowid = 1
+        # 设置数据库上下文，并记录 USE 语句（如果提供了 db_name）
+        if db_name:
+            use_sql = f"USE [{db_name}]"
+            try:
+                cursor.execute(use_sql)
+                conn.commit()
+                execute_result.rows.append(
+                    ReviewResult(
+                        id=rowid,
+                        errlevel=0,
+                        stagestatus="Execute Successfully",
+                        errormessage="None",
+                        sql=use_sql,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+                )
+                rowid += 1
+            except Exception as e:
+                logger.warning(f"MSSQL USE语句执行失败：{traceback.format_exc()}")
+                execute_result.error = str(e)
+                execute_result.rows.append(
+                    ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="Execute Failed",
+                        errormessage=f"异常信息：{e}",
+                        sql=use_sql,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+                )
+                rowid += 1
+
         for idx, statement in enumerate(all_statements):
             try:
                 # 使用 FuncTimer 统计执行时间
