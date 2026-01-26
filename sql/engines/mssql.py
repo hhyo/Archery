@@ -582,7 +582,7 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
                         all_statements.append(batch)
                     else:
                         all_statements.append(stmt)
-
+        
         # 获取数据库连接用于语法检测
         conn = None
         cursor = None
@@ -747,7 +747,6 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
             use_sql = f"USE [{db_name}]"
             try:
                 cursor.execute(use_sql)
-                conn.commit()
                 execute_result.rows.append(
                     ReviewResult(
                         id=rowid,

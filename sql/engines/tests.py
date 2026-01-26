@@ -237,7 +237,8 @@ class TestMssql(TestCase):
         self.assertEqual("some_sql", execute_result.full_sql)
         self.assertEqual(2, len(execute_result.rows))
         mock_cursor.return_value.execute.assert_called()
-        mock_cursor.return_value.commit.assert_called()
+        # MSSQL 使用 conn.commit()，每条语句执行后立即提交（与 Oracle 模式一致）
+        mock_connect.return_value.commit.assert_called()
         mock_cursor.reset_mock()
         # 验证异常
         mock_cursor.return_value.execute.side_effect = Exception(
@@ -247,8 +248,8 @@ class TestMssql(TestCase):
         self.assertIn("Boom! some exception!", execute_result.error)
         self.assertEqual("some_sql", execute_result.full_sql)
         self.assertEqual(2, len(execute_result.rows))
-        mock_cursor.return_value.commit.assert_not_called()
-        mock_cursor.return_value.rollback.assert_called()
+        # 异常情况下，应该调用 rollback，而不是 commit
+        mock_connect.return_value.rollback.assert_called()
 
 
 class TestRedis(TestCase):
