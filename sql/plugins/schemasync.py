@@ -5,6 +5,7 @@
 @file: schemasync.py
 @time: 2019/03/05
 """
+
 __author__ = "hhyo"
 
 from sql.plugins.plugin import Plugin

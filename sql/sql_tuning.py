@@ -21,9 +21,7 @@ class SqlTuning(object):
       variable_value
     from performance_schema.global_variables
     where upper(variable_name) in ('%s')
-    order by variable_name;""" % (
-            "','".join(SQLTuning.SYS_PARM_FILTER)
-        )
+    order by variable_name;""" % ("','".join(SQLTuning.SYS_PARM_FILTER))
         self.sql_optimizer_switch = """
     select variable_value
     from performance_schema.global_variables

@@ -827,9 +827,7 @@ class MysqlEngine(EngineBase):
         FROM information_schema.tables 
         WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')
           ORDER BY total_size DESC 
-        LIMIT {},{};""".format(
-            offset, row_count
-        )
+        LIMIT {},{};""".format(offset, row_count)
         return self.query("information_schema", sql)
 
     def tablespace_count(self):
@@ -932,9 +930,7 @@ class MysqlEngine(EngineBase):
         WHERE trx.trx_state = 'RUNNING'
         AND p.COMMAND = 'Sleep'
         AND p.time > {}
-        ORDER BY trx.trx_started ASC;""".format(
-            thread_time
-        )
+        ORDER BY trx.trx_started ASC;""".format(thread_time)
 
         return self.query("information_schema", sql)
 

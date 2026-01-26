@@ -26,7 +26,6 @@ from sql.models import (
     Tunnel,
 )
 
-
 User = get_user_model()
 
 
