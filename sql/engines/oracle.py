@@ -1268,16 +1268,14 @@ class OracleEngine(EngineBase):
             backup_cursor = conn.cursor()
             backup_cursor.execute(f"""create database if not exists ora_backup;""")
             backup_cursor.execute(f"use ora_backup;")
-            backup_cursor.execute(
-                f"""CREATE TABLE if not exists `sql_rollback` (
+            backup_cursor.execute(f"""CREATE TABLE if not exists `sql_rollback` (
                                        `id` bigint(20) NOT NULL AUTO_INCREMENT,
                                        `redo_sql` mediumtext,
                                        `undo_sql` mediumtext,
                                        `workflow_id` bigint(20) NOT NULL,
                                         PRIMARY KEY (`id`),
                                         key `idx_sql_rollback_01` (`workflow_id`)
-                                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"""
-            )
+                                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;""")
             # 使用logminer抓取回滚SQL
             logmnr_start_sql = f"""begin
                                         dbms_logmnr.start_logmnr(
@@ -1335,16 +1333,14 @@ class OracleEngine(EngineBase):
             backup_cursor = conn.cursor()
             backup_cursor.execute(f"""create database if not exists ora_backup;""")
             backup_cursor.execute(f"use ora_backup;")
-            backup_cursor.execute(
-                f"""CREATE TABLE if not exists `sql_rollback` (
+            backup_cursor.execute(f"""CREATE TABLE if not exists `sql_rollback` (
                                        `id` bigint(20) NOT NULL AUTO_INCREMENT,
                                        `redo_sql` mediumtext,
                                        `undo_sql` mediumtext,
                                        `workflow_id` bigint(20) NOT NULL,
                                         PRIMARY KEY (`id`),
                                         key `idx_sql_rollback_01` (`workflow_id`)
-                                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"""
-            )
+                                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;""")
             rows = cursor.fetchall()
             if len(rows) > 0:
                 for row in rows:
