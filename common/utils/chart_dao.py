@@ -41,9 +41,7 @@ class ChartDao(object):
           count(*)
         from sql_workflow 
         where create_time >= '{}' and create_time <= '{}'
-        group by syntax_type;""".format(
-            start_date, end_date
-        )
+        group by syntax_type;""".format(start_date, end_date)
         return self.__query(sql)
 
     # 工单数量统计
@@ -55,9 +53,7 @@ class ChartDao(object):
         from sql_workflow
         where create_time >= '{}' and create_time <= '{}'
         group by date_format(create_time, '%Y-%m-%d')
-        order by 1 asc;""".format(
-            start_date, end_date
-        )
+        order by 1 asc;""".format(start_date, end_date)
         return self.__query(sql)
 
     # 工单按组统计
@@ -69,9 +65,7 @@ class ChartDao(object):
         from sql_workflow
         where create_time >= '{}' and create_time <= '{}'
         group by group_id
-        order by count(*) desc;""".format(
-            start_date, end_date
-        )
+        order by count(*) desc;""".format(start_date, end_date)
         return self.__query(sql)
 
     def workflow_by_user(self, start_date, end_date):
@@ -84,9 +78,7 @@ class ChartDao(object):
         from sql_workflow
         where create_time >= '{}' and create_time <= '{}'
         group by engineer_display
-        order by count(*) desc;""".format(
-            start_date, end_date
-        )
+        order by count(*) desc;""".format(start_date, end_date)
         return self.__query(sql)
 
     # SQL查询统计(每日检索行数)
@@ -98,9 +90,7 @@ class ChartDao(object):
         from query_log
         where create_time >= '{}' and create_time <= '{}'
         group by date_format(create_time, '%Y-%m-%d')
-        order by sum(effect_row) desc;""".format(
-            start_date, end_date
-        )
+        order by sum(effect_row) desc;""".format(start_date, end_date)
         return self.__query(sql)
 
     # SQL查询统计(每日检索次数)
@@ -112,9 +102,7 @@ class ChartDao(object):
         from query_log
         where create_time >= '{}' and create_time <= '{}'
         group by date_format(create_time, '%Y-%m-%d')
-        order by count(*) desc;""".format(
-            start_date, end_date
-        )
+        order by count(*) desc;""".format(start_date, end_date)
         return self.__query(sql)
 
     # SQL查询统计(用户检索行数)
@@ -127,9 +115,7 @@ class ChartDao(object):
         where create_time >= '{}' and create_time <= '{}'
         group by user_display
         order by sum(effect_row) desc
-        limit 20;""".format(
-            start_date, end_date
-        )
+        limit 20;""".format(start_date, end_date)
         return self.__query(sql)
 
     # SQL查询统计(DB检索行数)
@@ -142,9 +128,7 @@ class ChartDao(object):
         where create_time >= '{}' and create_time <= '{}'
         group by db_name
         order by sum(effect_row) desc
-        limit 20;""".format(
-            start_date, end_date
-        )
+        limit 20;""".format(start_date, end_date)
         return self.__query(sql)
 
     # 慢日志历史趋势图(按次数)
@@ -172,9 +156,7 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
         from mysql_slow_query_review_history 
         where ts_min >= '{}' and ts_min <= '{}'
         group by db_max,user_max order by sum(ts_cnt) desc limit 50;
-        """.format(
-            start_date, end_date
-        )
+        """.format(start_date, end_date)
         return self.__query(sql)
 
     # 慢日志db维度统计
@@ -186,9 +168,7 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
         from mysql_slow_query_review_history 
         where ts_min >= '{}' and ts_min <= '{}'
         group by db_max order by sum(ts_cnt) desc limit 50;
-        """.format(
-            start_date, end_date
-        )
+        """.format(start_date, end_date)
         return self.__query(sql)
 
     # 数据库实例类型统计
@@ -228,9 +208,7 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
                 WHERE a.create_time >= '{}' and a.create_time <= '{}'
                 GROUP BY a.STATUS
                 ORDER BY 1;
-          """.format(
-            start_date, end_date
-        )
+          """.format(start_date, end_date)
         return self.__query(sql)
 
     def query_instance_env_info(self):

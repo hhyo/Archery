@@ -13,7 +13,6 @@ from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncode
 from sql.utils.resource_group import user_instances
 from .models import Instance
 
-
 logger = logging.getLogger("default")
 
 

@@ -11,7 +11,6 @@ from unittest.mock import patch, MagicMock
 from django.test import TestCase, Client
 from sql.utils.sql_utils import *
 
-
 __author__ = "hhyo"
 
 

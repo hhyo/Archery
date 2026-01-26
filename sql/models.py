@@ -12,7 +12,6 @@ from mirage.crypto import Crypto
 
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 
-
 logger = logging.getLogger("default")
 file, _class = settings.PASSWORD_MIXIN_PATH.split(":")
 
