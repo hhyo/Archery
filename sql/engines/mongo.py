@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import os
 import re
 import time
 import pymongo
@@ -8,6 +9,8 @@ import subprocess
 import simplejson as json
 import datetime
 import tempfile
+import json5
+import shutil
 from bson.son import SON
 from bson import json_util
 from pymongo.errors import OperationFailure
@@ -23,8 +26,12 @@ from common.config import SysConfig
 
 logger = logging.getLogger("default")
 
-# mongo客户端安装在本机的位置
-mongo = "mongo"
+# 获取本机的mongo shell客户端
+mongo = shutil.which("mongosh") or shutil.which("mongo")
+if mongo:
+    mongo = os.path.basename(mongo)
+else:
+    raise Exception("Mongo客户端未找到。")
 
 
 # 自定义异常
@@ -353,7 +360,7 @@ class MongoEngine(EngineBase):
     ):
         # 提取公共参数
         common_params = {
-            "mongo": "mongo",
+            "mongo": self.mongo,
             "host": self.host,
             "port": self.port,
             "db_name": db_name,
@@ -477,9 +484,12 @@ class MongoEngine(EngineBase):
                         )
                     else:
                         try:
-                            r = json.loads(r)
+                            if self.mongo == "mongosh":
+                                r = json5.loads(re.search(r"[{\[].*[\]}]", r).group(0))
+                            else:
+                                r = json.loads(r)
                         except Exception as e:
-                            logger.info(str(e))
+                            logger.warning(str(e))
                         finally:
                             methodStr = exec_sql.split(").")[-1].split("(")[0].strip()
                             if "." in methodStr:
