@@ -1075,6 +1075,11 @@
                 if (sql === 'explain') {
                     sqlContent = 'explain ' + sqlContent
                 }
+            } else if (optgroup === "MsSQL") {
+                //查看执行计划
+                if (sql === 'explain') {
+                    sqlContent = 'SET SHOWPLAN_ALL ON; ' + sqlContent + '; SET SHOWPLAN_ALL OFF;'
+                }
             }
             //提交请求
             $.ajax({
@@ -1160,7 +1165,6 @@
             return Object.assign({}, defaultDisplayConfig, extraArgs)
         }
         const engineDisplayConfig = {
-            "MsSQL": createDisplayConfig({showExplain: false}),
             "Redis": createDisplayConfig({showTableName: true, showSchemaName: false,
                 showRedisHelp: true,
                 showFormat: false, showExplain: false}),
