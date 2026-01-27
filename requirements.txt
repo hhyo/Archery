@@ -51,4 +51,5 @@ boto3
 azure_storage_blob==12.26.0
 openpyxl==3.1.5
 parameterized
+sqlglot
 pymemcache==4.0.0

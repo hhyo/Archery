@@ -203,7 +203,7 @@ class GoInceptionEngine(EngineBase):
         sql = f"""/*--user={user};--password={password};--host={host};--port={port};--masking=1;*/
                           inception_magic_start;
                           use `{db_name}`;
-                          {sql}
+                          {sql};
                           inception_magic_commit;"""
         query_result = self.query(db_name=db_name, sql=sql)
         # 有异常时主动抛出
@@ -218,7 +218,7 @@ class GoInceptionEngine(EngineBase):
         if print_info.get("errlevel") == 0 and print_info.get("errmsg") is None:
             return json.loads(print_info["query_tree"])
         else:
-            raise RuntimeError(f'Inception Error: print_info.get("errmsg")')
+            raise RuntimeError(f'Inception Error: {print_info.get("errmsg")}')
 
     def get_rollback(self, workflow):
         """

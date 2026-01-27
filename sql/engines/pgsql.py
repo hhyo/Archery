@@ -166,7 +166,7 @@ class PgSQLEngine(EngineBase):
         except IndexError:
             result["bad_query"] = True
             result["msg"] = "没有有效的SQL语句"
-        if re.match(r"^select|^explain", sql, re.I) is None:
+        if re.match(r"^select|^explain|^with", sql, re.I) is None:
             result["bad_query"] = True
             result["msg"] = "不支持的查询语法类型!"
         if "*" in sql:
@@ -258,7 +258,7 @@ class PgSQLEngine(EngineBase):
 
     def query_masking(self, db_name=None, sql="", resultset=None):
         """简单字段脱敏规则, 仅对select有效"""
-        if re.match(r"^select", sql, re.I):
+        if re.match(r"^select|^with", sql, re.I):
             filtered_result = simple_column_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:
@@ -277,7 +277,7 @@ class PgSQLEngine(EngineBase):
         for statement in sqlparse.split(sql):
             statement = sqlparse.format(statement, strip_comments=True)
             # 禁用语句
-            if re.match(r"^select", statement.lower()):
+            if re.match(r"^select|^with", statement.lower()):
                 result = ReviewResult(
                     id=line,
                     errlevel=2,

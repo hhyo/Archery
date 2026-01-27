@@ -11,3 +11,8 @@ VALUES
   ('离线下载权限', @content_type_id, 'offline_download'),
   ('菜单 数据导出', @content_type_id, 'menu_sqlexportworkflow'),
   ('提交数据导出', @content_type_id, 'sqlexport_submit');
+
+-- 添加original_sql，存储原始语句
+ALTER TABLE query_log ADD original_sql longtext NOT NULL AFTER sqllog;
+-- 将历史数据空的original_sql更新成sqllog的内容
+UPDATE query_log SET original_sql=sqllog WHERE original_sql = '';

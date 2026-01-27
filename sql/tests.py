@@ -518,7 +518,7 @@ class TestQuery(TransactionTestCase):
     @patch("sql.query.query_priv_check")
     def testCorrectSQL(self, _priv_check, _get_engine, _user_instances):
         c = Client()
-        some_sql = "select some from some_table limit 100;"
+        some_sql = "SELECT\n  some\nFROM some_table\nLIMIT 100"
         some_db = "some_db"
         some_limit = 100
         c.force_login(self.u1)
@@ -578,7 +578,7 @@ class TestQuery(TransactionTestCase):
         c = Client()
         some_limit = 100
         sql_without_limit = "select some from some_table"
-        sql_with_limit = "select some from some_table limit {0};".format(some_limit)
+        sql_with_limit = "SELECT\n  some\nFROM some_table\nLIMIT {0}".format(some_limit)
         some_db = "some_db"
         c.force_login(self.u2)
         q_result = ResultSet(full_sql=sql_without_limit, rows=["value"])
