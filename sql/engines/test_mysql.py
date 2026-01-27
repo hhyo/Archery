@@ -445,8 +445,14 @@ class TestMysql(TestCase):
         new_engine.kill_connection(100)
         _query.assert_called_once_with(sql="kill 100")
 
+    @patch.object(MysqlEngine, "get_connection")
     @patch.object(MysqlEngine, "query")
-    def test_seconds_behind_master(self, _query):
+    def test_seconds_behind_master(self, _query, mock_get_connection):
+        # Mock 连接以避免实际连接尝试
+        mock_conn = Mock()
+        mock_conn.get_server_info.return_value = "8.0.0"
+        mock_get_connection.return_value = mock_conn
+        
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.seconds_behind_master
         _query.assert_called_once_with(
