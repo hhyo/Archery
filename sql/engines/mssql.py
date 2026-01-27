@@ -440,24 +440,22 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
             # 如果已经使用了 TOP，则不重复添加
             if sql_lower.find(" top ") == -1 and limit_num > 0:
                 # 处理 SELECT DISTINCT 的情况，需要将 TOP 放在 DISTINCT 之后
-                if re.match(r"^select\s+distinct\s", sql_lower, re.I):
-                    # 找到 DISTINCT 后的位置，插入 TOP，保留原始大小写
-                    match = re.match(r"^(select\s+distinct)(\s+.*)$", sql, re.I)
-                    if match:
-                        return (
-                            match.group(1)
-                            + " top {}".format(limit_num)
-                            + match.group(2)
-                        )
-                else:
-                    # 保留原始大小写，只替换第一个 select
-                    return re.sub(
-                        r"^select\s+",
-                        "select top {} ".format(limit_num),
-                        sql,
-                        count=1,
-                        flags=re.I,
+                # 匹配 "select distinct" 后面跟空格和任意内容
+                distinct_match = re.match(r"^(select\s+distinct)(\s+.*)$", sql, re.I)
+                if distinct_match:
+                    return (
+                        distinct_match.group(1)
+                        + " top {}".format(limit_num)
+                        + distinct_match.group(2)
                     )
+                # 保留原始大小写，只替换第一个 select
+                return re.sub(
+                    r"^select\s+",
+                    "select top {} ".format(limit_num),
+                    sql,
+                    count=1,
+                    flags=re.I,
+                )
         return sql.strip()
 
     def query(
@@ -582,7 +580,6 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
                         all_statements.append(batch)
                     else:
                         all_statements.append(stmt)
-        
         # 获取数据库连接用于语法检测
         conn = None
         cursor = None

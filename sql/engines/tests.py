@@ -206,7 +206,14 @@ class TestMssql(TestCase):
         check_result = new_engine.filter_sql(sql=banned_sql, limit_num=10)
         self.assertEqual(check_result, "select distinct top 10 * from user_table")
 
-    def test_execute_check(self):
+    @patch("sql.engines.mssql.MssqlEngine.get_connection")
+    def test_execute_check(self, mock_get_connection):
+        # Mock 连接以避免 ODBC 驱动错误
+        mock_conn = Mock()
+        mock_cursor = Mock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_get_connection.return_value = mock_conn
+        
         new_engine = MssqlEngine(instance=self.ins1)
         test_sql = (
             "use database\ngo\nsome sql1\nGO\nsome sql2\n\r\nGo\nsome sql3\n\r\ngO\n"
