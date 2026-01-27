@@ -213,7 +213,7 @@ class TestMssql(TestCase):
         mock_cursor = Mock()
         mock_conn.cursor.return_value = mock_cursor
         mock_get_connection.return_value = mock_conn
-        
+
         new_engine = MssqlEngine(instance=self.ins1)
         test_sql = (
             "use database\ngo\nsome sql1\nGO\nsome sql2\n\r\nGo\nsome sql3\n\r\ngO\n"
