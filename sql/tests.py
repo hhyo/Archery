@@ -894,19 +894,47 @@ class TestWorkflowView(TransactionTestCase):
 
     @patch("sql.notify.auto_notify")
     @patch("sql.utils.workflow_audit.AuditV2.operate")
-    def testWorkflowPassedView(self, mock_operate, _):
+    @patch("sql.sql_workflow.async_task")
+    def testWorkflowPassedView(self, mock_async_task, mock_operate, _):
         """测试审核工单"""
         c = Client()
+        c.force_login(self.u2)
+        r = c.post("/passed/", {"workflow_id": self.wf2.id})
+        self.assertEqual(r.status_code, 403)
         c.force_login(self.superuser1)
         r = c.post("/passed/")
         self.assertContains(r, "workflow_id参数为空.")
+        r = c.post("/passed/", {"workflow_id": 999999})
+        self.assertContains(r, "工单不存在")
+        self.audit_flow.delete()
+        r = c.post("/passed/", {"workflow_id": self.wf2.id})
+        self.assertContains(r, "审核记录不存在")
+        sql_review = Permission.objects.get(codename="sql_review")
+        self.u2.user_permissions.add(sql_review)
+        aug = Group.objects.create(name="audit_group_x")
+        self.audit_flow = WorkflowAudit.objects.create(
+            group_id=1,
+            group_name="g1",
+            workflow_id=self.wf2.id,
+            workflow_type=WorkflowType.SQL_REVIEW,
+            workflow_title="123",
+            audit_auth_groups=str(aug.id),
+            current_audit=str(aug.id),
+            next_audit="",
+            current_status=WorkflowStatus.WAITING,
+            create_user="",
+            create_user_display="",
+        )
+        c.force_login(self.u2)
+        r = c.post("/passed/", {"workflow_id": self.wf2.id})
+        self.assertContains(r, "权限不足，您不在当前审批组中")
+        c = Client()
+        c.force_login(self.superuser1)
         mock_operate.side_effect = AuditException("mock audit failed")
         r = c.post("/passed/", {"workflow_id": self.wf2.id})
-        self.assertContains(r, "mock audit failed")
+        self.assertContains(r, "审核失败, 错误信息: mock audit failed")
         mock_operate.reset_mock(side_effect=True)
         mock_operate.return_value = None
-        # 因为 operate 被 mock 了, 为了测试审批流通过, 这里把审批流手动设置为通过, 仅 测试 view 层的逻辑
-        # audit operate 的测试由其他测试覆盖
         self.audit_flow.current_status = WorkflowStatus.PASSED
         self.audit_flow.save()
         r = c.post(
@@ -919,6 +947,7 @@ class TestWorkflowView(TransactionTestCase):
         )
         self.wf2.refresh_from_db()
         self.assertEqual(self.wf2.status, "workflow_review_pass")
+        mock_async_task.assert_called_once()
 
     @patch("sql.sql_workflow.notify_for_execute")
     @patch("sql.sql_workflow.Audit.add_log")
