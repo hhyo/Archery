@@ -504,7 +504,11 @@ class AuditV2:
         if self.audit.current_audit == "-1":
             operation_info = f"审批备注: {remark}, 无下级审批"
         else:
-            operation_info = f"审批备注：{remark}, 下级审批：{self.audit.current_audit}"
+            try:
+                next_group_name = Group.objects.get(id=self.audit.current_audit).name
+            except Group.DoesNotExist:
+                next_group_name = self.audit.current_audit
+            operation_info = f"审批备注：{remark}, 下级审批：{next_group_name}"
 
         # 增加工单日志
         WorkflowLog.objects.create(
