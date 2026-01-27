@@ -5,6 +5,7 @@
 @file: instance_database.py
 @time: 2019/09/19
 """
+
 import MySQLdb
 
 import simplejson as json

@@ -116,8 +116,14 @@ class MysqlEngine(EngineBase):
 
     @property
     def seconds_behind_master(self):
+        server_version = self.server_version
+        ##非maria分支且版本号大于8.4，就使用show replica status获取主从延迟
+        if self.server_fork_type != MysqlForkType.MARIADB and server_version >= (8, 4):
+            status_sql = "show replica status"
+        else:
+            status_sql = "show slave status"
         slave_status = self.query(
-            sql="show slave status",
+            sql=status_sql,
             close_conn=False,
             cursorclass=MySQLdb.cursors.DictCursor,
         )
@@ -827,9 +833,7 @@ class MysqlEngine(EngineBase):
         FROM information_schema.tables 
         WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')
           ORDER BY total_size DESC 
-        LIMIT {},{};""".format(
-            offset, row_count
-        )
+        LIMIT {},{};""".format(offset, row_count)
         return self.query("information_schema", sql)
 
     def tablespace_count(self):
@@ -932,9 +936,7 @@ class MysqlEngine(EngineBase):
         WHERE trx.trx_state = 'RUNNING'
         AND p.COMMAND = 'Sleep'
         AND p.time > {}
-        ORDER BY trx.trx_started ASC;""".format(
-            thread_time
-        )
+        ORDER BY trx.trx_started ASC;""".format(thread_time)
 
         return self.query("information_schema", sql)
 

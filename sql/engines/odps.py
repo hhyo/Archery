@@ -9,7 +9,6 @@ from .models import ResultSet
 
 from odps import ODPS
 
-
 logger = logging.getLogger("default")
 
 

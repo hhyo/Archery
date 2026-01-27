@@ -5,6 +5,7 @@
 @file: xx.py
 @time: 2024-08-01
 """
+
 __author__ = "feiazifeiazi"
 
 import logging
@@ -23,7 +24,6 @@ import logging
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import TransportError
-
 
 logger = logging.getLogger("default")
 

@@ -5,6 +5,7 @@
 @file: tests.py
 @time: 2019/03/04
 """
+
 import json
 from django.test import Client, TestCase
 from unittest.mock import patch, ANY, Mock

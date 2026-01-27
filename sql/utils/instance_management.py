@@ -1,6 +1,5 @@
 from sql.models import InstanceAccount
 
-
 SUPPORTED_MANAGEMENT_DB_TYPE = ["mysql", "mongo"]
 
 

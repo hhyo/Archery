@@ -5,6 +5,7 @@
 @file: query_privileges.py
 @time: 2019/03/24
 """
+
 import logging
 import datetime
 import re
