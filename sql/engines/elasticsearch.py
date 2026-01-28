@@ -920,7 +920,7 @@ class ElasticsearchEngineBase(EngineBase):
                 response = conn.delete_by_query(
                     index=doc.index_name, 
                     body=doc.doc_data_body,
-                    params={'scroll_size': '3000', 'slices': '2'}
+                    params={'scroll_size': '3000', 'slices': '2'},
                 )
                 successful_count = response.get("total", 0)
                 response_str = str(response)
