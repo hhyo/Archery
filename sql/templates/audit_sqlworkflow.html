@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <!-- 自定义操作按钮-->
+    <!-- Custom action buttons -->
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="navStatus" class="form-control selectpicker">
-                <option value="" selected="selected">状态</option>
+                <option value="" selected="selected">{% trans "Status" %}</option>
                 {% for status, status_display in status_list %}
                     <option value="{{ status }}">{{ status_display }}</option>
                 {% endfor %}
@@ -14,7 +15,7 @@
         <div class="form-group">
             <select id="instance_id" class="form-control selectpicker"
                     data-live-search="true">
-                <option value="" selected="selected">实例</option>
+                <option value="" selected="selected">{% trans "Instance" %}</option>
                 {% for ins in instance %}
                     <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
                 {% endfor %}
@@ -23,7 +24,7 @@
         <div class="form-group">
             <select id="group_id" class="form-control selectpicker"
                     data-live-search="true">
-                <option value="" selected="selected">组</option>
+                <option value="" selected="selected">{% trans "Group" %}</option>
                 {% for rgp in resource_group %}
                     <option value="{{ rgp.group_id }}">{{ rgp.group_name }}</option>
                 {% endfor %}
@@ -37,19 +38,19 @@
             </div>
         </div>
     </div>
-    <!-- 审核列表的表格-->
+    <!-- Audit list table -->
     <div class="table-responsive">
         <table id="sqlaudit-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
     </div>
-    <!-- 日志信息-->
+    <!-- Log information -->
     <div class="modal fade" id="logs">
         <div class="modal-dialog">
             <div class="modal-content message_align">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">工单日志</h4>
+                    <h4 class="modal-title text-danger">{% trans "Workflow Log" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
@@ -72,7 +73,7 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
-        // 初始化时间控件
+        // Initialize time picker
         $(function () {
             let start = moment().subtract(29, 'days');
             let end = moment();
@@ -81,7 +82,7 @@
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html(gettext('All Data'));
                 }
             }
 
@@ -90,26 +91,26 @@
                 endDate: end,
                 showDropdowns: true,
                 locale: {
-                    format: "YYYY-MM-DD",// 显示格式
-                    separator: " / ",// 两个日期之间的分割线
-                    // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    format: "YYYY-MM-DD",// Display format
+                    separator: " / ",// Separator between two dates
+                    // Localization
+                    applyLabel: gettext("Apply"),
+                    cancelLabel: gettext("Cancel"),
+                    fromLabel: gettext("From"),
+                    toLabel: gettext("To"),
+                    customRangeLabel: gettext("Custom"),
+                    daysOfWeek: [gettext("Sun"), gettext("Mon"), gettext("Tue"), gettext("Wed"), gettext("Thu"), gettext("Fri"), gettext("Sat")],
+                    monthNames: [gettext("January"), gettext("February"), gettext("March"), gettext("April"), gettext("May"), gettext("June"), gettext("July"), gettext("August"), gettext("September"), gettext("October"), gettext("November"), gettext("December")],
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [null, null],
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    [gettext("All")]: [null, null],
+                    [gettext("Today")]: [moment().startOf('day'), moment()],
+                    [gettext("Yesterday")]: [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    [gettext("Last 7 Days")]: [moment().subtract('days', 6), moment()],
+                    [gettext("Last 30 Days")]: [moment().subtract('days', 29), moment()],
+                    [gettext("This Month")]: [moment().startOf("month"), moment().endOf("month")],
+                    [gettext("Last Month")]: [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 get_workflow_list()
@@ -119,43 +120,43 @@
 
     </script>
     <script>
-        //获取SQL工单列表
+        //Get SQL workflow list
         function get_workflow_list() {
-            //采取异步请求
-            //初始化table
+            //Use asynchronous request
+            //Initialize table
             $('#sqlaudit-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/sqlworkflow_list_audit/",
-                striped: true,                      //是否显示行间隔色
-                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                pagination: true,                   //是否显示分页（*）
-                sortable: true,                     //是否启用排序
-                sortOrder: "asc",                   //排序方式
-                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 20,                     //每页的记录行数（*）
-                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                showExport: true,                   //是否显示导出按钮
+                striped: true,                      //Show row striping
+                cache: false,                       //Use cache, default is true, so generally need to set this property (*)
+                pagination: true,                   //Show pagination (*)
+                sortable: true,                     //Enable sorting
+                sortOrder: "asc",                   //Sort order
+                sidePagination: "server",           //Pagination method: client-side or server-side (*)
+                pageNumber: 1,                      //Initialize first page, default first page
+                pageSize: 20,                     //Records per page (*)
+                pageList: [20, 30, 50, 100],       //Selectable rows per page (*)
+                showExport: true,                   //Show export button
                 exportDataType: "all",
                 exportOptions: {
                     fileName: "sqlworkflow_" + dateFormat("yyyyMMddhhmmss",new Date())
                 },
-                search: true,                      //是否显示表格搜索
-                strictSearch: false,                //是否全匹配搜索
-                showColumns: true,                  //是否显示所有的列（选择显示的列）
-                showRefresh: true,                  //是否显示刷新按钮
-                minimumCountColumns: 2,             //最少允许的列数
-                clickToSelect: true,                //是否启用点击选中行
-                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                cardView: false,                    //是否显示详细视图
-                detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",               //指明自定义的toolbar
+                search: true,                      //Show table search
+                strictSearch: false,                //Full match search
+                showColumns: true,                  //Show all columns (select visible columns)
+                showRefresh: true,                  //Show refresh button
+                minimumCountColumns: 2,             //Minimum allowed columns
+                clickToSelect: true,                //Enable click to select row
+                uniqueId: "id",                     //Unique identifier for each row, usually primary key
+                showToggle: true,                   //Show toggle button for detail/list view
+                cardView: false,                    //Show detail view
+                detailView: false,                  //Show parent-child table
+                locale: 'zh-CN',                    //Localization
+                toolbar: "#toolbar",               //Specify custom toolbar
                 queryParamsType: 'limit',
-                //请求服务数据时所传参数
+                //Parameters passed when requesting service data
                 queryParams:
                     function (params) {
                         let start_date = $("#reservation").data('daterangepicker').startDate;
@@ -179,7 +180,7 @@
                         }
                     },
                 columns: [{
-                    title: '工单名称',
+                    title: gettext('Workflow Name'),
                     field: 'workflow_name',
                     formatter: function (value, row, index) {
                         var span = document.createElement('span');
@@ -193,15 +194,15 @@
                         return span.outerHTML;
                     }
                 }, {
-                    title: '工单完整名称',
+                    title: gettext('Full Workflow Name'),
                     field: 'workflow_name',
-                    visible: false // 默认不显示
+                    visible: false // Hidden by default
                 }, {
-                    title: '类型',
+                    title: gettext('Type'),
                     field: 'syntax_type',
                     formatter: function (value, row, index) {
                         if (String(value) === '0') {
-                            return '其他'
+                            return gettext('Other')
                         } else if (String(value) === '1') {
                             return 'DDL'
                         } else if (String(value) === '2') {
@@ -209,60 +210,60 @@
                         }
                     }
                 }, {
-                    title: '发起人',
+                    title: gettext('Initiator'),
                     field: 'engineer_display'
                 }, {
-                    title: '工单状态',
+                    title: gettext('Workflow Status'),
                     field: 'status',
                     formatter: function (value, row, index) {
                         return sqlworkflowStatus_formatter(value)
                     }
                 }, {
-                    title: '备份',
+                    title: gettext('Backup'),
                     field: 'is_backup',
-                    visible: true, // 默认显示
+                    visible: true, // Shown by default
                     formatter: function (value, row, index) {
                         if (String(value) === 'true') {
-                            return '是'
+                            return gettext('Yes')
                         } else {
-                            return '否'
+                            return gettext('No')
                         }
                     }
                 }, {
-                    title: '发起时间',
+                    title: gettext('Initiated Time'),
                     field: 'create_time'
                 }, {
-                    title: '目标实例',
+                    title: gettext('Target Instance'),
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: gettext('Database'),
                     field: 'db_name'
                 }, {
-                    title: '组',
+                    title: gettext('Group'),
                     field: 'group_name'
                 }, {
-                    title: '操作',
+                    title: gettext('Operations'),
                     field: 'operation',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >" + gettext("Operation Log") + "\n" + "</button>"
                     }
                 }],
                 onLoadSuccess: function () {
                 },
                 onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
-                    //传搜索参数给服务器
+                    //Pass search parameters to server
                     queryParams(e)
                 },
                 responseHandler: function (res) {
-                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    //Modify data source before ajax retrieves data and renders table
                     return res;
                 }
             });
 
         }
 
-        // 获取操作日志
+        // Get operation log
         function getLog(obj) {
             var workflow_id = $(obj).attr("workflow_id");
             var workflow_type = 2;
@@ -277,42 +278,42 @@
                 complete: function () {
                 },
                 success: function (data) {
-                    //初始化table
+                    //Initialize table
                     $('#logs').modal('show');
                     $('#log-list').bootstrapTable('destroy').bootstrapTable({
                         escape: true,
-                        striped: true,                      //是否显示行间隔色
-                        cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                        pagination: false,                   //是否显示分页（*）
-                        sortable: false,                     //是否启用排序
-                        sortOrder: "asc",                   //排序方式
-                        sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-                        pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                        pageSize: 20,                     //每页的记录行数（*）
-                        pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                        search: false,                      //是否显示表格搜索
-                        strictSearch: false,                //是否全匹配搜索
-                        showColumns: false,                  //是否显示所有的列（选择显示的列）
-                        showRefresh: false,                  //是否显示刷新按钮
-                        minimumCountColumns: 2,             //最少允许的列数
-                        clickToSelect: false,                //是否启用点击选中行
-                        uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                        showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
-                        cardView: false,                    //是否显示详细视图
-                        detailView: false,                  //是否显示父子表
-                        locale: 'zh-CN',                    //本地化
+                        striped: true,                      //Show row striping
+                        cache: false,                       //Use cache, default is true, so generally need to set this property (*)
+                        pagination: false,                   //Show pagination (*)
+                        sortable: false,                     //Enable sorting
+                        sortOrder: "asc",                   //Sort order
+                        sidePagination: "client",           //Pagination method: client-side or server-side (*)
+                        pageNumber: 1,                      //Initialize first page, default first page
+                        pageSize: 20,                     //Records per page (*)
+                        pageList: [20, 30, 50, 100],       //Selectable rows per page (*)
+                        search: false,                      //Show table search
+                        strictSearch: false,                //Full match search
+                        showColumns: false,                  //Show all columns (select visible columns)
+                        showRefresh: false,                  //Show refresh button
+                        minimumCountColumns: 2,             //Minimum allowed columns
+                        clickToSelect: false,                //Enable click to select row
+                        uniqueId: "id",                     //Unique identifier for each row, usually primary key
+                        showToggle: false,                   //Show toggle button for detail/list view
+                        cardView: false,                    //Show detail view
+                        detailView: false,                  //Show parent-child table
+                        locale: 'zh-CN',                    //Localization
                         data: data.rows,
                         columns: [{
-                            title: '操作',
+                            title: gettext('Operation'),
                             field: 'operation_type_desc'
                         }, {
-                            title: '操作人',
+                            title: gettext('Operator'),
                             field: 'operator_display'
                         }, {
-                            title: '操作时间',
+                            title: gettext('Operation Time'),
                             field: 'operation_time'
                         }, {
-                            title: '操作信息',
+                            title: gettext('Operation Info'),
                             field: 'operation_info'
                         }],
                         onLoadSuccess: function () {
@@ -326,7 +327,7 @@
             })
         }
 
-        //筛选变动自动刷新
+        //Auto-refresh on filter change
         $("#navStatus").change(function () {
             get_workflow_list();
         });
@@ -339,7 +340,7 @@
             get_workflow_list();
         });
 
-        //初始化数据
+        //Initialize data
         $(document).ready(function () {
             get_workflow_list();
         });

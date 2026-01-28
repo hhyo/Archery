@@ -2,12 +2,13 @@
 <html>
 <head>
     {% load static %}
+    {% load i18n %}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>{% block title %}Archery-SQL审核查询平台{{ custom_title_suffix }}{% endblock %}</title>
+    <title>{% block title %}Archery - {% trans "SQL Review Platform" %}{{ custom_title_suffix }}{% endblock %}</title>
     <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"/>
 
     <!-- 引入 Bootstrap -->
@@ -45,8 +46,34 @@
 
         <!-- /.navbar-header -->
         <ul class="nav navbar-top-links navbar-right">
+            <!-- Language Selector -->
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#" style="padding: 15px 10px;">
+                    <i class="fa fa-globe"></i>
+                    {% get_current_language as LANGUAGE_CODE %}
+                    {{ LANGUAGE_CODE|upper }}
+                    <i class="fa fa-caret-down"></i>
+                </a>
+                <ul class="dropdown-menu">
+                    {% get_available_languages as LANGUAGES %}
+                    {% for lang_code, lang_name in LANGUAGES %}
+                        <li>
+                            <form action="{% url 'set_language' %}" method="post" style="margin: 0;">
+                                {% csrf_token %}
+                                <input name="next" type="hidden" value="{{ request.path }}">
+                                <button type="submit" name="language" value="{{ lang_code }}"
+                                        class="btn btn-link" style="width: 100%; text-align: left; padding: 3px 20px;">
+                                    {% if lang_code == LANGUAGE_CODE %}<strong>{% endif %}
+                                    {{ lang_name }}
+                                    {% if lang_code == LANGUAGE_CODE %}</strong>{% endif %}
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </li>
             <li>
-                <a>你好，{{ user }}</a>
+                <a>{% trans "Hello" %}, {{ user }}</a>
             </li>
             {% if todo > 0 %}
                 <li>
@@ -69,15 +96,15 @@
                 <ul class="dropdown-menu dropdown-user">
                     {% if user.is_superuser %}
                         <li>
-                            <a target="_blank" href="/api/debug?full=true"><i class="fa fa-info fa-fw"></i> 系统信息</a>
+                            <a target="_blank" href="/api/debug?full=true"><i class="fa fa-info fa-fw"></i> {% trans "System Info" %}</a>
                         </li>
                         <li>
-                            <a target="_blank" href="/admin"><i class="fa fa-sitemap fa-fw"></i> 管理后台</a>
+                            <a target="_blank" href="/admin"><i class="fa fa-sitemap fa-fw"></i> {% trans "Admin Panel" %}</a>
                         </li>
                     {% endif %}
-                    <li><a id="2fa-menu" href="javascript:;"><i class="fa fa-lock fa-fw"></i> 两步验证</a></li>
-                    <li><a href="/admin/password_change/"><i class="fa fa-user fa-fw"></i> 修改密码</a></li>
-                    <li><a href="/logout/"><i class="fa fa-gear fa-fw"></i> 退出</a></li>
+                    <li><a id="2fa-menu" href="javascript:;"><i class="fa fa-lock fa-fw"></i> {% trans "Two-Factor Auth" %}</a></li>
+                    <li><a href="/admin/password_change/"><i class="fa fa-user fa-fw"></i> {% trans "Change Password" %}</a></li>
+                    <li><a href="/logout/"><i class="fa fa-gear fa-fw"></i> {% trans "Logout" %}</a></li>
                 </ul>
                 <!-- /.dropdown-user -->
             </li>
@@ -100,16 +127,16 @@
                     {% endif %}
                     {% if perms.sql.menu_sqlcheck %}
                         <li>
-                            <a href="#"><i class="fa fa-check fa-fw"></i> SQL审核<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-check fa-fw"></i> {% trans "SQL Review" %}<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_sqlworkflow %}
                                     <li>
-                                        <a href="/sqlworkflow/">SQL上线</a>
+                                        <a href="/sqlworkflow/">{% trans "SQL Deployment" %}</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_sqlanalyze %}
                                     <li>
-                                        <a href="/sqlanalyze/">SQL分析</a>
+                                        <a href="/sqlanalyze/">{% trans "SQL Analysis" %}</a>
                                     </li>
                                 {% endif %}
                             </ul>
@@ -118,26 +145,26 @@
                     {% endif %}
                     {% if perms.sql.menu_query %}
                         <li>
-                            <a href="#"><i class="fa fa-search fa-fw"></i> SQL查询<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-search fa-fw"></i> {% trans "SQL Query" %}<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_sqlquery %}
                                     <li>
-                                        <a href="/sqlquery/">在线查询</a>
+                                        <a href="/sqlquery/">{% trans "Online Query" %}</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_sqlexportworkflow %}
                                     <li>
-                                        <a href="/sqlexportworkflow/">数据导出</a>
+                                        <a href="/sqlexportworkflow/">{% trans "Data Export" %}</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_data_dictionary %}
                                     <li>
-                                        <a href="/data_dictionary/">数据字典</a>
+                                        <a href="/data_dictionary/">{% trans "Data Dictionary" %}</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_queryapplylist %}
                                     <li>
-                                        <a href="/queryapplylist/">权限管理</a>
+                                        <a href="/queryapplylist/">{% trans "Permission Management" %}</a>
                                     </li>
                                 {% endif %}
 
@@ -147,16 +174,16 @@
                     {% endif %}
                     {% if perms.sql.menu_sqloptimize %}
                         <li>
-                            <a href="#"><i class="fa fa-wrench fa-fw"></i> SQL优化<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-wrench fa-fw"></i> {% trans "SQL Optimization" %}<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_sqladvisor %}
                                     <li>
-                                        <a href="/sqladvisor/">优化工具</a>
+                                        <a href="/sqladvisor/">{% trans "Optimization Tools" %}</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_slowquery %}
                                     <li>
-                                        <a href="/slowquery/">慢查日志</a>
+                                        <a href="/slowquery/">{% trans "Slow Query Log" %}</a>
                                     </li>
                                 {% endif %}
                             </ul>
@@ -165,32 +192,32 @@
                     {% endif %}
                     {% if perms.sql.menu_instance %}
                         <li>
-                            <a href="#"><i class="fa fa-database fa-fw"></i> 实例管理<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-database fa-fw"></i> {% trans "Instance Management" %}<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_instance_list %}
                                     <li>
-                                        <a href="/instance/">实例列表</a>
+                                        <a href="/instance/">{% trans "Instance List" %}</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_dbdiagnostic %}
                                     <li>
-                                        <a href="/dbdiagnostic/">会话管理</a>
+                                        <a href="/dbdiagnostic/">{% trans "Session Management" %}</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_database %}
                                     <li>
-                                        <a href="/database/">数据库管理</a>
+                                        <a href="/database/">{% trans "Database Management" %}</a>
                                     </li>
                                 {% endif %}
 
                                 {% if perms.sql.menu_instance_account %}
                                     <li>
-                                        <a href="/instanceaccount/">账号管理</a>
+                                        <a href="/instanceaccount/">{% trans "Account Management" %}</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_param %}
                                     <li>
-                                        <a href="/instanceparam/">参数配置</a>
+                                        <a href="/instanceparam/">{% trans "Parameter Configuration" %}</a>
                                     </li>
                                 {% endif %}
                             </ul>
@@ -199,7 +226,7 @@
                     {% endif %}
                     {% if perms.sql.menu_tools %}
                         <li>
-                            <a href="#"><i class="fa fa-plug fa-fw"></i> 工具插件<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-plug fa-fw"></i> {% trans "Tools & Plugins" %}<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_archive %}
                                     <li>
@@ -222,25 +249,25 @@
                     {% endif %}
                     {% if perms.sql.menu_system %}
                         <li>
-                            <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-cogs fa-fw"></i> {% trans "System Management" %}<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 <li>
-                                    <a href="/config/">配置项管理</a>
+                                    <a href="/config/">{% trans "Configuration" %}</a>
                                 </li>
                                 <li>
-                                    <a href="/group/">资源组管理</a>
+                                    <a href="/group/">{% trans "Resource Groups" %}</a>
                                 </li>
                                 <li>
-                                    <a href="#">其他配置管理 <span class="fa arrow"></span></a>
+                                    <a href="#">{% trans "Other Settings" %} <span class="fa arrow"></span></a>
                                     <ul class="nav nav-third-level collapse">
                                         <li>
-                                            <a target="_blank" href="/admin/sql/users/">用户管理</a>
+                                            <a target="_blank" href="/admin/sql/users/">{% trans "User Management" %}</a>
                                         </li>
                                         <li>
-                                            <a target="_blank" href="/admin/auth/group/">权限组管理</a>
+                                            <a target="_blank" href="/admin/auth/group/">{% trans "Permission Groups" %}</a>
                                         </li>
                                         <li>
-                                            <a target="_blank" href="/admin/">全部后台数据</a>
+                                            <a target="_blank" href="/admin/">{% trans "All Backend Data" %}</a>
                                         </li>
                                     </ul>
                                     <!-- /.nav-third-level -->
@@ -251,23 +278,23 @@
                     {% endif %}
                     {% if perms.sql.audit_user %}
                         <li>
-                            <a href="#"><i class="fa fa-eye fa-fw"></i> 系统审计<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-eye fa-fw"></i> {% trans "System Audit" %}<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 <li>
-                                    <a href="/audit/">通用审计</a>
+                                    <a href="/audit/">{% trans "General Audit" %}</a>
                                 </li>
                                 <li>
-                                    <a href="/audit_sqlworkflow/">sql上线审计</a>
+                                    <a href="/audit_sqlworkflow/">{% trans "SQL Deployment Audit" %}</a>
                                 </li>
                                 <li>
-                                    <a href="/audit_sqlquery/">查询审计</a>
+                                    <a href="/audit_sqlquery/">{% trans "Query Audit" %}</a>
                                 </li>
                             </ul>
                         </li>
                     {% endif %}
                     {% if perms.sql.menu_document %}
                         <li>
-                            <a href="/dbaprinciples/"><i class="fa fa-sitemap fa-fw"></i> 相关文档</a>
+                            <a href="/dbaprinciples/"><i class="fa fa-sitemap fa-fw"></i> {% trans "Documentation" %}</a>
                         </li>
                     {% endif %}
                     {% if perms.sql.menu_openapi %}
@@ -282,19 +309,19 @@
         <!-- /.navbar-static-side -->
     </nav>
 
-<!-- 两步验证配置模态框-->
+<!-- Two-Factor Auth Modal -->
 <div class="modal fade" id="2fa" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel1" style="font-weight: bold">两步验证</h4>
+                <h4 class="modal-title" id="myModalLabel1" style="font-weight: bold">{% trans "Two-Factor Verification" %}</h4>
             </div>
             <div class="modal-body">
                 <div class="form-horizontal">
                 <div class="form-group">
-                    <label for="totp-switch" class="col-sm-4 control-label">TOTP：</label>
+                    <label for="totp-switch" class="col-sm-4 control-label">{% trans "TOTP" %}:</label>
                     <div class="col-sm-8">
                         <div class="switch switch-small">
                             <label>
@@ -304,7 +331,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="sms-switch" class="col-sm-4 control-label">短信：</label>
+                    <label for="sms-switch" class="col-sm-4 control-label">{% trans "SMS" %}:</label>
                     <div class="col-sm-8">
                         <div class="switch switch-small">
                             <label>
@@ -322,63 +349,63 @@
                 </select>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 密码验证模态框-->
+<!-- Password Verification Modal -->
 <div class="modal fade" id="passwd-auth" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel1">验证当前用户密码</h4>
+                <h4 class="modal-title" id="myModalLabel1">{% trans "Verify Current Password" %}</h4>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="passwd">输入密码验证:</label>
-                    <input type="password" class="form-control" id="passwd" placeholder="确认密码" required>
+                    <label for="passwd">{% trans "Enter password to verify" %}:</label>
+                    <input type="password" class="form-control" id="passwd" placeholder="{% trans "Password" %}" required>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                <button id="btnConfirm" type="submit" class="btn btn-success">确认</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button id="btnConfirm" type="submit" class="btn btn-success">{% trans "Confirm" %}</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- OTP验证模态框-->
+<!-- OTP Verification Modal -->
 <div class="modal fade bs-example-modal-sm" id="2fa-auth" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel2">扫码绑定</h4>
+                <h4 class="modal-title" id="myModalLabel2">{% trans "Scan to Bind" %}</h4>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <div id="totp-form" class="form-group">
-                        <label class="control-label" for="qrcode-img">1. 使用Google身份验证器扫码：</label>
+                        <label class="control-label" for="qrcode-img">1. {% trans "Use Google Authenticator to scan" %}:</label>
                         <img id="qrcode-img" key="" src="" style="width: 100%;height: auto;">
                     </div>
                     <div id="sms-form" class="form-group" style="display:none;">
-                        <label class="control-label" for="qrcode-img">1. 输入要绑定的手机号码：</label>
+                        <label class="control-label" for="qrcode-img">1. {% trans "Enter phone number to bind" %}:</label>
                         <input class="form-control ng-valid ng-dirty ng-touched" id="phone" name="phone" type="text"
                         oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                     </div>
-                    <label class="control-label" for="otp">2. 输入6位验证码完成绑定：</label>
+                    <label class="control-label" for="otp">2. {% trans "Enter 6-digit verification code" %}:</label>
                     <input class="form-control ng-valid ng-dirty ng-touched" id="otp" name="otpCode" type="text"
                        oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="get_captcha" type="button" class="btn btn-primary" style="display: none">获取验证码</button>
-                <button id="binding" type="button" class="btn btn-success">绑定</button>
+                <button id="get_captcha" type="button" class="btn btn-primary" style="display: none">{% trans "Get Verification Code" %}</button>
+                <button id="binding" type="button" class="btn btn-success">{% trans "Bind" %}</button>
             </div>
         </div>
     </div>
@@ -410,9 +437,18 @@
 <script src="{% static 'metisMenu/js/metisMenu.min.js' %}"></script>
 <script src="{% static 'sb-admin-2/js/sb-admin-2.js' %}"></script>
 <script src="{% static 'bootstrap-select/js/bootstrap-select.min.js' %}"></script>
+{% get_current_language as LANGUAGE_CODE %}
+{% if LANGUAGE_CODE == 'zh-hans' %}
 <script src="{% static 'bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
+{% elif LANGUAGE_CODE == 'es' %}
+<script src="{% static 'bootstrap-select/js/i18n/defaults-es_ES.min.js' %}"></script>
+{% endif %}
 <script src="{% static 'bootstrap-table/js/bootstrap-table.min.js' %}"></script>
+{% if LANGUAGE_CODE == 'zh-hans' %}
 <script src="{% static 'bootstrap-table/js/bootstrap-table-zh-CN.min.js' %}"></script>
+{% elif LANGUAGE_CODE == 'es' %}
+<script src="{% static 'bootstrap-table/js/bootstrap-table-es-ES.min.js' %}"></script>
+{% endif %}
 <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
 <script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
 <script src="{% static 'dist/js/formatter.js' %}"></script>
@@ -431,7 +467,7 @@
 </script>
 <script>
     function twofa(enable, auth_type) {
-        // 配置2fa
+        
         let result;
         $.ajax({
             type: "post",
@@ -476,7 +512,7 @@
             },
             success: function (data) {
                 if (data.status === 0) {
-                    alert("已开启两步验证！");
+                    alert(gettext("Two-factor verification enabled!"));
                     $("#2fa-auth").modal("hide");
                 } else {
                     alert(data.msg)
@@ -504,7 +540,7 @@
             },
             success: function (data) {
                 if (data.status === 0) {
-                    alert("验证成功！");
+                    alert(gettext("Verification successful!"));
                     save();
                 } else {
                     alert(data.msg)
@@ -517,7 +553,7 @@
     }
 
     function auth(username, password) {
-        // 用户认证校验
+        // User认证Validate
         let result = false;
         $.ajax({
             type: "post",
@@ -550,12 +586,12 @@
             $("#totp-form").show();
             $("#sms-form").hide();
             $("#get_captcha").hide();
-            $("#myModalLabel2").text('扫码绑定')
+            $("#myModalLabel2").text(gettext("Scan to Bind"))
         } else if (auth_type === 'sms') {
             $("#totp-form").hide();
             $("#sms-form").show();
             $("#get_captcha").show();
-            $("#myModalLabel2").text('绑定手机号')
+            $("#myModalLabel2").text(gettext("Bind Phone Number"))
         }
     })
 
@@ -566,7 +602,7 @@
     $("#binding").click(function () {
         let otp = $('#otp').val();
         if (!otp) {
-            alert('请输入验证码！')
+            alert(gettext("Please enter verification code!"))
             return
         }
         authOTP(otp);
@@ -587,7 +623,7 @@
         let password = $("#passwd").val();
         password = password.replace(/(^\s*)|(\s*$)/g, "");
         if (!password) {
-            alert('请输入密码！')
+            alert(gettext("Please enter password!"))
             return
         }
         $("#passwd").val('');
@@ -597,7 +633,7 @@
             if (enable === 'false') {
                 let data = twofa(enable, auth_type);
                 if (data.status === 0) {
-                    alert('配置成功')
+                    alert(gettext("Configuration successful"))
                 } else {
                     alert(data.msg)
                 }
@@ -625,7 +661,7 @@
         let phone = $("#phone").val();
         let enable = $("#enable").val();
         if (!phone) {
-            alert('请输入手机号！')
+            alert(gettext("Please enter phone number!"))
             return
         }
 
@@ -633,15 +669,15 @@
         let data = twofa(enable, auth_type);
         if (data.status === 0) {
             init_countdown(this);
-            alert('验证码已发送，5分钟内有效');
+            alert(gettext("Verification code sent, valid for 5 minutes"));
         }
     })
 
     $("#2fa").on('show.bs.modal',function() {
         $('input[name="2fa"]').each(function (i) {
             $(this).bootstrapSwitch({
-                onText: "启用",
-                offText: "禁用",
+                onText: gettext("Enabled"),
+                offText: gettext("Disabled"),
                 onColor: "success",
                 size: "small",
             })
@@ -731,7 +767,7 @@
         return cookieValue;
     }
 
-    // 解决下拉筛选项被表格遮挡
+    
     // https://github.com/twbs/bootstrap/issues/11037#issuecomment-274870381
     $('.table-responsive').on('shown.bs.dropdown', function (e) {
         var t = $(this),

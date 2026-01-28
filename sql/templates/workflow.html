@@ -1,43 +1,44 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <h4 style="display: inline;">待办列表<span>{{ workflow_detail.workflow_name }}</span></h4>
+    <h4 style="display: inline;">Todo List<span>{{ workflow_detail.workflow_name }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <hr>
-    <!-- 自定义操作按钮-->
+    <!-- Custom buttons -->
     <div id="toolbar" class="bootstrap-select">
         <select id="workflow_type" class="form-control dropdown-menu-right selectpicker ">
-            <option value="0" selected="selected">全部</option>
-            <option value="1">查询权限申请</option>
-            <option value="2">SQL上线申请</option>
-            <option value="3">数据归档申请</option>
+            <option value="0" selected="selected">{% trans "All" %}</option>
+            <option value="1">Query Permission Application</option>
+            <option value="2">SQLDeployment Application</option>
+            <option value="3">Data Archive Application</option>
         </select>
     </div>
-    <!-- 审核列表的表格-->
+    <!-- Reviewlist的Table格-->
     <div class="table-responsive">
         <table id="audit-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
-    <!-- 审核信息确认 -->
+    <!-- ReviewInfo确认 -->
     <div class="modal fade" id="auditConfim">
         <div class="modal-dialog" style="width: 400px">
             <div class="modal-content message_align">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">审核确认</h4>
+                    <h4 class="modal-title text-danger">Review确认</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <input type="hidden" id="audit_id">
-                        <textarea id="audit_remark" class="form-control" placeholder="请输入审核备注" rows=4
+                        <textarea id="audit_remark" class="form-control" placeholder="Please enterReviewRemarks" rows=4
                                   required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" id="reject" onclick="audit(0)" class="btn btn-danger">拒绝</button>
-                    <button type="button" id="pass" onclick="audit(1)" class="btn btn-success">审核通过</button>
+                    <button type="button" id="pass" onclick="audit(1)" class="btn btn-success">{% trans "Approved" %}</button>
                 </div>
             </div>
         </div>
@@ -46,38 +47,41 @@
 
 {% block js %}
     <script>
-        //获取申请列表
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
+        //getApplication List
         function get_auditlist() {
-            //采取异步请求
-            //初始化table
+            //Async request
+            //Initializetable
             $('#audit-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/workflow/list/",
-                striped: true,                      //是否显示行间隔色
-                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                pagination: true,                   //是否显示分页（*）
-                sortable: true,                     //是否启用排序
-                sortOrder: "asc",                   //排序方式
-                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 20,                     //每页的记录行数（*）
-                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                search: true,                      //是否显示表格搜索
-                strictSearch: false,                //是否全匹配搜索
-                showColumns: true,                  //是否显示所有的列（选择显示的列）
-                showRefresh: true,                  //是否显示刷新按钮
-                minimumCountColumns: 2,             //最少允许的列数
-                clickToSelect: true,                //是否启用点击选中行
-                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                cardView: false,                    //是否显示详细视图
-                detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",               //指明自定义的toolbar
+                striped: true,                      //Show row stripes
+                cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                pagination: true,                   //Show pagination（*）
+                sortable: true,                     //Enable sorting
+                sortOrder: "asc",                   //Sort order
+                sidePagination: "server",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                pageSize: 20,                     //Records per page（*）
+                pageList: [20, 30, 50, 100],       //Selectable rows per page（*）
+                search: true,                      //Show table search
+                strictSearch: false,                //Exact match search
+                showColumns: true,                  //Show all columns（Select columns to display）
+                showRefresh: true,                  //Show refresh button
+                minimumCountColumns: 2,             //Minimum columns allowed
+                clickToSelect: true,                //Enable click to select row
+                uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                showToggle: true,                   //Show toggle button for detail/list view
+                cardView: false,                    //Show detail view
+                detailView: false,                  //Show parent-child table
+                locale: currentLocale,                    //Localization
+                toolbar: "#toolbar",               //Specify customtoolbar
                 queryParamsType: 'limit',
-                //请求服务数据时所传参数
+                //Parameters when requesting data
                 queryParams:
                     function (params) {
                         return {
@@ -88,40 +92,40 @@
                         }
                     },
                 columns: [{
-                    title: '申请标题',
+                    title: 'Apply标题',
                     field: 'workflow_title',
                     formatter: function (value, row, index) {
                         return "<a href='/workflow/" + row.audit_id + "/'>" + value + "</a>";
                     }
                 }, {
-                    title: '组',
+                    title: 'Group',
                     field: 'group_name'
                 }, {
-                    title: '申请类型',
+                    title: 'ApplyType',
                     field: 'workflow_type',
                     formatter: function (value, row, index) {
                         return workflow_type_formatter(value)
                     }
                 }, {
-                    title: '申请人',
+                    title: 'Apply人',
                     field: 'create_user_display'
                 }, {
-                    title: '申请时间',
+                    title: 'ApplyTime',
                     field: 'create_time'
                 }, {
-                    title: '审核状态',
+                    title: 'ReviewStatus',
                     field: 'current_status',
                     formatter: function (value, row, index) {
                         return workflow_status_formatter(value)
                     }
                 }, {
-                    title: '操作',
+                    title: 'Operations',
                     field: 'id',
                     formatter: function (value, row, index) {
-                        // 当前审核人
+                        // when前Reviewer
                         return "<button class=\"btn btn-default btn-xs\" " +
                             "onclick=\"javascrtpt:window.location.href='/workflow/" + row.audit_id + "/'\">" +
-                            "审核</button>\n"
+                            "Review</button>\n"
 
                     }
                 }],
@@ -129,30 +133,30 @@
                 },
                 onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
-                    //传搜索参数给服务器
+                    //Pass search params to server
                     queryParams(e)
                 },
                 responseHandler: function (res) {
-                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    
                     return res;
                 }
             });
 
         }
 
-        //向审核的modal传audit_id值
+        
         function getaudit_id(audit_id) {
             $('#audit_id').val(audit_id);
         }
 
-        //审核申请
+        
         function audit(auditstatus) {
             var audit_id = $('#audit_id').val();
             var audit_remark = $("#audit_remark").val();
             var audit_status = auditstatus;
 
             if (audit_status == 0 && audit_remark == '') {
-                alert('请填写审核备注')
+                alert('Please fill inReviewRemarks')
             }
             else {
                 $('button[type=button]').addClass('disabled');
@@ -188,11 +192,11 @@
 
         }
 
-        //初始化数据
+        //Initialize数据
         $(document).ready(function () {
             get_auditlist();
         });
-        //状态筛选变动自动刷新
+        //Status筛选变动自动Refresh
         $("#workflow_type").change(function () {
             get_auditlist();
         });

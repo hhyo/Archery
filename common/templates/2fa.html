@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Archery - 两步验证</title>
+    {% load i18n %}
+    <title>Archery - {% trans "Two-Factor Verification" %}</title>
     {% load static %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 引入 Bootstrap -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}" rel="stylesheet">
     <link href="{% static 'dist/css/login.css' %}" rel="stylesheet">
-
-    <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
-    <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
     <!--[if lt IE 9]>
          <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
          <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
@@ -18,60 +15,61 @@
     <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" />
 </head>
 <body onload="document.getElementById('otpCode').focus()" style="background-color:#edeff1;">
+{% load i18n %}
 <div class="row lsb-login">
     <div class="col-sm-3 login-form-wrapper">
         <form class="login-form fade-in-effect" id="auth" method="post" role="form">
             {% csrf_token %}
             {% if verify_mode == 'verify_config' %}
                 <div class="form-group">
-                    <h4 style="font-weight: bold">启用两步验证</h4>
+                    <h4 style="font-weight: bold">{% trans "Enable Two-Factor Verification" %}</h4>
                 </div>
                 <div class="form-group">
-                    <label for="auth_type">验证方式:</label>
+                    <label for="auth_type">{% trans "Verification Method:" %}</label>
                     <select id="auth_type" class="form-control show-tick selectpicker" name="auth_type"
-                            title="选择额外验证方式:"
+                            title="{% trans 'Select verification method:' %}"
                             data-live-search="true">
-                        <option value="totp" selected="selected">Google身份验证器</option>
-                        <option value="sms">短信验证码</option>
+                        <option value="totp" selected="selected">{% trans "Google Authenticator" %}</option>
+                        <option value="sms">{% trans "SMS Verification Code" %}</option>
                     </select>
                 </div>
 
                 <div id="totp-form" class="form-group" style="display: grid">
-                    <label class="control-label" for="qrcode-img">1. 使用Google身份验证器扫码：</label>
+                    <label class="control-label" for="qrcode-img">1. {% trans "Scan with Google Authenticator:" %}</label>
                     <img id="qrcode-img" key="" src="" style="width: 100%;height: auto;">
                 </div>
                 <div id="sms-form" class="form-group" style="display:none;">
-                    <label class="control-label" for="phone">1. 输入要绑定的手机号码：</label>
+                    <label class="control-label" for="phone">1. {% trans "Enter phone number to bind:" %}</label>
                     <input class="form-control ng-valid ng-dirty ng-touched" id="phone" name="phone" type="text"
                            oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                 </div>
                 <div class="form-group">
-                    <label class="control-label" for="otpCode">2. 输入6位验证码完成验证：</label>
+                    <label class="control-label" for="otpCode">2. {% trans "Enter 6-digit verification code:" %}</label>
                     <input class="form-control ng-valid ng-dirty ng-touched" id="otpCode" name="otpCode" type="text"
                            oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                 </div>
                 <div class="form-group" style="text-align: center">
-                    <button id="btnCaptcha" type="button" class="btn btn-primary btn-block" style="display: none">获取验证码</button>
-                    <button id="btnAuth" type="button" class="btn btn-success btn-block"><i class="fa-lock"></i>验证</button>
+                    <button id="btnCaptcha" type="button" class="btn btn-primary btn-block" style="display: none">{% trans "Get Verification Code" %}</button>
+                    <button id="btnAuth" type="button" class="btn btn-success btn-block"><i class="fa-lock"></i>{% trans "Verify" %}</button>
                 </div>
             {% else %}
                 <div class="form-group">
-                    <label for="auth_type">选择验证方式:</label>
+                    <label for="auth_type">{% trans "Select Verification Method:" %}</label>
                     <select id="auth_type" class="form-control show-tick selectpicker" name="auth_type"
-                            title="选择额外验证方式:"
+                            title="{% trans 'Select verification method:' %}"
                             data-live-search="true">
                     </select>
                 </div>
                 <div class="form-group">
-                    <label id="totp-form" class="control-label" for="otpCode">OTP验证码</label>
-                    <label id="sms-form" class="control-label" for="otpCode">短信验证码</label>
+                    <label id="totp-form" class="control-label" for="otpCode">{% trans "OTP Verification Code" %}</label>
+                    <label id="sms-form" class="control-label" for="otpCode">{% trans "SMS Verification Code" %}</label>
                     <input class="form-control ng-valid ng-dirty ng-touched" id="otpCode" name="otpCode" type="text"
                            oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                 </div>
                 <input id="phone" value="{{ phone }}" style="display: none">
                 <div class="form-group">
-                    <button id="btnCaptcha" type="button" class="btn btn-primary btn-block" >获取验证码</button>
-                    <button id="btnAuth" type="button" class="btn btn-success btn-block"><i class="fa-lock"></i>验证</button>
+                    <button id="btnCaptcha" type="button" class="btn btn-primary btn-block" >{% trans "Get Verification Code" %}</button>
+                    <button id="btnAuth" type="button" class="btn btn-success btn-block"><i class="fa-lock"></i>{% trans "Verify" %}</button>
                 </div>
             {% endif %}
             <input type="text" style="display:none">
@@ -79,17 +77,21 @@
     </div>
 </div>
 
-<!--底部部分 -->
 <div class="user-bottom-div">
     <p><strong>&copy; Archery</strong>&nbsp;(v{{ archery_version }})</p>
 </div>
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
 <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
 <script src="{% static 'bootstrap-select/js/bootstrap-select.min.js' %}"></script>
+{% get_current_language as LANGUAGE_CODE %}
+{% if LANGUAGE_CODE == 'zh-hans' %}
 <script src="{% static 'bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
+{% elif LANGUAGE_CODE == 'es' %}
+<script src="{% static 'bootstrap-select/js/i18n/defaults-es_ES.min.js' %}"></script>
+{% endif %}
 <script src="{% static 'dist/js/utils.js' %}"></script>
+<script type="text/javascript" src="{% url 'sql:javascript-catalog' %}"></script>
 </body>
-<!-- 解决CSRF-->
 <script>
     $(function () {
         $.ajaxSetup({
@@ -103,7 +105,6 @@
             var cookies = document.cookie.split(';');
             for (var i = 0; i < cookies.length; i++) {
                 var cookie = jQuery.trim(cookies[i]);
-                // Does this cookie string begin with the name we want?
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
@@ -115,14 +116,13 @@
 </script>
 <script>
 
-    //回车键提交验证
+    // Submit on Enter key
     $(document).ready(function () {
         $(document).keydown(function (event) {
-            //keycode==13为回车键
             if (event.keyCode === 13) {
                 let otp = $('#otpCode').val();
                 if (!otp) {
-                    alert('请输入验证码！')
+                    alert(gettext('Please enter verification code!'))
                     return
                 }
                 authOTP(otp);
@@ -153,7 +153,7 @@
     $('#btnAuth').click(function () {
         let otp = $('#otpCode').val();
         if (!otp) {
-            alert('请输入验证码！')
+            alert(gettext('Please enter verification code!'))
             return
         }
         authOTP(otp);
@@ -163,14 +163,14 @@
         if ('{{ verify_mode }}' === 'verify_config') {
             let phone = $("#phone").val();
             if (!phone) {
-                alert('请输入手机号！')
+                alert(gettext('Please enter phone number!'))
                 return
             }
         }
         let data = config_2fa();
         if (data.status === 0) {
             init_countdown(this);
-            alert('验证码已发送，5分钟内有效')
+            alert(gettext('Verification code sent, valid for 5 minutes'))
         }
     })
 
@@ -189,7 +189,6 @@
     })
 
     function config_2fa() {
-        // 配置2fa
         let result;
         $.ajax({
             type: "post",
@@ -234,7 +233,7 @@
             },
             success: function (data) {
                 if (data.status === 0) {
-                    alert("已开启两步验证！");
+                    alert(gettext("Two-factor verification enabled!"));
                 } else {
                     alert(data.msg)
                 }

@@ -1,12 +1,11 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
-                <div class="panel-heading">
-                    SQL上线
-                </div>
+                <div class="panel-heading">{% trans "SQL Deployment" %}</div>
                 <div class="panel-body">
                     <form id="form-submitsql" class="form-horizontal">
                         {% csrf_token %}
@@ -15,9 +14,9 @@
                             <pre id="sql_content_editor" style="min-height:450px"></pre>
                         </div>
                         <div style="display: none" class="col-md-8 column">
-                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
-                                      data-placeholder="SQL内容不能为空！"
-                                      placeholder="请在此提交SQL，请以分号结尾。" rows=20
+                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQLContent"
+                                      data-placeholder="SQLContent cannot be empty！"
+                                      placeholder="Please submit hereSQL，Please end with semicolon。" rows=20
                                       required></textarea>
                         </div>
                         <div class="col-md-3 column">
@@ -27,22 +26,22 @@
                             <div class="form-group">
                                 <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
                                        class="form-control"
-                                       data-name="上线单名称" data-placeholder="请输入上线单名称!"
-                                       placeholder="请输入上线单名称，如:XX项目会员功能建表"
+                                       data-name="Deployment ticket name" data-placeholder="Please enterDeployment ticket name!"
+                                       placeholder="Please enterDeployment ticket name，如:XX项目会员功能建Table"
                                        required>
                             </div>
                             <div class="form-group">
                                 <input id="demand_url" type="text" autocomplete="off" name="demand_url"
                                        class="form-control"
-                                       data-name="需求链接" data-placeholder="请提供需求链接，记录工单需求信息！"
-                                       placeholder="请输入需求链接">
+                                       data-name="{% trans 'Requirement Link' %}" data-placeholder="请提供需求链接，记录工单需求Info！"
+                                       placeholder="Please enter需求链接">
                             </div>
                             <div class="form-group">
                                 <select id="group_name" name="group_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="组" data-placeholder="请选择组！"
-                                        title="请选择组"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
+                                        data-name="Group" data-placeholder="Select Group！"
+                                        title="Select Group"
+                                        data-live-search="true" data-live-search-placeholder="Search您所在的Group" required>
                                     {% for group in group_list %}
                                         <option value="{{ group.group_name }}"
                                                 group-id="{{ group.group_id }}">{{ group.group_name }}</option>
@@ -52,9 +51,9 @@
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="实例" data-placeholder="请选择实例！"
-                                        title="请选择实例"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
+                                        data-name="{% trans 'Instances' %}" data-placeholder="Select Instance！"
+                                        title="Select Instance"
+                                        data-live-search="true" data-live-search-placeholder="{% trans 'Search instances in your group' %}" required>
                                 {% for name, engine in engines.items %}
                                     <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
                                 {%  endfor %}
@@ -63,53 +62,53 @@
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-name="数据库" data-placeholder="请选择数据库！"
-                                        data-live-search="true" data-live-search-placeholder="搜索要提交的数据库"
-                                        title="请选择数据库"
+                                        data-name="Database" data-placeholder="Select Database！"
+                                        data-live-search="true" data-live-search-placeholder="Search要Submit的Database"
+                                        title="Select Database"
                                         required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                                    <option value="is-empty" disabled="" selected="selected">{% trans "Select Database:" %}</option>
                                 </select>
                             </div>
                             {% if enable_backup_switch %}
                                 <div id="div-backup" class="form-group">
                                     <select id="is_backup" name="is_backup"
                                             class="selectpicker show-tick form-control bs-select-hidden"
-                                            data-name="是否选择备份"
-                                            title="请选择是否需要备份"
-                                            data-placeholder="请选择是否要备份" required>
+                                            data-name="YesNo选择备份"
+                                            title="Please selectYesNo需要备份"
+                                            data-placeholder="Please selectYesNo要备份" required>
                                         <option value=True selected="selected">备份SQL</option>
                                         <option value=False>不备份SQL</option>
                                     </select>
                                 </div>
                             {% endif %}
-                            <!--可执行范围时间-->
+                            <!--可Execute范围Time-->
                             <div class='form-group'>
                                 <input type="hidden" id="run_date_start" name="run_date_start">
                                 <input type="hidden" id="run_date_end" name="run_date_end">
                                 <div class='input-group date'>
                                     <input type="text" id="run_date_range" readonly
-                                           value="请选择可执行时间范围"
+                                           value="Please select可Execute Time范围"
                                            style="background-color: #fff;color: #999 "
                                            class="form-control "/>
                                     <span class="input-group-addon"><span
                                             class="glyphicon glyphicon-time"></span></span>
                                 </div>
                             </div>
-                            <!--审批流程-->
-                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
-                                   data-placeholder="请配置审批流程！" required>
+                            <!--Approval Flow程-->
+                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="Approval Flow程"
+                                   data-placeholder="请ConfigApproval Flow程！" required>
                             <div id="div-workflow_auditors" class="form-group" style="display: none">
-                                <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
+                                <p class="bg-primary">&nbsp&nbsp&nbspApproval Flow程：<b id="workflow_auditors_display"></b></p>
                             </div>
                             <!--button-->
                             <div class="form-group">
-                                <button type="button" id="btn-format" class="btn btn-info">美化</button>
+                                <button type="button" id="btn-format" class="btn btn-info">{% trans "Format" %}</button>
                                 <button type="button" id="btn-autoreview" data-loading-text="检测中..."
                                         class="btn btn-danger">SQL检测
                                 </button>
-                                <button type="button" id="btn-submitsql" data-loading-text="提交中..."
+                                <button type="button" id="btn-submitsql" data-loading-text="Submit中..."
                                         class="btn btn-success disabled" disabled>
-                                    SQL提交
+                                    SQLSubmit
                                 </button>
                             </div>
                         </div>
@@ -120,7 +119,7 @@
         <div class="col-md-12 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    检测结果
+                    检测Result
                 </div>
 
                 <div class="panel-body">
@@ -132,22 +131,22 @@
             </div>
         </div>
     </div>
-    <!-- 审核信息确认 -->
+    <!-- ReviewInfo确认 -->
     <div class="modal fade" id="submitConfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header ">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">提交信息确认</h4>
+                    <h4 class="modal-title text-danger">SubmitInfo确认</h4>
                 </div>
                 <div class="modal-body">
-                    <p>提交的SQL经检测仍存在<font color="red" size="5"><b id="CheckWarningCount"></b></font>个警告信息和<font
-                            color="red" size="5"><b id="CheckErrorCount"></b></font>个错误信息，请按照平台规范仔细检查！<br>
+                    <p>Submit的SQL经检测仍存在<font color="red" size="5"><b id="CheckWarningCount"></b></font>个WarningInfo和<font
+                            color="red" size="5"><b id="CheckErrorCount"></b></font>个errorInfo，请按照平台规范仔细Check！<br>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button id="submitsqlconfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button id="submitsqlconfirm" type="button" class="btn btn-danger" data-dismiss="modal">ConfirmSubmit
                     </button>
                 </div>
             </div>
@@ -169,7 +168,7 @@
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
 
-    <!--初始化时间控件 -->
+    <!--InitializeTime控件 -->
     <script>
         $("#run_date_range").daterangepicker({
             timePicker: true,
@@ -182,10 +181,10 @@
             startDate: moment().startOf('hour'),
             endDate: moment().startOf('hour'),
             locale: {
-                "applyLabel": "确定",
+                "applyLabel": "Confirm",
                 "cancelLabel": "清空",
                 "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
-                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "monthNames": ["一months", "二months", "三months", "四months", "五months", "六", "七months", "八months", "九months", "十months", "十一months", "十二months"],
                 "firstDay": 1
             },
         }).on('apply.daterangepicker', function (ev, picker) {
@@ -195,48 +194,48 @@
             $(this).val(picker.startDate.format('MM-DD HH:mm') + ' / ' + picker.endDate.format('MM-DD HH:mm'));
         }).on('cancel.daterangepicker', function (ev, picker) {
             $(this).css("color", "#999");
-            $(this).val('请选择可执行时间范围');
+            $(this).val('Please select可Execute Time范围');
             $("#run_date_start").val('');
             $("#run_date_end").val('');
         });
     </script>
     <!--upload -->
     <script>
-        //初始化上传控件
+        //InitializeUpload控件
         function init_upload() {
             $("#sql-upload").fileinput({
                 language: 'zh',
-                allowedFileExtensions: ['sql'],//接收的文件后缀
-                showCaption: true,//是否显示标题
+                allowedFileExtensions: ['sql'],
+                showCaption: true,
                 initialCaption: '仅支持10M内的SQL文件',
                 defaultPreviewContent: '仅支持10M内的SQL文件',
-                showUpload: false,     //不显示上传按钮
-                showPreview: false,    // 不显示预览,
+                showUpload: false,     
+                showPreview: false,    
                 //maxFileSize: 10240
             }).on('fileloaded', function (event, data, previewId, index) {
                 if (data.size <= 10240 * 1024) {
                     loadsql();
                 } else {
                     $('#sql-upload').fileinput('reset');
-                    alert('文件大小超过10M，请重新选择');
+                    alert('文件Size超过10M，请重新选择');
                 }
             }).on('fileclear', function (event) {
                 editor.setValue("");
             });
         }
 
-        //读取文件并展示在输入域
+        
         function loadsql() {
-            //获取文件
+            //get文件
             var file = $("#sql-upload")[0].files[0];
 
-            //创建读取文件的对象
+            
             var reader = new FileReader();
 
-            //创建文件读取相关的变量
+            
             var sqlFile;
 
-            //为文件读取成功设置事件
+            
             reader.onload = function (e) {
                 var sqlFile = e.target.result;
                 var value = editor.getValue() + sqlFile;
@@ -244,13 +243,13 @@
                 editor.clearSelection();
             };
 
-            //正式读取文件
+            
             reader.readAsText(file);
         }
     </script>
     <!--ace -->
     <script>
-        // 实例变更获取数据库补全提示
+        
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             $("#div-backup").show();
@@ -258,7 +257,7 @@
                 $("#div-backup").hide();
                 $("#is_backup").val("False");
             }
-            //将数据通过ajax提交给获取db_name
+            
             $.ajax({
                 type: "get",
                 url: "/instance/instance_resource/",
@@ -270,7 +269,7 @@
                 complete: function () {
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
-                        //填充库名
+                        
                         $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
                         if ($("#db_name").val()) {
                             $("#db_name").selectpicker().trigger("change");
@@ -287,7 +286,7 @@
                         }
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
-                        //自动补全提示
+                        
                         setDbsCompleteData(result)
                     } else {
                         alert(data.msg);
@@ -298,9 +297,9 @@
                 }
             });
         });
-        //数据库变更获取表名称补全提示
+        //Database变更getTableName补全Tip
         $("#db_name").change(function () {
-            //将数据通过ajax提交给获取db_name
+            
             $.ajax({
                 type: "get",
                 url: "/instance/instance_resource/",
@@ -314,7 +313,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        //自动补全提示
+                        
                         setTablesCompleteData(data.data)
                     } else {
                         alert(data.msg);
@@ -334,7 +333,7 @@
                 function () {
                     var fieldElement = $(this);
                     var fieldId = $(this).attr('id');
-                    //如果为null则设置为''
+                    
                     var value = fieldElement.val() || '';
                     if (value) {
                         value = value.trim();
@@ -345,7 +344,7 @@
                         return result;
                     }
                     if(fieldId == "workflow_name" && value.length>=50){
-                        alert("上线单名称/工单名称不能超过50个字符！");
+                        alert("Deployment ticket name/Ticket Name不能超过50个字符！");
                         result = false;
                         return result;
                     }
@@ -354,7 +353,7 @@
             return result;
         }
 
-        //美化
+        
         $("#btn-format").click(function () {
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
                 if (select_sqlContent) {
@@ -376,7 +375,7 @@
         });
 
         function checkRunDate(gap = 60) {
-            // 结束时间与开始时间的间隔不应该太短
+            
             var start = $("#run_date_start").val();
             var end = $("#run_date_end").val();
             if (start && end) {
@@ -384,7 +383,7 @@
                 if (realGap >= gap) {
                     return true
                 } else {
-                    alert("可执行时间范围不应该短于" + gap + "分钟");
+                    alert("可Execute Time范围不应该短于" + gap + "minutes");
                     return false
                 }
             }
@@ -401,10 +400,10 @@
             return str;
         };
         $("#btn-autoreview").click(function () {
-            //先做表单验证，成功了提交ajax给后端
+            
             const sqlTips = "-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n";
             var editorValue=editor.getValue();
-            // 删除默认的提示字符串。
+            // DeleteDefault的Tipstring。
             editorValueRemove=removeStartsWith(editorValue,sqlTips);
             if(editorValue!==editorValueRemove)
             {
@@ -417,12 +416,12 @@
             }
         });
 
-        //SQL提交
+        //SQLSubmit
         $("#btn-submitsql").click(function () {
-            //获取form对象，判断输入，通过则提交
+            //getformobject，check输入，ApprovethenSubmit
             $("#sql_content").val(editor.getValue());
             if (validateForm($("#form-submitsql")) && checkRunDate()) {
-                //判断是否需要弹出提示
+                //checkYesNo需要弹出Tip
                 var CheckWarningCount = sessionStorage.getItem('CheckWarningCount');
                 var CheckErrorCount = sessionStorage.getItem('CheckErrorCount');
                 $("#CheckWarningCount").text(CheckWarningCount);
@@ -435,13 +434,13 @@
             }
         });
 
-        //提交二次确认
+        
         $("#submitsqlconfirm").click(function () {
             sqlSubmit()
         });
 
         function autoreview() {
-            //将数据通过ajax提交给后端进行检查
+            
             $.ajax({
                 type: "post",
                 url: "/api/v1/workflow/sqlcheck/",
@@ -460,8 +459,8 @@
                 },
                 success: function (data) {
                     var result = data;
-                    //初始化表结构显示
-                    // 异步获取要动态生成的列
+                    //InitializeTable结构显示
+                    
                     var columns = [];
                     $.each(result['column_list'], function (i, column) {
                         columns.push({"field": i, "title": column, "sortable": true});
@@ -488,7 +487,7 @@
                                 field: 'affected_rows',
                                 sortable: true
                             }, {
-                                title: '审核状态',
+                                title: 'ReviewStatus',
                                 field: 'errlevel',
                                 sortable: true,
                                 formatter: function (value, row, index) {
@@ -501,7 +500,7 @@
                                     }
                                 }
                             }, {
-                                title: '审核信息',
+                                title: 'ReviewInfo',
                                 field: 'errormessage',
                                 formatter: function (value, row, index) {
                                     if (value === null) {
@@ -519,44 +518,44 @@
                                 }
                                 return {classes: style}
                             },
-                            escape: true,                       // 转义HTML字符串，替换 &, <, >, ", \`, 和 ' 字符。
-                            striped: true,                      //是否显示行间隔色
-                            cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                            sortable: true,                     //是否启用排序
-                            //sortOrder: "desc",                   //排序方式
-                            //sortName: 'errormessage',           //排序字段
-                            pagination: true,                   //是否显示分页（*）
-                            sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-                            pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                            pageSize: 500,                     //每页的记录行数（*）
-                            pageList: [500, 1000, 5000],       //可供选择的每页的行数（*）
-                            search: true,                      //是否显示表格搜索
-                            strictSearch: false,                //是否全匹配搜索
-                            showColumns: true,                  //是否显示所有的列（选择显示的列）
-                            showRefresh: false,                  //是否显示刷新按钮
+                            escape: true,                       
+                            striped: true,                      //Show row stripes
+                            cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                            sortable: true,                     //Enable sorting
+                            //sortOrder: "desc",                   //Sort order
+                            //sortName: 'errormessage',           
+                            pagination: true,                   //Show pagination（*）
+                            sidePagination: "client",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                            pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                            pageSize: 500,                     //Records per page（*）
+                            pageList: [500, 1000, 5000],       //Selectable rows per page（*）
+                            search: true,                      //Show table search
+                            strictSearch: false,                //Exact match search
+                            showColumns: true,                  //Show all columns（Select columns to display）
+                            showRefresh: false,                  //Show refresh button
                             showExport: true,
                             exportDataType: "all",
-                            minimumCountColumns: 1,             //最少允许的列数
-                            uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                            showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                            cardView: false,                    //是否显示详细视图
-                            detailView: true,                  //是否显示父子表
-                            //格式化详情
+                            minimumCountColumns: 1,             //Minimum columns allowed
+                            uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                            showToggle: true,                   //Show toggle button for detail/list view
+                            cardView: false,                    //Show detail view
+                            detailView: true,                  //Show parent-child table
+                            
                             detailFormatter: function (index, row) {
                                 var html = [];
                                 $.each(row, function (key, value) {
                                     if (key === 'sql') {
                                         //let sql = window.sqlFormatter.format(key);
                                         let sql = value;
-                                        //替换标签
+                                        
                                         sql = sql.replace(/&/g, "&amp;");
                                         sql = sql.replace(/</g, "&lt;");
                                         sql = sql.replace(/>/g, "&gt;");
                                         sql = sql.replace(/"/g, "&quot;");
-                                        //替换所有的换行符
+                                        
                                         sql = sql.replace(/\r\n/g, "<br>");
                                         sql = sql.replace(/\n/g, "<br>");
-                                        //替换所有的空格
+                                        
                                         sql = sql.replace(/\s/g, "&nbsp;");
                                         html.push('<span>' + sql + '</span>');
 
@@ -566,7 +565,7 @@
                             }
                         }
                     );
-                    //记录审核结果
+                    
                     sessionStorage.setItem('CheckWarningCount', result.warning_count);
                     sessionStorage.setItem('CheckErrorCount', result.error_count);
                     $("#inception-result").show();
@@ -630,7 +629,7 @@
     </script>
     <!--group -->
     <script>
-        // 获取实例信息和审批流程
+        // getInstanceInfo和Approval Flow程
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
@@ -643,7 +642,7 @@
                 complete: function () {
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
-                        //填充实例信息
+                        
                         $('#instance_name').selectpicker('val', sessionStorage.getItem('editClustername'));
                         if ($("#instance_name").val()) {
                             $("#instance_name").selectpicker().trigger("change");
@@ -700,9 +699,9 @@
     <!--init -->
     <script>
         $(document).ready(function () {
-            // 初始化上传控件
+            // InitializeUpload控件
             init_upload();
-            // 清空id, 只允许新增不允许修改
+            
             sessionStorage.removeItem('editWorkflowDetailId');
             var pathname = window.location.pathname;
             if (pathname == "/editsql/") {
@@ -721,7 +720,7 @@
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             } else if (pathname === "/submitsql/") {
-                //重置页面内容
+                
                 editor.setValue("");
                 $(".selectpicker").selectpicker('val', '');
                 $(".selectpicker").selectpicker('render');

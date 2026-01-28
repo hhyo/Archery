@@ -1,11 +1,13 @@
 from django.urls import include, path
 from django.contrib import admin
+from django.conf.urls.i18n import i18n_patterns
 from common import views
 from django.conf import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(("sql_api.urls", "sql_api"), namespace="sql_api")),
+    path("i18n/", include("django.conf.urls.i18n")),  # language selector
     path("", include(("sql.urls", "sql"), namespace="sql")),
 ]
 

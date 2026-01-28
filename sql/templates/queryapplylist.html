@@ -1,40 +1,41 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <!-- 自定义操作按钮-->
+    <!-- Custom operation buttons -->
     <div id="toolbar" class="btn-group">
         <a type="button" class="btn btn-default" href="/queryuserprivileges/">
             <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-            <span aria-hidden="true"></span>权限管理</a>
+            <span aria-hidden="true"></span>{% trans "Permission Management" %}</a>
         <button id="btn_add" type="button" class="btn btn-default"
                 data-toggle="modal" data-target="#apply">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-            <span aria-hidden="true"></span>权限申请
+            <span aria-hidden="true"></span>{% trans "Apply for Permission" %}
         </button>
     </div>
-    <!-- 申请列表的表格-->
+    <!-- Application list table-->
     <div class="table-responsive">
         <table id="dbauthapply-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
-    <!-- 申请权限的模态框-->
+    <!-- Apply for permission modal-->
     <div class="modal fade" id="apply" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">申请数据库查询权限</h4>
+                    <h4 class="modal-title" id="myModalLabel">{% trans "Apply for Database Query Permission" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <input type="text" autocomplete="off" class="form-control" id="title" placeholder="简单说明权限用途">
+                        <input type="text" autocomplete="off" class="form-control" id="title" placeholder="{% trans 'Brief description of permission usage' %}">
                     </div>
                     <div class="form-group">
                         <select id="group_name" name="group_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                title="请选择组:"
+                                title="{% trans 'Please select group:' %}"
                                 data-live-search="true" required>
                             {% for group in group_list %}
                                 <option value="{{ group.group_name }}">{{ group.group_name }}</option>
@@ -44,9 +45,9 @@
                     <div class="form-group">
                         <select id="instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                title="请选择实例:"
+                                title="Please select instance:"
                                 data-live-search="true" required>
-                            // TODO 使用models中的choices 渲染
+                            // TODO Use choices from models to render
                             {% for name, engine in engines.items %}
                                 <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
                             {%  endfor %}
@@ -54,19 +55,19 @@
                     </div>
                     <div class="form-group">
                         <select id="priv_type" name="db_name" data-live-search="true"
-                                title="权限级别:"
+                                title="{% trans 'Permission level:' %}"
                                 class="form-control selectpicker show-tick bs-select-hidden">
                         </select>
                     </div>
                     <div id="db_name_div" class="form-group">
                         <select id="db_name" name="db_name" data-live-search="true"
-                                title="请选择数据库:"
+                                title="Please select database:"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
                         </select>
                     </div>
                     <div id="db_name_multiple_div" class="form-group" style="display: none">
                         <select id="db_name_multiple" name="db_name" data-live-search="true" multiple="multiple"
-                                title="请选择数据库:" required
+                                title="Please select database:" required
                                 class="form-control selectpicker show-tick bs-select-hidden ">
                         </select>
                     </div>
@@ -75,50 +76,50 @@
                         <select id="table_name" name="table_name"
                                 class="form-control selectpicker show-tick bs-select-hidden" data-live-search="true"
                                 multiple='multiple' data-max-options="999"
-                                title="请选择表:" required>
+                                title="{% trans 'Please select table:' %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="valid_date" name="valid_date"
-                                title="请选择授权时间:"
+                                title="{% trans 'Please select authorization period:' %}"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="day">一天</option>
-                            <option value="week">一周</option>
-                            <option value="month">一月</option>
-                            <option value="year">长期(一年)</option>
+                            <option value="day">{% trans "One day" %}</option>
+                            <option value="week">{% trans "One week" %}</option>
+                            <option value="month">{% trans "One month" %}</option>
+                            <option value="year">{% trans "Long term (one year)" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <input id="limit_num" list="limits" type="number"
                                class="form-control "
-                               placeholder="请选择查询限制行数:">
+                               placeholder="{% trans 'Please select query row limit:' %}">
                         <datalist id="limits">
                             <option value=100>100</option>
                             <option value=500>500</option>
                             <option value=1000>1000</option>
                         </datalist>
                     </div>
-                    <!--审批流程-->
+                    <!--Approval process-->
                     <div id="div-workflow_auditors" class="form-group" style="display: none">
-                        <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors"></b></p>
+                        <p class="bg-primary">&nbsp&nbsp&nbspApproval process：<b id="workflow_auditors"></b></p>
                     </div>
-                    <p class="text-info">提示：权限审核通过后即可进行在线查询，请耐心等待。</p>
+                    <p class="text-info">{% trans "Note: After permission approval, you can perform online queries. Please wait patiently." %}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-success" onclick="applyforprivileges()">提交申请</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="applyforprivileges()">Submit application</button>
                 </div>
             </div>
         </div>
     </div>
-    <!-- 日志信息-->
+    <!-- Log information -->
     <div class="modal fade" id="logs">
         <div class="modal-dialog">
             <div class="modal-content message_align">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">工单日志</h4>
+                    <h4 class="modal-title text-danger">{% trans "Workflow Log" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
@@ -137,7 +138,7 @@
 {% block js %}
     <!--group -->
     <script>
-        // 获取实例信息和审批流程
+        // Get instance information and approval process
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
@@ -197,50 +198,50 @@
 
     </script>
     <script>
-        //选择控件初始化
+        //Select control initialization
         $("#table_name").selectpicker({
-            actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-            countSelectedText: "已选中{0}项",
+            actionsBox: true, //Add select all and cancel buttons to dropdown
+            countSelectedText: gettext("{0} items selected"),
             selectedTextFormat: "count > 5"
         });
         $("#db_name_multiple").selectpicker({
-            actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-            countSelectedText: "已选中{0}项",
+            actionsBox: true, //Add select all and cancel buttons to dropdown
+            countSelectedText: gettext("{0} items selected"),
             selectedTextFormat: "count > 5"
         });
 
-        //获取申请列表
+        //Get application list
         function queryapplylist() {
-            //采取异步请求
-            //初始化table
+            //Use asynchronous request
+            //Initialize table
             $('#dbauthapply-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/query/applylist/",
-                striped: true,                      //是否显示行间隔色
-                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                pagination: true,                   //是否显示分页（*）
-                sortable: true,                     //是否启用排序
-                sortOrder: "asc",                   //排序方式
-                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 20,                     //每页的记录行数（*）
-                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                search: true,                      //是否显示表格搜索
-                strictSearch: false,                //是否全匹配搜索
-                showColumns: true,                  //是否显示所有的列（选择显示的列）
-                showRefresh: true,                  //是否显示刷新按钮
-                minimumCountColumns: 2,             //最少允许的列数
-                clickToSelect: true,                //是否启用点击选中行
-                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                cardView: false,                    //是否显示详细视图
-                detailView: true,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",               //指明自定义的toolbar
+                striped: true,                      //Show row striping
+                cache: false,                       //Use cache, default is true, so generally need to set this property (*)
+                pagination: true,                   //Show pagination (*)
+                sortable: true,                     //Enable sorting
+                sortOrder: "asc",                   //Sort order
+                sidePagination: "server",           //Pagination method: client-side or server-side (*)
+                pageNumber: 1,                      //Initialize first page, default first page
+                pageSize: 20,                     //Records per page (*)
+                pageList: [20, 30, 50, 100],       //Selectable rows per page (*)
+                search: true,                      //Show table search
+                strictSearch: false,                //Full match search
+                showColumns: true,                  //Show all columns (select visible columns)
+                showRefresh: true,                  //Show refresh button
+                minimumCountColumns: 2,             //Minimum allowed columns
+                clickToSelect: true,                //Enable click to select row
+                uniqueId: "id",                     //Unique identifier for each row, usually primary key
+                showToggle: true,                   //Show toggle button for detail/list view
+                cardView: false,                    //Show detail view
+                detailView: true,                  //Show parent-child table
+                locale: 'zh-CN',                    //Localization
+                toolbar: "#toolbar",               //Specify custom toolbar
                 queryParamsType: 'limit',
-                //请求服务数据时所传参数
+                //Parameters passed when requesting service data
                 queryParams:
                     function (params) {
                         return {
@@ -249,14 +250,14 @@
                             search: params.search
                         }
                     },
-                //格式化详情
+                //Format details
                 detailFormatter: function (index, row) {
                     var html = [];
                     if (row.priv_type === 2) {
                         $.each(row, function (key, value) {
                             if (key === 'table_list') {
-                                var sql = '表清单：<br>' + value;
-                                //替换间隔符为换行符
+                                var sql = gettext('Table list:') + '<br>' + value;
+                                //Replace separator with line break
                                 sql = sql.replace(/,/g, "<br>");
                                 html.push('<span>' + sql + '</span>');
                             }
@@ -265,8 +266,8 @@
                     } else {
                         $.each(row, function (key, value) {
                             if (key === 'db_list') {
-                                var sql = '数据库清单：<br>' + value;
-                                //替换间隔符为换行符
+                                var sql = gettext('Database list:') + '<br>' + value;
+                                //Replace separator with line break
                                 sql = sql.replace(/,/g, "<br>");
                                 html.push('<span>' + sql + '</span>');
                             }
@@ -275,7 +276,7 @@
                     }
                 },
                 columns: [{
-                    title: '工单名称',
+                    title: gettext('Workflow Name'),
                     field: 'title',
                     formatter: function (value, row, index) {
                         var span = document.createElement('span');
@@ -289,10 +290,10 @@
                         return span.outerHTML;
                     }
                 }, {
-                    title: '实例',
+                    title: gettext('Instance'),
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: gettext('Database'),
                     field: 'db_list',
                     formatter: function (value, row, index) {
                         if (value.length > 30) {
@@ -303,7 +304,7 @@
                         }
                     }
                 }, {
-                    title: '权限级别',
+                    title: gettext('Permission Level'),
                     field: 'priv_type',
                     formatter: function (value, row, index) {
                         if (String(value) === '1') {
@@ -313,49 +314,49 @@
                         }
                     }
                 }, {
-                    title: '结果集',
+                    title: gettext('Result Set'),
                     field: 'limit_num'
                 }, {
-                    title: '有效时间',
+                    title: gettext('Valid Until'),
                     field: 'valid_date'
                 }, {
-                    title: '工单状态',
+                    title: gettext('Workflow Status'),
                     field: 'status',
                     formatter: function (value, row, index) {
                         return workflow_status_formatter(value)
                     }
                 }, {
-                    title: '申请人',
+                    title: gettext('Applicant'),
                     field: 'user_display'
                 }, {
-                    title: '申请时间',
+                    title: gettext('Application Time'),
                     field: 'create_time'
                 }, {
-                    title: '组',
+                    title: gettext('Group'),
                     field: 'group_name'
                 }, {
-                    title: '操作',
+                    title: gettext('Operations'),
                     field: 'operation',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.apply_id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.apply_id + "\"\n" + "onclick=\"getLog(this)\" >" + gettext("Operation Log") + "\n" + "</button>"
                     }
                 }],
                 onLoadSuccess: function () {
                 },
                 onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
-                    //传搜索参数给服务器
+                    //Pass search parameters to server
                     queryParams(e)
                 },
                 responseHandler: function (res) {
-                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    //Modify data source before ajax retrieves data and renders table
                     return res;
                 }
             });
 
         }
 
-        //实例变更获取数据库列表/权限类型
+        //Get database list/permission type on instance change
         $("#instance_name").change(function () {
             $.ajax({
                 type: "get",
@@ -366,7 +367,7 @@
                     resource_type: "database"
                 },
                 complete: function () {
-                    // 仅MySQL支持限制到表级权限
+                    // Only MySQL supports table-level permissions
                     var optgroup = $('#instance_name :selected').parent().attr('label');
                     $("#priv_type").empty();
                     if (optgroup === "MySQL") {
@@ -375,7 +376,7 @@
                     } else {
                         $('#priv_type').append("<option value=\"1\" selected=\"selected\">DATABASE</option>");
                     }
-                    $('#priv_type').prepend("<option value=\"is-empty\" disabled=\"\">权限级别:</option>");
+                    $('#priv_type').prepend("<option value=\"is-empty\" disabled=\"\">" + gettext('Permission level:') + "</option>");
                     $('#priv_type').selectpicker('render');
                     $('#priv_type').selectpicker('refresh');
                     $('#priv_type').selectpicker().trigger("change")
@@ -404,7 +405,7 @@
             });
         });
 
-        //数据库变更获取表名称
+        //Get table names on database change
         $("#db_name").change(function () {
             $.ajax({
                 type: "get",
@@ -437,15 +438,15 @@
             });
         });
 
-        //判断页面显示
+        //Determine page display
         $("#priv_type").change(function () {
-            //库权限
+            //Database permission
             if ($("#priv_type").val() === '1') {
                 $("#table_div").hide();
                 $("#db_name_div").hide();
                 $("#db_name_multiple_div").show();
             }
-            //表权限
+            //Table permission
             else if ($("#priv_type").val() === '2') {
                 $("#table_div").show();
                 $("#db_name_div").show();
@@ -453,7 +454,7 @@
             }
         });
 
-        //时间计算
+        //Time calculation
         function addDate(date, days) {
             var d = new Date(date);
             d.setDate(d.getDate() + days);
@@ -461,7 +462,7 @@
             return d.getFullYear() + '-' + m + '-' + d.getDate();
         }
 
-        //提交参数校验
+        //Submit parameter validation
         function applyvalidate() {
             var title = $("#title").val();
             var priv_type = $("#priv_type").val();
@@ -475,30 +476,30 @@
             var workflow_auditors = $("#workflow_auditors").val();
             var group_name = $("#group_name").val();
 
-            // 参数校验
+            // Parameter validation
             if (priv_type) {
                 if (priv_type === '1') {
                     if (title && group_name && workflow_auditors && instance_name && db_name_multiple && valid_date && limit_num) {
                         return true
                     } else {
-                        alert("信息填写不完整，或者未配置审批流程");
+                        alert(gettext("Information incomplete or approval process not configured"));
                         return false
                     }
                 } else if (priv_type === '2') {
                     if (title && group_name && workflow_auditors && instance_name && db_name && table_name && valid_date && limit_num) {
                         return true
                     } else {
-                        alert("信息填写不完整，或者未配置审批流程");
+                        alert(gettext("Information incomplete or approval process not configured"));
                         return false
                     }
                 }
             } else if (priv_type == null) {
-                alert("请选择权限类别");
+                alert(gettext("Please select permission type"));
                 return false
             }
         }
 
-        //提交权限申请
+        //Submit apply for permission
         function applyforprivileges() {
             var title = $("#title").val();
             var priv_type = $("#priv_type").val();
@@ -512,9 +513,9 @@
             var workflow_auditors = $("#workflow_auditors").val();
             var group_name = $("#group_name").val();
 
-            // 参数校验
+            // Parameter validation
             if (applyvalidate()) {
-                //时间格式化
+                //Time formatting
                 var date = new Date();
                 if (valid_date === 'day') {
                     valid_date = addDate(date, 1);
@@ -529,10 +530,10 @@
                     valid_date = addDate(date, 1);
                 }
 
-                //禁用按钮
+                //Disable button
                 $('button[type=button]').addClass('disabled');
                 $('button[type=button]').prop('disabled', true);
-                //提交请求
+                //Submit request
                 $.ajax({
                     type: "post",
                     url: "/query/applyforprivileges/",
@@ -569,7 +570,7 @@
             }
         }
 
-        // 获取操作日志
+        // Get operation log
         function getLog(obj) {
             var workflow_id = $(obj).attr("workflow_id");
             var workflow_type = 1;
@@ -584,42 +585,42 @@
                 complete: function () {
                 },
                 success: function (data) {
-                    //初始化table
+                    //Initialize table
                     $('#logs').modal('show');
                     $('#log-list').bootstrapTable('destroy').bootstrapTable({
                         escape: true,
-                        striped: true,                      //是否显示行间隔色
-                        cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                        pagination: false,                   //是否显示分页（*）
-                        sortable: false,                     //是否启用排序
-                        sortOrder: "asc",                   //排序方式
-                        sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-                        pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                        pageSize: 20,                     //每页的记录行数（*）
-                        pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                        search: false,                      //是否显示表格搜索
-                        strictSearch: false,                //是否全匹配搜索
-                        showColumns: false,                  //是否显示所有的列（选择显示的列）
-                        showRefresh: false,                  //是否显示刷新按钮
-                        minimumCountColumns: 2,             //最少允许的列数
-                        clickToSelect: false,                //是否启用点击选中行
-                        uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                        showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
-                        cardView: false,                    //是否显示详细视图
-                        detailView: false,                  //是否显示父子表
-                        locale: 'zh-CN',                    //本地化
+                        striped: true,                      //Show row striping
+                        cache: false,                       //Use cache, default is true, so generally need to set this property (*)
+                        pagination: false,                   //Show pagination (*)
+                        sortable: false,                     //Enable sorting
+                        sortOrder: "asc",                   //Sort order
+                        sidePagination: "client",           //Pagination method: client-side or server-side (*)
+                        pageNumber: 1,                      //Initialize first page, default first page
+                        pageSize: 20,                     //Records per page (*)
+                        pageList: [20, 30, 50, 100],       //Selectable rows per page (*)
+                        search: false,                      //Show table search
+                        strictSearch: false,                //Full match search
+                        showColumns: false,                  //Show all columns (select visible columns)
+                        showRefresh: false,                  //Show refresh button
+                        minimumCountColumns: 2,             //Minimum allowed columns
+                        clickToSelect: false,                //Enable click to select row
+                        uniqueId: "id",                     //Unique identifier for each row, usually primary key
+                        showToggle: false,                   //Show toggle button for detail/list view
+                        cardView: false,                    //Show detail view
+                        detailView: false,                  //Show parent-child table
+                        locale: 'zh-CN',                    //Localization
                         data: data.rows,
                         columns: [{
-                            title: '操作',
+                            title: gettext('Operations'),
                             field: 'operation_type_desc'
                         }, {
-                            title: '操作人',
+                            title: gettext('Operator'),
                             field: 'operator_display'
                         }, {
-                            title: '操作时间',
+                            title: gettext('Operation Time'),
                             field: 'operation_time'
                         }, {
-                            title: '操作信息',
+                            title: gettext('Operation Info'),
                             field: 'operation_info'
                         }],
                         onLoadSuccess: function () {
@@ -633,7 +634,7 @@
             })
         }
 
-        //初始化数据
+        //Initialize data
         $(document).ready(function () {
             queryapplylist();
         });

@@ -1,17 +1,16 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <!-- 自定义操作按钮-->
+    <!-- Custom buttons -->
     <div id="toolbar" class="form-inline">
         <div class="form-group ">
             <button id="btn_add" type="button" class="btn btn-default"
                     onclick="window.open('/admin/sql/resourcegroup/add/')">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加组
-            </button>
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{% trans "Add Group" %}</button>
         </div>
     </div>
-    <!-- 表格-->
+    <!-- Table -->
     <div class="table-responsive">
         <table id="group-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -23,42 +22,45 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
-        //获取列表
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
+        //Get list
         function grouplist() {
-            //采取异步请求
-            //初始化table
+            //Async request
+            //Initializetable
             $('#group-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/group/group/",
-                striped: true,                      //是否显示行间隔色
-                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                pagination: true,                   //是否显示分页（*）
-                sortable: true,                     //是否启用排序
-                sortOrder: "asc",                   //排序方式
-                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 20,                     //每页的记录行数（*）
-                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
-                showExport: true,                   //是否显示导出按钮
+                striped: true,                      //Show row stripes
+                cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                pagination: true,                   //Show pagination（*）
+                sortable: true,                     //Enable sorting
+                sortOrder: "asc",                   //Sort order
+                sidePagination: "server",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                pageSize: 20,                     //Records per page（*）
+                pageList: [20, 30, 50, 100],       //Selectable rows per page（*）
+                showExport: true,                   //Show export button
                 exportOptions: {
-                    fileName: 'group'  //文件名称设置
+                    fileName: 'group'  //File name setting
                 },
-                search: true,                      //是否显示表格搜索
-                strictSearch: false,                //是否全匹配搜索
-                showColumns: true,                  //是否显示所有的列（选择显示的列）
-                showRefresh: true,                  //是否显示刷新按钮
-                minimumCountColumns: 2,             //最少允许的列数
-                clickToSelect: true,                //是否启用点击选中行
-                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                cardView: false,                    //是否显示详细视图
-                detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",               //指明自定义的toolbar
+                search: true,                      //Show table search
+                strictSearch: false,                //Exact match search
+                showColumns: true,                  //Show all columns（Select columns to display）
+                showRefresh: true,                  //Show refresh button
+                minimumCountColumns: 2,             //Minimum columns allowed
+                clickToSelect: true,                //Enable click to select row
+                uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                showToggle: true,                   //Show toggle button for detail/list view
+                cardView: false,                    //Show detail view
+                detailView: false,                  //Show parent-child table
+                locale: currentLocale,                    //Localization
+                toolbar: "#toolbar",               //Specify customtoolbar
                 queryParamsType: 'limit',
-                //请求服务数据时所传参数
+                //Parameters when requesting data
                 queryParams:
                     function (params) {
                         return {
@@ -71,13 +73,13 @@
                     title: 'ID',
                     field: 'group_id'
                 }, {
-                    title: '组名称',
+                    title: 'GroupName',
                     field: 'group_name',
                     formatter: function (value, row, index) {
                         return "<a target=\"_blank\" href=\"/admin/sql/resourcegroup/" + row.group_id + "/change/\">" + value + "</a>"
                     }
                 }, {
-                    title: '关联对象',
+                    title: 'Associated Objects',
                     field: '',
                     formatter: function (value, row, index) {
                         return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.location.href='/grouprelations/" + row.group_id + "/'\">管理</button>\n"
@@ -87,14 +89,14 @@
                 },
                 onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
-                    //传搜索参数给服务器
+                    //Pass search params to server
                     queryParams(e)
                 }
             });
 
         }
 
-        //初始化数据
+        //Initialize数据
         $(document).ready(function () {
             grouplist();
         });

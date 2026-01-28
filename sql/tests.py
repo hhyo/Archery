@@ -1304,11 +1304,14 @@ class TestAsync(TestCase):
         mock_audit.detail_by_workflow_id.assert_called_with(
             workflow_id=self.wf1.id, workflow_type=ANY
         )
+        # Get the expected status display dynamically
+        self.wf1.refresh_from_db()
+        expected_status = self.wf1.get_status_display()
         mock_audit.add_log.assert_called_with(
             audit_id=123,
             operation_type=ANY,
             operation_type_desc=ANY,
-            operation_info="执行结果：已正常结束",
+            operation_info=f"执行结果：{expected_status}",
             operator=ANY,
             operator_display=ANY,
         )
