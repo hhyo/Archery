@@ -19,11 +19,8 @@ import sqlparse
 from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
-from common.config import SysConfig
-import logging
 
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import TransportError
 
 logger = logging.getLogger("default")
 
@@ -583,7 +580,7 @@ class ElasticsearchEngineBase(EngineBase):
                         sql=doc.sql,
                     )
                 else:
-                    if is_pass == False:
+                    if is_pass is False:
                         is_pass = True
             elif not doc.api_endpoint:
                 if doc.method == "PUT":
@@ -635,10 +632,10 @@ class ElasticsearchEngineBase(EngineBase):
                             sql=doc.sql,
                         )
                     else:
-                        if is_pass == False:
+                        if is_pass is False:
                             is_pass = True
                 elif doc.method == "POST":
-                    if is_pass == False:
+                    if is_pass is False:
                         is_pass = True
                 else:
                     result = ReviewResult(
@@ -669,7 +666,7 @@ class ElasticsearchEngineBase(EngineBase):
                             sql=doc.sql,
                         )
                     else:
-                        if is_pass == False:
+                        if is_pass is False:
                             is_pass = True
                 else:
                     result = ReviewResult(
@@ -683,7 +680,7 @@ class ElasticsearchEngineBase(EngineBase):
                     )
             elif doc.api_endpoint == "_update_by_query":
                 if doc.method == "POST":
-                    if is_pass == False:
+                    if is_pass is False:
                         is_pass = True
                 else:
                     result = ReviewResult(
@@ -695,12 +692,41 @@ class ElasticsearchEngineBase(EngineBase):
                         affected_rows=0,
                         execute_time=0,
                     )
-            elif doc.api_endpoint not in ["", "_doc", "_update_by_query", "_update"]:
+            elif doc.api_endpoint == "_mapping":
+                if doc.method == "PUT":
+                    if not doc.doc_data_body or "properties" not in doc.doc_data_body:
+                        result = ReviewResult(
+                            id=rowid,
+                            errlevel=2,
+                            stagestatus="驳回不支持语句",
+                            errormessage="PUT请求更新索引映射时请求体必须包含properties字段。",
+                            sql=doc.sql,
+                        )
+                    else:
+                        if is_pass is False:
+                            is_pass = True
+                else:
+                    result = ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage=f"不支持此操作，{doc.api_endpoint}需要使用PUT方法。解析结果：{doc_desc}",
+                        sql=doc.sql,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+            elif doc.api_endpoint not in [
+                "",
+                "_doc",
+                "_update_by_query",
+                "_update",
+                "_mapping",
+            ]:
                 result = ReviewResult(
                     id=rowid,
                     errlevel=2,
                     stagestatus="驳回不支持语句",
-                    errormessage="API操作端点(API Endpoint)仅支持: 空, _doc、_update、_update_by_query。",
+                    errormessage="API操作端点(API Endpoint)仅支持: 空, _doc、_update、_update_by_query、_mapping。",
                     sql=doc.sql,
                 )
             else:
@@ -778,6 +804,10 @@ class ElasticsearchEngineBase(EngineBase):
                     reviewResult = self.__add_or_update(conn, doc)
                     reviewResult.id = line
                     execute_result.rows.append(reviewResult)
+                elif doc.api_endpoint == "_mapping":
+                    reviewResult = self.__put_mapping(conn, doc)
+                    reviewResult.id = line
+                    execute_result.rows.append(reviewResult)
                 else:
                     raise Exception(f"不支持的API类型：{doc.api_endpoint}")
         except Exception as e:
@@ -806,7 +836,7 @@ class ElasticsearchEngineBase(EngineBase):
                         id=line,
                         errlevel=0,
                         stagestatus="Audit completed",
-                        errormessage=f"前序语句失败, 未执行",
+                        errormessage="前序语句失败, 未执行",
                         sql=doc.sql,
                         affected_rows=0,
                         execute_time=0,
@@ -915,6 +945,34 @@ class ElasticsearchEngineBase(EngineBase):
             execute_time=t.cost,
         )
 
+    def __put_mapping(self, conn, doc):
+        """ES的 更新索引映射方法"""
+        errlevel = 0
+        with FuncTimer() as t:
+            try:
+                response = conn.indices.put_mapping(
+                    index=doc.index_name, body=doc.doc_data_body
+                )
+                successful_count = response.get("_shards", {}).get("successful", None)
+                response_str = str(response)
+            except Exception as e:
+                error_message = str(e)
+                if "index_not_found_exception" in error_message.lower():
+                    response_str = "index not found: " + error_message
+                    successful_count = 0
+                    errlevel = 2
+                else:
+                    raise
+
+        return ReviewResult(
+            errlevel=errlevel,
+            stagestatus="Execute Successfully",
+            errormessage=response_str,
+            sql=doc.sql,
+            affected_rows=successful_count if successful_count is not None else 0,
+            execute_time=t.cost,
+        )
+
     def __delete_data(self, conn, doc):
         """
         数据删除
@@ -951,7 +1009,6 @@ class ElasticsearchEngineBase(EngineBase):
         """
         result = ElasticsearchDocument(sql=sql)
         if re.match(r"^POST |^PUT |^DELETE ", sql, re.I):
-
             # 提取方法和路径
             method, path_with_params = sql.split(maxsplit=1)
             if path_with_params.startswith("{"):
