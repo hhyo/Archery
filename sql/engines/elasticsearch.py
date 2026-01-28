@@ -710,7 +710,13 @@ class ElasticsearchEngineBase(EngineBase):
                         affected_rows=0,
                         execute_time=0,
                     )
-            elif doc.api_endpoint not in ["", "_doc", "_update_by_query", "_update", "_delete_by_query"]:
+            elif doc.api_endpoint not in [
+                "", 
+                "_doc", 
+                "_update_by_query", 
+                "_update", 
+                "_delete_by_query",
+            ]:
                 result = ReviewResult(
                     id=rowid,
                     errlevel=2,
@@ -907,12 +913,13 @@ class ElasticsearchEngineBase(EngineBase):
         )
 
     def __delete_by_query(self, conn, doc):
-        """ES的 update_by_query方法"""
+        """ES的 delete_by_query方法"""
         errlevel = 0
         with FuncTimer() as t:
             try:
                 response = conn.delete_by_query(
-                    index=doc.index_name, body=doc.doc_data_body,
+                    index=doc.index_name, 
+                    body=doc.doc_data_body,
                     params={'scroll_size': '3000', 'slices': '2'}
                 )
                 successful_count = response.get("total", 0)
