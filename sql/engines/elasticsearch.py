@@ -907,7 +907,7 @@ class ElasticsearchEngineBase(EngineBase):
         )
 
     def __delete_by_query(self, conn, doc):
-        """ES的 update_by_query方法"""
+        """ES的 delete_by_query方法"""
         errlevel = 0
         with FuncTimer() as t:
             try:
