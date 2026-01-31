@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from sql.engines.models import ResultSet
 from sql.models import Instance
@@ -62,8 +61,26 @@ class TestDbDiagnostic(TestCase):
         mock_engine = MagicMock()
         mock_result = ResultSet()
         mock_result.rows = [
-            {"Id": 1, "User": "root", "Host": "localhost", "db": "test_db", "Command": "Query", "Time": 10, "State": "executing", "Info": "SELECT * FROM test_table"},
-            {"Id": 2, "User": "app", "Host": "192.168.1.1", "db": "app_db", "Command": "Sleep", "Time": 5, "State": "idle", "Info": None},
+            {
+                "Id": 1,
+                "User": "root",
+                "Host": "localhost",
+                "db": "test_db",
+                "Command": "Query",
+                "Time": 10,
+                "State": "executing",
+                "Info": "SELECT * FROM test_table",
+            },
+            {
+                "Id": 2,
+                "User": "app",
+                "Host": "192.168.1.1",
+                "db": "app_db",
+                "Command": "Sleep",
+                "Time": 5,
+                "State": "idle",
+                "Info": None,
+            },
         ]
         mock_result.error = None
         mock_engine.processlist.return_value = mock_result
@@ -71,7 +88,7 @@ class TestDbDiagnostic(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:process_view"),
+            "/db_diagnostic/process/",
             {
                 "instance_name": "test_mysql",
                 "command_type": "All",
@@ -103,7 +120,7 @@ class TestDbDiagnostic(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:process_view"),
+            "/db_diagnostic/process/",
             {
                 "instance_name": "nonexistent_instance",
                 "command_type": "All",
@@ -143,7 +160,7 @@ class TestDbDiagnostic(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:process_view"),
+            "/db_diagnostic/process/",
             {
                 "instance_name": "test_mysql",
                 "command_type": "All",
@@ -184,7 +201,7 @@ class TestDbDiagnostic(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:create_kill_session"),
+            "/db_diagnostic/create_kill_session/",
             {
                 "instance_name": "test_mysql",
                 "ThreadIDs": json.dumps([123, 456]),
@@ -217,7 +234,7 @@ class TestDbDiagnostic(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:create_kill_session"),
+            "/db_diagnostic/create_kill_session/",
             {
                 "instance_name": "nonexistent_instance",
                 "ThreadIDs": json.dumps([123]),
@@ -231,7 +248,9 @@ class TestDbDiagnostic(TestCase):
 
     @patch("sql.db_diagnostic.user_instances")
     @patch("sql.db_diagnostic.get_engine")
-    def test_create_kill_session_not_supported(self, mock_get_engine, mock_user_instances):
+    def test_create_kill_session_not_supported(
+        self, mock_get_engine, mock_user_instances
+    ):
         """测试不支持的数据库类型"""
         # 赋予权限
         from django.contrib.auth.models import Permission
@@ -255,7 +274,7 @@ class TestDbDiagnostic(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:create_kill_session"),
+            "/db_diagnostic/create_kill_session/",
             {
                 "instance_name": "test_mysql",
                 "ThreadIDs": json.dumps([123]),
@@ -295,7 +314,7 @@ class TestDbDiagnostic(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:kill_session"),
+            "/db_diagnostic/kill_session/",
             {
                 "instance_name": "test_mysql",
                 "ThreadIDs": json.dumps([123, 456]),
@@ -326,7 +345,7 @@ class TestDbDiagnostic(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:kill_session"),
+            "/db_diagnostic/kill_session/",
             {
                 "instance_name": "nonexistent_instance",
                 "ThreadIDs": json.dumps([123]),

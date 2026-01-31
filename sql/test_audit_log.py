@@ -5,7 +5,6 @@ from unittest.mock import patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, RequestFactory
-from django.urls import reverse
 
 from sql.models import AuditEntry
 from sql.audit_log import (
@@ -49,7 +48,7 @@ class TestAuditLog(TestCase):
         """测试成功记录审计日志"""
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:audit_input"),
+            "/audit/input/",
             {
                 "action": "查询数据",
                 "extra_info": "查询了test_table表",
@@ -73,7 +72,7 @@ class TestAuditLog(TestCase):
         """测试不带额外信息的审计日志"""
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:audit_input"),
+            "/audit/input/",
             {
                 "action": "登录系统",
             },
@@ -116,7 +115,7 @@ class TestAuditLog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:audit_log"),
+            "/audit/log/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -160,7 +159,7 @@ class TestAuditLog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:audit_log"),
+            "/audit/log/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -178,7 +177,7 @@ class TestAuditLog(TestCase):
         # 创建不同日期的测试数据
         today = datetime.datetime.now()
         yesterday = today - datetime.timedelta(days=1)
-        
+
         AuditEntry.objects.create(
             user_id=self.user.id,
             user_name=self.user.username,
@@ -210,7 +209,7 @@ class TestAuditLog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:audit_log"),
+            "/audit/log/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -256,7 +255,7 @@ class TestAuditLog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:audit_log"),
+            "/audit/log/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -273,7 +272,7 @@ class TestAuditLog(TestCase):
         """测试从X-Forwarded-For获取客户端IP"""
         request = self.factory.get("/")
         request.META["HTTP_X_FORWARDED_FOR"] = "192.168.1.1, 10.0.0.1"
-        
+
         ip = get_client_ip(request)
         self.assertEqual(ip, "192.168.1.1")
 
@@ -281,7 +280,7 @@ class TestAuditLog(TestCase):
         """测试从REMOTE_ADDR获取客户端IP"""
         request = self.factory.get("/")
         request.META["REMOTE_ADDR"] = "192.168.1.2"
-        
+
         ip = get_client_ip(request)
         self.assertEqual(ip, "192.168.1.2")
 
@@ -289,13 +288,12 @@ class TestAuditLog(TestCase):
         """测试用户登录回调"""
         request = self.factory.get("/")
         request.META["REMOTE_ADDR"] = "192.168.1.1"
-        
+
         user_logged_in_callback(None, request, self.user)
-        
+
         # 验证是否创建了登录日志
         audit = AuditEntry.objects.filter(
-            user_name=self.user.username,
-            action="登入"
+            user_name=self.user.username, action="登入"
         ).first()
         self.assertIsNotNone(audit)
         self.assertEqual(audit.extra_info, "192.168.1.1")
@@ -304,13 +302,12 @@ class TestAuditLog(TestCase):
         """测试用户登出回调"""
         request = self.factory.get("/")
         request.META["REMOTE_ADDR"] = "192.168.1.2"
-        
+
         user_logged_out_callback(None, request, self.user)
-        
+
         # 验证是否创建了登出日志
         audit = AuditEntry.objects.filter(
-            user_name=self.user.username,
-            action="登出"
+            user_name=self.user.username, action="登出"
         ).first()
         self.assertIsNotNone(audit)
         self.assertEqual(audit.extra_info, "192.168.1.2")
@@ -318,13 +315,12 @@ class TestAuditLog(TestCase):
     def test_user_login_failed_callback_existing_user(self):
         """测试登录失败回调 - 已存在的用户"""
         credentials = {"username": "test_user"}
-        
+
         user_login_failed_callback(None, credentials=credentials)
-        
+
         # 验证是否创建了登录失败日志
         audit = AuditEntry.objects.filter(
-            user_name="test_user",
-            action="登入失败"
+            user_name="test_user", action="登入失败"
         ).first()
         self.assertIsNotNone(audit)
         self.assertEqual(audit.user_id, self.user.id)
@@ -333,13 +329,12 @@ class TestAuditLog(TestCase):
     def test_user_login_failed_callback_nonexistent_user(self):
         """测试登录失败回调 - 不存在的用户"""
         credentials = {"username": "nonexistent_user"}
-        
+
         user_login_failed_callback(None, credentials=credentials)
-        
+
         # 验证是否创建了登录失败日志
         audit = AuditEntry.objects.filter(
-            user_name="nonexistent_user",
-            action="登入失败"
+            user_name="nonexistent_user", action="登入失败"
         ).first()
         self.assertIsNotNone(audit)
         self.assertEqual(audit.user_id, 0)

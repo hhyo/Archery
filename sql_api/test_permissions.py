@@ -3,7 +3,8 @@ from unittest.mock import patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, RequestFactory
-from rest_framework.test import APIRequestFactory
+from rest_framework.test import APIRequestFactory, force_authenticate
+from rest_framework.request import Request
 
 from common.config import SysConfig
 from sql_api.permissions import IsInUserWhitelist, IsOwner
@@ -119,10 +120,10 @@ class TestIsOwner(TestCase):
     def test_user_is_owner(self):
         """测试用户是所有者"""
         request = self.factory.post(
-            "/api/test/",
-            data={"engineer": "test_user"},
-            format="json"
+            "/api/test/", data={"engineer": "test_user"}, format="json"
         )
+        # Wrap in DRF Request to parse data
+        request = Request(request)
         request.user = self.user
 
         has_permission = self.permission.has_permission(request, None)
@@ -131,10 +132,10 @@ class TestIsOwner(TestCase):
     def test_user_is_not_owner(self):
         """测试用户不是所有者"""
         request = self.factory.post(
-            "/api/test/",
-            data={"engineer": "other_user"},
-            format="json"
+            "/api/test/", data={"engineer": "other_user"}, format="json"
         )
+        # Wrap in DRF Request to parse data
+        request = Request(request)
         request.user = self.user
 
         has_permission = self.permission.has_permission(request, None)
@@ -142,11 +143,9 @@ class TestIsOwner(TestCase):
 
     def test_missing_engineer_parameter(self):
         """测试缺少engineer参数"""
-        request = self.factory.post(
-            "/api/test/",
-            data={},
-            format="json"
-        )
+        request = self.factory.post("/api/test/", data={}, format="json")
+        # Wrap in DRF Request to parse data
+        request = Request(request)
         request.user = self.user
 
         has_permission = self.permission.has_permission(request, None)
@@ -155,10 +154,10 @@ class TestIsOwner(TestCase):
     def test_none_engineer_parameter(self):
         """测试engineer参数为None"""
         request = self.factory.post(
-            "/api/test/",
-            data={"engineer": None},
-            format="json"
+            "/api/test/", data={"engineer": None}, format="json"
         )
+        # Wrap in DRF Request to parse data
+        request = Request(request)
         request.user = self.user
 
         has_permission = self.permission.has_permission(request, None)
@@ -166,11 +165,9 @@ class TestIsOwner(TestCase):
 
     def test_empty_engineer_parameter(self):
         """测试engineer参数为空字符串"""
-        request = self.factory.post(
-            "/api/test/",
-            data={"engineer": ""},
-            format="json"
-        )
+        request = self.factory.post("/api/test/", data={"engineer": ""}, format="json")
+        # Wrap in DRF Request to parse data
+        request = Request(request)
         request.user = self.user
 
         has_permission = self.permission.has_permission(request, None)
@@ -179,10 +176,10 @@ class TestIsOwner(TestCase):
     def test_case_sensitive_username(self):
         """测试用户名大小写敏感"""
         request = self.factory.post(
-            "/api/test/",
-            data={"engineer": "TEST_USER"},  # 大写用户名
-            format="json"
+            "/api/test/", data={"engineer": "TEST_USER"}, format="json"  # 大写用户名
         )
+        # Wrap in DRF Request to parse data
+        request = Request(request)
         request.user = self.user  # 小写用户名
 
         has_permission = self.permission.has_permission(request, None)

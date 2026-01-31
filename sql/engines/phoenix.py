@@ -68,7 +68,7 @@ class PhoenixEngine(EngineBase):
         whitelist_pattern = "^" + "|^".join(sql_whitelist)
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
-            sql = sql.format(sql, strip_comments=True)
+            sql = sqlparse.format(sql, strip_comments=True)
             sql = sqlparse.split(sql)[0]
             result["filtered_sql"] = sql.strip()
             # sql_lower = sql.lower()
@@ -76,7 +76,7 @@ class PhoenixEngine(EngineBase):
             result["bad_query"] = True
             result["msg"] = "没有有效的SQL语句"
             return result
-        if re.match(whitelist_pattern, sql) is None:
+        if re.match(whitelist_pattern, sql, re.I) is None:
             result["bad_query"] = True
             result["msg"] = "仅支持{}语法!".format(",".join(sql_whitelist))
             return result

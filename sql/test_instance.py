@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from sql.models import Instance, ParamTemplate, ParamHistory
 
@@ -73,7 +72,7 @@ class TestInstance(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:instance_list"),
+            "/instance/list/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -125,7 +124,7 @@ class TestInstance(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:instance_list"),
+            "/instance/list/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -177,7 +176,7 @@ class TestInstance(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:instance_list"),
+            "/instance/list/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -229,7 +228,7 @@ class TestInstance(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:instance_list"),
+            "/instance/list/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -274,7 +273,7 @@ class TestInstance(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:instance_list"),
+            "/instance/list/",
             {
                 "limit": 2,
                 "offset": 0,
@@ -335,7 +334,7 @@ class TestInstance(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:param_list"),
+            "/param/list/",
             {
                 "instance_id": instance.id,
             },
@@ -361,7 +360,7 @@ class TestInstance(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:param_list"),
+            "/param/list/",
             {
                 "instance_id": 99999,  # 不存在的实例ID
             },
@@ -417,7 +416,7 @@ class TestInstance(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:param_list"),
+            "/param/list/",
             {
                 "instance_id": instance.id,
                 "search": "max_connections",
@@ -473,7 +472,7 @@ class TestInstance(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:param_list"),
+            "/param/list/",
             {
                 "instance_id": instance.id,
                 "editable": "true",

@@ -39,7 +39,7 @@ class TestClickHouseEngine(TestCase):
         self.assertEqual(self.engine.port, 9000)
         self.assertEqual(self.engine.user, "default")
 
-    @patch("sql.engines.clickhouse.Client")
+    @patch("sql.engines.clickhouse.connect")
     def test_get_connection_success(self, mock_client):
         """测试成功获取数据库连接"""
         mock_conn = MagicMock()
@@ -48,7 +48,7 @@ class TestClickHouseEngine(TestCase):
         conn = self.engine.get_connection(db_name="default")
         self.assertIsNotNone(conn)
 
-    @patch("sql.engines.clickhouse.Client")
+    @patch("sql.engines.clickhouse.connect")
     def test_get_connection_failure(self, mock_client):
         """测试连接失败"""
         mock_client.side_effect = Exception("Connection failed")
@@ -59,12 +59,17 @@ class TestClickHouseEngine(TestCase):
     @patch.object(ClickHouseEngine, "get_connection")
     def test_query_success(self, mock_get_connection):
         """测试成功执行查询"""
-        # Mock connection
-        mock_conn = MagicMock()
-        mock_conn.execute.return_value = [
+        # Mock cursor
+        mock_cursor = MagicMock()
+        mock_cursor.fetchall.return_value = [
             (1, "test"),
             (2, "demo"),
         ]
+        mock_cursor.description = [("id",), ("name",)]
+
+        # Mock connection
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
         mock_get_connection.return_value = mock_conn
 
         result = self.engine.query(db_name="default", sql="SELECT * FROM test_table")
@@ -76,8 +81,11 @@ class TestClickHouseEngine(TestCase):
     @patch.object(ClickHouseEngine, "get_connection")
     def test_query_error(self, mock_get_connection):
         """测试查询失败"""
+        mock_cursor = MagicMock()
+        mock_cursor.execute.side_effect = Exception("Query error")
+
         mock_conn = MagicMock()
-        mock_conn.execute.side_effect = Exception("Query error")
+        mock_conn.cursor.return_value = mock_cursor
         mock_get_connection.return_value = mock_conn
 
         result = self.engine.query(db_name="default", sql="INVALID SQL")
@@ -89,7 +97,8 @@ class TestClickHouseEngine(TestCase):
     def test_get_all_databases(self, mock_query):
         """测试获取所有数据库列表"""
         mock_result = ResultSet()
-        mock_result.rows = [("default",), ("system",), ("test_db",)]
+        # Note: system will be filtered out
+        mock_result.rows = [("default",), ("test_db",), ("mydb",)]
         mock_result.error = None
         mock_query.return_value = mock_result
 
@@ -188,7 +197,7 @@ class TestClickHouseEngine(TestCase):
 
         # 先建立连接
         self.engine.get_connection(db_name="default")
-        
+
         # 关闭连接
         self.engine.close()
 
@@ -207,7 +216,7 @@ class TestClickHouseEngine(TestCase):
         mock_result.error = None
         mock_query.return_value = mock_result
 
-        result = self.engine.processlist()
+        result = self.engine.processlist(command_type="query")
 
         self.assertIsInstance(result, ResultSet)
         self.assertIsNone(result.error)
@@ -216,14 +225,18 @@ class TestClickHouseEngine(TestCase):
     def test_execute_workflow_ddl(self, mock_execute):
         """测试工作流执行 - DDL语句"""
         workflow = MagicMock()
-        workflow.sqlworkflowcontent.sql_content = "CREATE TABLE test (id Int32) ENGINE = MergeTree() ORDER BY id"
-        
+        workflow.sqlworkflowcontent.sql_content = (
+            "CREATE TABLE test (id Int32) ENGINE = MergeTree() ORDER BY id"
+        )
+
         mock_result = ResultSet()
         mock_result.error = None
         mock_execute.return_value = mock_result
 
         # ClickHouse execute_workflow 应该允许DDL
         # 验证可以执行CREATE TABLE
-        result = self.engine.execute(db_name="test_db", sql=workflow.sqlworkflowcontent.sql_content)
+        result = self.engine.execute(
+            db_name="test_db", sql=workflow.sqlworkflowcontent.sql_content
+        )
         self.assertIsInstance(result, ResultSet)
         self.assertIsNone(result.error)

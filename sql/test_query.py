@@ -6,7 +6,6 @@ from unittest.mock import patch, MagicMock
 import pytest
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from common.config import SysConfig
 from sql.engines.models import ResultSet
@@ -57,12 +56,9 @@ class TestQuery(TestCase):
         """测试成功查询"""
         # 设置权限
         self.user.user_permissions.add(
-            *list(
-                User._meta.default_permissions
-                | {"query_submit"}
-            )
+            *list(set(User._meta.default_permissions) | {"query_submit"})
         )
-        
+
         # Mock user_instances
         mock_user_instances.return_value = Instance.objects.filter(
             instance_name="test_instance"
@@ -78,7 +74,7 @@ class TestQuery(TestCase):
         mock_engine.filter_sql.return_value = "SELECT * FROM test_table LIMIT 100"
         mock_engine.thread_id = 123
         mock_engine.get_connection.return_value = None
-        
+
         # Mock query result
         mock_result = ResultSet()
         mock_result.rows = [("test_data",)]
@@ -86,7 +82,7 @@ class TestQuery(TestCase):
         mock_result.affected_rows = 1
         mock_result.error = None
         mock_engine.query.return_value = mock_result
-        
+
         mock_get_engine.return_value = mock_engine
 
         # Mock privilege check
@@ -98,7 +94,7 @@ class TestQuery(TestCase):
         # 登录并执行查询
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:query"),
+            "/query/",
             {
                 "instance_name": "test_instance",
                 "sql_content": "SELECT * FROM test_table",
@@ -116,18 +112,15 @@ class TestQuery(TestCase):
         """测试实例不存在的情况"""
         # 设置权限
         self.user.user_permissions.add(
-            *list(
-                User._meta.default_permissions
-                | {"query_submit"}
-            )
+            *list(set(User._meta.default_permissions) | {"query_submit"})
         )
-        
+
         # Mock user_instances to raise DoesNotExist
         mock_user_instances.return_value.get.side_effect = Instance.DoesNotExist
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:query"),
+            "/query/",
             {
                 "instance_name": "nonexistent_instance",
                 "sql_content": "SELECT * FROM test_table",
@@ -146,19 +139,16 @@ class TestQuery(TestCase):
         """测试缺少必需参数的情况"""
         # 设置权限
         self.user.user_permissions.add(
-            *list(
-                User._meta.default_permissions
-                | {"query_submit"}
-            )
+            *list(set(User._meta.default_permissions) | {"query_submit"})
         )
-        
+
         mock_user_instances.return_value = Instance.objects.filter(
             instance_name="test_instance"
         )
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:query"),
+            "/query/",
             {
                 "instance_name": "test_instance",
                 # Missing sql_content, db_name, limit_num
@@ -176,12 +166,9 @@ class TestQuery(TestCase):
         """测试禁止执行的查询"""
         # 设置权限
         self.user.user_permissions.add(
-            *list(
-                User._meta.default_permissions
-                | {"query_submit"}
-            )
+            *list(set(User._meta.default_permissions) | {"query_submit"})
         )
-        
+
         mock_user_instances.return_value = Instance.objects.filter(
             instance_name="test_instance"
         )
@@ -196,7 +183,7 @@ class TestQuery(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:query"),
+            "/query/",
             {
                 "instance_name": "test_instance",
                 "sql_content": "DELETE FROM test_table",
@@ -213,16 +200,15 @@ class TestQuery(TestCase):
     @patch("sql.query.user_instances")
     @patch("sql.query.get_engine")
     @patch("sql.query.SysConfig")
-    def test_query_disable_star(self, mock_config, mock_get_engine, mock_user_instances):
+    def test_query_disable_star(
+        self, mock_config, mock_get_engine, mock_user_instances
+    ):
         """测试禁用*的情况"""
         # 设置权限
         self.user.user_permissions.add(
-            *list(
-                User._meta.default_permissions
-                | {"query_submit"}
-            )
+            *list(set(User._meta.default_permissions) | {"query_submit"})
         )
-        
+
         mock_user_instances.return_value = Instance.objects.filter(
             instance_name="test_instance"
         )
@@ -243,7 +229,7 @@ class TestQuery(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:query"),
+            "/query/",
             {
                 "instance_name": "test_instance",
                 "sql_content": "SELECT * FROM test_table",
@@ -266,12 +252,9 @@ class TestQuery(TestCase):
         """测试权限检查失败"""
         # 设置权限
         self.user.user_permissions.add(
-            *list(
-                User._meta.default_permissions
-                | {"query_submit"}
-            )
+            *list(set(User._meta.default_permissions) | {"query_submit"})
         )
-        
+
         mock_user_instances.return_value = Instance.objects.filter(
             instance_name="test_instance"
         )
@@ -293,7 +276,7 @@ class TestQuery(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:query"),
+            "/query/",
             {
                 "instance_name": "test_instance",
                 "sql_content": "SELECT * FROM test_table",
@@ -311,7 +294,7 @@ class TestQuery(TestCase):
         """测试没有查询权限的情况"""
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:query"),
+            "/query/",
             {
                 "instance_name": "test_instance",
                 "sql_content": "SELECT * FROM test_table",

@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from sql.models import Instance
 
@@ -61,7 +60,7 @@ class TestSqlAnalyze(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:generate_sql"),
+            "/sql_analyze/generate/",
             {
                 "text": "SELECT * FROM users WHERE id = 1;\nUPDATE users SET name = 'test' WHERE id = 1;",
             },
@@ -88,7 +87,7 @@ class TestSqlAnalyze(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:generate_sql"),
+            "/sql_analyze/generate/",
             {},  # No text parameter
         )
 
@@ -134,13 +133,16 @@ class TestSqlAnalyze(TestCase):
         mock_soar_instance = MagicMock()
         mock_soar_instance.generate_args2cmd.return_value = ["soar", "-query", "..."]
         mock_process = MagicMock()
-        mock_process.communicate.return_value = (b"# SQL Analysis Report\nScore: 100", b"")
+        mock_process.communicate.return_value = (
+            b"# SQL Analysis Report\nScore: 100",
+            b"",
+        )
         mock_soar_instance.execute_cmd.return_value = mock_process
         mock_soar.return_value = mock_soar_instance
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:analyze_sql"),
+            "/sql_analyze/analyze/",
             {
                 "text": "SELECT * FROM users WHERE id = 1;",
                 "instance_name": "test_mysql",
@@ -178,13 +180,16 @@ class TestSqlAnalyze(TestCase):
         mock_soar_instance = MagicMock()
         mock_soar_instance.generate_args2cmd.return_value = ["soar", "-query", "..."]
         mock_process = MagicMock()
-        mock_process.communicate.return_value = (b"# SQL Analysis Report\nScore: 90", b"")
+        mock_process.communicate.return_value = (
+            b"# SQL Analysis Report\nScore: 90",
+            b"",
+        )
         mock_soar_instance.execute_cmd.return_value = mock_process
         mock_soar.return_value = mock_soar_instance
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:analyze_sql"),
+            "/sql_analyze/analyze/",
             {
                 "text": "SELECT * FROM users WHERE id = 1;",
                 "instance_name": "",
@@ -216,7 +221,7 @@ class TestSqlAnalyze(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:analyze_sql"),
+            "/sql_analyze/analyze/",
             {
                 "text": "SELECT * FROM users WHERE id = 1;",
                 "instance_name": "nonexistent",
@@ -245,7 +250,7 @@ class TestSqlAnalyze(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:analyze_sql"),
+            "/sql_analyze/analyze/",
             {
                 "text": "",
                 "instance_name": "",
@@ -291,7 +296,7 @@ class TestSqlAnalyze(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:analyze_sql"),
+            "/sql_analyze/analyze/",
             {
                 "text": "/etc/passwd",
                 "instance_name": "test_mysql",

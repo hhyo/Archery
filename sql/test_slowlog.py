@@ -5,7 +5,6 @@ import datetime
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from sql.engines.models import ResultSet
 from sql.models import Instance, SlowQuery, SlowQueryHistory, AliyunRdsConfig
@@ -63,7 +62,7 @@ class TestSlowlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:slowquery_review"),
+            "/slowquery/review/",
             {
                 "instance_name": "test_mysql",
                 "StartTime": "2024-01-01",
@@ -124,7 +123,7 @@ class TestSlowlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:slowquery_review"),
+            "/slowquery/review/",
             {
                 "instance_name": "test_mysql",
                 "StartTime": "2024-01-01",
@@ -183,7 +182,7 @@ class TestSlowlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:slowquery_review"),
+            "/slowquery/review/",
             {
                 "instance_name": "test_mysql",
                 "StartTime": "2024-01-01",
@@ -237,7 +236,7 @@ class TestSlowlog(TestCase):
             fingerprint="SELECT * FROM orders WHERE user_id = ?",
             sample="SELECT * FROM orders WHERE user_id = 1",
         )
-        
+
         for sq in [slow_query1, slow_query2]:
             SlowQueryHistory.objects.create(
                 checksum_id=sq.checksum,
@@ -253,7 +252,7 @@ class TestSlowlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:slowquery_review"),
+            "/slowquery/review/",
             {
                 "instance_name": "test_mysql",
                 "StartTime": "2024-01-01",
@@ -274,9 +273,7 @@ class TestSlowlog(TestCase):
 
     @patch("sql.slowlog.user_instances")
     @patch("sql.slowlog.AliyunRdsConfig")
-    def test_slowquery_review_pagination(
-        self, mock_aliyun_config, mock_user_instances
-    ):
+    def test_slowquery_review_pagination(self, mock_aliyun_config, mock_user_instances):
         """测试慢查询分页"""
         # 赋予权限
         from django.contrib.auth.models import Permission
@@ -317,7 +314,7 @@ class TestSlowlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:slowquery_review"),
+            "/slowquery/review/",
             {
                 "instance_name": "test_mysql",
                 "StartTime": "2024-01-01",

@@ -5,7 +5,6 @@ from unittest.mock import patch, MagicMock
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from common.utils.const import WorkflowStatus
 from sql.models import WorkflowAudit, WorkflowLog, ResourceGroup
@@ -31,13 +30,13 @@ class TestWorkflow(TestCase):
             display="管理员",
             is_active=True,
         )
-        
+
         # 创建资源组
         self.resource_group = ResourceGroup.objects.create(
             group_id=1,
             group_name="测试资源组",
         )
-        
+
         # 创建权限组
         self.auth_group = Group.objects.create(name="审核组")
         self.user.groups.add(self.auth_group)
@@ -86,7 +85,7 @@ class TestWorkflow(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("common:workflow_list"),
+            "/workflow/list/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -135,7 +134,7 @@ class TestWorkflow(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("common:workflow_list"),
+            "/workflow/list/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -184,7 +183,7 @@ class TestWorkflow(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("common:workflow_list"),
+            "/workflow/list/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -234,7 +233,7 @@ class TestWorkflow(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("common:workflow_list"),
+            "/workflow/list/",
             {
                 "limit": 10,
                 "offset": 0,
@@ -284,7 +283,7 @@ class TestWorkflow(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("common:workflow_log"),
+            "/workflow/log/",
             {
                 "workflow_id": 1,
                 "workflow_type": 1,
@@ -300,7 +299,7 @@ class TestWorkflow(TestCase):
         """测试工单不存在时获取日志"""
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("common:workflow_log"),
+            "/workflow/log/",
             {
                 "workflow_id": 99999,
                 "workflow_type": 1,
@@ -341,7 +340,7 @@ class TestWorkflow(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("common:workflow_log"),
+            "/workflow/log/",
             {
                 "workflow_id": 1,
                 "workflow_type": 1,

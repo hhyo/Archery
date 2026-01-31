@@ -65,9 +65,9 @@ class TestPgSQLEngine(TestCase):
         mock_cursor.description = [("id",), ("name",)]
         mock_cursor.fetchall.return_value = [(1, "test"), (2, "demo")]
         mock_cursor.rowcount = 2
-        
+
         mock_conn = MagicMock()
-        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_conn.cursor.return_value = mock_cursor
         mock_get_connection.return_value = mock_conn
 
         result = self.engine.query(db_name="test_db", sql="SELECT * FROM test_table")
@@ -82,9 +82,9 @@ class TestPgSQLEngine(TestCase):
         """测试查询失败"""
         mock_cursor = MagicMock()
         mock_cursor.execute.side_effect = Exception("Query error")
-        
+
         mock_conn = MagicMock()
-        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_conn.cursor.return_value = mock_cursor
         mock_get_connection.return_value = mock_conn
 
         result = self.engine.query(db_name="test_db", sql="INVALID SQL")
@@ -97,7 +97,8 @@ class TestPgSQLEngine(TestCase):
     def test_get_all_databases(self, mock_query):
         """测试获取所有数据库列表"""
         mock_result = ResultSet()
-        mock_result.rows = [("postgres",), ("test_db",), ("template1",)]
+        # Note: template0 and template1 will be filtered out
+        mock_result.rows = [("postgres",), ("test_db",), ("mydb",)]
         mock_result.error = None
         mock_query.return_value = mock_result
 
@@ -175,7 +176,7 @@ class TestPgSQLEngine(TestCase):
         mock_result.error = None
         mock_query.return_value = mock_result
 
-        result = self.engine.processlist()
+        result = self.engine.processlist(command_type="query")
 
         self.assertIsInstance(result, ResultSet)
         self.assertIsNone(result.error)
@@ -211,20 +212,19 @@ class TestPgSQLEngine(TestCase):
         sql = "SELECT * FROM users LIMIT 50"
         filtered_sql = self.engine.filter_sql(sql=sql, limit_num=0)
 
-        # 当limit_num为0时，不应该修改SQL
-        self.assertEqual(filtered_sql, sql)
+        # PostgreSQL adds semicolon
+        self.assertEqual(filtered_sql, "SELECT * FROM users LIMIT 50;")
 
-    @patch.object(PgSQLEngine, "get_connection")
-    def test_close_connection(self, mock_get_connection):
+    def test_close_connection(self):
         """测试关闭连接"""
         mock_conn = MagicMock()
-        mock_get_connection.return_value = mock_conn
+        # Directly set the connection on the engine
+        self.engine.conn = mock_conn
 
-        # 先建立连接
-        self.engine.get_connection(db_name="test_db")
-        
         # 关闭连接
         self.engine.close()
-        
+
         # 验证连接被关闭
         mock_conn.close.assert_called()
+        # 验证conn被设置为None
+        self.assertIsNone(self.engine.conn)

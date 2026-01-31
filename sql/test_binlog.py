@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from sql.engines.models import ResultSet
 from sql.models import Instance
@@ -68,7 +67,7 @@ class TestBinlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:binlog_list"),
+            "/binlog/list/",
             {
                 "instance_name": "test_mysql",
             },
@@ -96,7 +95,7 @@ class TestBinlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:binlog_list"),
+            "/binlog/list/",
             {
                 "instance_name": "nonexistent_instance",
             },
@@ -131,7 +130,7 @@ class TestBinlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:binlog_list"),
+            "/binlog/list/",
             {
                 "instance_name": "test_mysql",
             },
@@ -167,7 +166,7 @@ class TestBinlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:del_binlog"),
+            "/binlog/del_log/",
             {
                 "instance_id": self.instance.id,
                 "binlog": "mysql-bin.000001",
@@ -204,7 +203,7 @@ class TestBinlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:del_binlog"),
+            "/binlog/del_log/",
             {
                 "instance_id": self.instance.id,
                 "binlog": "mysql-bin.000001",
@@ -233,7 +232,7 @@ class TestBinlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:del_binlog"),
+            "/binlog/del_log/",
             {
                 "instance_id": 99999,  # 不存在的实例ID
                 "binlog": "mysql-bin.000001",
@@ -262,7 +261,7 @@ class TestBinlog(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:del_binlog"),
+            "/binlog/del_log/",
             {
                 "instance_id": self.instance.id,
                 "binlog": "",

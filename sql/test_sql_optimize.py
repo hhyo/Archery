@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from sql.models import Instance
 
@@ -79,7 +78,7 @@ class TestSqlOptimize(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:optimize_sqladvisor"),
+            "/slowquery/optimize_sqladvisor/",
             {
                 "sql_content": "SELECT * FROM users WHERE id = 1",
                 "instance_name": "test_mysql",
@@ -109,7 +108,7 @@ class TestSqlOptimize(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:optimize_sqladvisor"),
+            "/slowquery/optimize_sqladvisor/",
             {
                 # Missing sql_content and instance_name
                 "db_name": "test_db",
@@ -141,7 +140,7 @@ class TestSqlOptimize(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:optimize_sqladvisor"),
+            "/slowquery/optimize_sqladvisor/",
             {
                 "sql_content": "SELECT * FROM users WHERE id = 1",
                 "instance_name": "nonexistent",
@@ -182,7 +181,7 @@ class TestSqlOptimize(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:optimize_sqladvisor"),
+            "/slowquery/optimize_sqladvisor/",
             {
                 "sql_content": "SELECT * FROM users WHERE id = 1",
                 "instance_name": "test_mysql",
@@ -232,7 +231,7 @@ class TestSqlOptimize(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:optimize_sqladvisor"),
+            "/slowquery/optimize_sqladvisor/",
             {
                 "sql_content": "INVALID SQL",
                 "instance_name": "test_mysql",
@@ -282,7 +281,7 @@ class TestSqlOptimize(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:optimize_soar"),
+            "/slowquery/optimize_soar/",
             {
                 "instance_name": "test_mysql",
                 "db_name": "test_db",
@@ -310,7 +309,7 @@ class TestSqlOptimize(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.post(
-            reverse("sql:optimize_soar"),
+            "/slowquery/optimize_soar/",
             {
                 # Missing required parameters
                 "instance_name": "test_mysql",

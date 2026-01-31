@@ -6,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from sql.models import SqlWorkflow, QueryPrivilegesApply, Instance
 
@@ -80,7 +79,7 @@ class TestDashboard(TestCase):
         mock_chart_dao.return_value = mock_dao_instance
 
         self.client.force_login(self.user)
-        response = self.client.get(reverse("common:dashboard"))
+        response = self.client.get("/dashboard/")
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "dashboard")
@@ -110,7 +109,7 @@ class TestDashboard(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.get(
-            reverse("common:dashboard_api"),
+            "/dashboard/api/",
             {
                 "start_date": "2024-01-01",
                 "end_date": "2024-01-07",
@@ -137,7 +136,7 @@ class TestDashboard(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.get(
-            reverse("common:dashboard_api"),
+            "/dashboard/api/",
             {
                 "start_date": "invalid-date",
                 "end_date": "2024-01-07",
@@ -162,7 +161,7 @@ class TestDashboard(TestCase):
 
         self.client.force_login(self.user)
         response = self.client.get(
-            reverse("common:dashboard_api"),
+            "/dashboard/api/",
             {},  # Missing start_date and end_date
         )
 
@@ -196,7 +195,9 @@ class TestDashboard(TestCase):
 
         # 验证统计数据准确性
         self.assertEqual(Instance.objects.count(), 1)
-        self.assertEqual(User.objects.filter(is_active=True).count(), 2)  # test_user + admin
+        self.assertEqual(
+            User.objects.filter(is_active=True).count(), 2
+        )  # test_user + admin
 
     def test_validate_date_valid(self):
         """测试日期验证 - 有效日期"""
@@ -263,7 +264,7 @@ class TestDashboard(TestCase):
     def test_dashboard_without_permission(self):
         """测试无权限访问仪表板"""
         self.client.force_login(self.user)
-        response = self.client.get(reverse("common:dashboard"))
+        response = self.client.get("/dashboard/")
 
         # 应该返回403或重定向
         self.assertIn(response.status_code, [302, 403])
