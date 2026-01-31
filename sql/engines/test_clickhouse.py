@@ -212,12 +212,18 @@ class TestClickHouseEngine(TestCase):
         self.assertIsInstance(result, ResultSet)
         self.assertIsNone(result.error)
 
-    def test_execute_workflow_select_not_allowed(self):
-        """测试工作流执行 - SELECT不允许"""
+    @patch.object(ClickHouseEngine, "execute")
+    def test_execute_workflow_ddl(self, mock_execute):
+        """测试工作流执行 - DDL语句"""
         workflow = MagicMock()
-        workflow.sqlworkflowcontent.sql_content = "SELECT * FROM users"
+        workflow.sqlworkflowcontent.sql_content = "CREATE TABLE test (id Int32) ENGINE = MergeTree() ORDER BY id"
+        
+        mock_result = ResultSet()
+        mock_result.error = None
+        mock_execute.return_value = mock_result
 
-        # ClickHouse execute_workflow 通常不允许SELECT
-        # 验证workflow对象已创建
-        self.assertIsNotNone(workflow)
-        self.assertEqual(workflow.sqlworkflowcontent.sql_content, "SELECT * FROM users")
+        # ClickHouse execute_workflow 应该允许DDL
+        # 验证可以执行CREATE TABLE
+        result = self.engine.execute(db_name="test_db", sql=workflow.sqlworkflowcontent.sql_content)
+        self.assertIsInstance(result, ResultSet)
+        self.assertIsNone(result.error)

@@ -147,15 +147,15 @@ class TestPhoenixEngine(TestCase):
         self.assertIn("bad_query", result)
         self.assertFalse(result["bad_query"])
 
-    def test_query_check_bad_query(self):
-        """测试查询语句检查 - 禁止的语句"""
+    def test_query_check_ddl_statement(self):
+        """测试查询语句检查 - DDL语句"""
         sql = "DROP TABLE USERS"
         result = self.engine.query_check(db_name="", sql=sql)
 
         self.assertIsInstance(result, dict)
         # Phoenix通常不允许DDL操作在查询中
-        # 应该标记为bad_query或在msg中包含错误信息
-        self.assertTrue(result.get("bad_query", False) or "msg" in result)
+        # 应该标记为bad_query
+        self.assertTrue(result.get("bad_query", False))
 
     def test_filter_sql_with_limit(self):
         """测试SQL过滤 - 添加LIMIT"""

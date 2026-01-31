@@ -198,12 +198,11 @@ class TestDashboard(TestCase):
         self.assertEqual(Instance.objects.count(), 1)
         self.assertEqual(User.objects.filter(is_active=True).count(), 2)  # test_user + admin
 
-    @patch("common.dashboard.validate_date")
-    def test_validate_date_valid(self, mock_validate):
+    def test_validate_date_valid(self):
         """测试日期验证 - 有效日期"""
         from common.dashboard import validate_date
 
-        # 不使用mock，直接测试实际函数
+        # 直接测试实际函数
         result = validate_date("2024-01-01")
         self.assertEqual(result, "2024-01-01")
 
@@ -257,6 +256,9 @@ class TestDashboard(TestCase):
         # 验证返回结果
         self.assertIsNotNone(result)
         self.assertIsInstance(result, dict)
+        # 验证ChartDao方法被正确调用
+        mock_dao_instance.workflow_by_date.assert_called()
+        mock_dao_instance.get_date_list.assert_called()
 
     def test_dashboard_without_permission(self):
         """测试无权限访问仪表板"""

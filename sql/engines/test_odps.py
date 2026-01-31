@@ -137,7 +137,8 @@ class TestODPSEngine(TestCase):
         result = self.engine.query_check(db_name="test_project", sql=sql)
 
         self.assertIsInstance(result, dict)
-        # Should mark as bad query
+        # Should mark DROP statements as bad query
+        self.assertTrue(result.get("bad_query", False))
 
     def test_filter_sql_with_limit(self):
         """测试SQL过滤 - 添加LIMIT"""
