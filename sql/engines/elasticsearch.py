@@ -710,7 +710,13 @@ class ElasticsearchEngineBase(EngineBase):
                         affected_rows=0,
                         execute_time=0,
                     )
-            elif doc.api_endpoint not in ["", "_doc", "_update_by_query", "_update", "_delete_by_query"]:
+            elif doc.api_endpoint not in [
+                "",
+                "_doc",
+                "_update_by_query",
+                "_update",
+                "_delete_by_query",
+            ]:
                 result = ReviewResult(
                     id=rowid,
                     errlevel=2,
@@ -912,8 +918,9 @@ class ElasticsearchEngineBase(EngineBase):
         with FuncTimer() as t:
             try:
                 response = conn.delete_by_query(
-                    index=doc.index_name, body=doc.doc_data_body,
-                    params={'scroll_size': '3000', 'slices': '2'}
+                    index=doc.index_name,
+                    body=doc.doc_data_body,
+                    params={"scroll_size": "3000", "slices": "2"},
                 )
                 successful_count = response.get("total", 0)
                 response_str = str(response)
