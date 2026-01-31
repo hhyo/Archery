@@ -166,8 +166,8 @@ class TestDashboard(TestCase):
             {},  # Missing start_date and end_date
         )
 
-        # Should handle missing parameters gracefully
-        self.assertIn(response.status_code, [200, 400])
+        # Should return 400 for missing required parameters
+        self.assertEqual(response.status_code, 400)
 
     def test_dashboard_count_stats(self):
         """测试仪表板统计数据"""

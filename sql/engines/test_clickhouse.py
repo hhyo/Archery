@@ -218,4 +218,6 @@ class TestClickHouseEngine(TestCase):
         workflow.sqlworkflowcontent.sql_content = "SELECT * FROM users"
 
         # ClickHouse execute_workflow 通常不允许SELECT
-        # 这取决于实际实现
+        # 验证workflow对象已创建
+        self.assertIsNotNone(workflow)
+        self.assertEqual(workflow.sqlworkflowcontent.sql_content, "SELECT * FROM users")

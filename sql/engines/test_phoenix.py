@@ -154,6 +154,8 @@ class TestPhoenixEngine(TestCase):
 
         self.assertIsInstance(result, dict)
         # Phoenix通常不允许DDL操作在查询中
+        # 应该标记为bad_query或在msg中包含错误信息
+        self.assertTrue(result.get("bad_query", False) or "msg" in result)
 
     def test_filter_sql_with_limit(self):
         """测试SQL过滤 - 添加LIMIT"""
@@ -223,7 +225,8 @@ class TestPhoenixEngineEdgeCases(TestCase):
         sql = "   \n  \t  "
         filtered_sql = self.engine.filter_sql(sql=sql, limit_num=100)
 
-        # Should handle gracefully
+        # Should handle gracefully, likely returning original or stripped string
+        self.assertIsInstance(filtered_sql, str)
 
     @patch.object(PhoenixEngine, "query")
     def test_get_all_columns_empty_table(self, mock_query):

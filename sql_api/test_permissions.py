@@ -87,8 +87,9 @@ class TestIsInUserWhitelist(TestCase):
         request.user = self.user
 
         has_permission = self.permission.has_permission(request, None)
-        # 这取决于实际实现是否处理空格，当前实现可能不处理
-        # 如果实现正确处理空格，应该返回True
+        # 当前实现会尝试将 " {id} " 转换为int，会产生ValueError
+        # 所以应该返回False
+        self.assertFalse(has_permission)
 
 
 class TestIsOwner(TestCase):

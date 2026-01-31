@@ -216,7 +216,9 @@ class TestODPSEngineEdgeCases(TestCase):
         sql = "SELECT * FROM users LIMIT 50"
         filtered_sql = self.engine.filter_sql(sql=sql, limit_num=100)
 
-        # Should handle existing LIMIT
+        # Should handle existing LIMIT, either keep it or replace with smaller value
+        self.assertIn("LIMIT", filtered_sql.upper())
+        self.assertIsInstance(filtered_sql, str)
 
     @patch.object(ODPSEngine, "get_connection")
     def test_get_all_tables_empty_project(self, mock_get_connection):

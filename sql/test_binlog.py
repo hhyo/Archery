@@ -270,4 +270,6 @@ class TestBinlog(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        # Should handle empty binlog gracefully
+        data = json.loads(response.content)
+        # 空binlog不会执行清理操作，响应应该有合理的状态
+        self.assertIn(data["status"], [0, 1, 2])
