@@ -85,6 +85,9 @@ class TestAuditLog(TestCase):
 
     def test_audit_log_list(self):
         """测试获取审计日志列表"""
+        # 先清理可能存在的审计日志
+        AuditEntry.objects.all().delete()
+
         # 创建测试数据
         AuditEntry.objects.create(
             user_id=self.user.id,
@@ -114,6 +117,9 @@ class TestAuditLog(TestCase):
         self.user.user_permissions.add(permission)
 
         self.client.force_login(self.user)
+        # 清理登录产生的审计日志，只保留测试数据
+        AuditEntry.objects.filter(action="登录").delete()
+
         response = self.client.post(
             "/audit/log/",
             {
@@ -208,6 +214,9 @@ class TestAuditLog(TestCase):
         self.user.user_permissions.add(permission)
 
         self.client.force_login(self.user)
+        # 清理登录产生的审计日志，只保留测试数据
+        AuditEntry.objects.filter(action="登录").delete()
+
         response = self.client.post(
             "/audit/log/",
             {

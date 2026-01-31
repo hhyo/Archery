@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.test import Client, TestCase
 
 from common.config import SysConfig
@@ -54,10 +55,9 @@ class TestQuery(TestCase):
     @patch("sql.query.query_priv_check")
     def test_query_success(self, mock_priv_check, mock_get_engine, mock_user_instances):
         """测试成功查询"""
-        # 设置权限
-        self.user.user_permissions.add(
-            *list(set(User._meta.default_permissions) | {"query_submit"})
-        )
+        # 设置权限 - 只添加query_submit权限
+        query_perm = Permission.objects.get(codename="query_submit")
+        self.user.user_permissions.add(query_perm)
 
         # Mock user_instances
         mock_user_instances.return_value = Instance.objects.filter(
@@ -138,9 +138,9 @@ class TestQuery(TestCase):
     def test_query_missing_parameters(self, mock_user_instances):
         """测试缺少必需参数的情况"""
         # 设置权限
-        self.user.user_permissions.add(
-            *list(set(User._meta.default_permissions) | {"query_submit"})
-        )
+        # 设置权限 - 只添加query_submit权限
+        query_perm = Permission.objects.get(codename="query_submit")
+        self.user.user_permissions.add(query_perm)
 
         mock_user_instances.return_value = Instance.objects.filter(
             instance_name="test_instance"
@@ -165,9 +165,9 @@ class TestQuery(TestCase):
     def test_query_bad_query(self, mock_get_engine, mock_user_instances):
         """测试禁止执行的查询"""
         # 设置权限
-        self.user.user_permissions.add(
-            *list(set(User._meta.default_permissions) | {"query_submit"})
-        )
+        # 设置权限 - 只添加query_submit权限
+        query_perm = Permission.objects.get(codename="query_submit")
+        self.user.user_permissions.add(query_perm)
 
         mock_user_instances.return_value = Instance.objects.filter(
             instance_name="test_instance"

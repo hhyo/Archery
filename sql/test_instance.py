@@ -342,7 +342,8 @@ class TestInstance(TestCase):
 
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertEqual(data["status"], 0)
+        # param_list returns a list, not a dict with status
+        self.assertIsInstance(data, list)
 
     def test_param_list_instance_not_found(self):
         """测试实例不存在时获取参数列表"""
@@ -425,7 +426,8 @@ class TestInstance(TestCase):
 
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertEqual(data["status"], 0)
+        # param_list returns a list, not a dict with status
+        self.assertIsInstance(data, list)
 
     def test_param_list_editable_only(self):
         """测试只获取可编辑参数"""
@@ -481,4 +483,5 @@ class TestInstance(TestCase):
 
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertEqual(data["status"], 0)
+        # param_list returns a list, not a dict with status
+        self.assertIsInstance(data, list)

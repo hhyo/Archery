@@ -88,9 +88,8 @@ class TestIsInUserWhitelist(TestCase):
         request.user = self.user
 
         has_permission = self.permission.has_permission(request, None)
-        # 当前实现会尝试将 " {id} " 转换为int，会产生ValueError
-        # 所以应该返回False
-        self.assertFalse(has_permission)
+        # int() 可以处理前后空格，所以应该返回True
+        self.assertTrue(has_permission)
 
 
 class TestIsOwner(TestCase):
@@ -119,9 +118,7 @@ class TestIsOwner(TestCase):
 
     def test_user_is_owner(self):
         """测试用户是所有者"""
-        request = self.factory.post(
-            "/api/test/", data={"engineer": "test_user"}, format="json"
-        )
+        request = self.factory.post("/api/test/", data={"engineer": "test_user"})
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -131,9 +128,7 @@ class TestIsOwner(TestCase):
 
     def test_user_is_not_owner(self):
         """测试用户不是所有者"""
-        request = self.factory.post(
-            "/api/test/", data={"engineer": "other_user"}, format="json"
-        )
+        request = self.factory.post("/api/test/", data={"engineer": "other_user"})
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -143,7 +138,7 @@ class TestIsOwner(TestCase):
 
     def test_missing_engineer_parameter(self):
         """测试缺少engineer参数"""
-        request = self.factory.post("/api/test/", data={}, format="json")
+        request = self.factory.post("/api/test/", data={})
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -153,9 +148,7 @@ class TestIsOwner(TestCase):
 
     def test_none_engineer_parameter(self):
         """测试engineer参数为None"""
-        request = self.factory.post(
-            "/api/test/", data={"engineer": None}, format="json"
-        )
+        request = self.factory.post("/api/test/", data={"engineer": None})
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -165,7 +158,7 @@ class TestIsOwner(TestCase):
 
     def test_empty_engineer_parameter(self):
         """测试engineer参数为空字符串"""
-        request = self.factory.post("/api/test/", data={"engineer": ""}, format="json")
+        request = self.factory.post("/api/test/", data={"engineer": ""})
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -176,7 +169,7 @@ class TestIsOwner(TestCase):
     def test_case_sensitive_username(self):
         """测试用户名大小写敏感"""
         request = self.factory.post(
-            "/api/test/", data={"engineer": "TEST_USER"}, format="json"  # 大写用户名
+            "/api/test/", data={"engineer": "TEST_USER"}  # 大写用户名
         )
         # Wrap in DRF Request to parse data
         request = Request(request)
