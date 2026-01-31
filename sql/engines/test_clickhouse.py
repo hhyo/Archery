@@ -159,12 +159,18 @@ class TestClickHouseEngine(TestCase):
     def test_query_check_select(self):
         """测试查询语句检查 - SELECT"""
         sql = "SELECT * FROM users WHERE id = 1"
-        result = self.engine.query_check(db_name="test_db", sql=sql)
+        # Mock server_version to avoid IndexError
+        with patch.object(
+            ClickHouseEngine,
+            "server_version",
+            new_callable=lambda: property(lambda self: (21, 1, 2)),
+        ):
+            result = self.engine.query_check(db_name="test_db", sql=sql)
 
-        self.assertIsInstance(result, dict)
-        self.assertIn("filtered_sql", result)
-        self.assertIn("bad_query", result)
-        self.assertFalse(result["bad_query"])
+            self.assertIsInstance(result, dict)
+            self.assertIn("filtered_sql", result)
+            self.assertIn("bad_query", result)
+            self.assertFalse(result["bad_query"])
 
     def test_query_check_bad_query(self):
         """测试查询语句检查 - 禁止的语句"""
