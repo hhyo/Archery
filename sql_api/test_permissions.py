@@ -118,94 +118,72 @@ class TestIsOwner(TestCase):
 
     def test_user_is_owner(self):
         """测试用户是所有者"""
-        import json
+        from unittest.mock import Mock
 
-        request = self.factory.post(
-            "/api/test/",
-            data=json.dumps({"engineer": "test_user"}),
-            content_type="application/json",
-        )
-        # Wrap in DRF Request to parse data
-        request = Request(request)
+        # Create a mock request with data attribute
+        request = Mock()
         request.user = self.user
+        request.data = {"engineer": "test_user"}
 
         has_permission = self.permission.has_permission(request, None)
         self.assertTrue(has_permission)
 
     def test_user_is_not_owner(self):
         """测试用户不是所有者"""
-        import json
+        from unittest.mock import Mock
 
-        request = self.factory.post(
-            "/api/test/",
-            data=json.dumps({"engineer": "other_user"}),
-            content_type="application/json",
-        )
-        # Wrap in DRF Request to parse data
-        request = Request(request)
+        # Create a mock request with data attribute
+        request = Mock()
         request.user = self.user
+        request.data = {"engineer": "other_user"}
 
         has_permission = self.permission.has_permission(request, None)
         self.assertFalse(has_permission)
 
     def test_missing_engineer_parameter(self):
         """测试缺少engineer参数"""
-        import json
+        from unittest.mock import Mock
 
-        request = self.factory.post(
-            "/api/test/", data=json.dumps({}), content_type="application/json"
-        )
-        # Wrap in DRF Request to parse data
-        request = Request(request)
+        # Create a mock request with data attribute but missing engineer
+        request = Mock()
         request.user = self.user
+        request.data = {}
 
         has_permission = self.permission.has_permission(request, None)
         self.assertFalse(has_permission)
 
     def test_none_engineer_parameter(self):
         """测试engineer参数为None"""
-        import json
+        from unittest.mock import Mock
 
-        request = self.factory.post(
-            "/api/test/",
-            data=json.dumps({"engineer": None}),
-            content_type="application/json",
-        )
-        # Wrap in DRF Request to parse data
-        request = Request(request)
+        # Create a mock request with engineer=None
+        request = Mock()
         request.user = self.user
+        request.data = {"engineer": None}
 
         has_permission = self.permission.has_permission(request, None)
         self.assertFalse(has_permission)
 
     def test_empty_engineer_parameter(self):
         """测试engineer参数为空字符串"""
-        import json
+        from unittest.mock import Mock
 
-        request = self.factory.post(
-            "/api/test/",
-            data=json.dumps({"engineer": ""}),
-            content_type="application/json",
-        )
-        # Wrap in DRF Request to parse data
-        request = Request(request)
+        # Create a mock request with empty engineer string
+        request = Mock()
         request.user = self.user
+        request.data = {"engineer": ""}
 
         has_permission = self.permission.has_permission(request, None)
         self.assertFalse(has_permission)
 
     def test_case_sensitive_username(self):
         """测试用户名大小写敏感"""
-        import json
+        from unittest.mock import Mock
 
-        request = self.factory.post(
-            "/api/test/",
-            data=json.dumps({"engineer": "TEST_USER"}),  # 大写用户名
-            content_type="application/json",
-        )
-        # Wrap in DRF Request to parse data
-        request = Request(request)
-        request.user = self.user  # 小写用户名
+        # Create a mock request with uppercase engineer name
+        request = Mock()
+        request.user = self.user  # 小写用户名 test_user
+        request.data = {"engineer": "TEST_USER"}  # 大写用户名
 
         has_permission = self.permission.has_permission(request, None)
         # 取决于实现，如果用户名大小写敏感，应该返回False

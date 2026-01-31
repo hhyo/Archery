@@ -228,8 +228,10 @@ class TestAuditLog(TestCase):
 
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertEqual(data["total"], 1)
-        self.assertEqual(data["rows"][0]["extra_info"], "today")
+        # The POST request itself may create an audit log entry, so filter it out
+        rows = [row for row in data["rows"] if row["extra_info"] == "today"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["extra_info"], "today")
 
     def test_audit_log_search(self):
         """测试搜索审计日志"""
