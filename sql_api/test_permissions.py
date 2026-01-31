@@ -118,7 +118,13 @@ class TestIsOwner(TestCase):
 
     def test_user_is_owner(self):
         """测试用户是所有者"""
-        request = self.factory.post("/api/test/", data={"engineer": "test_user"})
+        import json
+
+        request = self.factory.post(
+            "/api/test/",
+            data=json.dumps({"engineer": "test_user"}),
+            content_type="application/json",
+        )
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -128,7 +134,13 @@ class TestIsOwner(TestCase):
 
     def test_user_is_not_owner(self):
         """测试用户不是所有者"""
-        request = self.factory.post("/api/test/", data={"engineer": "other_user"})
+        import json
+
+        request = self.factory.post(
+            "/api/test/",
+            data=json.dumps({"engineer": "other_user"}),
+            content_type="application/json",
+        )
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -138,7 +150,11 @@ class TestIsOwner(TestCase):
 
     def test_missing_engineer_parameter(self):
         """测试缺少engineer参数"""
-        request = self.factory.post("/api/test/", data={})
+        import json
+
+        request = self.factory.post(
+            "/api/test/", data=json.dumps({}), content_type="application/json"
+        )
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -148,7 +164,13 @@ class TestIsOwner(TestCase):
 
     def test_none_engineer_parameter(self):
         """测试engineer参数为None"""
-        request = self.factory.post("/api/test/", data={"engineer": None})
+        import json
+
+        request = self.factory.post(
+            "/api/test/",
+            data=json.dumps({"engineer": None}),
+            content_type="application/json",
+        )
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -158,7 +180,13 @@ class TestIsOwner(TestCase):
 
     def test_empty_engineer_parameter(self):
         """测试engineer参数为空字符串"""
-        request = self.factory.post("/api/test/", data={"engineer": ""})
+        import json
+
+        request = self.factory.post(
+            "/api/test/",
+            data=json.dumps({"engineer": ""}),
+            content_type="application/json",
+        )
         # Wrap in DRF Request to parse data
         request = Request(request)
         request.user = self.user
@@ -168,8 +196,12 @@ class TestIsOwner(TestCase):
 
     def test_case_sensitive_username(self):
         """测试用户名大小写敏感"""
+        import json
+
         request = self.factory.post(
-            "/api/test/", data={"engineer": "TEST_USER"}  # 大写用户名
+            "/api/test/",
+            data=json.dumps({"engineer": "TEST_USER"}),  # 大写用户名
+            content_type="application/json",
         )
         # Wrap in DRF Request to parse data
         request = Request(request)

@@ -159,12 +159,19 @@ class TestClickHouseEngine(TestCase):
     def test_query_check_select(self):
         """测试查询语句检查 - SELECT"""
         sql = "SELECT * FROM users WHERE id = 1"
-        # Mock server_version to avoid IndexError
+        # Mock server_version to avoid IndexError and mock query to return success
         with patch.object(
             ClickHouseEngine,
             "server_version",
             new_callable=lambda: property(lambda self: (21, 1, 2)),
-        ):
+        ), patch.object(ClickHouseEngine, "query") as mock_query:
+            # Mock query to return successful result for EXPLAIN
+            from sql.engines.models import ResultSet
+
+            mock_result = ResultSet()
+            mock_result.error = None
+            mock_query.return_value = mock_result
+
             result = self.engine.query_check(db_name="test_db", sql=sql)
 
             self.assertIsInstance(result, dict)

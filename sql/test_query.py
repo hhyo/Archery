@@ -110,10 +110,9 @@ class TestQuery(TestCase):
     @patch("sql.query.user_instances")
     def test_query_instance_not_found(self, mock_user_instances):
         """测试实例不存在的情况"""
-        # 设置权限
-        self.user.user_permissions.add(
-            *list(set(User._meta.default_permissions) | {"query_submit"})
-        )
+        # 设置权限 - 只添加query_submit权限
+        query_perm = Permission.objects.get(codename="query_submit")
+        self.user.user_permissions.add(query_perm)
 
         # Mock user_instances to raise DoesNotExist
         mock_user_instances.return_value.get.side_effect = Instance.DoesNotExist
@@ -204,10 +203,9 @@ class TestQuery(TestCase):
         self, mock_config, mock_get_engine, mock_user_instances
     ):
         """测试禁用*的情况"""
-        # 设置权限
-        self.user.user_permissions.add(
-            *list(set(User._meta.default_permissions) | {"query_submit"})
-        )
+        # 设置权限 - 只添加query_submit权限
+        query_perm = Permission.objects.get(codename="query_submit")
+        self.user.user_permissions.add(query_perm)
 
         mock_user_instances.return_value = Instance.objects.filter(
             instance_name="test_instance"
@@ -250,10 +248,9 @@ class TestQuery(TestCase):
         self, mock_priv_check, mock_get_engine, mock_user_instances
     ):
         """测试权限检查失败"""
-        # 设置权限
-        self.user.user_permissions.add(
-            *list(set(User._meta.default_permissions) | {"query_submit"})
-        )
+        # 设置权限 - 只添加query_submit权限
+        query_perm = Permission.objects.get(codename="query_submit")
+        self.user.user_permissions.add(query_perm)
 
         mock_user_instances.return_value = Instance.objects.filter(
             instance_name="test_instance"

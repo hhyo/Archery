@@ -85,7 +85,21 @@ class TestAuditLog(TestCase):
 
     def test_audit_log_list(self):
         """测试获取审计日志列表"""
-        # 先清理可能存在的审计日志
+        # 赋予权限
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+
+        content_type = ContentType.objects.get_for_model(User)
+        permission = Permission.objects.create(
+            codename="audit_user",
+            name="Can audit user",
+            content_type=content_type,
+        )
+        self.user.user_permissions.add(permission)
+
+        self.client.force_login(self.user)
+
+        # 清理所有现有审计日志（包括登录产生的）
         AuditEntry.objects.all().delete()
 
         # 创建测试数据
@@ -103,22 +117,6 @@ class TestAuditLog(TestCase):
             action="修改配置",
             extra_info="修改了系统配置",
         )
-
-        # 赋予权限
-        from django.contrib.auth.models import Permission
-        from django.contrib.contenttypes.models import ContentType
-
-        content_type = ContentType.objects.get_for_model(User)
-        permission = Permission.objects.create(
-            codename="audit_user",
-            name="Can audit user",
-            content_type=content_type,
-        )
-        self.user.user_permissions.add(permission)
-
-        self.client.force_login(self.user)
-        # 清理登录产生的审计日志，只保留测试数据
-        AuditEntry.objects.filter(action="登录").delete()
 
         response = self.client.post(
             "/audit/log/",
@@ -180,6 +178,23 @@ class TestAuditLog(TestCase):
 
     def test_audit_log_filter_by_date_range(self):
         """测试按日期范围过滤审计日志"""
+        # 赋予权限
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+
+        content_type = ContentType.objects.get_for_model(User)
+        permission = Permission.objects.create(
+            codename="audit_user",
+            name="Can audit user",
+            content_type=content_type,
+        )
+        self.user.user_permissions.add(permission)
+
+        self.client.force_login(self.user)
+
+        # 清理所有现有审计日志（包括登录产生的）
+        AuditEntry.objects.all().delete()
+
         # 创建不同日期的测试数据
         today = datetime.datetime.now()
         yesterday = today - datetime.timedelta(days=1)
@@ -200,22 +215,6 @@ class TestAuditLog(TestCase):
             extra_info="yesterday",
             action_time=yesterday,
         )
-
-        # 赋予权限
-        from django.contrib.auth.models import Permission
-        from django.contrib.contenttypes.models import ContentType
-
-        content_type = ContentType.objects.get_for_model(User)
-        permission = Permission.objects.create(
-            codename="audit_user",
-            name="Can audit user",
-            content_type=content_type,
-        )
-        self.user.user_permissions.add(permission)
-
-        self.client.force_login(self.user)
-        # 清理登录产生的审计日志，只保留测试数据
-        AuditEntry.objects.filter(action="登录").delete()
 
         response = self.client.post(
             "/audit/log/",
