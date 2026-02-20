@@ -11,6 +11,7 @@
 from django.forms import ModelForm, Textarea
 from sql.models import Tunnel, Instance
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 class TunnelForm(ModelForm):
@@ -32,7 +33,7 @@ class TunnelForm(ModelForm):
                     )
             except IOError:
                 raise ValidationError(
-                    "秘钥文件不存在， 请勾选秘钥路径的清除选项再进行保存"
+                    _("Private key file not found. Please check the clear option for key path before saving.")  # 秘钥文件不存在， 请勾选秘钥路径的清除选项再进行保存
                 )
 
 

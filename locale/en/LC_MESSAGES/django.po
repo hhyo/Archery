@@ -735,3 +735,905 @@ msgstr "DML"
 
 msgid "Other"
 msgstr "Other"
+
+# Model fields, admin, const, form translations
+
+msgid "2FA Configuration"
+msgstr "2FA Configuration"
+
+msgid "2FA Configurations"
+msgstr "2FA Configurations"
+
+msgid "Account"
+msgstr "Account"
+
+msgid "Action"
+msgstr "Action"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Active Status"
+msgstr "Active Status"
+
+msgid "Aliyun RDS Configuration"
+msgstr "Aliyun RDS Configuration"
+
+msgid "Aliyun RDS Configurations"
+msgstr "Aliyun RDS Configurations"
+
+msgid "Aliyun RDS Instance ID"
+msgstr "Aliyun RDS Instance ID"
+
+msgid "Amount"
+msgstr "Amount"
+
+msgid "Applicant Display Name"
+msgstr "Applicant Display Name"
+
+msgid "Application Remark"
+msgstr "Application Remark"
+
+msgid "Application Title"
+msgstr "Application Title"
+
+msgid "Application Type"
+msgstr "Application Type"
+
+msgid "Apply Query Privilege"
+msgstr "Apply Query Privilege"
+
+msgid "Approval Flow Configuration"
+msgstr "Approval Flow Configuration"
+
+msgid "Approval Flow Configurations"
+msgstr "Approval Flow Configurations"
+
+msgid "Approval Group List"
+msgstr "Approval Group List"
+
+msgid "Approval Type"
+msgstr "Approval Type"
+
+msgid "Approve"
+msgstr "Approve"
+
+msgid "Approved"
+msgstr "Approved"
+
+msgid "Archive Command"
+msgstr "Archive Command"
+
+msgid "Archive Condition (WHERE clause)"
+msgstr "Archive Condition (WHERE clause)"
+
+msgid "Archive Configuration"
+msgstr "Archive Configuration"
+
+msgid "Archive Configuration Title"
+msgstr "Archive Configuration Title"
+
+msgid "Archive Configurations"
+msgstr "Archive Configurations"
+
+msgid "Archive Enabled"
+msgstr "Archive Enabled"
+
+msgid "Archive Log"
+msgstr "Archive Log"
+
+msgid "Archive Logs"
+msgstr "Archive Logs"
+
+msgid "Archive Statistics Log"
+msgstr "Archive Statistics Log"
+
+msgid "Archive Successful"
+msgstr "Archive Successful"
+
+msgid "Audit Log"
+msgstr "Audit Log"
+
+msgid "Audit Logs"
+msgstr "Audit Logs"
+
+msgid "Audit Main ID"
+msgstr "Audit Main ID"
+
+msgid "Audit Permission"
+msgstr "Audit Permission"
+
+msgid "Auth Type"
+msgstr "Auth Type"
+
+msgid "Authentication"
+msgstr "Authentication"
+
+msgid "Backup Enabled"
+msgstr "Backup Enabled"
+
+msgid "Bank Card"
+msgstr "Bank Card"
+
+msgid "Cancelled"
+msgstr "Cancelled"
+
+msgid "Cannot retrieve associated workflow"
+msgstr "Cannot retrieve associated workflow"
+
+msgid "Charset"
+msgstr "Charset"
+
+msgid "Cloud Access Key Configuration"
+msgstr "Cloud Access Key Configuration"
+
+msgid "Cloud Access Key Configurations"
+msgstr "Cloud Access Key Configurations"
+
+msgid "Cluster"
+msgstr "Cluster"
+
+msgid "Column Comment"
+msgstr "Column Comment"
+
+msgid "Column ID"
+msgstr "Column ID"
+
+msgid "Column Name"
+msgstr "Column Name"
+
+msgid "Config Item"
+msgstr "Config Item"
+
+msgid "Config Value"
+msgstr "Config Value"
+
+msgid "Connection Info"
+msgstr "Connection Info"
+
+msgid "Connection Tunnel"
+msgstr "Connection Tunnel"
+
+msgid "Created Time"
+msgstr "Created Time"
+
+msgid "Current Approval Group"
+msgstr "Current Approval Group"
+
+msgid "Data Archive Application"
+msgstr "Data Archive Application"
+
+msgid "Data Masking Column Configuration"
+msgstr "Data Masking Column Configuration"
+
+msgid "Data Masking Column Configurations"
+msgstr "Data Masking Column Configurations"
+
+msgid "Data Masking Rule Configuration"
+msgstr "Data Masking Rule Configuration"
+
+msgid "Data Masking Rule Configurations"
+msgstr "Data Masking Rule Configurations"
+
+msgid "Database"
+msgstr "Database"
+
+msgid "Database Display Regex"
+msgstr "Database Display Regex"
+
+msgid "Database Hide Regex"
+msgstr "Database Hide Regex"
+
+msgid "Database Name"
+msgstr "Database Name"
+
+msgid "Database Type"
+msgstr "Database Type"
+
+msgid "Default Value"
+msgstr "Default Value"
+
+msgid "Delete Count"
+msgstr "Delete Count"
+
+msgid "Demand URL"
+msgstr "Demand URL"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Destination Database"
+msgstr "Destination Database"
+
+msgid "Destination Table"
+msgstr "Destination Table"
+
+msgid "DingTalk User ID"
+msgstr "DingTalk User ID"
+
+msgid "DingTalk Webhook URL"
+msgstr "DingTalk Webhook URL"
+
+msgid "Direct Delete"
+msgstr "Direct Delete"
+
+msgid "Edit Instance Parameters"
+msgstr "Edit Instance Parameters"
+
+msgid "Editable"
+msgstr "Editable"
+
+msgid "End Time"
+msgstr "End Time"
+
+msgid "Error Info"
+msgstr "Error Info"
+
+msgid "Execute SOAR"
+msgstr "Execute SOAR"
+
+msgid "Execute SQL Analysis"
+msgstr "Execute SQL Analysis"
+
+msgid "Execute SQL Workflow (Own Only)"
+msgstr "Execute SQL Workflow (Own Only)"
+
+msgid "Execute SQL Workflow (Resource Group)"
+msgstr "Execute SQL Workflow (Resource Group)"
+
+msgid "Execute SQLAdvisor"
+msgstr "Execute SQLAdvisor"
+
+msgid "Execute SQLTuning"
+msgstr "Execute SQLTuning"
+
+msgid "Executed Query"
+msgstr "Executed Query"
+
+msgid "Execution Completed"
+msgstr "Execution Completed"
+
+msgid "Execution End Time"
+msgstr "Execution End Time"
+
+msgid "Execution Result (JSON)"
+msgstr "Execution Result (JSON)"
+
+msgid "Execution Start Time"
+msgstr "Execution Start Time"
+
+msgid "Execution Time"
+msgstr "Execution Time"
+
+msgid "Export Data Dictionary"
+msgstr "Export Data Dictionary"
+
+msgid "Export Format"
+msgstr "Export Format"
+
+msgid "Failed Login Count"
+msgstr "Failed Login Count"
+
+msgid "Feishu Open ID"
+msgstr "Feishu Open ID"
+
+msgid "Feishu Webhook URL"
+msgstr "Feishu Webhook URL"
+
+msgid "File"
+msgstr "File"
+
+msgid "Filename"
+msgstr "Filename"
+
+msgid "Google Authenticator"
+msgstr "Google Authenticator"
+
+msgid "Group ID"
+msgstr "Group ID"
+
+msgid "Group Name"
+msgstr "Group Name"
+
+msgid "Hidden Group"
+msgstr "Hidden Group"
+
+msgid "Hit"
+msgstr "Hit"
+
+msgid "Hit Masking Rule"
+msgstr "Hit Masking Rule"
+
+msgid "Host"
+msgstr "Host"
+
+msgid "ID Number"
+msgstr "ID Number"
+
+msgid "Inactive"
+msgstr "Inactive"
+
+msgid "Initiator Display Name"
+msgstr "Initiator Display Name"
+
+msgid "Insert Count"
+msgstr "Insert Count"
+
+msgid "Instance Account"
+msgstr "Instance Account"
+
+msgid "Instance Account List"
+msgstr "Instance Account List"
+
+msgid "Instance Configuration"
+msgstr "Instance Configuration"
+
+msgid "Instance Configurations"
+msgstr "Instance Configurations"
+
+msgid "Instance Database"
+msgstr "Instance Database"
+
+msgid "Instance Database List"
+msgstr "Instance Database List"
+
+msgid "Instance Host"
+msgstr "Instance Host"
+
+msgid "Instance Name"
+msgstr "Instance Name"
+
+msgid "Instance Parameter Histories"
+msgstr "Instance Parameter Histories"
+
+msgid "Instance Parameter History"
+msgstr "Instance Parameter History"
+
+msgid "Instance Parameter Template"
+msgstr "Instance Parameter Template"
+
+msgid "Instance Parameter Templates"
+msgstr "Instance Parameter Templates"
+
+msgid "Instance Tag"
+msgstr "Instance Tag"
+
+msgid "Instance Tags"
+msgstr "Instance Tags"
+
+msgid "Instance Type"
+msgstr "Instance Type"
+
+msgid "Is Deleted"
+msgstr "Is Deleted"
+
+msgid "Is Favorited"
+msgstr "Is Favorited"
+
+msgid "Is Offline Export"
+msgstr "Is Offline Export"
+
+msgid "Keep Source Data"
+msgstr "Keep Source Data"
+
+msgid "Kill Sessions"
+msgstr "Kill Sessions"
+
+msgid "Last Archive Time"
+msgstr "Last Archive Time"
+
+msgid "Last Failed Login Time"
+msgstr "Last Failed Login Time"
+
+msgid "Last Modified"
+msgstr "Last Modified"
+
+msgid "Level"
+msgstr "Level"
+
+msgid "Manage Archive Applications"
+msgstr "Manage Archive Applications"
+
+msgid "Manage Instance Accounts"
+msgstr "Manage Instance Accounts"
+
+msgid "Manage Query Privileges"
+msgstr "Manage Query Privileges"
+
+msgid "Master"
+msgstr "Master"
+
+msgid "Menu Dashboard"
+msgstr "Menu Dashboard"
+
+msgid "Menu Data Archive"
+msgstr "Menu Data Archive"
+
+msgid "Menu Data Dictionary"
+msgstr "Menu Data Dictionary"
+
+msgid "Menu Data Export"
+msgstr "Menu Data Export"
+
+msgid "Menu Database Management"
+msgstr "Menu Database Management"
+
+msgid "Menu Documentation"
+msgstr "Menu Documentation"
+
+msgid "Menu Instance Account Management"
+msgstr "Menu Instance Account Management"
+
+msgid "Menu Instance List"
+msgstr "Menu Instance List"
+
+msgid "Menu Instance Management"
+msgstr "Menu Instance Management"
+
+msgid "Menu My2SQL"
+msgstr "Menu My2SQL"
+
+msgid "Menu Online Query"
+msgstr "Menu Online Query"
+
+msgid "Menu OpenAPI"
+msgstr "Menu OpenAPI"
+
+msgid "Menu Optimization Tools"
+msgstr "Menu Optimization Tools"
+
+msgid "Menu Parameter Configuration"
+msgstr "Menu Parameter Configuration"
+
+msgid "Menu Privilege Management"
+msgstr "Menu Privilege Management"
+
+msgid "Menu SQL Analysis"
+msgstr "Menu SQL Analysis"
+
+msgid "Menu SQL Optimization"
+msgstr "Menu SQL Optimization"
+
+msgid "Menu SQL Query"
+msgstr "Menu SQL Query"
+
+msgid "Menu SQL Review"
+msgstr "Menu SQL Review"
+
+msgid "Menu SQL Workflow"
+msgstr "Menu SQL Workflow"
+
+msgid "Menu SchemaSync"
+msgstr "Menu SchemaSync"
+
+msgid "Menu Session Management"
+msgstr "Menu Session Management"
+
+msgid "Menu Slow Query Log"
+msgstr "Menu Slow Query Log"
+
+msgid "Menu System Management"
+msgstr "Menu System Management"
+
+msgid "Menu Tools"
+msgstr "Menu Tools"
+
+msgid "Modified By"
+msgstr "Modified By"
+
+msgid "Modified By Display Name"
+msgstr "Modified By Display Name"
+
+msgid "Native Execution"
+msgstr "Native Execution"
+
+msgid "New Value"
+msgstr "New Value"
+
+msgid "Next Approval Group"
+msgstr "Next Approval Group"
+
+msgid "No"
+msgstr "No"
+
+msgid "Normal"
+msgstr "Normal"
+
+msgid "Not Hit/Unknown"
+msgstr "Not Hit/Unknown"
+
+msgid "Offline Download Permission"
+msgstr "Offline Download Permission"
+
+msgid "Offline Export"
+msgstr "Offline Export"
+
+msgid "Old Value"
+msgstr "Old Value"
+
+msgid "Online Query Download Permission"
+msgstr "Online Query Download Permission"
+
+msgid "Operation Type"
+msgstr "Operation Type"
+
+msgid "Operation Type Description"
+msgstr "Operation Type Description"
+
+msgid "Operator Display Name"
+msgstr "Operator Display Name"
+
+msgid "Other Info"
+msgstr "Other Info"
+
+msgid "Other Instance"
+msgstr "Other Instance"
+
+msgid "Owner"
+msgstr "Owner"
+
+msgid "Owner Display Name"
+msgstr "Owner Display Name"
+
+msgid "Parameter Modified Time"
+msgstr "Parameter Modified Time"
+
+msgid "Parameter Name"
+msgstr "Parameter Name"
+
+msgid "Parent ID"
+msgstr "Parent ID"
+
+msgid "Pending Review"
+msgstr "Pending Review"
+
+msgid "Permissions"
+msgstr "Permissions"
+
+msgid "Personal Info"
+msgstr "Personal Info"
+
+msgid "Phone Number"
+msgstr "Phone Number"
+
+msgid "Port"
+msgstr "Port"
+
+msgid "Private Key"
+msgstr "Private Key"
+
+msgid "Private Key Password"
+msgstr "Private Key Password"
+
+msgid "Private Key Path"
+msgstr "Private Key Path"
+
+msgid "Private key file not found. Please check the clear option for key path before saving."
+msgstr "Private key file not found. Please check the clear option for key path before saving."
+
+msgid "Privilege Type"
+msgstr "Privilege Type"
+
+msgid "Query All Instances"
+msgstr "Query All Instances"
+
+msgid "Query Log"
+msgstr "Query Log"
+
+msgid "Query Logs"
+msgstr "Query Logs"
+
+msgid "Query Permission Verified"
+msgstr "Query Permission Verified"
+
+msgid "Query Privilege Application"
+msgstr "Query Privilege Application"
+
+msgid "Query Privilege Applications"
+msgstr "Query Privilege Applications"
+
+msgid "Query Privilege Record"
+msgstr "Query Privilege Record"
+
+msgid "Query Privilege Records"
+msgstr "Query Privilege Records"
+
+msgid "Query Resource Group Instances"
+msgstr "Query Resource Group Instances"
+
+msgid "RDS Instance AK Configuration"
+msgstr "RDS Instance AK Configuration"
+
+msgid "Regex for masking rule (must have groups, hidden groups replaced with ****)"
+msgstr "Regex for masking rule (must have groups, hidden groups replaced with ****)"
+
+msgid "Regular expression. Example: ^(test_db|dmp_db|za.*)$. Redis example: ^(0|4|6|11|12|13)$"
+msgstr "Regular expression. Example: ^(test_db|dmp_db|za.*)$. Redis example: ^(0|4|6|11|12|13)$"
+
+msgid "Regular expression. Hide takes priority over display."
+msgstr "Regular expression. Hide takes priority over display."
+
+msgid "Reject"
+msgstr "Reject"
+
+msgid "Rejected"
+msgstr "Rejected"
+
+msgid "Related Workflow ID"
+msgstr "Related Workflow ID"
+
+msgid "Remark"
+msgstr "Remark"
+
+msgid "Resource Group"
+msgstr "Resource Group"
+
+msgid "Result Properly Masked"
+msgstr "Result Properly Masked"
+
+msgid "Review Archive Application"
+msgstr "Review Archive Application"
+
+msgid "Review Content (JSON)"
+msgstr "Review Content (JSON)"
+
+msgid "Review Query Privilege"
+msgstr "Review Query Privilege"
+
+msgid "Review Remark"
+msgstr "Review Remark"
+
+msgid "Review SQL Workflow"
+msgstr "Review SQL Workflow"
+
+msgid "Review Status"
+msgstr "Review Status"
+
+msgid "Review Time"
+msgstr "Review Time"
+
+msgid "Reviewer"
+msgstr "Reviewer"
+
+msgid "Row Limit"
+msgstr "Row Limit"
+
+msgid "Rule Description"
+msgstr "Rule Description"
+
+msgid "Rule Type"
+msgstr "Rule Type"
+
+msgid "Running Mode"
+msgstr "Running Mode"
+
+msgid "SMS Verification Code"
+msgstr "SMS Verification Code"
+
+msgid "SQL Content"
+msgstr "SQL Content"
+
+msgid "SQL Review Application"
+msgstr "SQL Review Application"
+
+msgid "SQL Statement for Online Config Change"
+msgstr "SQL Statement for Online Config Change"
+
+msgid "SQL Workflow"
+msgstr "SQL Workflow"
+
+msgid "SQL Workflow Content"
+msgstr "SQL Workflow Content"
+
+msgid "SQL Workflow Contents"
+msgstr "SQL Workflow Contents"
+
+msgid "SQL Workflows"
+msgstr "SQL Workflows"
+
+msgid "SSL Enabled"
+msgstr "SSL Enabled"
+
+msgid "Schema Name"
+msgstr "Schema Name"
+
+msgid "Secret Key"
+msgstr "Secret Key"
+
+msgid "Select Count"
+msgstr "Select Count"
+
+msgid "Set Scheduled Execution"
+msgstr "Set Scheduled Execution"
+
+msgid "Skipped"
+msgstr "Skipped"
+
+msgid "Slave"
+msgstr "Slave"
+
+msgid "Sleep Seconds After Archive Limit"
+msgstr "Sleep Seconds After Archive Limit"
+
+msgid "Slow Query Histories"
+msgstr "Slow Query Histories"
+
+msgid "Slow Query History"
+msgstr "Slow Query History"
+
+msgid "Slow Query Statistics"
+msgstr "Slow Query Statistics"
+
+msgid "Sort Order"
+msgstr "Sort Order"
+
+msgid "Source Database"
+msgstr "Source Database"
+
+msgid "Source Table"
+msgstr "Source Table"
+
+msgid "Standalone"
+msgstr "Standalone"
+
+msgid "Start Execution"
+msgstr "Start Execution"
+
+msgid "Start Time"
+msgstr "Start Time"
+
+msgid "Statement Alias"
+msgstr "Statement Alias"
+
+msgid "Submit"
+msgstr "Submit"
+
+msgid "Submit Archive Application"
+msgstr "Submit Archive Application"
+
+msgid "Submit Data Export"
+msgstr "Submit Data Export"
+
+msgid "Submit SQL Query"
+msgstr "Submit SQL Query"
+
+msgid "Submit SQL Workflow"
+msgstr "Submit SQL Workflow"
+
+msgid "System Configuration"
+msgstr "System Configuration"
+
+msgid "System Configurations"
+msgstr "System Configurations"
+
+msgid "System Modified Time"
+msgstr "System Modified Time"
+
+msgid "System Time"
+msgstr "System Time"
+
+msgid "Table"
+msgstr "Table"
+
+msgid "Table Name"
+msgstr "Table Name"
+
+msgid "Tag Code"
+msgstr "Tag Code"
+
+msgid "Tag Name"
+msgstr "Tag Name"
+
+msgid "Three-segment General Masking Rule"
+msgstr "Three-segment General Masking Rule"
+
+msgid "Three-segment general masking rule: automatically splits by field length into three parts, masks the middle segment."
+msgstr "Three-segment general masking rule: automatically splits by field length into three parts, masks the middle segment."
+
+msgid "Tunnel Configuration"
+msgstr "Tunnel Configuration"
+
+msgid "Tunnel Configurations"
+msgstr "Tunnel Configurations"
+
+msgid "Tunnel Host"
+msgstr "Tunnel Host"
+
+msgid "Tunnel Info"
+msgstr "Tunnel Info"
+
+msgid "Tunnel Name"
+msgstr "Tunnel Name"
+
+msgid "Updated Time"
+msgstr "Updated Time"
+
+msgid "User"
+msgstr "User"
+
+msgid "User Display Name"
+msgstr "User Display Name"
+
+msgid "User ID"
+msgstr "User ID"
+
+msgid "Users"
+msgstr "Users"
+
+msgid "Valid values: range [1-65535], value [ON|OFF]"
+msgstr "Valid values: range [1-65535], value [ON|OFF]"
+
+msgid "Verify Server SSL Certificate"
+msgstr "Verify Server SSL Certificate"
+
+msgid "View Instance Parameters"
+msgstr "View Instance Parameters"
+
+msgid "View Locks"
+msgstr "View Locks"
+
+msgid "View Sessions"
+msgstr "View Sessions"
+
+msgid "View Tablespace"
+msgstr "View Tablespace"
+
+msgid "View Transactions"
+msgstr "View Transactions"
+
+msgid "WeCom User ID"
+msgstr "WeCom User ID"
+
+msgid "WeCom Webhook URL"
+msgstr "WeCom Webhook URL"
+
+msgid "Workflow Audit"
+msgstr "Workflow Audit"
+
+msgid "Workflow Audit Detail"
+msgstr "Workflow Audit Detail"
+
+msgid "Workflow Audit Details"
+msgstr "Workflow Audit Details"
+
+msgid "Workflow Audit ID"
+msgstr "Workflow Audit ID"
+
+msgid "Workflow Audit List"
+msgstr "Workflow Audit List"
+
+msgid "Workflow Logs"
+msgstr "Workflow Logs"
+
+msgid "Workflow Type (0=Unknown, 1=DDL, 2=DML, 3=Offline Export)"
+msgstr "Workflow Type (0=Unknown, 1=DDL, 2=DML, 3=Offline Export)"
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "workflow_abort"
+msgstr "workflow_abort"
+
+msgid "workflow_autoreviewwrong"
+msgstr "workflow_autoreviewwrong"
+
+msgid "workflow_exception"
+msgstr "workflow_exception"
+
+msgid "workflow_executing"
+msgstr "workflow_executing"
+
+msgid "workflow_finish"
+msgstr "workflow_finish"
+
+msgid "workflow_manreviewing"
+msgstr "workflow_manreviewing"
+
+msgid "workflow_queuing"
+msgstr "workflow_queuing"
+
+msgid "workflow_review_pass"
+msgstr "workflow_review_pass"
+
+msgid "workflow_timingtask"
+msgstr "workflow_timingtask"

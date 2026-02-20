@@ -735,3 +735,905 @@ msgstr "DML"
 
 msgid "Other"
 msgstr "其他"
+
+# Model fields, admin, const, form translations
+
+msgid "2FA Configuration"
+msgstr "2FA配置"
+
+msgid "2FA Configurations"
+msgstr "2FA配置"
+
+msgid "Account"
+msgstr "账号"
+
+msgid "Action"
+msgstr "动作"
+
+msgid "Active"
+msgstr "激活"
+
+msgid "Active Status"
+msgstr "激活状态"
+
+msgid "Aliyun RDS Configuration"
+msgstr "阿里云rds配置"
+
+msgid "Aliyun RDS Configurations"
+msgstr "阿里云rds配置"
+
+msgid "Aliyun RDS Instance ID"
+msgstr "对应阿里云RDS实例ID"
+
+msgid "Amount"
+msgstr "金额"
+
+msgid "Applicant Display Name"
+msgstr "申请人中文名"
+
+msgid "Application Remark"
+msgstr "申请备注"
+
+msgid "Application Title"
+msgstr "申请标题"
+
+msgid "Application Type"
+msgstr "申请类型"
+
+msgid "Apply Query Privilege"
+msgstr "申请查询权限"
+
+msgid "Approval Flow Configuration"
+msgstr "审批流程配置"
+
+msgid "Approval Flow Configurations"
+msgstr "审批流程配置"
+
+msgid "Approval Group List"
+msgstr "审批权限组列表"
+
+msgid "Approval Type"
+msgstr "审批类型"
+
+msgid "Approve"
+msgstr "审核通过"
+
+msgid "Approved"
+msgstr "审核通过"
+
+msgid "Archive Command"
+msgstr "归档命令"
+
+msgid "Archive Condition (WHERE clause)"
+msgstr "归档条件，where条件"
+
+msgid "Archive Configuration"
+msgstr "归档配置表"
+
+msgid "Archive Configuration Title"
+msgstr "归档配置说明"
+
+msgid "Archive Configurations"
+msgstr "归档配置表"
+
+msgid "Archive Enabled"
+msgstr "是否启用归档"
+
+msgid "Archive Log"
+msgstr "归档日志表"
+
+msgid "Archive Logs"
+msgstr "归档日志表"
+
+msgid "Archive Statistics Log"
+msgstr "归档统计日志"
+
+msgid "Archive Successful"
+msgstr "是否归档成功"
+
+msgid "Audit Log"
+msgstr "审计日志"
+
+msgid "Audit Logs"
+msgstr "审计日志"
+
+msgid "Audit Main ID"
+msgstr "审核主表id"
+
+msgid "Audit Permission"
+msgstr "审计权限"
+
+msgid "Auth Type"
+msgstr "认证类型"
+
+msgid "Authentication"
+msgstr "认证信息"
+
+msgid "Backup Enabled"
+msgstr "是否备份"
+
+msgid "Bank Card"
+msgstr "银行卡"
+
+msgid "Cancelled"
+msgstr "审核取消"
+
+msgid "Cannot retrieve associated workflow"
+msgstr "无法获取到关联工单"
+
+msgid "Charset"
+msgstr "字符集"
+
+msgid "Cloud Access Key Configuration"
+msgstr "云服务认证信息配置"
+
+msgid "Cloud Access Key Configurations"
+msgstr "云服务认证信息配置"
+
+msgid "Cluster"
+msgstr "集群"
+
+msgid "Column Comment"
+msgstr "字段描述"
+
+msgid "Column ID"
+msgstr "字段id"
+
+msgid "Column Name"
+msgstr "字段名"
+
+msgid "Config Item"
+msgstr "配置项"
+
+msgid "Config Value"
+msgstr "配置项值"
+
+msgid "Connection Info"
+msgstr "连接信息"
+
+msgid "Connection Tunnel"
+msgstr "连接隧道"
+
+msgid "Created Time"
+msgstr "创建时间"
+
+msgid "Current Approval Group"
+msgstr "当前审批权限组"
+
+msgid "Data Archive Application"
+msgstr "数据归档申请"
+
+msgid "Data Masking Column Configuration"
+msgstr "脱敏字段配置"
+
+msgid "Data Masking Column Configurations"
+msgstr "脱敏字段配置"
+
+msgid "Data Masking Rule Configuration"
+msgstr "脱敏规则配置"
+
+msgid "Data Masking Rule Configurations"
+msgstr "脱敏规则配置"
+
+msgid "Database"
+msgstr "数据库"
+
+msgid "Database Display Regex"
+msgstr "显示的数据库列表正则"
+
+msgid "Database Hide Regex"
+msgstr "隐藏的数据库列表正则"
+
+msgid "Database Name"
+msgstr "数据库名称"
+
+msgid "Database Type"
+msgstr "数据库类型"
+
+msgid "Default Value"
+msgstr "默认参数值"
+
+msgid "Delete Count"
+msgstr "删除数量"
+
+msgid "Demand URL"
+msgstr "需求链接"
+
+msgid "Description"
+msgstr "参数描述"
+
+msgid "Destination Database"
+msgstr "目标数据库"
+
+msgid "Destination Table"
+msgstr "目标表"
+
+msgid "DingTalk User ID"
+msgstr "钉钉UserID"
+
+msgid "DingTalk Webhook URL"
+msgstr "钉钉webhook地址"
+
+msgid "Direct Delete"
+msgstr "直接删除"
+
+msgid "Edit Instance Parameters"
+msgstr "修改实例参数"
+
+msgid "Editable"
+msgstr "是否支持修改"
+
+msgid "End Time"
+msgstr "结束时间"
+
+msgid "Error Info"
+msgstr "错误信息"
+
+msgid "Execute SOAR"
+msgstr "执行SOAR"
+
+msgid "Execute SQL Analysis"
+msgstr "执行SQL分析"
+
+msgid "Execute SQL Workflow (Own Only)"
+msgstr "执行SQL上线工单(仅自己提交的)"
+
+msgid "Execute SQL Workflow (Resource Group)"
+msgstr "执行SQL上线工单(资源组粒度)"
+
+msgid "Execute SQLAdvisor"
+msgstr "执行SQLAdvisor"
+
+msgid "Execute SQLTuning"
+msgstr "执行SQLTuning"
+
+msgid "Executed Query"
+msgstr "执行的查询语句"
+
+msgid "Execution Completed"
+msgstr "执行结束"
+
+msgid "Execution End Time"
+msgstr "可执行结束时间"
+
+msgid "Execution Result (JSON)"
+msgstr "执行结果的JSON格式"
+
+msgid "Execution Start Time"
+msgstr "可执行起始时间"
+
+msgid "Execution Time"
+msgstr "执行耗时"
+
+msgid "Export Data Dictionary"
+msgstr "导出数据字典"
+
+msgid "Export Format"
+msgstr "导出格式"
+
+msgid "Failed Login Count"
+msgstr "失败计数"
+
+msgid "Feishu Open ID"
+msgstr "飞书OpenID"
+
+msgid "Feishu Webhook URL"
+msgstr "飞书webhook地址"
+
+msgid "File"
+msgstr "文件"
+
+msgid "Filename"
+msgstr "文件名"
+
+msgid "Google Authenticator"
+msgstr "Google身份验证器"
+
+msgid "Group ID"
+msgstr "组ID"
+
+msgid "Group Name"
+msgstr "组名称"
+
+msgid "Hidden Group"
+msgstr "需要隐藏的组"
+
+msgid "Hit"
+msgstr "命中"
+
+msgid "Hit Masking Rule"
+msgstr "查询是否命中脱敏规则"
+
+msgid "Host"
+msgstr "主机"
+
+msgid "ID Number"
+msgstr "证件号码"
+
+msgid "Inactive"
+msgstr "未激活"
+
+msgid "Initiator Display Name"
+msgstr "发起人中文名"
+
+msgid "Insert Count"
+msgstr "插入数量"
+
+msgid "Instance Account"
+msgstr "实例账号列表"
+
+msgid "Instance Account List"
+msgstr "Instance Account List"
+
+msgid "Instance Configuration"
+msgstr "实例配置"
+
+msgid "Instance Configurations"
+msgstr "实例配置"
+
+msgid "Instance Database"
+msgstr "实例数据库"
+
+msgid "Instance Database List"
+msgstr "Instance Database List"
+
+msgid "Instance Host"
+msgstr "实例连接"
+
+msgid "Instance Name"
+msgstr "实例名称"
+
+msgid "Instance Parameter Histories"
+msgstr "Instance Parameter Histories"
+
+msgid "Instance Parameter History"
+msgstr "实例参数修改历史"
+
+msgid "Instance Parameter Template"
+msgstr "实例参数模板配置"
+
+msgid "Instance Parameter Templates"
+msgstr "实例参数模板配置"
+
+msgid "Instance Tag"
+msgstr "实例标签"
+
+msgid "Instance Tags"
+msgstr "实例标签"
+
+msgid "Instance Type"
+msgstr "实例类型"
+
+msgid "Is Deleted"
+msgstr "是否删除"
+
+msgid "Is Favorited"
+msgstr "是否收藏"
+
+msgid "Is Offline Export"
+msgstr "是否为离线导出工单"
+
+msgid "Keep Source Data"
+msgstr "是否保留源数据"
+
+msgid "Kill Sessions"
+msgstr "终止会话"
+
+msgid "Last Archive Time"
+msgstr "最近归档时间"
+
+msgid "Last Failed Login Time"
+msgstr "上次失败登录时间"
+
+msgid "Last Modified"
+msgstr "系统修改时间"
+
+msgid "Level"
+msgstr "层级"
+
+msgid "Manage Archive Applications"
+msgstr "管理归档申请"
+
+msgid "Manage Instance Accounts"
+msgstr "管理实例账号"
+
+msgid "Manage Query Privileges"
+msgstr "管理查询权限"
+
+msgid "Master"
+msgstr "主库"
+
+msgid "Menu Dashboard"
+msgstr "菜单 Dashboard"
+
+msgid "Menu Data Archive"
+msgstr "菜单 数据归档"
+
+msgid "Menu Data Dictionary"
+msgstr "菜单 数据字典"
+
+msgid "Menu Data Export"
+msgstr "菜单 数据导出"
+
+msgid "Menu Database Management"
+msgstr "菜单 数据库管理"
+
+msgid "Menu Documentation"
+msgstr "菜单 相关文档"
+
+msgid "Menu Instance Account Management"
+msgstr "菜单 实例账号管理"
+
+msgid "Menu Instance List"
+msgstr "菜单 实例列表"
+
+msgid "Menu Instance Management"
+msgstr "菜单 实例管理"
+
+msgid "Menu My2SQL"
+msgstr "菜单 My2SQL"
+
+msgid "Menu Online Query"
+msgstr "菜单 在线查询"
+
+msgid "Menu OpenAPI"
+msgstr "菜单 OpenAPI"
+
+msgid "Menu Optimization Tools"
+msgstr "Menu Optimization Tools"
+
+msgid "Menu Parameter Configuration"
+msgstr "菜单 参数配置"
+
+msgid "Menu Privilege Management"
+msgstr "Menu Privilege Management"
+
+msgid "Menu SQL Analysis"
+msgstr "菜单 SQL分析"
+
+msgid "Menu SQL Optimization"
+msgstr "菜单 SQL优化"
+
+msgid "Menu SQL Query"
+msgstr "菜单 SQL查询"
+
+msgid "Menu SQL Review"
+msgstr "Menu SQL Review"
+
+msgid "Menu SQL Workflow"
+msgstr "菜单 SQL上线"
+
+msgid "Menu SchemaSync"
+msgstr "菜单 SchemaSync"
+
+msgid "Menu Session Management"
+msgstr "菜单 会话管理"
+
+msgid "Menu Slow Query Log"
+msgstr "菜单 慢查日志"
+
+msgid "Menu System Management"
+msgstr "菜单 系统管理"
+
+msgid "Menu Tools"
+msgstr "菜单 工具插件"
+
+msgid "Modified By"
+msgstr "修改人"
+
+msgid "Modified By Display Name"
+msgstr "修改人中文名"
+
+msgid "Native Execution"
+msgstr "是否原生执行"
+
+msgid "New Value"
+msgstr "修改后参数值"
+
+msgid "Next Approval Group"
+msgstr "下级审批权限组"
+
+msgid "No"
+msgstr "否"
+
+msgid "Normal"
+msgstr "正常"
+
+msgid "Not Hit/Unknown"
+msgstr "未命中/未知"
+
+msgid "Offline Download Permission"
+msgstr "离线下载权限"
+
+msgid "Offline Export"
+msgstr "离线导出工单"
+
+msgid "Old Value"
+msgstr "修改前参数值"
+
+msgid "Online Query Download Permission"
+msgstr "在线查询下载权限"
+
+msgid "Operation Type"
+msgstr "操作类型"
+
+msgid "Operation Type Description"
+msgstr "操作类型描述"
+
+msgid "Operator Display Name"
+msgstr "操作人中文名"
+
+msgid "Other Info"
+msgstr "其他信息"
+
+msgid "Other Instance"
+msgstr "其他实例"
+
+msgid "Owner"
+msgstr "负责人"
+
+msgid "Owner Display Name"
+msgstr "负责人中文名"
+
+msgid "Parameter Modified Time"
+msgstr "参数被修改时间点"
+
+msgid "Parameter Name"
+msgstr "参数名"
+
+msgid "Parent ID"
+msgstr "父级id"
+
+msgid "Pending Review"
+msgstr "待审核"
+
+msgid "Permissions"
+msgstr "权限信息"
+
+msgid "Personal Info"
+msgstr "个人信息"
+
+msgid "Phone Number"
+msgstr "手机号码"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Private Key"
+msgstr "密钥"
+
+msgid "Private Key Password"
+msgstr "密钥密码"
+
+msgid "Private Key Path"
+msgstr "密钥地址"
+
+msgid "Private key file not found. Please check the clear option for key path before saving."
+msgstr "秘钥文件不存在，请勾选秘钥路径的清除选项再进行保存"
+
+msgid "Privilege Type"
+msgstr "权限类型"
+
+msgid "Query All Instances"
+msgstr "可查询所有实例"
+
+msgid "Query Log"
+msgstr "查询日志"
+
+msgid "Query Logs"
+msgstr "查询日志"
+
+msgid "Query Permission Verified"
+msgstr "查询权限是否正常校验"
+
+msgid "Query Privilege Application"
+msgstr "查询权限申请"
+
+msgid "Query Privilege Applications"
+msgstr "Query Privilege Applications"
+
+msgid "Query Privilege Record"
+msgstr "查询权限记录"
+
+msgid "Query Privilege Records"
+msgstr "查询权限记录"
+
+msgid "Query Resource Group Instances"
+msgstr "可查询所在资源组内的所有实例"
+
+msgid "RDS Instance AK Configuration"
+msgstr "RDS实例对应的AK配置"
+
+msgid "Regex for masking rule (must have groups, hidden groups replaced with ****)"
+msgstr "规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替"
+
+msgid "Regular expression. Example: ^(test_db|dmp_db|za.*)$. Redis example: ^(0|4|6|11|12|13)$"
+msgstr "正则表达式。示例：^(test_db|dmp_db|za.*)$。Redis示例: ^(0|4|6|11|12|13)$"
+
+msgid "Regular expression. Hide takes priority over display."
+msgstr "正则表达式。隐藏大于显示，此规则优先。"
+
+msgid "Reject"
+msgstr "审核不通过"
+
+msgid "Rejected"
+msgstr "审核不通过"
+
+msgid "Related Workflow ID"
+msgstr "关联业务id"
+
+msgid "Remark"
+msgstr "备注"
+
+msgid "Resource Group"
+msgstr "资源组"
+
+msgid "Result Properly Masked"
+msgstr "查询结果是否正常脱敏"
+
+msgid "Review Archive Application"
+msgstr "审核归档申请"
+
+msgid "Review Content (JSON)"
+msgstr "自动审核内容的JSON格式"
+
+msgid "Review Query Privilege"
+msgstr "审核查询权限"
+
+msgid "Review Remark"
+msgstr "审核备注"
+
+msgid "Review SQL Workflow"
+msgstr "审核SQL上线工单"
+
+msgid "Review Status"
+msgstr "审核状态"
+
+msgid "Review Time"
+msgstr "审核时间"
+
+msgid "Reviewer"
+msgstr "审核人"
+
+msgid "Row Limit"
+msgstr "行数限制"
+
+msgid "Rule Description"
+msgstr "规则描述"
+
+msgid "Rule Type"
+msgstr "规则类型"
+
+msgid "Running Mode"
+msgstr "运行模式"
+
+msgid "SMS Verification Code"
+msgstr "短信验证码"
+
+msgid "SQL Content"
+msgstr "具体sql内容"
+
+msgid "SQL Review Application"
+msgstr "SQL上线申请"
+
+msgid "SQL Statement for Online Config Change"
+msgstr "在线变更配置执行的SQL语句"
+
+msgid "SQL Workflow"
+msgstr "SQL工单"
+
+msgid "SQL Workflow Content"
+msgstr "SQL工单内容"
+
+msgid "SQL Workflow Contents"
+msgstr "SQL Workflow Contents"
+
+msgid "SQL Workflows"
+msgstr "SQL工单"
+
+msgid "SSL Enabled"
+msgstr "是否启用SSL"
+
+msgid "Schema Name"
+msgstr "字段所在库名"
+
+msgid "Secret Key"
+msgstr "用户密钥"
+
+msgid "Select Count"
+msgstr "查询数量"
+
+msgid "Set Scheduled Execution"
+msgstr "设置定时执行"
+
+msgid "Skipped"
+msgstr "跳过"
+
+msgid "Slave"
+msgstr "从库"
+
+msgid "Sleep Seconds After Archive Limit"
+msgstr "归档limit行后的休眠秒数"
+
+msgid "Slow Query Histories"
+msgstr "Slow Query Histories"
+
+msgid "Slow Query History"
+msgstr "慢日志明细"
+
+msgid "Slow Query Statistics"
+msgstr "慢日志统计"
+
+msgid "Sort Order"
+msgstr "排序"
+
+msgid "Source Database"
+msgstr "源数据库"
+
+msgid "Source Table"
+msgstr "源表"
+
+msgid "Standalone"
+msgstr "单机"
+
+msgid "Start Execution"
+msgstr "开始执行"
+
+msgid "Start Time"
+msgstr "开始时间"
+
+msgid "Statement Alias"
+msgstr "语句标识"
+
+msgid "Submit"
+msgstr "提交"
+
+msgid "Submit Archive Application"
+msgstr "提交归档申请"
+
+msgid "Submit Data Export"
+msgstr "提交数据导出"
+
+msgid "Submit SQL Query"
+msgstr "提交SQL查询"
+
+msgid "Submit SQL Workflow"
+msgstr "提交SQL上线工单"
+
+msgid "System Configuration"
+msgstr "系统配置"
+
+msgid "System Configurations"
+msgstr "系统配置"
+
+msgid "System Modified Time"
+msgstr "系统时间修改"
+
+msgid "System Time"
+msgstr "系统时间"
+
+msgid "Table"
+msgstr "表"
+
+msgid "Table Name"
+msgstr "字段所在表名"
+
+msgid "Tag Code"
+msgstr "标签代码"
+
+msgid "Tag Name"
+msgstr "标签名称"
+
+msgid "Three-segment General Masking Rule"
+msgstr "三段式通用脱敏规则"
+
+msgid "Three-segment general masking rule: automatically splits by field length into three parts, masks the middle segment."
+msgstr "三段式通用脱敏规则：根据字段长度自动分成三份，中间段脱敏。"
+
+msgid "Tunnel Configuration"
+msgstr "隧道配置"
+
+msgid "Tunnel Configurations"
+msgstr "隧道配置"
+
+msgid "Tunnel Host"
+msgstr "隧道连接"
+
+msgid "Tunnel Info"
+msgstr "隧道信息"
+
+msgid "Tunnel Name"
+msgstr "隧道名称"
+
+msgid "Updated Time"
+msgstr "更新时间"
+
+msgid "User"
+msgstr "用户管理"
+
+msgid "User Display Name"
+msgstr "用户中文名"
+
+msgid "User ID"
+msgstr "用户ID"
+
+msgid "Users"
+msgstr "用户管理"
+
+msgid "Valid values: range [1-65535], value [ON|OFF]"
+msgstr "有效参数值，范围参数[1-65535]，值参数[ON|OFF]"
+
+msgid "Verify Server SSL Certificate"
+msgstr "是否验证服务端SSL证书"
+
+msgid "View Instance Parameters"
+msgstr "查看实例参数列表"
+
+msgid "View Locks"
+msgstr "查看锁信息"
+
+msgid "View Sessions"
+msgstr "查看会话"
+
+msgid "View Tablespace"
+msgstr "查看表空间"
+
+msgid "View Transactions"
+msgstr "查看事务信息"
+
+msgid "WeCom User ID"
+msgstr "企业微信UserID"
+
+msgid "WeCom Webhook URL"
+msgstr "企业微信webhook地址"
+
+msgid "Workflow Audit"
+msgstr "工作流审批列表"
+
+msgid "Workflow Audit Detail"
+msgstr "工作流审批明细"
+
+msgid "Workflow Audit Details"
+msgstr "工作流审批明细"
+
+msgid "Workflow Audit ID"
+msgstr "工单审批id"
+
+msgid "Workflow Audit List"
+msgstr "Workflow Audit List"
+
+msgid "Workflow Logs"
+msgstr "工作流日志"
+
+msgid "Workflow Type (0=Unknown, 1=DDL, 2=DML, 3=Offline Export)"
+msgstr "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单"
+
+msgid "Yes"
+msgstr "是"
+
+msgid "workflow_abort"
+msgstr "workflow_abort"
+
+msgid "workflow_autoreviewwrong"
+msgstr "workflow_autoreviewwrong"
+
+msgid "workflow_exception"
+msgstr "workflow_exception"
+
+msgid "workflow_executing"
+msgstr "workflow_executing"
+
+msgid "workflow_finish"
+msgstr "workflow_finish"
+
+msgid "workflow_manreviewing"
+msgstr "workflow_manreviewing"
+
+msgid "workflow_queuing"
+msgstr "workflow_queuing"
+
+msgid "workflow_review_pass"
+msgstr "workflow_review_pass"
+
+msgid "workflow_timingtask"
+msgstr "workflow_timingtask"
