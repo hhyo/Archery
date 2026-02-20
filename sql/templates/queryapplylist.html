@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block content %}
-    <!-- Custom operation buttons -->
+    <!-- 自定义操作按钮--> <!-- Custom action buttons -->
     <div id="toolbar" class="btn-group">
         <a type="button" class="btn btn-default" href="/queryuserprivileges/">
             <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
@@ -13,13 +13,13 @@
             <span aria-hidden="true"></span>{% trans "Apply for Permission" %}
         </button>
     </div>
-    <!-- Application list table-->
+    <!-- 申请列表的表格--> <!-- Application list table -->
     <div class="table-responsive">
         <table id="dbauthapply-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
-    <!-- Apply for permission modal-->
+    <!-- 申请权限的模态框--> <!-- Apply permission modal -->
     <div class="modal fade" id="apply" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -99,7 +99,7 @@
                             <option value=1000>1000</option>
                         </datalist>
                     </div>
-                    <!--Approval process-->
+                    <!--审批流程--> <!-- Approval workflow -->
                     <div id="div-workflow_auditors" class="form-group" style="display: none">
                         <p class="bg-primary">&nbsp&nbsp&nbspApproval process：<b id="workflow_auditors"></b></p>
                     </div>
@@ -112,7 +112,7 @@
             </div>
         </div>
     </div>
-    <!-- Log information -->
+    <!-- 日志信息--> <!-- Log information -->
     <div class="modal fade" id="logs">
         <div class="modal-dialog">
             <div class="modal-content message_align">

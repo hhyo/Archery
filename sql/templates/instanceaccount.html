@@ -4,7 +4,7 @@
 
 
 {% block content %}
-    <!-- Custom buttons -->
+    <!-- 自定义操作按钮--> <!-- Custom action buttons -->
     <div style="position: relative">
         <div id="toolbar" class="form-inline pull-left" style="position: absolute;top: 10px">
             <div class="form-group ">
@@ -29,13 +29,13 @@
             </div>
         </div>
     </div>
-    <!-- Table -->
+    <!-- 表格--> <!-- Table -->
     <div class="table-responsive">
         <table id="user-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
-    <!-- Create Account模态框 -->
+    <!-- 创建账号模态框 --> <!-- Create account modal -->
     <div class="modal fade" id="create-account" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -43,10 +43,10 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title">{% trans "Create Account" %}</h4>
-                    <h6 style="color:red">Note：新创建的账号NonePermission，需要使用Grant功能授予相关Permission</h6>
+                    <h6 style="color:red">注：新创建的账号无权限，需要使用授权功能授予相关权限</h6>
                 </div>
                 <div class="modal-body form-group">
-                    <!-- DatabaseName -->
+                    <!-- 数据库名称 --> <!-- Database name -->
                     <div class="form-group row" id="db-name1-row">
                         <label for="db_name1" class="col-sm-3 col-form-label">
                             <span style="color:red">*</span>Database</label>
@@ -59,48 +59,48 @@
                     </div>
                     <div class="form-group row">
                         <label for="user" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>Database账号</label>
+                            <span style="color:red">*</span>数据库账号</label>
                         <div class="col-sm-9">
                             <input type="text" id="user" class="form-control" autocomplete="off"
                                    aria-describedby="userHelpBlock"
-                                   placeholder="Please enter账号Name">
+                                   placeholder="请输入账号名称">
                             <small id="userHelpBlock" class="form-text text-muted">
-                                帐号名需要1-16个字符，由字母、数字和特殊字符Group成；
+                                帐号名需要1-16个字符，由字母、数字和特殊字符组成；
                             </small>
                         </div>
                     </div>
                     <div class="form-group row" id="host-row">
                         <label for="host" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>Host</label>
+                            <span style="color:red">*</span>主机</label>
                         <div class="col-sm-9">
                             <input type="text" id="host" class="form-control" autocomplete="new-password"
                                    aria-describedby="hostHelpBlock"
-                                   placeholder="Please enterHost">
+                                   placeholder="请输入主机">
                             <small id="hostHelpBlock" class="form-text text-muted">
                                 1. IP形式，支持填入% <br>
-                                2. 多个Host以|分隔符分隔
+                                2. 多个主机以|分隔符分隔
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>Password</label>
+                            <span style="color:red">*</span>密码</label>
                         <div class="col-sm-9">
                             <input type="password" id="password1" class="form-control" autocomplete="new-password"
                                    aria-describedby="passwordHelpBlock"
-                                   placeholder="Please enterPassword">
+                                   placeholder="请输入密码">
                             <small id="passwordHelpBlock" class="form-text text-muted">
-                                Password需要8-32个字符，至少包含英文、数字和特殊符号
+                                密码需要8-32个字符，至少包含英文、数字和特殊符号
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password2" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>确认Password</label>
+                            <span style="color:red">*</span>确认密码</label>
                         <div class="col-sm-9">
                             <input type="password" id="password2" class="form-control"
                                    autocomplete="new-password"
-                                   placeholder="请再次输入Password">
+                                   placeholder="请再次输入密码">
                         </div>
                     </div>
                     <div class="form-group row">
@@ -108,7 +108,7 @@
                         <div class="col-sm-9">
                             <input type="text" id="remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="Please enterRemarks">
+                                   placeholder="请输入备注">
                         </div>
                     </div>
                 </div>
@@ -119,7 +119,7 @@
             </div>
         </div>
     </div>
-    <!-- 修改账号模态框 -->
+    <!-- 修改账号模态框 --> <!-- Edit account modal -->
     <div class="modal fade" id="edit-account" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -127,10 +127,10 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title">修改/录入账号 </h4>
-                    <h6 style="color:red">Note：此Operations不会修改账号Password，仅将相关Info录入平台进行管理，如需Change Password请使用改密功能</h6>
+                    <h6 style="color:red">注：此操作不会修改账号密码，仅将相关信息录入平台进行管理，如需修改密码请使用改密功能</h6>
                 </div>
                 <div class="modal-body form-group">
-                    <!-- DatabaseName -->
+                    <!-- 数据库名称 --> <!-- Database name -->
                     <div class="form-group row" id="edit-db-name1-row">
                         <label for="edit-db-name1" class="col-sm-3 col-form-label">
                             <span style="color:red">*</span>Database</label>
@@ -143,11 +143,11 @@
                     </div>
                     <div class="form-group row">
                         <label for="edit-user" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>Database账号</label>
+                            <span style="color:red">*</span>数据库账号</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit-user" class="form-control" autocomplete="off"
                                    readonly="readonly"
-                                   placeholder="Please enter账号Name">
+                                   placeholder="请输入账号名称">
                         </div>
                     </div>
                     <div class="form-group row" id="edit-host-row">
@@ -156,15 +156,15 @@
                         <div class="col-sm-9">
                             <input type="text" id="edit-host" class="form-control" autocomplete="off"
                                    readonly="readonly"
-                                   placeholder="Please enterHost">
+                                   placeholder="请输入主机">
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="edit-password1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>Password</label>
+                            <span style="color:red">*</span>密码</label>
                         <div class="col-sm-9">
                             <input type="password" id="edit-password" class="form-control" autocomplete="new-password"
-                                   placeholder="Please enterPassword，留空then不修改录入Info">
+                                   placeholder="请输入密码，留空则不修改录入信息">
                         </div>
                     </div>
                     <div class="form-group row">
@@ -172,7 +172,7 @@
                         <div class="col-sm-9">
                             <input type="text" id="edit-remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="Please enterRemarks">
+                                   placeholder="请输入备注">
                         </div>
                     </div>
                 </div>
@@ -183,15 +183,15 @@
             </div>
         </div>
     </div>
-    <!-- Permission变更模态框 -->
+    <!-- 权限变更模态框 --> <!-- Permission change modal -->
     <div class="modal fade" id="grants-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Grant变更
-                        Instance: <span id="modify-instance" style="color: red"></span>
+                    <h4 class="modal-title">授权变更
+                        实例: <span id="modify-instance" style="color: red"></span>
                         账号: <span id="modify-user" style="color: red"></span></h4>
                 </div>
                 <div class="modal-body">
@@ -199,61 +199,61 @@
                         <div class="col-md-3">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    object选择
+                                    对象选择
                                 </div>
                                 <div class="panel-body">
                                     <div class="form-group">
-                                        <h5 class="control-label text-bold">选择Operation Type：</h5>
+                                        <h5 class="control-label text-bold">选择操作类型：</h5>
                                         <div class="form-group">
                                             <select id="op-type" name="op-type"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="Operation Type" title="Please selectOperation Type" required>
+                                                    data-name="操作类型" title="请选择操作类型" required>
                                                 <option value="0" selected="selected">赋权</option>
                                                 <option value="1">回收</option>
                                             </select>
                                         </div>
-                                        <h5 class="control-label text-bold">选择PermissionType：</h5>
+                                        <h5 class="control-label text-bold">选择权限类型：</h5>
                                         <div class="form-group">
                                             <select id="priv-type" name="priv-type"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="Configuration" title="Please selectConfiguration" required>
-                                                <option value="0" selected="selected">全局Permission</option>
-                                                <option value="1">库Permission</option>
-                                                <option value="2">TablePermission</option>
-                                                <option value="3">列Permission</option>
+                                                    data-name="配置项" title="请选择配置项" required>
+                                                <option value="0" selected="selected">全局权限</option>
+                                                <option value="1">库权限</option>
+                                                <option value="2">表权限</option>
+                                                <option value="3">列权限</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="div-db" class="form-group" style="display: none">
-                                        <h5 class="control-label text-bold">Select Database：</h5>
+                                        <h5 class="control-label text-bold">请选择数据库：</h5>
                                         <div class="form-group">
                                             <select id="db_name" name="db_name"
                                                     data-live-search="true"
-                                                    data-none-selected-text="Select Database"
+                                                    data-none-selected-text="请选择数据库"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="Database" required>
+                                                    data-name="数据库" required>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="div-tb" class="form-group" style="display: none">
-                                        <h5 class="control-label text-bold">Please selectTable：</h5>
+                                        <h5 class="control-label text-bold">请选择表：</h5>
                                         <div class="form-group">
                                             <select id="tb_name" name="tb_name"
                                                     data-live-search="true"
-                                                    data-none-selected-text="Please selectTable"
+                                                    data-none-selected-text="请选择表"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="Table" required>
+                                                    data-name="表" required>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="div-col" class="form-group" style="display: none">
-                                        <h5 class="control-label text-bold">Please select列：</h5>
+                                        <h5 class="control-label text-bold">请选择列：</h5>
                                         <div class="form-group">
                                             <select id="col_name" name="col_name"
                                                     data-live-search="true"
-                                                    data-none-selected-text="Please select列"
+                                                    data-none-selected-text="请选择列"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="Table" required>
+                                                    data-name="表" required>
                                             </select>
                                         </div>
                                     </div>
@@ -264,7 +264,7 @@
                         <div class="col-md-9">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    Permission选择
+                                    权限选择
                                 </div>
                                 <div class="panel-body" id="div-global-priv">
                                     <div class="col-sm-3">
@@ -915,10 +915,10 @@
                     <div id="mongo-grant-content" class="form-group">
                         <div class="form-group row">
                             <label for="db-roles" class="col-sm-3 col-form-label">
-                                <span style="color:red">*</span>DatabaseRole</label>
+                                <span style="color:red">*</span>数据库角色</label>
                             <div class="col-sm-9">
                                 <select id="db-roles" class="form-control selectpicker" name="db_roles"
-                                        title="Select DatabaseRole"
+                                        title="请选择数据库角色"
                                         multiple
                                         data-live-search="true">
                                     <option value="read">read</option>
@@ -947,38 +947,38 @@
             </div>
         </div>
     </div>
-    <!-- Change Password模态框 -->
+    <!-- 修改密码模态框 --> <!-- Change password modal -->
     <div class="modal fade" id="reset-pwd" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Change Password
-                        Instance: <span id="reset-instance" style="color: red"></span>
+                    <h4 class="modal-title">修改密码
+                        实例: <span id="reset-instance" style="color: red"></span>
                         账号: <span id="reset-user" style="color: red"></span></h4>
-                    <h6 style="color:red">Note：此Operations会修改账号Password，同时变更平台录入Info，请谨慎Operations</h6>
+                    <h6 style="color:red">注：此操作会修改账号密码，同时变更平台录入信息，请谨慎操作</h6>
                 </div>
                 <div class="modal-body form-group">
                     <div class="form-group row">
                         <label for="password1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>Password</label>
+                            <span style="color:red">*</span>密码</label>
                         <div class="col-sm-9">
                             <input type="password" id="reset-pwd1" class="form-control" autocomplete="new-password"
                                    aria-describedby="resetpwdHelpBlock"
-                                   placeholder="Please enterPassword">
+                                   placeholder="请输入密码">
                             <small id="resetpwdHelpBlock" class="form-text text-muted">
-                                Password需要8-32个字符，至少包含英文、数字和特殊符号
+                                密码需要8-32个字符，至少包含英文、数字和特殊符号
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password2" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>确认Password</label>
+                            <span style="color:red">*</span>确认密码</label>
                         <div class="col-sm-9">
                             <input type="password" id="reset-pwd2" class="form-control"
                                    autocomplete="new-password"
-                                   placeholder="请再次输入Password">
+                                   placeholder="请再次输入密码">
                         </div>
                     </div>
                 </div>
@@ -989,7 +989,7 @@
             </div>
         </div>
     </div>
-    <!-- 锁定账号模态框 -->
+    <!-- 锁定账号模态框 --> <!-- Lock account modal -->
     <div class="modal fade" id="lock-account" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -997,7 +997,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title"><span id="lock-title">锁定账号</span>
-                        Instance: <span id="lock-instance" style="color: red"></span>
+                        实例: <span id="lock-instance" style="color: red"></span>
                         账号: <span id="lock-user" style="color: red"></span></h4>
                 </div>
                 <div class="modal-body form-group">
@@ -1012,20 +1012,20 @@
             </div>
         </div>
     </div>
-    <!-- Delete Account模态框 -->
+    <!-- 删除账号模态框 --> <!-- Delete account modal -->
     <div class="modal fade" id="delete-account" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Delete Account
-                        Instance: <span id="delete-instance" style="color: red"></span>
+                    <h4 class="modal-title">删除账号
+                        实例: <span id="delete-instance" style="color: red"></span>
                         账号: <span id="delete-user" style="color: red"></span></h4>
                 </div>
                 <div class="modal-body form-group">
                     <span style="color: red">
-                        Confirm delete该账号？请预先统计该账号近期的连接和访问情况，做好风险防范措施！
+                        确认删除该账号？请预先统计该账号近期的连接和访问情况，做好风险防范措施！
                     </span>
                 </div>
                 <div class="modal-footer">
@@ -1045,7 +1045,7 @@
         var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
 
         function get_db_type() {
-            // get选data in库Instance的Type
+            // 获取选中的数据库实例的类型 / Get the type of the selected database instance
             let db_type = "";
             if ($("#instance").val()) {
                 db_type = $("#instance")[0].options[$("#instance")[0].selectedIndex].getAttribute("instance-type");
@@ -1170,11 +1170,11 @@
                             field: 'user',
                             visible: false
                         }, {
-                            title: 'Host',
+                            title: '主机',
                             field: 'host',
                             visible: false
                         }, {
-                            title: 'Permission',
+                            title: '权限',
                             field: 'privileges',
                             formatter: function (value, row, index) {
                                 var priv = '';
@@ -1186,10 +1186,10 @@
                             width: "60",
                             widthUnit: "%",
                         }, {
-                            title: 'Remarks',
+                            title: '备注',
                             field: 'remark'
                         }, {
-                            title: 'Operations',
+                            title: '操作',
                             field: '',
                             formatter: function (value, row, index) {
                                 let btn_edit = "<button class=\"btn btn-info btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_edit_modal(this)" + "\">{% trans "Edit" %}</button>\n";
@@ -1208,7 +1208,7 @@
                 case 'mongo':
                     return [
                         {
-                            title: 'Database名',
+                            title: '数据库名',
                             field: 'db_name'
                         }, {
                             title: '账号',
@@ -1221,16 +1221,16 @@
                                 }
                             }
                         }, {
-                            title: 'Role',
+                            title: '角色',
                             field: 'roles',
                             formatter: function (value, row, index) {
                                 return value.join(',')
                             }
                         }, {
-                            title: 'Remarks',
+                            title: '备注',
                             field: 'remark'
                         }, {
-                            title: 'Operations',
+                            title: '操作',
                             field: '',
                             formatter: function (value, row, index) {
                                 let btn_edit = "<button class=\"btn btn-info btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_edit_modal(this)" + "\">{% trans "Edit" %}</button>\n";
@@ -1246,7 +1246,7 @@
             }
         }
 
-        //get账号list
+        // 获取账号列表 / Get account list
         function user_list() {
             const db_type = get_db_type();
             let uniqueId;
@@ -1255,32 +1255,32 @@
             } else if (db_type === 'mongo') {
                 uniqueId = 'db_name_user';
             }
-            //Initializetable
+            // 初始化table / Initialize table
             $('#user-list').bootstrapTable('destroy').bootstrapTable({
                 escape: false,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/instance/user/list",
                 striped: true,                      //Show row stripes
-                cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
-                pagination: true,                   //Show pagination（*）
+                cache: false,                       //Use cache, default is true, so usually need to set this property (*)
+                pagination: true,                   //Show pagination (*)
                 sortable: true,                     //Enable sorting
                 sortOrder: "asc",                   //Sort order
-                sidePagination: "client",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
-                pageNumber: 1,                      //Initialize load first page，Default first page,and record
-                pageSize: 20,                     //Records per page（*）
-                pageList: [20, 30, 50, 100],       //Selectable rows per page（*）
+                sidePagination: "client",           //Pagination mode: client=Client-side, server=Server-side (*)
+                pageNumber: 1,                      //Initialize load first page, default first page
+                pageSize: 20,                     //Records per page (*)
+                pageList: [20, 30, 50, 100],       //Selectable rows per page (*)
                 showExport: true,                   //Show export button
                 exportOptions: {
                     fileName: 'instance_user'  //File name setting
                 },
                 search: true,                      //Show table search
                 strictSearch: false,                //Exact match search
-                showColumns: true,                  //Show all columns（Select columns to display）
+                showColumns: true,                  //Show all columns (select columns to display)
                 showRefresh: true,                  //Show refresh button
                 minimumCountColumns: 2,             //Minimum columns allowed
                 clickToSelect: true,                //Enable click to select row
-                uniqueId: uniqueId,               //Unique identifier for each row，Usually primary key column
+                uniqueId: uniqueId,               //Unique identifier for each row, usually primary key column
                 showToggle: true,                   //Show toggle button for detail/list view
                 cardView: false,                    //Show detail view
                 detailView: false,                  //Show parent-child table
@@ -1300,7 +1300,7 @@
                 columns: get_db_columns(db_type),
                 onLoadSuccess: function (data) {
                     if (data.status !== 0) {
-                        alert("数据加载Failed！" + data.msg);
+                        alert("数据加载失败！" + data.msg);
                         $('#btn-create-account').addClass('disabled');
                         $('#btn-create-account').prop('disabled', true);
                     } else if ($("#instance").val()) {
@@ -1318,7 +1318,7 @@
 
         }
 
-        //getInstanceDatabase
+        // 获取实例数据库 / Get instance databases
         function db_list() {
             $.ajax({
                 type: "get",
@@ -1364,7 +1364,7 @@
             });
         }
 
-        //getTable
+        // 获取表 / Get tables
         function tb_list() {
             $.ajax({
                 type: "get",
@@ -1399,7 +1399,7 @@
             });
         }
 
-        //getTable
+        // 获取表 / Get columns
         function col_list() {
             $.ajax({
                 type: "get",
@@ -1435,7 +1435,7 @@
             });
         }
 
-        // Options变动
+        // 选项变动 / Options change
         $("#saved").change(function () {
             user_list();
             if ($("#instance").val()) {
@@ -1456,7 +1456,7 @@
             }
         });
 
-        //Database变动
+        // 数据库变动 / Database change
         $("#db_name").change(function () {
             let priv_type = $("#priv-type").val();
             if (priv_type === '2' || priv_type === '3') {
@@ -1472,10 +1472,10 @@
             }
         });
 
-        //Create Account
+        // 创建账号 / Create account
         function create_account() {
             if (!$("#instance").val()) {
-                alert("Select Instance！");
+                alert("请选择实例！");
             } else {
                 $.ajax({
                     type: "post",
@@ -1509,7 +1509,7 @@
 
         }
 
-        //Edit、录入账号
+        // 编辑、录入账号 / Edit, enter account
         function show_edit_modal(obj) {
             const db_type = get_db_type();
             let user_host;
@@ -1774,7 +1774,7 @@
             });
         }
 
-        //Delete Account
+        // 删除账号 / Delete account
         function show_delete_modal(obj) {
             const db_type = get_db_type();
             let user_host;
@@ -1820,10 +1820,10 @@
 
         }
 
-        //Initialize数据
+        // 初始化数据 / Initialize data
         $(document).ready(function () {
             user_list();
-            //get账号Instancelist
+            // 获取账号实例列表 / Get account instance list
             $(function () {
                 $.ajax({
                     type: "get",

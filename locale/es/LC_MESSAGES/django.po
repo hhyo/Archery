@@ -647,6 +647,55 @@ msgstr "Pausa (segundos)"
 msgid "Delete"
 msgstr "Eliminar"
 
+# Dashboard page
+msgid "SQL Deployment Tickets"
+msgstr "Tickets de Despliegue SQL"
+
+msgid "SQL Query Tickets"
+msgstr "Tickets de Consulta SQL"
+
+msgid "More"
+msgstr "Mas"
+
+msgid "Active Users"
+msgstr "Usuarios Activos"
+
+msgid "Instances"
+msgstr "Instancias"
+
+msgid "Database Instance Type Statistics"
+msgstr "Estadisticas de Tipo de Instancia de Base de Datos"
+
+msgid "Statistics Time Range:"
+msgstr "Rango de Tiempo de Estadisticas:"
+
+msgid "SQL Query Statistics"
+msgstr "Estadisticas de Consultas SQL"
+
+msgid "SQL Deployment Count"
+msgstr "Cantidad de Despliegues SQL"
+
+msgid "SQL Deployment Users"
+msgstr "Usuarios de Despliegue SQL"
+
+msgid "24h Slow Query by Database"
+msgstr "Consultas Lentas 24h por Base de Datos"
+
+msgid "SQL Deployment Statistics"
+msgstr "Estadisticas de Despliegue SQL"
+
+msgid "DB Rows Scanned"
+msgstr "Filas Escaneadas de BD"
+
+msgid "SQL Query Users"
+msgstr "Usuarios de Consulta SQL"
+
+msgid "SQL Deployment Ticket Types"
+msgstr "Tipos de Tickets de Despliegue SQL"
+
+msgid "24h Slow Query by DB/User"
+msgstr "Consultas Lentas 24h por BD/Usuario"
+
 # Dashboard chart translations
 msgid "Finished"
 msgstr "Finalizado"

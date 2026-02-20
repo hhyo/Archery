@@ -11,7 +11,7 @@
     <title>{% block title %}Archery - {% trans "SQL Review Platform" %}{{ custom_title_suffix }}{% endblock %}</title>
     <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"/>
 
-    <!-- 引入 Bootstrap -->
+    <!-- 引入 Bootstrap --> <!-- Import Bootstrap -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'metisMenu/css/metisMenu.min.css' %}" rel="stylesheet">
     <link href="{% static 'sb-admin-2/css/sb-admin-2.css' %}" rel="stylesheet">
@@ -309,7 +309,7 @@
         <!-- /.navbar-static-side -->
     </nav>
 
-<!-- Two-Factor Auth Modal -->
+<!-- 两步验证配置模态框--> <!-- Two-step verification config modal -->
 <div class="modal fade" id="2fa" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
@@ -355,7 +355,7 @@
     </div>
 </div>
 
-<!-- Password Verification Modal -->
+<!-- 密码验证模态框--> <!-- Password verification modal -->
 <div class="modal fade" id="passwd-auth" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
@@ -378,7 +378,7 @@
     </div>
 </div>
 
-<!-- OTP Verification Modal -->
+<!-- OTP验证模态框--> <!-- OTP verification modal -->
 <div class="modal fade bs-example-modal-sm" id="2fa-auth" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
@@ -421,7 +421,7 @@
             {% endif %}
             {% block content %}
             {% endblock content %}
-            <!--底部部分 -->
+            <!--底部部分 --> <!-- Footer section -->
             <footer class="text-center">
                 <hr>
                 <p><strong>&copy; Archery</strong>&nbsp;(v{{ archery_version }})</p>
@@ -744,7 +744,7 @@
 </script>
 </body>
 <script>
-    <!-- 解决CSRF-->
+    <!-- 解决CSRF--> <!-- CSRF fix -->
     $(function () {
         $.ajaxSetup({
             headers: {"X-CSRFToken": getCookie("csrftoken")}

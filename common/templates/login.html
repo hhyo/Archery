@@ -4,9 +4,12 @@
     <title>{% load i18n %}{% trans "Login To Archery" %}{{ custom_title_suffix }}</title>
     {% load static %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 引入 Bootstrap --> <!-- Import Bootstrap -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'dist/css/login.css' %}" rel="stylesheet">
+    <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 --> <!-- Note: Respond.js won't work via file:// protocol -->
     <!--[if lt IE 9]>
+    <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 --> <!-- HTML5 Shim and Respond.js for IE8 HTML5 elements and media queries support -->
          <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
          <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
       <![endif]-->
@@ -85,7 +88,7 @@
     </div>
 </div>
 
-<!-- Registration Modal -->
+<!-- 注册模态框--> <!-- Registration modal -->
 <div class="modal fade" id="sign-up" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -129,7 +132,7 @@
 </div>
 
 
-<!-- Alert Modal -->
+<!-- 模态框（Modal） --> <!-- Modal -->
 <div class="modal fade" id="wrongpwd-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
      aria-hidden="true">
     <div class="modal-dialog">
@@ -151,13 +154,16 @@
     </div>
 </div>
 
-<!-- Footer -->
+<!--底部部分 --> <!-- Footer section -->
 <div class="user-bottom-div">
     <p><strong>&copy; Archery</strong>&nbsp;(v{{ archery_version }})</p>
 </div>
+<!-- jQuery (Bootstrap 的 JavaScript 插件需要引入 jQuery，务必先引入jquery js再引入bootstrap js) --> <!-- jQuery (Bootstrap JS plugins require jQuery - load jquery.js before bootstrap.js) -->
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
+<!-- 包括所有已编译的插件 --> <!-- Include all compiled plugins -->
 <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
 </body>
+<!-- 解决CSRF--> <!-- CSRF fix -->
 <script>
     $(function () {
         $.ajaxSetup({
@@ -180,7 +186,9 @@
         return cookieValue;
     }
 </script>
+<!-- 退出登录后清空sessionStorage / Clear sessionStorage after logout -->
 <script>
+    <!-- 退出登录后清空sessionStorage --> <!-- Clear sessionStorage after logout -->
     $(document).ready(function () {
         sessionStorage.clear();
     });

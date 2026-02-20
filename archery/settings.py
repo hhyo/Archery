@@ -181,8 +181,7 @@ LANGUAGES = [
     ("zh-hans", _("Chinese Simplified")),
 ]
 
-# DAF LANGUAGE_CODE = "zh-hans"
-LANGUAGE_CODE = "en"  # default language
+LANGUAGE_CODE = "zh-hans"
 
 # DAF TIME_ZONE = "Asia/Shanghai"
 TIME_ZONE = "UTC"

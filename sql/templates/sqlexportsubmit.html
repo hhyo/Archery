@@ -12,13 +12,13 @@
                         <input type="hidden" id="workflow_id" name="workflow_id"/>
                         <div class="col-md-9 column">
                             <pre id="sql_content_editor" style="min-height:450px"></pre>
-                            <!-- Validation tips -->
+                            <!-- 校验提示 --> <!-- Validation prompt -->
 		      	            <div class="validation-notice" id="validationNotice">
                                 <div class="notice-icon" id="noticeIcon">
                                 </div>
 			                    <div class="notice-content">
-			                        <div class="notice-title">Counting rows...</div>
-			                        <div class="notice-message">ValidatingSQLsyntax and count result rows，Please wait...</div>
+			                        <div class="notice-title">行数统计中...</div>
+			                        <div class="notice-message">正在校验SQL语法并统计结果行数，请稍候...</div>
 			                    </div>
 			                    <button class="close-notice" id="closeNotice" title="{% trans 'Close' %}">
 			                        &times;
@@ -29,9 +29,9 @@
 			                </div>
                         </div>
                         <div style="display: none" class="col-md-8 column">
-                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQLContent"
-                                      data-placeholder="SQLContent cannot be empty！"
-                                      placeholder="Please submit hereSQL，Please end with semicolon。" rows=20
+                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
+                                      data-placeholder="SQL内容不能为空！"
+                                      placeholder="请在此提交SQL，请以分号结尾。" rows=20
                                       required></textarea>
                         </div>
                         <div class="col-md-3 column">
@@ -41,16 +41,16 @@
                             <div class="form-group">
                                 <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
                                        class="form-control"
-                                       data-name="Deployment ticket name" data-placeholder="Please enterDeployment ticket name!"
-                                       placeholder="Please enterDeployment ticket name，如:XX项目会员功能建Table"
+                                       data-name="上线单名称" data-placeholder="请输入上线单名称!"
+                                       placeholder="请输入上线单名称，如:XX项目会员功能建表"
                                        required>
                             </div>
                             <div class="form-group toggleable">
                                 <select id="export_format" name="export_format"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="OfflineExport数据格式" data-placeholder="Please selectExport数据格式！"
-                                        title="Please selectExport数据格式"
-                                        data-live-search="true" data-live-search-placeholder="Search您所在的Group" required>
+                                        data-name="离线导出数据格式" data-placeholder="请选择导出数据格式！"
+                                        title="请选择导出数据格式"
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
                                     <option value="csv">CSV</option>
                                     <option value="xlsx">Excel</option>
                                     <option value="sql">SQL</option>
@@ -61,9 +61,9 @@
                             <div class="form-group">
                                 <select id="group_name" name="group_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="Group" data-placeholder="Select Group！"
-                                        title="Select Group"
-                                        data-live-search="true" data-live-search-placeholder="Search您所在的Group" required>
+                                        data-name="组" data-placeholder="请选择组！"
+                                        title="请选择组"
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
                                     {% for group in group_list %}
                                         <option value="{{ group.group_name }}"
                                                 group-id="{{ group.group_id }}">{{ group.group_name }}</option>
@@ -73,8 +73,8 @@
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="{% trans 'Instances' %}" data-placeholder="Select Instance！"
-                                        title="Select Instance"
+                                        data-name="实例" data-placeholder="请选择实例！"
+                                        title="请选择实例"
                                         data-live-search="true" data-live-search-placeholder="{% trans 'Search instances in your group' %}" required>
                                 {% for name, engine in engines.items %}
                                     <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
@@ -84,9 +84,9 @@
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-name="Database" data-placeholder="Select Database！"
-                                        data-live-search="true" data-live-search-placeholder="Search要Submit的Database"
-                                        title="Select Database"
+                                        data-name="数据库" data-placeholder="请选择数据库！"
+                                        data-live-search="true" data-live-search-placeholder="搜索要提交的数据库"
+                                        title="请选择数据库"
                                         required>
                                     <option value="is-empty" disabled="" selected="selected">{% trans "Select Database:" %}</option>
                                 </select>
@@ -95,32 +95,33 @@
                                 <div id="div-backup" class="form-group">
                                     <select id="is_backup" name="is_backup"
                                             class="selectpicker show-tick form-control bs-select-hidden"
-                                            data-name="YesNo选择备份"
-                                            title="Please selectYesNo需要备份"
-                                            data-placeholder="Please selectYesNo要备份" required>
+                                            data-name="是否选择备份"
+                                            title="请选择是否需要备份"
+                                            data-placeholder="请选择是否要备份" required>
                                         <option value=True selected="selected">备份SQL</option>
                                         <option value=False>不备份SQL</option>
                                     </select>
                                 </div>
                             {% endif %}
-                            <!--可Execute范围Time-->
+                            <!--可执行范围时间--> <!-- Executable time range -->
                             <div class='form-group'>
                                 <input type="hidden" id="run_date_start" name="run_date_start">
                                 <input type="hidden" id="run_date_end" name="run_date_end">
                                 <div class='input-group date'>
                                     <input type="text" id="run_date_range" readonly
-                                           value="Please select可Execute Time范围"
+                                           value="请选择可执行时间范围"
                                            style="background-color: #fff;color: #999 "
                                            class="form-control "/>
                                     <span class="input-group-addon"><span
                                             class="glyphicon glyphicon-time"></span></span>
                                 </div>
                             </div>
-                            <!--Approval Flow程-->
-                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="Approval Flow程"
-                                   data-placeholder="请ConfigApproval Flow程！" required>
+                            <!-- 审批流程 / Approval process -->
+                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
+                                   data-placeholder="请配置审批流程！" required>
+                            <!--审批流程--> <!-- Approval workflow -->
                             <div id="div-workflow_auditors" class="form-group" style="display: none">
-                                <p class="bg-primary">&nbsp&nbsp&nbspApproval Flow程：<b id="workflow_auditors_display"></b></p>
+                                <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
                             </div>
                             <!--button-->
                             <div class="form-group">
@@ -128,9 +129,9 @@
                                 <button type="button" id="btn-autoreview" data-loading-text="检测中..."
                                         class="btn btn-danger">SQL检测
                                 </button>
-                                <button type="button" id="btn-submitsql" data-loading-text="Submit中..."
+                                <button type="button" id="btn-submitsql" data-loading-text="提交中..."
                                         class="btn btn-success" disabled>
-                                    ExportSubmit
+                                    导出提交
                                 </button>
                             </div>
                         </div>
@@ -155,7 +156,8 @@
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
 
-    <!-- Validation tips  notice/css/notice.css-->
+    <!--初始化时间控件 --> <!-- Initialize time control -->
+    <!-- 校验提示  notice/css/notice.css--> <!-- Validation prompt notice/css/notice.css -->
     <script>
 	    const validationNotice = document.getElementById('validationNotice');
 	    const closeNotice = document.getElementById('closeNotice');
@@ -173,12 +175,12 @@
             noticeIcon.classList.remove('icon-loading','icon-success','icon-error');
             noticeIcon.classList.add('icon-loading');
             validationNotice.className = 'validation-notice visible';
-            validationNotice.querySelector('.notice-title').textContent = "Counting rows...";
-            validationNotice.querySelector('.notice-message').textContent = "ValidatingSQLsyntax and count result rows，Please wait...";
+            validationNotice.querySelector('.notice-title').textContent = "行数统计中...";
+            validationNotice.querySelector('.notice-message').textContent = "正在校验SQL语法并统计结果行数，请稍候...";
             validationNotice.classList.remove('status-success', 'status-error', 'status-warning');
         }
 
-        // CloseTip按钮
+        // 关闭提示按钮 / Close tip button
         closeNotice.addEventListener('click', function(e) {
             e.preventDefault();
             validationNotice.style.display = 'none';
@@ -189,8 +191,8 @@
             const {
                 element = validationNotice,   
                 noticeIconClass = '',         
-                statusClass = 'status-error', // Status类名
-                title = 'ValidateFailed',            
+                statusClass = 'status-error', // 状态类名
+                title = '校验失败',            
                 message = '',                 
                 params = {},                  
                 delay = 5000,                 
@@ -252,7 +254,7 @@
         });
     </script>
 
-    <!--InitializeTime控件 -->
+    <!-- 初始化时间控件 / Initialize time control -->
     <script>
         $("#run_date_range").daterangepicker({
             timePicker: true,
@@ -265,10 +267,10 @@
             startDate: moment().startOf('hour'),
             endDate: moment().startOf('hour'),
             locale: {
-                "applyLabel": "Confirm",
+                "applyLabel": "确定",
                 "cancelLabel": "清空",
                 "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
-                "monthNames": ["一months", "二months", "三months", "四months", "五months", "六", "七months", "八months", "九months", "十months", "十一months", "十二months"],
+                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
                 "firstDay": 1
             },
         }).on('apply.daterangepicker', function (ev, picker) {
@@ -278,7 +280,7 @@
             $(this).val(picker.startDate.format('MM-DD HH:mm') + ' / ' + picker.endDate.format('MM-DD HH:mm'));
         }).on('cancel.daterangepicker', function (ev, picker) {
             $(this).css("color", "#999");
-            $(this).val('Please select可Execute Time范围');
+            $(this).val('请选择可执行时间范围');
             $("#run_date_start").val('');
             $("#run_date_end").val('');
         });
@@ -334,7 +336,7 @@
                 }
             });
         });
-        //Database变更getTableName补全Tip
+        //数据库变更获取表名称补全提示 / Get table name autocomplete on DB change
         $("#db_name").change(function () {
             
             $.ajax({
@@ -381,7 +383,7 @@
                         return result;
                     }
                     if(fieldId == "workflow_name" && value.length>=50){
-                        alert("Deployment ticket name/Ticket Name不能超过50个字符！");
+                        alert("上线单名称/工单名称不能超过50个字符！");
                         result = false;
                         return result;
                     }
@@ -426,7 +428,7 @@
                 if (realGap >= gap) {
                     return true
                 } else {
-                    alert("可Execute Time范围不应该短于" + gap + "minutes");
+                    alert("可执行时间范围不应该短于" + gap + "分钟");
                     return false
                 }
             }
@@ -466,15 +468,15 @@
                 sqlContent = select_sqlContent
             }
             var isOfflineExport = $("#btn-submitsql").is(':hidden') ? 0 : 1;
-            // remove单行Note释和多行Note释后再统计语句Count
-            let processedSql = sqlContent.replace(/--.*$/gm, ''); // remove单行Note释
-            processedSql = processedSql.replace(/\/\*[\s\S]*?\*\//gm, ''); // remove多行Note释
+            // 移除单行注释和多行注释后再统计语句数量 / Remove comments before counting statements
+            let processedSql = sqlContent.replace(/--.*$/gm, ''); // 移除单行注释
+            processedSql = processedSql.replace(/\/\*[\s\S]*?\*\//gm, ''); // 移除多行注释
             var totalSqlCnt = processedSql.split(';')
                 .map(stmt => stmt.trim()) 
                 .filter(stmt => stmt.length > 0) 
                 .length; 
 
-            // CheckSQL开头
+            // 检查SQL开头 / Check SQL beginning
             let trimmedSQL = sqlContent.trim().toUpperCase();
             
             while (true) {
@@ -496,25 +498,25 @@
                 break;
             }
             if (!instance_name) {
-                alert("Select Instance！");
+                alert("请选择实例！");
                 return result = false;
             } else if (!db_name) {
-                alert("Select Database！");
+                alert("请选择数据库！");
                 return result = false;
             } else if (!sqlContent) {
-                alert("SQLContent cannot be empty！");
+                alert("SQL内容不能为空！");
                 return result = false;
             } else if (!trimmedSQL.startsWith("SELECT") && !trimmedSQL.startsWith("WITH")) {
-                alert("SQL必须Yes查询语句！");
+                alert("SQL必须是查询语句！");
                 return result = false;
             } else if (isOfflineExport === 1 && totalSqlCnt > 1) {
-                alert("检测到多个SQL语句，只能Submit一个SQL，请选中要SubmitExport工单的SQL重试。");
+                alert("检测到多个SQL语句，只能提交一个SQL，请选中要提交导出工单的SQL重试。");
                 return result = false;
             }
             return result;
         }
         
-        //count行数统计
+        //count行数统计 / Row count statistics
         function sqlcount(sql) {
             var result = true;
             var optgroup = $('#instance_name :selected').parent().attr('label');
@@ -557,14 +559,14 @@
             });
         }
 
-        //SQLSubmit
+        //SQL提交 / SQL Submit
         $("#btn-submitsql").click(function () {
-            //getformobject，check输入，ApprovethenSubmit
+            //获取form对象，判断输入，通过则提交 / Get form object, validate input, then submit
             $("#sql_content").val(editor.getValue());
             if (validateForm($("#form-submitsql")) && checkRunDate()) {
                 resetValidationNotice()
-                validationNotice.querySelector('.notice-title').textContent = "工单Submit中...";
-                validationNotice.querySelector('.notice-message').textContent = "后台二次Validate，Please wait...";
+                validationNotice.querySelector('.notice-title').textContent = "工单提交中...";
+                validationNotice.querySelector('.notice-message').textContent = "后台二次校验，请稍候...";
                 editor.container.style.pointerEvents = "none";
                 editor.container.style.opacity = 0.6;
                 sqlSubmit()
@@ -583,8 +585,8 @@
                     showStatusNotice({
                         noticeIconClass: 'icon-error',
                         statusClass: 'status-error',
-                        title: 'ValidateFailed',
-                        message: '统计查询Result：{ActualRows} 行数据，超过了阈Value：{maxExportRows}',
+                        title: '校验失败',
+                        message: '统计查询结果：{ActualRows} 行数据，超过了阈值：{maxExportRows}',
                         params: { ActualRows: ActualRows, maxExportRows: maxExportRows },
                         delay: 5000
                     });
@@ -593,8 +595,8 @@
                     showStatusNotice({
                         noticeIconClass: 'icon-success',
                         statusClass: 'status-success',
-                        title: 'ValidateSuccess',
-                        message: '统计查询Result：{ActualRows} 行数据，点击SubmitExport按钮ApplyExport。',
+                        title: '校验成功',
+                        message: '统计查询结果：{ActualRows} 行数据，点击提交导出按钮申请导出。',
                         params: { ActualRows: ActualRows},
                         delay: 5000
                     });
@@ -605,8 +607,8 @@
                 showStatusNotice({
                     noticeIconClass: 'icon-error',
                     statusClass: 'status-error',
-                    title: 'ValidateFailed',
-                    message: 'error：{msg}',
+                    title: '校验失败',
+                    message: '错误：{msg}',
                     params: { msg: data.msg },
                     delay: 5000
                 });
@@ -668,7 +670,7 @@
     </script>
     <!--group -->
     <script>
-        // getInstanceInfo和Approval Flow程
+        // 获取实例信息和审批流程 / Get instance info and approval flow
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
@@ -741,7 +743,7 @@
         $(document).ready(function () {
             
             sessionStorage.removeItem('editWorkflowDetailId');
-            //geturlParameter置入对应的InitializeContent
+            //获取url参数置入对应的初始化内容 / Get URL params and initialize content
             const urlParams = new URLSearchParams(window.location.search);
             const urlSource = urlParams.get('source');
             if (urlSource == "resubmit") {

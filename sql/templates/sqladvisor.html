@@ -59,9 +59,9 @@
                             <div id="div_verbose" class="form-group">
                                 <select id="verbose" name="verbose"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-name="YesNoViewOptimize过程"
-                                        data-placeholder="YesNoViewOptimize过程:" required>
-                                    <option value="is-empty" disabled="">YesNoViewOptimize过程:</option>
+                                        data-name="是否查看优化过程"
+                                        data-placeholder="是否查看优化过程:" required>
+                                    <option value="is-empty" disabled="">是否查看优化过程:</option>
                                     <option value="1" selected="selected">{% trans "Yes" %}</option>
                                     <option value="0">{% trans "No" %}</option>
                                 </select>
@@ -70,25 +70,25 @@
                                 <div class="checkbox">
                                     <label>
                                         <input id="sys_parm" type="checkbox" value="">
-                                        显示系统Parameter
+                                        显示系统参数
                                     </label>
                                 </div>
                                 <div class="checkbox">
                                     <label>
                                         <input id="sql_plan" type="checkbox" value="" checked>
-                                        显示Execute计划
+                                        显示执行计划
                                     </label>
                                 </div>
                                 <div class="checkbox">
                                     <label>
                                         <input id="obj_stat" type="checkbox" value="" checked>
-                                        显示相关object(Table、Index)统计Info
+                                        显示相关对象(表、索引)统计信息
                                     </label>
                                 </div>
                                 <div class="checkbox">
                                     <label>
                                         <input id="sql_profile" type="checkbox" value="">
-                                        显示PROFILE跟踪Info(真实ExecuteSQL，谨慎选择)
+                                        显示PROFILE跟踪信息(真实执行SQL，谨慎选择)
                                     </label>
                                 </div>
                             </div>
@@ -106,27 +106,27 @@
             <div class="panel panel-default">
                 <div class="panel-heading">{% trans "Optimization Suggestions" %}</div>
                 <div class="panel-body">
-                    <!-- sqladvisorOptimizeInfo -->
+                    <!-- sqladvisor优化信息 --> <!-- SQLAdvisor optimization info -->
                     <div id="sqladvisor-result" style="display:none;" class="form-group">
                         <div id="sqladvisor-result-col" class="col-md-12">
                         </div>
                     </div>
-                    <!-- Execute计划 -->
+                    <!-- 执行计划 --> <!-- Execution plan -->
                     <div id="explain_result" style="display:none;" class="form-group table-responsive">
                         <table id="tb_explain" data-toggle="table" class="table table-condensed"
                                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                     </div>
-                    <!-- SQLTuningAdvisor报告 -->
+                    <!-- SQLTuningAdvisor报告 --> <!-- SQLTuningAdvisor report -->
                     <div id="sqltuningadvisor_result" style="display:none;" class="form-group table-responsive">
                         <div id="sqltuningadvisor_result_col" class="col-md-12">
                         </div>
                     </div>
-                    <!-- soar报告 -->
+                    <!-- soar报告 --> <!-- SOAR report -->
                     <div id="soar-result" style="display:none;" class="form-group">
                         <div id="soar-result-col" class="col-md-12">
                         </div>
                     </div>
-                    <!-- MySQLtuningInfo -->
+                    <!-- MySQLtuning信息 --> <!-- MySQLtuning info -->
                     <div id="tuning_result" style="display:none;" class="form-group table-responsive">
                         <div id="div_sys_parm" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
@@ -135,7 +135,7 @@
                             </div>
                             <div class="panel-body">
                                 <p>author：<b id="author"></b>
-                                    <a href="http://dbaplus.cn/blog-77-736-1.html" target="_blank"> View文章</a></p>
+                                    <a href="http://dbaplus.cn/blog-77-736-1.html" target="_blank"> 查看文章</a></p>
                                 <p>db_version：<b id="db_version"></b></p>
                             </div>
                             <div class="panel-heading" style="background-color: dimgray; color: white">
@@ -246,7 +246,7 @@
         // Get current locale for bootstrap-table
         var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
 
-        //check页面显示
+        // 判断页面显示 / Check page display
         $("#tools").change(function () {
             //SQLAdvisor
             if ($("#tools").val() === '1') {
@@ -279,19 +279,19 @@
             var db_name = $("#db_name").val();
 
             if (sqlContent === null || sqlContent.trim() === "") {
-                alert("SQLContent cannot be empty！");
+                alert("SQL内容不能为空！");
                 return result = false;
             } else if (instance_name === null || instance_name === $("#instance_name").attr("data-placeholder")) {
-                alert("Select Instance！");
+                alert("请选择实例！");
                 return result = false;
             } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
-                alert("Select Database！");
+                alert("请选择数据库！");
                 return result = false;
             }
             return result;
         }
 
-        // getOptimize建议
+        // 获取优化建议 / Get optimization suggestions
         $("#btn-sqladvisor").click(function () {
                 
                 if (sqladvisor_validate()) {
@@ -325,7 +325,7 @@
             }
         );
 
-        //getExecute计划
+        // 获取执行计划 / Get execution plan
         $("#btn-explain").click(function () {
                 
                 if (sqladvisor_validate()) {
@@ -344,10 +344,10 @@
             $('#tools').selectpicker('refresh');
             var obj = document.getElementById("tools");
             if (optgroup === "Oracle") {
-                //oracleOptimize工具
+                // oracle优化工具 / Oracle optimization tools
                 obj.options.add(new Option("SQLTuningAdvisor", "4", true, true));
             } else if (optgroup === "MySQL") {
-                //mysqlOptimize工具
+                // mysql优化工具 / MySQL optimization tools
                 obj.options.add(new Option("SQLAdvisor", "1", true, true));
                 obj.options.add(new Option("SQLTuning", "2"));
                 obj.options.add(new Option("SOAR", "3"));
@@ -357,7 +357,7 @@
             get_db_list();
         });
 
-        //getInstanceDatabase
+        // 获取实例数据库 / Get instance databases
         function get_db_list() {
             
             $("#db_name").empty();
@@ -478,7 +478,7 @@
             ;
         }
 
-        //get查询建议
+        // 获取查询建议 / Get query suggestions
         function sqladvisor() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
@@ -532,7 +532,7 @@
             });
         }
 
-        //getExecute计划
+        // 获取执行计划 / Get execution plan
         function explain() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
@@ -595,7 +595,7 @@
                             }
                         });
                     });
-                    //Initialize查询Result
+                    // 初始化查询结果 / Initialize query results
                     $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
                         escape: true,
                         data: result['rows'],
@@ -619,7 +619,7 @@
             }
         }
 
-        //getsoar报告
+        // 获取soar报告 / Get SOAR report
         function soar() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
@@ -677,7 +677,7 @@
             });
         }
 
-        //gettunningInfo
+        // 获取tunning信息 / Get tuning info
         function tunning() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
@@ -731,7 +731,7 @@
                                         "title": column
                                     });
                                 });
-                                //Initialize查询Result
+                                // 初始化查询结果 / Initialize query results
                                 $('#tb_sys_parameter').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['sys_parameter']['rows'],
@@ -750,7 +750,7 @@
                                         }
                                     });
                                 });
-                                //Initialize查询Result
+                                // 初始化查询结果 / Initialize query results
                                 $('#tb_optimizer_switch').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['optimizer_switch']['rows'],
@@ -772,7 +772,7 @@
                                         "title": column
                                     });
                                 });
-                                //Initialize查询Result
+                                // 初始化查询结果 / Initialize query results
                                 $('#tb_plan').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['plan']['rows'],
@@ -798,7 +798,7 @@
                                         })
                                     }
                                 });
-                                //Initialize查询Result
+                                // 初始化查询结果 / Initialize query results
                                 $('#tb_optimizer_rewrite_sql').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['optimizer_rewrite_sql']['rows'],
@@ -857,7 +857,7 @@
                                                 }
                                             })
                                         });
-                                        //Initialize查询Result
+                                        // 初始化查询结果 / Initialize query results
                                         $("#" + tb_table_structure_id).bootstrapTable('destroy').bootstrapTable({
                                             escape: true,
                                             data: result['structure']['rows'],
@@ -889,7 +889,7 @@
                                                 "title": column
                                             })
                                         });
-                                        //Initialize查询Result
+                                        // 初始化查询结果 / Initialize query results
                                         $("#" + tb_table_info_id).bootstrapTable('destroy').bootstrapTable({
                                             escape: true,
                                             data: result['table_info']['rows'],
@@ -904,14 +904,14 @@
                                                 "title": column
                                             })
                                         });
-                                        //Initialize查询Result
+                                        // 初始化查询结果 / Initialize query results
                                         $("#" + tb_index_info_id).bootstrapTable('destroy').bootstrapTable({
                                             escape: true,
                                             data: result['index_info']['rows'],
                                             columns: columns
                                         });
                                     } else {
-                                        $("#div_obj_stat-panel-body").append("<p>ParseTable出错或者Tablenot exists，None法展示TableInfo</p>");
+                                        $("#div_obj_stat-panel-body").append("<p>解析表出错或者表不存在，无法展示表信息</p>");
                                     }
                                 });
                             } else {
@@ -930,7 +930,7 @@
                                         "title": column
                                     })
                                 });
-                                //Initialize查询Result
+                                // 初始化查询结果 / Initialize query results
                                 $('#tb_session_status').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['session_status']['SESSION_STATUS(DIFFERENT)']['rows'],
@@ -946,7 +946,7 @@
                                         "title": column
                                     })
                                 });
-                                //Initialize查询Result
+                                // 初始化查询结果 / Initialize query results
                                 $('#tb_sql_profiling_detail').bootstrapTable('destroy').bootstrapTable({
                                     data: result['session_status']['PROFILING_DETAIL']['rows'],
                                     columns: columns
@@ -961,7 +961,7 @@
                                         "title": column
                                     })
                                 });
-                                //Initialize查询Result
+                                // 初始化查询结果 / Initialize query results
                                 $('#tb_sql_profiling_summary').bootstrapTable('destroy').bootstrapTable({
                                     escape: true,
                                     data: result['session_status']['PROFILING_SUMMARY']['rows'],
@@ -991,7 +991,7 @@
         }
 
         $(document).ready(function () {
-            //getUserInstancelist
+            // 获取用户实例列表 / Get user instance list
             $(function () {
                 $.ajax({
                     type: "get",

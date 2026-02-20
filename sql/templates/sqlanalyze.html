@@ -47,7 +47,7 @@
             </div>
         </div>
     </div>
-    <!-- Analysis Report Modal -->
+    <!-- 分析报告--> <!-- Analysis report -->
     <div class="modal fade" id="reports">
         <div class="modal-dialog modal-lg">
             <div class="modal-content message_align">
@@ -77,6 +77,10 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script src="{% static 'dist/js/marked.min.js' %}"></script>
+    <!-- 查看分析报告 --> <!-- View analysis report -->
+    <!-- 执行分析获取结果 --> <!-- Execute analysis and get results -->
+    <!-- 获取数据库名称 --> <!-- Get database name -->
+    <!-- 解析文件 --> <!-- Parse file -->
     <script>
         // Get current locale for bootstrap-table
         var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
@@ -202,7 +206,7 @@
 
         }
     </script>
-    <!-- Get database names -->
+    <!-- 获取数据库名称 / Get database names -->
     <script>
         $("#instance_name").change(function () {
             $.ajax({
@@ -235,7 +239,7 @@
             });
         });
     </script>
-    <!-- Execute analysis and get results -->
+    <!-- 执行分析获取结果 / Execute analysis and get results -->
     <script>
         function analyze() {
             var analyze_text = sessionStorage.getItem('analyze_text');
@@ -354,7 +358,7 @@
 
         }
     </script>
-    <!-- View analysis report -->
+    <!-- 查看分析报告 / View analysis report -->
     <script>
         function getReport(obj) {
             var report = $(obj).attr("report");

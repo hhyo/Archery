@@ -2,16 +2,19 @@
 {% load i18n %}
 {% load format_tags %}
 {% block content %}
-    <!-- Log -->
+    <!--有管理权限的用户可以直接编辑--> <!-- Users with admin privileges can edit directly -->
+    <!--单次调用--> <!-- Single call -->
     <div id="tab-content" class="tab-content">
-        <!-- Log -->
+        <!-- 归档配置信息--> <!-- Archive configuration info -->
+        <!-- 归档日志--> <!-- Archive log -->
         <div id="logs" role="tabpanel" class="tab-pane fade table-responsive">
             <table id="tb-logs" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
+    <!--最后操作信息--> <!-- Last operation info -->
     </div>
-    <!-- Log -->
+    <!--TAB控制 --> <!-- Tab control -->
     <script>
         //tab切换,保留when前激活的标签id
         $(function () {

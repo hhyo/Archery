@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block content %}
-    <!-- Custom buttons -->
+    <!-- 自定义操作按钮--> <!-- Custom action buttons -->
     <div id="process-toolbar" class="btn-group right" style="display:none;">
         <button id="kill_process" class="btn btn-default" type="button">{% trans "Kill Session" %}</button>
     </div>
@@ -44,32 +44,32 @@
     </ul>
     <!-- Tab panes -->
     <div id="tab-content" class="tab-content">
-        <!-- Process Status的Table格-->
+        <!-- 进程状态的表格--> <!-- Process status table -->
         <div id="process" role="tabpanel" class="tab-pane fade in active table-responsive">
             <table id="process-list" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
-        <!-- TopTablespace的Table格-->
+        <!-- Top表空间的表格--> <!-- Top tablespace table -->
         <div id="space" role="tabpanel" class="tab-pane fade table-responsive">
             <table id="tablespace-list" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
-        <!-- Transaction Info的Table格-->
+        <!-- 事务信息的表格--> <!-- Transaction info table -->
         <div id="trx" role="tabpanel" class="tab-pane fade table-responsive">
             <table id="trx-list" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
-        <!-- Lock Info的Table格-->
+        <!-- 锁信息的表格--> <!-- Lock info table -->
         <div id="trxandlocks" role="tabpanel" class="tab-pane fade table-responsive">
             <table id="trxandlocks-list" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
     </div>
-    <!-- ConfigInfo确认 -->
+    <!-- 配置信息确认 --> <!-- Configuration info confirmation -->
     <div class="modal fade" id="killComfirm">
         <div class="modal-dialog">
             <div class="modal-content message_align">

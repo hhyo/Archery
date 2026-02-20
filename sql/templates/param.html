@@ -62,7 +62,7 @@
         function get_param_list() {
             $("#editable-div").show();
             if ($("#instance").val()) {
-                //Initializetable
+                // 初始化table / Initialize table
                 $('#param-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
@@ -124,12 +124,12 @@
                                 }
                             });
                         } else {
-                            alert('请先在Parameter模板中Config该Parameter！');
+                            alert('请先在参数模板中配置该参数！');
                             get_param_list()
                         }
                     },
                     columns: [{
-                        title: 'Parameter名',
+                        title: '参数名',
                         field: 'variable_name',
                         formatter: function (value, row, index) {
                             if (row.id) {
@@ -139,25 +139,25 @@
                             }
                         }
                     }, {
-                        title: '运行ParameterValue',
+                        title: '运行参数值',
                         field: 'runtime_value',
                         editable: {
                             type: 'text',
-                            title: '修改ParameterValue',
+                            title: '修改参数值',
                             placement: 'bottom',
                             emptytext: '-',
                             validate: function (v) {
-                                if (!v) return 'ParameterValue不能为空';
+                                if (!v) return '参数值不能为空';
                             }
                         }
                     }, {
-                        title: 'DefaultParameterValue',
+                        title: '默认参数值',
                         field: 'default_value'
                     }, {
-                        title: 'Modifiable ParametersValue',
+                        title: '可修改参数值',
                         field: 'valid_values'
                     }, {
-                        title: 'ParameterDescription',
+                        title: '参数描述',
                         field: 'description',
                         visible: false 
                     }],
@@ -221,19 +221,19 @@
                         title: 'Instance Name',
                         field: 'instance__instance_name'
                     }, {
-                        title: 'Parameter名',
+                        title: '参数名',
                         field: 'variable_name'
                     }, {
-                        title: '变更前的ParameterValue',
+                        title: '变更前的参数值',
                         field: 'old_var'
                     }, {
-                        title: '变更后的ParameterValue',
+                        title: '变更后的参数值',
                         field: 'new_var'
                     }, {
                         title: '修改人',
                         field: 'user_display'
                     }, {
-                        title: '修改Time',
+                        title: '修改时间',
                         field: 'create_time'
                     }],
                     onLoadSuccess: function () {
@@ -255,7 +255,7 @@
 
         
         $(document).ready(function () {
-                //getUserInstancelist
+                // 获取用户实例列表 / Get user instance list
                 $(function () {
                     $.ajax({
                         type: "get",
@@ -294,12 +294,12 @@
             }
         );
 
-        //tab切换,保留when前激活的标签id
+        // tab切换,保留当前激活的标签id / Tab switch, keep current active tab id
         $(function () {
             $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
                 var active_li_id = $(e.target).parents().attr('id');
                 sessionStorage.setItem('param_active_li_id', active_li_id);
-                //when前激活的标签id
+                // 当前激活的标签id / Current active tab id
                 if (active_li_id === 'param_tab') {
                     get_param_list();
                 } else if (active_li_id === 'history_tab') {
@@ -318,7 +318,7 @@
             flush()
         });
 
-        //Refresh页面
+        // 刷新页面 / Refresh page
         function flush() {
             sessionStorage.setItem('instance_id', $("#instance").val());
             var active_li_id = sessionStorage.getItem('param_active_li_id');

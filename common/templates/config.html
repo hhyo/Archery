@@ -58,6 +58,8 @@
                     <div id="div-system-config" class="form-group" style="display: none">
                         <h4 style="color: darkgrey; display: inline;"><b>{% trans "goInception Configuration" %}</b></h4>&nbsp;&nbsp;&nbsp;
                         <h6 style="color:red">Note1：Backup DB info is only for getting rollback SQL，needs to match audit tool config，changes here wont modify audit tool config</h6>
+                            <!-- 存储类型选择 --> <!-- Storage type selection -->
+                            <!-- 数据导出配置 --> <!-- Data export configuration -->
                         <hr/>
                         <div class="form-horizontal">
                             <div id="div-go-inception-config">
@@ -397,7 +399,7 @@
                                 </div>
                             </div>
 
-                            <!-- Data Export Config -->
+                            <!-- 数据导出配置 / Data Export Config -->
                             <h5 style="color: darkgrey"><b>{% trans "Data Export Configuration" %}</b></h5>
                             <hr/>
                             <div id="offline_download_export_msg">
@@ -413,7 +415,7 @@
                                 </div>
                             </div>
 
-                            <!-- Storage Type Selection -->
+                            <!-- 存储类型选择 / Storage Type Selection -->
                             <h5 style="color: darkgrey"><b>{% trans "Storage Type Selection" %}</b></h5>
                             <hr/>
                             <div class="form-group">
@@ -433,9 +435,9 @@
                                 <button id='check_storage_conn' class='btn-sm btn-info'>{% trans "Test Connection" %}</button>
                             </div>
 
-                            <!-- Dynamic config area -->
+                            <!-- 动态配置区域 --> <!-- Dynamic configuration area -->
                             <div id="dynamic-config">
-                                <!-- Local storage config -->
+                                <!-- 本地存储配置 --> <!-- Local storage configuration -->
                                 <div id="storage-local" class="storage-config" style="display: none;">
                                     <div class="form-group">
                                         <label for="local-path" class="col-sm-4 control-label">{% trans "Local Storage Path" %}</label>
@@ -445,7 +447,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- SFTP Config -->
+                                <!-- SFTP配置 --> <!-- SFTP configuration -->
                                 <div id="storage-sftp" class="storage-config" style="display: none;">
                                     <div class="form-group">
                                         <label for="sftp-host" class="col-sm-4 control-label">{% trans "SFTP Host" %}</label>
@@ -503,7 +505,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- S3 compatible backend storage config -->
+                                <!-- S3兼容的后端存储配置 --> <!-- S3-compatible backend storage configuration -->
                                 <div id="storage-s3c" class="storage-config" style="display: none;">
                                     <div class="form-group">
                                         <label for="s3c-access-key-id" class="col-sm-4 control-label">Access Key</label>
@@ -570,7 +572,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- AzureConfig -->
+                                <!-- Azure配置 --> <!-- Azure configuration -->
                                 <div id="storage-azure" class="storage-config" style="display: none;">
                                     <div class="form-group">
                                         <label for="azure-container" class="col-sm-4 control-label">{% trans "Azure Container" %}</label>
@@ -831,7 +833,7 @@
                                     <i class="ace-icon fa fa-hand-o-right"></i>
                                     {% trans "Create DingTalk Archery mini-app reference:" %} <a target="_blank"
                                                         href="https://ding-doc.dingtalk.com/doc#/bgb96b/aw3h75">{% trans "DingTalk Enterprise Development Documentation" %}</a>
-                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>SyncUser
+                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户 / Sync User
                                 </button>
                                 </div>
                                 <div class="form-group">
@@ -908,7 +910,7 @@
                                     <i class="ace-icon fa fa-hand-o-right"></i>
                                     {% trans "Create WeChat Work app reference:" %} <a target="_blank"
                                                   href="https://work.weixin.qq.com/api/doc#90000/90135/90226">{% trans "WeChat Work Development Documentation" %}</a>
-                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>SyncUser#}
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户 / Sync User#}
                                     </button>
                                 </div>
                                 <div class="form-group">
@@ -989,7 +991,7 @@
                                     <i class="ace-icon fa fa-hand-o-right"></i>
                                     {% trans "Create Feishu app reference:" %} <a target="_blank"
                                                 href="https://open.feishu.cn/document/uQjL04CN/ukzM04SOzQjL5MDN">{% trans "Feishu Development Documentation" %}</a>
-                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>SyncUser#}
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户 / Sync User#}
                                     </button>
                                 </div>
                                 <div class="form-group">

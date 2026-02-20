@@ -5,7 +5,7 @@
     <h4 style="display: inline;">Todo List<span>{{ workflow_detail.workflow_name }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <hr>
-    <!-- Custom buttons -->
+    <!-- 自定义操作按钮--> <!-- Custom action buttons -->
     <div id="toolbar" class="bootstrap-select">
         <select id="workflow_type" class="form-control dropdown-menu-right selectpicker ">
             <option value="0" selected="selected">{% trans "All" %}</option>
@@ -14,13 +14,13 @@
             <option value="3">Data Archive Application</option>
         </select>
     </div>
-    <!-- Reviewlist的Table格-->
+    <!-- 审核列表的表格--> <!-- Audit list table -->
     <div class="table-responsive">
         <table id="audit-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
-    <!-- ReviewInfo确认 -->
+    <!-- 审核信息确认 --> <!-- Audit info confirmation -->
     <div class="modal fade" id="auditConfim">
         <div class="modal-dialog" style="width: 400px">
             <div class="modal-content message_align">
@@ -110,10 +110,10 @@
                     title: 'Apply人',
                     field: 'create_user_display'
                 }, {
-                    title: 'ApplyTime',
+                    title: '申请时间',
                     field: 'create_time'
                 }, {
-                    title: 'ReviewStatus',
+                    title: '审核状态',
                     field: 'current_status',
                     formatter: function (value, row, index) {
                         return workflow_status_formatter(value)

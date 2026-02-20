@@ -81,7 +81,8 @@
 {% endblock content %}
 {% block js %}
     {% load static %}
-    <!-- Select sync data -->
+    <!-- 执行对比 --> <!-- Execute comparison -->
+    <!-- 选择同步数据 --> <!-- Select sync data -->
     <script>
         //Get user instance list
         $(function () {
@@ -186,7 +187,7 @@
             });
         });
     </script>
-    <!-- Execute comparison -->
+    <!-- 执行对比 / Execute comparison -->
     <script>
         function schemasync() {
             var instance_name = $('#instance_name').val();

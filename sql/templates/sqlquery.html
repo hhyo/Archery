@@ -2,7 +2,8 @@
 {% load i18n %}
 
 {% block content %}
-    <!-- Modal -->
+    <!-- 自定义操作按钮--> <!-- Custom action buttons -->
+    <!-- 收藏信息弹出框--> <!-- Favorites info popup -->
     <div class="modal fade" id="favorite">
         <div class="modal-dialog modal-sm">
             <div class="modal-content message_align">
@@ -239,7 +240,8 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
 
-    <!-- Query history -->
+    <!-- 执行结果  --> <!-- Execution results -->
+    <!-- 查询历史  --> <!-- Query history -->
     <script>
         // Get current locale for bootstrap-table
         var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
@@ -504,7 +506,7 @@
             });
         }
     </script>
-    <!-- Execute Result -->
+    <!-- 执行结果 / Execute result -->
     <script>
         
         function redis_help_tab_add() {

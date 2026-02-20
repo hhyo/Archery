@@ -2,7 +2,9 @@
 {% load i18n %}
 
 {% block content %}
-    <!-- Log -->
+    <!-- 自定义操作按钮--> <!-- Custom action buttons -->
+    <!-- 获取列表数据 --> <!-- Get list data -->
+    <!-- 选择框和切换控件 --> <!-- Select box and toggle controls -->
     <script>
         
         $(function () {
@@ -24,19 +26,19 @@
                     sessionStorage.setItem('advisor_instance_name', advisor_instance_name);
                     location.href = '/slowquery_advisor/';
                 } else {
-                    alert("请先选择需要Optimize的sql")
+                    alert("请先选择需要优化的sql")
                 }
             });
         });
     </script>
-    <!-- Get list数据 -->
+    <!-- 慢日志统计--> <!-- Slow query statistics -->
     <script>
         // getSlow Log Statistics
         function slowquery_review() {
             $("#sqladvisor-toolbar").hide();
             var instance_name = $("#instance_name").val();
             if (instance_name) {
-                //Initializetable
+                // 初始化table / Initialize table
                 $('#slowsql-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
@@ -101,6 +103,7 @@
                                 
                                 sql = sql.replace(/\s/g, "&nbsp;");
                                 html.push('<div class="col-lg-4">' + sql + '</div>');
+        <!-- 慢日志明细--> <!-- Slow query details -->
                             }
                         });
                         $.ajax({
@@ -126,11 +129,11 @@
                         return html.join('');
                     },
                     columns: [{
-                        title: '日志统计Time',
+                        title: '日志统计时间',
                         field: 'CreateTime',
                         sortable:true
                     }, {
-                        title: 'Database名',
+                        title: '数据库名',
                         field: 'DBName',
                         sortable:true
                     }, {
@@ -159,15 +162,15 @@
                         field: 'SQLText',
                         visible: false 
                     }, {
-                        title: 'Execute总次数',
+                        title: '执行总次数',
                         field: 'MySQLTotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: 'Execute总时长(seconds)',
+                        title: '执行总时长(秒)',
                         field: 'MySQLTotalExecutionTimes',
                         sortable:true
                     }, {
-                        title: '平均Execute时长(seconds)',
+                        title: '平均执行时长(秒)',
                         field: 'QueryTimeAvg',
                         sortable:true
                     }, {
@@ -175,7 +178,7 @@
                         field: 'ParseTotalRowCounts',
                         sortable:true
                     }, {
-                        title: 'returns总行数',
+                        title: '返回总行数',
                         field: 'ReturnTotalRowCounts',
                         sortable:true
                     }, {
@@ -183,7 +186,7 @@
                         field: 'ParseRowAvg',
                         sortable:true
                     }, {
-                        title: '平均returns行数',
+                        title: '平均返回行数',
                         field: 'ReturnRowAvg',
                         sortable:true
                     }],
@@ -211,7 +214,7 @@
             $("#sqladvisor-toolbar").show();
             var instance_name = $("#instance_name").val();
             if (instance_name) {
-                //Initializetable
+                // 初始化table / Initialize table
                 $('#slowsqlinfo-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
@@ -287,15 +290,15 @@
                         field: 'checkbox',
                         checkbox: true
                     }, {
-                        title: 'ExecuteStartTime',
+                        title: '执行开始时间',
                         field: 'ExecutionStartTime',
                         sortable:true
                     }, {
-                        title: 'Database名',
+                        title: '数据库名',
                         field: 'DBName',
                         sortable:true
                     }, {
-                        title: 'User名',
+                        title: '用户名',
                         field: 'HostAddress',
                         sortable:true
                     }, {
@@ -314,27 +317,27 @@
                         field: 'SQLText',
                         visible: false 
                     }, {
-                        title: 'Execute总次数',
+                        title: '执行总次数',
                         field: 'TotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: 'Execute时长(95%)',
+                        title: '执行时长(95%)',
                         field: 'QueryTimePct95',
                         sortable:true
                     }, {
-                        title: 'Execute总时长(seconds)',
+                        title: '执行总时长(秒)',
                         field: 'QueryTimes',
                         sortable:true
                     }, {
-                        title: '锁定总时长(seconds)',
+                        title: '锁定总时长(秒)',
                         field: 'LockTimes',
                         sortable:true
                     }, {
-                        title: 'Parse总行数',
+                        title: '解析总行数',
                         field: 'ParseRowCounts',
                         sortable:true
                     }, {
-                        title: 'returns总行数',
+                        title: '返回总行数',
                         field: 'ReturnRowCounts',
                         sortable:true
                     }],

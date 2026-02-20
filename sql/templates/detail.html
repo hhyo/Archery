@@ -9,17 +9,866 @@
             <a target="_blank"
                href="{{ workflow_detail.demand_url }}">{{ workflow_detail.workflow_name }}</a>
         </h4>
-        <!-- Log -->
+        <!--只允许发起人提交其他实例--> <!-- Only allow initiator to submit other instances -->
+        {% if user.username == workflow_detail.engineer and not workflow_detail.is_offline_export %}
+            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">{% trans "Submit to other instance" %}</a>
+        {% endif %}
+        {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
+            {% if not workflow_detail.is_offline_export %}
+                <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">{% trans "View submission info" %}</a>
+            {% endif %}
+        {% endif %}
+    </div>
+    <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
+    <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sqlworkflowcontent.sql_content }}"/>
+    <hr>
+    <h4>
+        {% trans "Approval flow" %}
+    </h4>
+    <h5>
+    {% include "workflow_display.html" %}
+    <h4>
+        {% trans "Other info" %}
+    </h4>
+    <table data-toggle="table" class="table table-striped table-hover"
+           style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        <thead>
+        <tr>
+            <th>
+                {% trans "Initiator" %}
+            </th>
+            <th>
+                {% trans "Target instance" %}
+            </th>
+            <th>
+                {% trans "Database" %}
+            </th>
+            <th>
+                {% trans "Submission time" %}
+            </th>
+            <th>
+                {% trans "Executable time range" %}
+            </th>
+            <th>
+                {% trans "End time" %}
+            </th>
+            <th>
+                {% trans "Backup" %}
+            </th>
+            <th>
+                {% trans "Current status" %}
+            </th>
+            <th>
+                {% trans "Group" %}
+            </th>
+            <th>
+                {% trans "Type" %}
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="success">
+            <td>
+                {{ workflow_detail.engineer_display }}
+            </td>
+            <td>
+                {{ workflow_detail.instance.instance_name }}
+            </td>
+            <td>
+                {{ workflow_detail.db_name }}
+            </td>
+            <td>
+                {{ workflow_detail.create_time }}
+            </td>
+            <td>
+                {% if workflow_detail.run_date_start and workflow_detail.run_date_end %}
+                    {{ workflow_detail.run_date_start }} / {{ workflow_detail.run_date_end }}
+                {% else %}
+                    {% trans "No limit" %}
+                {% endif %}
+            </td>
+            <td>
+                {{ workflow_detail.finish_time }}
+            </td>
+            <td>
+                {% if workflow_detail.is_backup %}
+                    {% trans "Yes" %}
+                {% else %}
+                    {% trans "No" %}
+                {% endif %}
+            </td>
+            <td>
+                {% if workflow_detail.status == "workflow_finish" or workflow_detail.status == "workflow_finish_manual" %}
+                    <font color="green">
+                {% else %}
+                    <font color="red">
+                {% endif %}
+                <B id="workflow_detail_disaply">{{ workflow_detail.get_status_display }}</B></font>
+                <span hidden="hidden" id="workflow_detail_status">{{ workflow_detail.status }}</span>
+            </td>
+            <td>
+                {{ workflow_detail.group_name }}
+            </td>
+            <td>
+                {{ workflow_detail.get_syntax_type_display }}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <br>
+
+    <!-- Nav tabs -->
+    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
+        <li id="detail_tab" class="active">
+            <!-- 工单详情 --> <!-- Ticket details -->
+            <a href="#detail" role="tab" data-toggle="tab">{% trans "Ticket details" %}</a>
+        </li>
+        <li id="logs_tab">
+            <!-- 工单日志 --> <!-- Ticket log -->
+            <a href="#logs" role="tab" data-toggle="tab">{% trans "Ticket log" %}</a>
+        </li>
+    </ul>
+    <!-- Tab panes -->
+    <div id="tab-content" class="tab-content">
+        <!-- 工单详情--> <!-- Ticket details -->
+        <div id="detail" role="tabpanel" class="tab-pane fade in active table-responsive">
+            <!-- 自定义操作按钮--> <!-- Custom action buttons -->
+            <div id="detail-toolbar" class="btn-group right">
+                <button id="expandAllRows" class="btn btn-default navbar-btn" type="button">{% trans "Expand all" %}</button>
+            </div>
+            <table id="tb-detail" data-toggle="table" class="table table-condensed"
+                   style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
+            <!--最后操作信息--> <!-- Last operation info -->
+            {% if last_operation_info %}
+                <table data-toggle="table" class="table table-striped table-hover"
+                       style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
+                    <thead>
+                    <tr>
+                        <th>
+                            {% trans "Operation info" %}
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            {% format_str last_operation_info %}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <br>
+            {% endif %}
+        </div>
+
+        <!-- 工单日志--> <!-- Ticket log -->
+        <div id="logs" role="tabpanel" class="tab-pane fade table-responsive">
+            <table id="tb-logs" data-toggle="table" class="table table-hover"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </table>
+        </div>
+    </div>
+
+    <!--审核备注输入框--> <!-- Audit remarks input -->
+    {% if is_can_review or is_can_cancel %}
+        <textarea id="remark" name="remark" class="form-control" data-name="{% trans "Audit remarks" %}"
+                  placeholder="{% trans "Please enter audit remarks / termination reason" %}" rows=3></textarea>
+        <br>
+    {% endif %}
+    <!--审核人修改可执行时间按钮--> <!-- Reviewer modify execution time button -->
+    {% if is_can_review %}
+        <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+            <input type="hidden" id="audit_remark" name="audit_remark" value="">
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#Executabletime"
+                   value="{% trans "Executable time change" %}"/>
+        </form>
+    {% endif %}
+    <!--审核通过按钮--> <!-- Approve button -->
+    {% if is_can_review %}
+        <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+            <input type="hidden" id="audit_remark" name="audit_remark" value="">
+            <input type="button" id="btnPass" class="btn btn-success" value="{% trans "Approve" %}"/>
+        </form>
+    {% endif %}
+    <!--立即执行按钮--> <!-- Execute now button -->
+    {% if is_can_execute %}
+        <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="mode" value="auto">
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+            <input type="button" id="btnExecuteOnly" class="btn btn-danger"
+                   value="{% trans "Execute now" %}"/>
+        </form>
+        {% if manual %}
+            <form id="from-execute-manual" action="/execute/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="manual">
+                <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                <input type="button" id="btnExecuteOnly-manual" class="btn btn-warning"
+                       value="{% trans "Manually completed" %}"/>
+            </form>
+        {% endif %}
+    {% endif %}
+    <!--定时执行按钮--> <!-- Scheduled execution button -->
+    {% if is_can_timingtask %}
+        {% if workflow_detail.status == 'workflow_review_pass' %}
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="{% trans "Scheduled execution" %}"/>
+        {% elif workflow_detail.status == 'workflow_timingtask' %}
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="{% trans "Execution time change" %}"/>
+        {% endif %}
+    {% endif %}
+    <!--终止执行按钮--> <!-- Terminate execution button -->
+    {% if is_can_review or is_can_cancel %}
+        <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+            <input type="hidden" id="cancel_remark" name="cancel_remark" value="">
+            <input type="button" id="btnCancel" class="btn btn-default" value="{% trans "Terminate process" %}"/>
+        </form>
+    {% endif %}
+    {% if workflow_detail.status == 'workflow_finish' and workflow_detail.is_offline_export %}
+        <form id="form-download" class="form-horizontal">
+            <button type="button" id="btnDownload" data-loading-text="{% trans "Downloading..." %}"
+                     class="btn btn-info">
+                {% trans "Download file" %}
+            </button>
+        </form>
+    {% endif %}
+    <!--查看回滚按钮--> <!-- View rollback button -->
+    {% if is_can_rollback %}
+        {% if  workflow_detail.status == 'workflow_finish' or  workflow_detail.status == 'workflow_exception' %}
+            <form action="/rollback/" method="get" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default"
+                       value="{% trans "View rollback SQL" %}"/>
+            </form>
+            <form action="/rollback/" method="get" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                <input type="hidden" name="download" value="true">
+                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-info"
+                       value="{% trans "Download rollback SQL" %}"/>
+            </form>
+        {% endif %}
+    {% endif %}
+    <!--重新修改按钮--> <!-- Re-edit button -->
+    {% if workflow_detail.status == 'workflow_autoreviewwrong' or workflow_detail.status == 'workflow_abort' or workflow_detail.status == 'workflow_exception' %}
+        {% if user.username == workflow_detail.engineer %}
+            <!--只允许发起人修改工单--> <!-- Only allow initiator to edit ticket -->
+            {% csrf_token %}
+            {% if workflow_detail.is_offline_export %}
+                <!-- 离线导出工单跳转到导出提交页 --> <!-- Offline export ticket redirect to export submit page -->
+                <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
+                   href="/sqlexportsubmit/?source=resubmit">{% trans "Re-edit" %}</a>
+            {% else %}
+                <!-- 非离线导出工单跳转到上线变更提交页 --> <!-- Non-offline export ticket redirect to change submit page -->
+                <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
+                   href="/editsql/">{% trans "Re-edit" %}</a>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    <!-- 定时执行弹出框 --> <!-- Scheduled execution popup -->
+    <form id="from-addsqlcronjob" action="/timingtask/" method="post" style="display:inline-block;">
+        <div class="modal fade" id="cronComfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header ">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">×</span></button>
+                        <h4 class="modal-title text-danger">{% trans "Scheduled SQL execution" %}</h4>
+                    </div>
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                            <div class='input-group date' id='datetimepicker'>
+                                <input id="run_date" name="run_date" type='text' autocomplete="off" class="form-control"
+                                       placeholder="{% trans "Please select execution time" %}"/>
+                                <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Cancel" %}</button>
+
+                        <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                        <input type="button" id="btnAddsqlcronjob" class="btn btn-danger" value="{% trans "Confirm submit" %}"/>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 执行进度弹出框--> <!-- Execution progress popup -->
+    <!-- 自定义操作按钮--> <!-- Custom action buttons -->
+    <div id="osc-toolbar" class="btn-group left" style="display:none;">
+        <button id="pause_osc" class="btn btn-warning" type="button">{% trans "Pause" %}</button>
+        <button id="resume_osc" class="btn btn-success" type="button">{% trans "Resume" %}</button>
+        <button id="kill_osc" class="btn btn-danger" type="button">{% trans "Terminate" %}</button>
+    </div>
+    <div class="modal fade" id="osc_percent">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content message_align">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">{% trans "Execution progress" %}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table id="osc_percent_list" data-toggle="table" class="table table-striped table-hover"
+                               style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 修改可执行时间弹出框 --> <!-- Modify execution time popup -->
+    <form id="from-alterexecutabletime" action="/alter_run_date/" method="post" style="display:inline-block;">
+        <div class="modal fade" id="Executabletime" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header ">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">×</span></button>
+                        <h4 class="modal-title text-danger">{% trans "Modify executable time" %}</h4>
+                    </div>
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <!--可执行范围时间--> <!-- Executable time range -->
+                        <div class='form-group input-group'>
+                            <input type="hidden" id="run_date_start" name="run_date_start">
+                            <input type="hidden" id="run_date_end" name="run_date_end">
+                            <input type="text" id="run_date_range" readonly
+                                   value="{% trans "Please select executable time range" %}"
+                                   style="background-color: #fff;color: #999 "
+                                   class="form-control "/>
+                            <span class="input-group-addon"><span class="fa fa-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Cancel" %}</button>
+
+                        <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                        <input type="button" id="btnalterExecutabletime" class="btn btn-danger" value="{% trans "Confirm submit" %}"/>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+
+{% endblock content %}
+
+{% block js %}
+    {% load static %}
+    <link href="{% static 'datetimepicker/css/bootstrap-datetimepicker.css' %}" rel="stylesheet" type="text/css"/>
+    <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
+    <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.zh-CN.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <!--初始化时间控件 --> <!-- Initialize time control -->
+    <script>
+        var date = new Date();
+        $("#datetimepicker").datetimepicker({
+            format: "yyyy-mm-dd hh:ii",
+            autoclose: true,
+            todayBtn: true,
+            pickerPosition: "bottom-left",
+            language: 'zh-CN',//中文，需要引用zh-CN.js包
+            startView: 1,//天视图
+            minView: 0,//分钟
+            startDate: date,
+            inline: true,
+            sideBySide: true,
+            minuteStep: 5,
+        });
+        $("#run_date_range").daterangepicker({
+            timePicker: true,
+            timePicker24Hour: true,
+            autoApply: true,
+            autoUpdateInput: false,
+            opens: "left",
+            drops: "down",
+            minDate: moment().startOf('minutes'),
+            startDate: moment().startOf('hour'),
+            endDate: moment().startOf('hour'),
+            locale: {
+                "applyLabel": gettext("OK"),
+                "cancelLabel": gettext("Clear"),
+                "daysOfWeek": [gettext("Sun"), gettext("Mon"), gettext("Tue"), gettext("Wed"), gettext("Thu"), gettext("Fri"), gettext("Sat")],
+                "monthNames": [gettext("January"), gettext("February"), gettext("March"), gettext("April"), gettext("May"), gettext("June"), gettext("July"), gettext("August"), gettext("September"), gettext("October"), gettext("November"), gettext("December")],
+                "firstDay": 1
+            },
+        }).on('apply.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#333");
+            $("#run_date_start").val(picker.startDate.format('YYYY-MM-DD HH:mm'));
+            $("#run_date_end").val(picker.endDate.format('YYYY-MM-DD HH:mm'));
+            $(this).val(picker.startDate.format('YYYY-MM-DD HH:mm') + ' / ' + picker.endDate.format('YYYY-MM-DD HH:mm'));
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#999");
+            $(this).val(gettext('Please select executable time range'));
+        });
+    </script>
+
+    <script>
+        var editWorkflowNname = "{{ workflow_detail.workflow_name|escapejs }}";
+        var editDemandUrl = "{{ workflow_detail.demand_url|escapejs }}";
+        var editSqlContent = $("#editSqlContent").val();
+        var editGroup = "{{ workflow_detail.group_name|escapejs }}";
+        var editClustername = "{{ workflow_detail.instance.instance_name|escapejs }}";
+        var editDbname = "{{ workflow_detail.db_name|escapejs }}";
+        var editIsbackup = "{{ workflow_detail.is_backup|escapejs }}";
+    </script>
+    <!--按钮控制 --> <!-- Button control -->
+    <script>
+        // 表格展开折叠全部行 / Expand/collapse all table rows
+        $("#expandAllRows").click(function () {
+            $(this).trigger("blur");
+            if ($(this).text() === gettext('Expand all')) {
+                $('#tb-detail').bootstrapTable('hideColumn', 'sql');
+                $('#tb-detail').bootstrapTable('expandAllRows');
+                $(this).text(gettext('Collapse all'))
+            } else if ($(this).text() === gettext('Collapse all')) {
+                $('#tb-detail').bootstrapTable('showColumn', 'sql');
+                $('#tb-detail').bootstrapTable('collapseAllRows');
+                $(this).text(gettext('Expand all'))
+            }
+        });
+
+        $("#btnEditSql").click(function () {
+            sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+            sessionStorage.setItem('editDemandUrl', editDemandUrl);
+            sessionStorage.setItem('editSqlContent', editSqlContent);
+            sessionStorage.setItem('editGroup', editGroup);
+            sessionStorage.setItem('editClustername', editClustername);
+            sessionStorage.setItem('editDbname', editDbname);
+            sessionStorage.setItem('editIsbackup', editIsbackup);
+        });
+        $("#btnViewSql").click(function () {
+            sessionStorage.removeItem('editWorkflowDetailId');
+            sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+            sessionStorage.setItem('editDemandUrl', editDemandUrl);
+            sessionStorage.setItem('editSqlContent', editSqlContent);
+            sessionStorage.setItem('editGroup', editGroup);
+            sessionStorage.setItem('editClustername', editClustername);
+            sessionStorage.setItem('editDbname', editDbname);
+            sessionStorage.setItem('editIsbackup', editIsbackup);
+        });
+        $("#btnSubmitOtherCluster").click(function () {
+            sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+            sessionStorage.setItem('editDemandUrl', editDemandUrl);
+            sessionStorage.setItem('editSqlContent', editSqlContent);
+            sessionStorage.setItem('editGroup', editGroup);
+            sessionStorage.setItem('editIsbackup', editIsbackup);
+        });
+
+        // 执行确认 / Execution confirmation
+        $("#btnExecuteOnly").click(function () {
+            if ("{{ workflow_detail.is_backup }}" === 'False' &&
+            "{{workflow_detail.is_offline_export}}" === 0) {
+                var isContinue = confirm(gettext("This ticket has not selected backup. Data will not be automatically backed up. Are you sure you want to execute now?"));
+            } else {
+                var isContinue = confirm(gettext("Are you sure you want to execute now?"));
+            }
+            var formExecuteOnly = $("#from-execute");
+            if (isContinue) {
+                formExecuteOnly.submit();
+                loading(this)
+            }
+        });
+
+        // 执行确认手工执行 / Manual execution confirmation
+        $("#btnExecuteOnly-manual").click(function () {
+            var isContinue = confirm(gettext("Please confirm that manual execution has been completed?"));
+            var formExecuteOnly = $("#from-execute-manual");
+            if (isContinue) {
+                formExecuteOnly.submit();
+                loading(this)
+            }
+        });
+
+        //审核通过 / Approve
+        $("#btnPass").click(function () {
+            //获取form对象，判断输入，通过则提交
+            $("#audit_remark").val($("#remark").val());
+            var formPassed = $("#from-passed");
+            loading(this);
+            formPassed.submit();
+        });
+
+        // 审核不通过 / Reject
+        $("#btnCancel").click(function () {
+            //获取form对象，判断输入，通过则提交
+            $("#cancel_remark").val($("#remark").val());
+            var formCancel = $("#form-cancel");
+            if ($("#cancel_remark").val()) {
+                loading(this);
+                formCancel.submit();
+            } else {
+                alert(gettext('Please enter the termination reason'))
+            }
+        });
+
+        // 定时时间校验 / Scheduled time validation
+        $("#btnAddsqlcronjob").click(function () {
+            //获取form对象，判断输入，通过则提交
+            var formAddsqlcronjo = $("#from-addsqlcronjob");
+            if ($("#run_date").val()) {
+                loading(this);
+                formAddsqlcronjo.submit();
+            } else {
+                alert(gettext('Please enter the scheduled execution time'))
+            }
+        });
+
+        // 修改可执行时间 / Modify executable time
+        $("#btnalterExecutabletime").click(function () {
+            //获取form对象，判断输入，通过则提交
+            var formAlterexecutabletime = $("#from-alterexecutabletime");
+            loading(this);
+            formAlterexecutabletime.submit();
+        });
+
+        // 按钮禁用 / Button disable
+        function loading(obj) {
+            $(obj).button('loading').delay(2500).queue(function () {
+                $(obj).button('reset');
+                $(obj).dequeue();
+            });
+        }
+    </script>
+    <!--表格初始化 --> <!-- Table initialization -->
+    <script>
+        //获取工单详情 / Get ticket details
+        function get_detail() {
+            $('#tb-detail').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'get',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/sqlworkflow/detail_content/",
+                striped: true,
+                cache: true,
+                pagination: true,
+                sortable: true,
+                sidePagination: "client",
+                pageNumber: 1,
+                pageSize: 500,
+                pageList: [500, 1000, 5000],
+                search: true,
+                strictSearch: false,
+                showColumns: true,
+                showRefresh: true,
+                minimumCountColumns: 1,
+                clickToSelect: false,
+                uniqueId: "id",
+                showToggle: false,
+                toolbar: "#detail-toolbar",
+                showExport: true,
+                exportDataType: "all",
+                exportOptions: {
+                    ignoreColumn: [0],
+                    fileName: 'detail_content'
+                },
+                cardView: false,
+                detailView: true,
+                //格式化详情 / Format details
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'sql') {
+                            let sql = value;
+                            //替换标签 / Replace tags
+                            sql = sql.replace(/&/g, "&amp;");
+                            sql = sql.replace(/</g, "&lt;");
+                            sql = sql.replace(/>/g, "&gt;");
+                            sql = sql.replace(/"/g, "&quot;");
+                            //替换所有的换行符 / Replace all line breaks
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格 / Replace all spaces
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数 / Parameters sent when requesting server data
+                queryParams:
+                    function (params) {
+                        return {
+                            workflow_id: "{{ workflow_detail.id }}",
+                        }
+                    },
+                locale: 'zh-CN',
+                columns: [{
+                    title: 'ID',
+                    field: 'id',
+                    sortable: true
+                }, {
+                    title: gettext('Full SQL content'),
+                    field: 'sql',
+                    visible: false
+                }, {
+                    title: gettext('SQL content'),
+                    field: 'sql',
+                    formatter: function (value, row, index) {
+                        var sql=row.sql;
+                        if (sql.length > 80) {
+                            return sql.substr(0, 80) + '...';
+                        } else {
+                            return sql
+                        }
+                    },
+                    sortable: false
+                }, {
+                    title: gettext('Audit/execution status'),
+                    field: 'errlevel',
+                    formatter: function (value, row, index) {
+                        if (String(value) === '0') {
+                            return 'pass'
+                        } else if (String(value) === '1') {
+                            return 'warning'
+                        } else if (String(value) === '2') {
+                            return 'error'
+                        }
+                    },
+                    sortable: true
+                }, {
+                    title: gettext('Audit/execution info'),
+                    field: 'errormessage',
+                    formatter: function (value, row, index) {
+                        return value.replace(/\n/g, '<br>');
+                    },
+                    sortable: true
+                }, {
+                    title: gettext('Scanned/affected rows'),
+                    field: 'affected_rows',
+                    sortable: true
+                }, {
+                    title: gettext('Execution time'),
+                    field: 'execute_time',
+                    sortable: true
+                }, {
+                    title: gettext('Backup time'),
+                    field: 'backup_time',
+                    sortable: true
+                }, {
+                    title: gettext('Current stage'),
+                    field: 'stagestatus',
+                    sortable: true
+                }, {
+                    title: gettext('Operation'),
+                    field: 'sqlsha1',
+                    formatter: function (value, row, index) {
+                        let btn_percent = "<button class=\"btn btn-info btn-xs\" sqlsha1=\"" + row.sqlsha1 + "\" onclick=\"get_osc_percent(this)" + "\">" + gettext("View progress") + "</button>\n";
+                        let status = $("#workflow_detail_status").text();
+                        if (row.sqlsha1 && status === 'workflow_executing') {
+                            return btn_percent;
+                        }
+                    },
+
+                }],
+                rowStyle: function (row, index) {
+                    var style = "";
+                    if (row.errlevel === 1) {
+                        style = 'warning';
+                    } else if (row.errlevel === 2) {
+                        style = 'danger';
+                    }
+                    return {classes: style}
+                },
+                onLoadSuccess: function () {
+                },
+                onLoadError: onLoadErrorCallback,
+            });
+        }
+
+        // 获取操作日志 / Get operation logs
+        function get_logs() {
+            $.ajax({
+                type: "post",
+                url: "/workflow/log/",
+                dataType: "json",
+                data: {
+                    workflow_id: "{{ workflow_detail.id }}",
+                    workflow_type: 2,
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    //初始化table / Initialize table
+                    $('#tb-logs').bootstrapTable('destroy').bootstrapTable({
+                        escape: true,
+                        striped: true,
+                        cache: true,
+                        pagination: true,
+                        sortable: false,
+                        sortOrder: "asc",
+                        sidePagination: "client",
+                        pageNumber: 1,
+                        pageSize: 20,
+                        pageList: [20, 30, 50, 100],
+                        search: true,
+                        strictSearch: false,
+                        showColumns: false,
+                        showRefresh: false,
+                        minimumCountColumns: 2,
+                        clickToSelect: false,
+                        uniqueId: "id",
+                        showToggle: false,
+                        cardView: false,
+                        detailView: false,
+                        locale: 'zh-CN',
+                        data: data.rows,
+                        columns: [{
+                            title: gettext('Operation'),
+                            field: 'operation_type_desc'
+                        }, {
+                            title: gettext('Operator'),
+                            field: 'operator_display'
+                        }, {
+                            title: gettext('Operation time'),
+                            field: 'operation_time'
+                        }, {
+                            title: gettext('Operation info'),
+                            field: 'operation_info'
+                        }],
+                        onLoadSuccess: function () {
+                        },
+                        onLoadError: onLoadErrorCallback,
+                    });
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            })
+        }
+
+        //获取osc执行进度信息 / Get OSC execution progress info
+        function get_osc_percent(obj) {
+            $('#osc_percent_list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/inception/osc_control/",
+                striped: true,
+                cache: false,
+                pagination: false,
+                sortable: false,
+                sortOrder: "asc",
+                sidePagination: "server",
+                pageNumber: 1,
+                pageSize: 20,
+                pageList: [20, 30, 50, 100],
+                search: false,
+                strictSearch: false,
+                showColumns: false,
+                showRefresh: true,
+                minimumCountColumns: 2,
+                checkboxHeader: false,
+                singleSelect: true,
+                clickToSelect: true,
+                uniqueId: "id",
+                showToggle: false,
+                cardView: false,
+                detailView: true,
+                //格式化详情 / Format details
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'INFOMATION') {
+                            //替换所有的换行符 / Replace all line breaks
+                            value = value.replace(/\r\n/g, "<br>");
+                            value = value.replace(/\n/g, "<br>");
+                            //替换所有的空格 / Replace all spaces
+                            value = value.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + value + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
+                locale: 'zh-CN',
+                toolbar: "#osc-toolbar",
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数 / Parameters sent when requesting server data
+                queryParams:
+                    function (params) {
+                        return {
+                            sqlsha1: $(obj).attr("sqlsha1"),
+                            workflow_id: "{{ workflow_detail.id }}",
+                            command: "get"
+                        }
+                    },
+                columns: [{
+                    title: '',
+                    field: 'checkbox',
+                    checkbox: true,
+                    formatter: function stateFormatter(value, row, index) {
+                        return {
+                            checked: true
+                        };
+                    },
+                }, {
+                    title: 'DBNAME',
+                    field: 'DBNAME'
+                }, {
+                    title: 'TABLENAME',
+                    field: 'TABLENAME'
+                }, {
+                    title: 'PERCENT',
+                    field: 'PERCENT'
+                }, {
+                    title: 'SQLSHA1',
+                    field: 'SQLSHA1',
+                    visible: false
+                }, {
+                    title: 'REMAINTIME',
+                    field: 'REMAINTIME'
+                }, {
+                    title: 'INFOMATION',
+                    field: 'INFOMATION',
+                    formatter: function (value, row, index) {
+                        if (value.length > 300) {
+                            value = value.substr(0, 300) + '...';
+                        }
+                        return value.replace(/\n/g, '<br>');
+                    },
+                }],
+                onLoadSuccess: function () {
+                    $("#osc-toolbar").show();
+                    $('#osc_percent').modal('show');
+                },
+                onLoadError: onLoadErrorCallback,
+            });
+
+        }
+    </script>
+    <!--OSC控制--> <!-- OSC control -->
     <script>
         $(":input[id$='_osc']").bind('click', function () {
             let AllSelections = $("#osc_percent_list").bootstrapTable('getSelections');
             if (AllSelections.length === 1) {
-                //get选择的sqlsha1
+                //获取选择的sqlsha1 / Get selected sqlsha1
                 let sqlsha1 = AllSelections[0]['SQLSHA1'];
                 let command = '';
                 let isContinue = true;
 
-                // checkcommandValue
+                // 判断command值 / Check command value
                 switch (this.id) {
                     case 'pause_osc':
                         command = 'pause';
@@ -35,7 +884,7 @@
                         alert(gettext('Command error!'))
                 }
                 if (isContinue) {
-                    
+                    //发送请求 / Send request
                     $.ajax({
                         type: "post",
                         url: "/inception/osc_control/",
@@ -63,7 +912,7 @@
 
         });
     </script>
-    <!-- Status control -->
+    <!--状态控制 --> <!-- Status control -->
     <script>
         var workflow_id = "{{ workflow_detail.id }}";
         var status = $("#workflow_detail_status").text();
@@ -119,14 +968,14 @@
 
 
     </script>
-    <!-- TAB control -->
+    <!--TAB控制 --> <!-- TAB control -->
     <script>
-        //Tab switch, save the previously active tab id
+        //tab切换,保留当前激活的标签id / Tab switch, save the previously active tab id
         $(function () {
             $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
                 var active_li_id = $(e.target).parents().attr('id');
                 sessionStorage.setItem('sql_workflow_active_li_id', active_li_id);
-                //The previously active tab id
+                //当前激活的标签id / Currently active tab id
                 if (active_li_id === 'detail_tab') {
                     get_detail();
                 } else if (active_li_id === 'logs_tab') {
@@ -135,54 +984,54 @@
             });
         });
     </script>
-    <!-- Download exported file -->
+    <!--下载导出文件--> <!-- Download export file -->
     <script>
         $('#btnDownload').click(async function() {
             const $btn = $(this);
             $btn.prop('disabled', true);
             const originalText = $btn.html();
             $btn.html('<i class="fa fa-spinner fa-spin"></i> ' + gettext('Preparing download...'));
-                
+
             try {
                 const workflow_id = "{{ workflow_detail.id }}";
                 const file_name = "{{ workflow_detail.file_name }}";
                 const filePath = `/downloadfile/?file_name=${encodeURIComponent(file_name)}&workflow_id=${workflow_id}`;
-            
-                
+
+                // 轻量级类型检查 / Lightweight type check
                 const typeCheck = await fetch(filePath, {
                     method: 'HEAD',
                     cache: 'no-store'
                 });
-            
+
                 if (typeCheck.headers.get('content-type')?.includes('application/json')) {
-                    
+                    // 处理OSS重定向 / Handle OSS redirect
                     const res = await fetch(filePath);
                     const data = await res.json();
-                    
+                    // 优先处理错误响应 / Handle error response first
                     if (data.error) {
-                        throw new Error(data.error);  
+                        throw new Error(data.error);
                     }
-                    
+                    // 处理重定向 / Handle redirect
                     if (data.type === 'redirect') {
                         window.location.href = data.url;
                         return;
                     }
                     throw new Error(gettext('Unknown response format'));
                 }
-            
-                
+
+                // 处理文件下载 / Handle file download
                 const a = document.createElement('a');
                 a.href = filePath;
                 a.download = file_name;
                 a.style.display = 'none';
                 document.body.appendChild(a);
                 a.click();
-            
+
             } catch (error) {
                 console.error('Download failed:', error);
                 alert(gettext('Download error:') + ' ' + (error.message || gettext('Server connection failed')));
             } finally {
-                
+                // 恢复按钮 / Restore button
                 if (!$btn.prop('disabled')) return;
                 setTimeout(() => {
                     $btn.prop('disabled', false);
@@ -193,4 +1042,3 @@
     </script>
 
 {% endblock %}
-
