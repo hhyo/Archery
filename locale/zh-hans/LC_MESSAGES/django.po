@@ -1,0 +1,737 @@
+# Archery Chinese Simplified translations
+# Copyright (C) 2024
+# This file is distributed under the same license as the Archery package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Archery 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-07 12:00+0000\n"
+"PO-Revision-Date: 2024-01-07 12:00+0000\n"
+"Last-Translator: Diego <diego@archery.local>\n"
+"Language-Team: Chinese Simplified\n"
+"Language: zh-hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# Language names
+msgid "English"
+msgstr "English"
+
+msgid "Spanish"
+msgstr "Español"
+
+msgid "Chinese Simplified"
+msgstr "简体中文"
+
+# Login page
+msgid "Login To Archery"
+msgstr "Login To Archery"
+
+msgid "Login with DingTalk"
+msgstr "以钉钉登录"
+
+msgid "CAS Login"
+msgstr "CAS认证登录"
+
+msgid "Show traditional login"
+msgstr "显示传统登录"
+
+msgid "Register"
+msgstr "注册用户"
+
+msgid "Create Account"
+msgstr "注册账号"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Display Name"
+msgstr "中文名"
+
+msgid "Email"
+msgstr "邮箱"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Confirm Password"
+msgstr "密码确认"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Notice"
+msgstr "提示"
+
+msgid "OK"
+msgstr "确定"
+
+msgid "Login"
+msgstr "登录"
+
+msgid "Registration successful! Please login."
+msgstr "注册成功, 请输入密码登录!"
+
+# Base template / Navigation
+msgid "SQL Review Platform"
+msgstr "SQL审核查询平台"
+
+msgid "Hello"
+msgstr "你好"
+
+msgid "System Info"
+msgstr "系统信息"
+
+msgid "Admin Panel"
+msgstr "管理后台"
+
+msgid "Two-Factor Auth"
+msgstr "两步验证"
+
+msgid "Change Password"
+msgstr "修改密码"
+
+msgid "Logout"
+msgstr "退出"
+
+# Menu items
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "SQL Review"
+msgstr "SQL审核"
+
+msgid "SQL Deployment"
+msgstr "SQL上线"
+
+msgid "SQL Analysis"
+msgstr "SQL分析"
+
+msgid "SQL Query"
+msgstr "SQL查询"
+
+msgid "Online Query"
+msgstr "在线查询"
+
+msgid "Data Export"
+msgstr "数据导出"
+
+msgid "Data Dictionary"
+msgstr "数据字典"
+
+msgid "Permission Management"
+msgstr "权限管理"
+
+msgid "SQL Optimization"
+msgstr "SQL优化"
+
+msgid "Optimization Tools"
+msgstr "优化工具"
+
+msgid "Slow Query Log"
+msgstr "慢查日志"
+
+msgid "Instance Management"
+msgstr "实例管理"
+
+msgid "Instance List"
+msgstr "实例列表"
+
+msgid "Session Management"
+msgstr "会话管理"
+
+msgid "Database Management"
+msgstr "数据库管理"
+
+msgid "Account Management"
+msgstr "账号管理"
+
+msgid "Parameter Configuration"
+msgstr "参数配置"
+
+msgid "Tools & Plugins"
+msgstr "工具插件"
+
+msgid "System Management"
+msgstr "系统管理"
+
+msgid "Configuration"
+msgstr "配置项管理"
+
+msgid "Resource Groups"
+msgstr "资源组管理"
+
+msgid "Other Settings"
+msgstr "其他配置管理"
+
+msgid "User Management"
+msgstr "用户管理"
+
+msgid "Permission Groups"
+msgstr "权限组管理"
+
+msgid "All Backend Data"
+msgstr "全部后台数据"
+
+msgid "System Audit"
+msgstr "系统审计"
+
+msgid "General Audit"
+msgstr "通用审计"
+
+msgid "SQL Deployment Audit"
+msgstr "SQL上线审计"
+
+msgid "Query Audit"
+msgstr "查询审计"
+
+msgid "Documentation"
+msgstr "相关文档"
+
+# Two-factor authentication
+msgid "Two-Factor Verification"
+msgstr "两步验证"
+
+msgid "TOTP"
+msgstr "TOTP"
+
+msgid "SMS"
+msgstr "短信"
+
+msgid "Close"
+msgstr "关闭"
+
+msgid "Verify Current Password"
+msgstr "验证当前用户密码"
+
+msgid "Enter password to verify"
+msgstr "输入密码验证"
+
+msgid "Confirm"
+msgstr "确认"
+
+msgid "Scan to Bind"
+msgstr "扫码绑定"
+
+msgid "Bind Phone Number"
+msgstr "绑定手机号"
+
+msgid "Use Google Authenticator to scan"
+msgstr "使用Google身份验证器扫码"
+
+msgid "Enter phone number to bind"
+msgstr "输入要绑定的手机号码"
+
+msgid "Enter 6-digit verification code"
+msgstr "输入6位验证码完成绑定"
+
+msgid "Get Verification Code"
+msgstr "获取验证码"
+
+msgid "Bind"
+msgstr "绑定"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Disabled"
+msgstr "禁用"
+
+msgid "All Data"
+msgstr "全部数据"
+
+msgid "Workflow Log"
+msgstr "工单日志"
+
+msgid "Workflow Name"
+msgstr "工单名称"
+
+msgid "Full Workflow Name"
+msgstr "工单完整名称"
+
+msgid "Initiator"
+msgstr "发起人"
+
+msgid "Workflow Status"
+msgstr "工单状态"
+
+msgid "Initiated Time"
+msgstr "发起时间"
+
+msgid "Target Instance"
+msgstr "目标实例"
+
+msgid "Operations"
+msgstr "操作"
+
+msgid "Operation Log"
+msgstr "操作日志"
+
+msgid "Operator"
+msgstr "操作人"
+
+msgid "Operation Time"
+msgstr "操作时间"
+
+msgid "Operation Info"
+msgstr "操作信息"
+
+msgid "Submit Export Workflow"
+msgstr "提交导出工单"
+
+msgid "All Instances"
+msgstr "所有实例"
+
+msgid "Enable Status"
+msgstr "启用状态"
+
+msgid "Apply for Archive"
+msgstr "申请归档"
+
+msgid "Add Configuration"
+msgstr "添加配置"
+
+msgid "Apply for Data Archive"
+msgstr "申请数据归档"
+
+msgid "Brief description of the archive"
+msgstr "归档的简要描述"
+
+msgid "Please select group:"
+msgstr "请选择组:"
+
+msgid "Please select source instance:"
+msgstr "请选择源实例:"
+
+msgid "Please select instance:"
+msgstr "请选择实例:"
+
+msgid "Please select source database:"
+msgstr "请选择源数据库:"
+
+msgid "Please select database:"
+msgstr "请选择数据库:"
+
+msgid "Please select table to archive:"
+msgstr "请选择要归档的表:"
+
+msgid "Please select archive mode:"
+msgstr "请选择归档模式:"
+
+msgid "Archive to file"
+msgstr "归档到文件"
+
+msgid "Archive to another instance"
+msgstr "归档到另一个实例"
+
+msgid "Delete directly"
+msgstr "直接删除"
+
+msgid "Keep source data after archiving:"
+msgstr "归档后是否保留源数据:"
+
+msgid "Keep source data after archiving"
+msgstr "归档后保留源数据"
+
+msgid "Keep"
+msgstr "保留"
+
+msgid "Please select destination instance:"
+msgstr "请选择目标实例:"
+
+msgid "Please select destination database:"
+msgstr "请选择目标数据库:"
+
+msgid "Please select corresponding database:"
+msgstr "请选择对应数据库:"
+
+msgid "Please select destination table:"
+msgstr "请选择目标表:"
+
+msgid "Enter archive condition (WHERE clause of SQL statement)"
+msgstr "输入归档条件（SQL语句的WHERE子句）"
+
+msgid "Sleep seconds after archiving 10000 rows"
+msgstr "归档10000行后暂停秒数"
+
+msgid "Approval Process:"
+msgstr "审批流程："
+
+msgid "Note: Source and destination table structures must be consistent, otherwise archiving will fail"
+msgstr "注意：源和目标表结构必须一致，否则归档将失败"
+
+msgid "Submit Application"
+msgstr "提交申请"
+
+
+msgid "Feishu App ID"
+msgstr "飞书应用AppID"
+
+msgid "Feishu AppSecret"
+msgstr "飞书AppSecret"
+
+msgid "Generic Webhook URL"
+msgstr "通用Webhook地址"
+
+msgid "Generic webhook URL, called on every status change of each workflow"
+msgstr "通用webhook地址，每个工单的每个状态转变均会调用"
+
+msgid "SMS Service"
+msgstr "短信服务"
+
+msgid "SMS Service Provider"
+msgstr "短信服务提供商"
+
+msgid "SMS Provider"
+msgstr "短信服务商"
+
+msgid "Aliyun Access Key ID, used to identify User"
+msgstr "阿里云访问密钥ID，用于标识用户"
+
+msgid "Aliyun Access Key Secret, used to verify User identity"
+msgstr "阿里云访问密钥，用于验证用户身份"
+
+msgid "SMS signature, must be approved status"
+msgstr "短信签名，需为审核通过状态"
+
+msgid "SMS template code, must be approved status"
+msgstr "短信模板Code，需为审核通过状态"
+
+msgid "Variable name in SMS template, e.g.: code"
+msgstr "短信模板中的变量名，如：code"
+
+msgid "Used to identify API caller identity"
+msgstr "用于标识API调用者的身份"
+
+msgid "Key used for encrypting signature and server-side verification"
+msgstr "用于加密签名字符串和服务器端验证签名的密钥"
+
+msgid "SMS template ID, must be approved status"
+msgstr "短信模板ID，需为审核通过状态"
+
+msgid "SMS Application ID"
+msgstr "短信应用ID"
+
+msgid "Login button display name, e.g. Login With KeyCloak"
+msgstr "登录按钮显示名称，如 Login With KeyCloak"
+
+msgid "Note 1: If OPENAI_API_KEY is not configured, related features will not be enabled"
+msgstr "注1：若无OPENAI_API_KEY配置，则不开启相关功能"
+
+msgid "Note 2: DEFAULT_CHAT_MODEL defaults to gpt-3.5-turbo, DEFAULT_QUERY_TEMPLATE defaults to system-defined template"
+msgstr "注2：DEFAULT_CHAT_MODEL默认配置为gpt-3.5-turbo，DEFAULT_QUERY_TEMPLATE默认为系统定义模板"
+
+msgid "Default Django template for generating SQL statements, empty template will cause generation to fail, requires db_type/table_schema/user_input"
+msgstr "默认生成SQL语句的Django模板，空模板会导致生成失败，需要db_type/table_schema/user_input"
+
+msgid "Other Configuration"
+msgstr "其他配置"
+
+msgid "System homepage path, default is SQL workflow page: sqlworkflow"
+msgstr "系统首页路径，默认SQL工单页面：sqlworkflow"
+
+msgid "my2sql call path, e.g. /opt/archery/src/plugins/my2sql"
+msgstr "my2sql调用路径，如 /opt/archery/src/plugins/my2sql"
+
+msgid "Permission groups automatically assigned to new users on first login"
+msgstr "新用户首次登录自动关联权限组"
+
+msgid "Resource groups automatically assigned to new users on first login"
+msgstr "新用户首次登录自动关联资源组"
+
+msgid "API User Whitelist"
+msgstr "API用户白名单"
+
+msgid "Account lockout time after failed login (seconds)"
+msgstr "账户登录失败锁定时间（秒）"
+
+msgid "Number of failed login attempts before account lockout"
+msgstr "账户登录失败几次锁账户"
+
+msgid "Enable user registration"
+msgstr "是否开启注册功能"
+
+msgid "Enable watermark"
+msgstr "是否开启水印功能"
+
+msgid "Enforce 2FA on login"
+msgstr "登录是否强制使用2FA"
+
+msgid "Enable announcements"
+msgstr "是否开启公告"
+
+msgid "Announcement content"
+msgstr "公告内容"
+
+msgid "Append this content to website title and login page, useful for distinguishing multiple Archery instances"
+msgstr "在网站标题及登录页面追加此内容，用于区分多个Archery实例"
+
+msgid "Rules:"
+msgstr "规则："
+
+msgid "Selecting multiple permission groups creates multi-level approval, flowing in selection order, all users in a group can approve"
+msgstr "选择多个权限组即审批流程为多级审核，按选择顺序流转，每组内所有用户均可审批"
+
+msgid "Current Approval Process:"
+msgstr "当前审批流程："
+
+
+msgid "Apply for Database Query Permission"
+msgstr "申请数据库查询权限"
+
+msgid "Brief description of permission usage"
+msgstr "权限使用的简要描述"
+
+msgid "Permission level:"
+msgstr "权限级别："
+
+msgid "Please select table:"
+msgstr "请选择表："
+
+msgid "Please select authorization period:"
+msgstr "请选择授权期限："
+
+msgid "One day"
+msgstr "一天"
+
+msgid "One week"
+msgstr "一周"
+
+msgid "One month"
+msgstr "一个月"
+
+msgid "Long term (one year)"
+msgstr "长期（一年）"
+
+msgid "Please select query row limit:"
+msgstr "请选择查询行数限制："
+
+msgid "Note: After permission approval, you can perform online queries. Please wait patiently."
+msgstr "注意：权限审批通过后，即可进行在线查询，请耐心等待。"
+
+msgid "{0} items selected"
+msgstr "已选中{0}项"
+
+msgid "Table list:"
+msgstr "表列表："
+
+msgid "Database list:"
+msgstr "数据库列表："
+
+msgid "Permission Level"
+msgstr "权限级别"
+
+msgid "Result Set"
+msgstr "结果集"
+
+msgid "Valid Until"
+msgstr "有效期至"
+
+msgid "Applicant"
+msgstr "申请人"
+
+msgid "Application Time"
+msgstr "申请时间"
+
+msgid "Information incomplete or approval process not configured"
+msgstr "信息不完整或审批流程未配置"
+
+msgid "Please select permission type"
+msgstr "请选择权限类型"
+
+msgid "Parse Threads:"
+msgstr "解析线程："
+
+msgid "Default 4"
+msgstr "默认4"
+
+msgid "Parse Range Control:"
+msgstr "解析范围控制："
+
+msgid "Parse row count per page, default 30"
+msgstr "解析每页行数，默认30"
+
+msgid "Start parse file:"
+msgstr "起始解析文件："
+
+msgid "Start parse position (optional)"
+msgstr "起始解析位置（可选）"
+
+msgid "End parse file (optional):"
+msgstr "终止解析文件（可选）："
+
+msgid "End parse position (optional)"
+msgstr "终止解析位置（可选）"
+
+msgid "Start parse time (not recommended)"
+msgstr "起始解析时间（不推荐）"
+
+msgid "End parse time (optional)"
+msgstr "终止解析时间（可选）"
+
+msgid "Object Filter:"
+msgstr "对象过滤："
+
+msgid "Database filter (optional):"
+msgstr "数据库过滤（可选）："
+
+msgid "Table filter (optional):"
+msgstr "表过滤（可选）："
+
+msgid "Type filter (optional):"
+msgstr "类型过滤（可选）："
+
+msgid "SQL Statements"
+msgstr "SQL语句"
+
+msgid "Frontend display count is controlled by parse range parameter. If 'Save to file' is checked, complete SQL file will be asynchronously saved to downloads directory. Notification will be sent to operator after execution ends (if message notification is enabled)."
+msgstr "前端展示数量由解析范围参数控制。如果勾选了'保存到文件'，完整的SQL文件将被异步保存到下载目录。执行结束后会通知操作人（如果开启了消息通知功能）。"
+
+msgid "Full SQL"
+msgstr "完整SQL"
+
+msgid "Please select instance and start parse file!"
+msgstr "请选择实例和起始解析文件！"
+
+
+msgid "Extra Info"
+msgstr "额外信息"
+
+msgid "Full Extra Info"
+msgstr "完整额外信息"
+
+msgid "Query Time"
+msgstr "查询时间"
+
+msgid "Statement"
+msgstr "语句"
+
+msgid "Full Statement"
+msgstr "完整语句"
+
+msgid "Rows Returned"
+msgstr "返回行数"
+
+msgid "Duration (seconds)"
+msgstr "耗时（秒）"
+
+
+msgid "Change Approval Process:"
+msgstr "变更审批流程："
+
+msgid "Please select approver permission group"
+msgstr "请选择审批权限组"
+
+msgid "Approver"
+msgstr "审批人"
+
+msgid "Approver:"
+msgstr "审批人："
+
+msgid "Change"
+msgstr "变更"
+
+
+msgid "Archive Mode"
+msgstr "归档模式"
+
+msgid "Source Data"
+msgstr "源数据"
+
+msgid "Sleep (seconds)"
+msgstr "暂停（秒）"
+
+msgid "Delete"
+msgstr "删除"
+
+# Dashboard page
+msgid "SQL Deployment Tickets"
+msgstr "SQL上线工单"
+
+msgid "SQL Query Tickets"
+msgstr "SQL查询工单"
+
+msgid "More"
+msgstr "更多"
+
+msgid "Active Users"
+msgstr "有效平台用户"
+
+msgid "Instances"
+msgstr "实例数量"
+
+msgid "Database Instance Type Statistics"
+msgstr "数据库实例类型统计"
+
+msgid "Statistics Time Range:"
+msgstr "统计时间范围："
+
+msgid "SQL Query Statistics"
+msgstr "SQL查询统计"
+
+msgid "SQL Deployment Count"
+msgstr "SQL上线数量"
+
+msgid "SQL Deployment Users"
+msgstr "SQL上线用户"
+
+msgid "24h Slow Query by Database"
+msgstr "24h慢查询db维度统计"
+
+msgid "SQL Deployment Statistics"
+msgstr "SQL上线统计"
+
+msgid "DB Rows Scanned"
+msgstr "DB检索行数"
+
+msgid "SQL Query Users"
+msgstr "SQL查询用户"
+
+msgid "SQL Deployment Ticket Types"
+msgstr "SQL上线工单类型"
+
+msgid "24h Slow Query by DB/User"
+msgstr "24h慢查询db/user维度统计"
+
+# Dashboard chart translations
+msgid "Finished"
+msgstr "已完成"
+
+msgid "Auto Review Failed"
+msgstr "自动审核不通过"
+
+msgid "Aborted"
+msgstr "人工终止流程"
+
+msgid "Exception"
+msgstr "执行异常"
+
+msgid "Review Passed"
+msgstr "审核通过"
+
+msgid "Queuing"
+msgstr "排队中"
+
+msgid "Executing"
+msgstr "执行中"
+
+msgid "Waiting for Review"
+msgstr "待审核"
+
+msgid "Scheduled"
+msgstr "定时执行"
+
+msgid "Unknown"
+msgstr "未知"
+
+msgid "DDL"
+msgstr "DDL"
+
+msgid "DML"
+msgstr "DML"
+
+msgid "Other"
+msgstr "其他"

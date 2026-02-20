@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <!-- 自定义操作按钮-->
+    <!-- 自定义操作按钮--> <!-- Custom action buttons -->
     <div class="form-group ">
         <form action="/data_dictionary/export/">
             <div id="toolbar" class="form-inline">
                 <div class="form-group">
                     <select id="instance_name" class="form-control selectpicker "
                             name="instance_name"
-                            title="请选择实例"
+                            title="Select Instance"
                             data-live-search="true">
                         <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                         <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
@@ -18,16 +19,14 @@
                 <div class="form-group">
                     <select id="db_name" class="form-control selectpicker "
                             name="db_name"
-                            title="请选择数据库"
+                            title="Select Database"
                             data-live-search="true">
                     </select>
                 </div>
                 {% if perms.sql.data_dictionary_export %}
                     <div class="form-group">
                         <button id="btn_export_dict" type="submit" disabled="disabled" class="btn btn-default">
-                            <span class="glyphicon glyphicon-export" aria-hidden="true"></span>
-                            导出
-                        </button>
+                            <span class="glyphicon glyphicon-export" aria-hidden="true"></span>{% trans "Export" %}</button>
                     </div>
                 {% endif %}
             </div>
@@ -281,9 +280,12 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
         var instance_result ="";
         $(document).ready(function () {
-            //获取用户实例列表
+            //获取用户实例列表 / Get user instance list
             $(function () {
                 $.ajax({
                     type: "get",
@@ -329,7 +331,7 @@
             });
         });
 
-        //实例变动获取库
+        //实例变动获取库 / Instance change: fetch databases
         $("#instance_name").change(function () {
             $('#db_name').empty();
             $.ajax({
@@ -357,7 +359,7 @@
                 complete: function () {
                     $('#db_name').selectpicker('render');
                     $('#db_name').selectpicker('refresh');
-                    // 管理员激活导出按钮
+                    // 管理员激活导出按钮 / Admin: activate export button
                     if ("{{ request.user.is_superuser }}" === 'True') {
                         $('#btn_export_dict').removeClass('disabled');
                         $('#btn_export_dict').prop('disabled', false);
@@ -366,12 +368,12 @@
             });
         });
 
-        //库变动获取表
+        //库变动获取表 / Database change: fetch tables
         $("#db_name").change(function () {
             get_table_list()
         });
 
-        // 获取表
+        // 获取表 / Get table list
         function get_table_list() {
             var instance_name = $("#instance_name").val();
             var db_name = $('#db_name').val();
@@ -392,7 +394,7 @@
                     },
                     success: function (data) {
                         if (data.status === 0) {
-                            // 激活导出按钮
+                            // 激活导出按钮 / Activate export button
                             $('#btn_export_dict').removeClass('disabled');
                             $('#btn_export_dict').prop('disabled', false);
                             $('#jumpbox').empty();
@@ -432,13 +434,13 @@
             }
         }
 
-        // 根据传入的参数显示哪一种数据库的modal body
+        // 根据传入的参数显示哪一种数据库的modal body / Show modal body based on db_type parameter
         function showModalBody(db_type) {
             $(".modal-body").hide();
             $("#modal-body-" + db_type).show();
         }
 
-        // 展示表信息
+        // 展示表信息 / Show table information
         function showTableInfo(ins_name, db_name, tb_name) {
             // console.log(ins_name, db_name, tb_name);
             var inst_db_type_ind = instance_result.findIndex((value)=>value.instance_name==ins_name);
@@ -467,16 +469,16 @@
                                     field: 1,
                                     formatter: function (value, row, index) {
                                         var sql = window.sqlFormatter.format(value);
-                                        //替换所有的换行符
+                                        //替换所有的换行符 / Replace all newline characters
                                         sql = sql.replace(/\r\n/g, "<br>");
                                         sql = sql.replace(/\n/g, "<br>");
-                                        //替换所有的空格
+                                        //替换所有的空格 / Replace all spaces
                                         sql = sql.replace(/\s/g, " ");
                                         return sql;
 
                                     }
                                 }],
-                                locale: 'zh-CN'
+                                locale: currentLocale
                             });
                         } else if (inst_db_type === 'oracle') {
                             showModalBody('oracle');
@@ -506,8 +508,8 @@
                             exportDataType: "all",
                             exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                             exportOptions: {
-                                //ignoreColumn: [0],  //忽略某些列的索引数组
-                                fileName: 'field'  //文件名称设置
+                                //ignoreColumn: [0],  //忽略某些列的索引数组 / Ignore column index array
+                                fileName: 'field'  //文件名称设置 / File name setting
                             },
                             showColumns: true,
                             showToggle: true,
@@ -516,7 +518,7 @@
                             pagination: true,
                             pageSize: 30,
                             pageList: [30, 50, 100, 500, 1000],
-                            locale: 'zh-CN'
+                            locale: currentLocale
                         });
                         var columns_index = [];
                         $.each(result['index']['column_list'], function (i, column) {
@@ -538,7 +540,7 @@
                             pagination: true,
                             pageSize: 30,
                             pageList: [30, 50, 100, 500, 1000],
-                            locale: 'zh-CN'
+                            locale: currentLocale
                         });
 
 

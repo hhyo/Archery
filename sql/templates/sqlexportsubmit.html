@@ -1,19 +1,18 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
-                <div class="panel-heading">
-                    数据导出
-                </div>
+                <div class="panel-heading">{% trans "Data Export" %}</div>
                 <div class="panel-body">
                     <form id="form-submitsql" class="form-horizontal">
                         {% csrf_token %}
                         <input type="hidden" id="workflow_id" name="workflow_id"/>
                         <div class="col-md-9 column">
                             <pre id="sql_content_editor" style="min-height:450px"></pre>
-                            <!-- 校验提示 -->
+                            <!-- 校验提示 --> <!-- Validation prompt -->
 		      	            <div class="validation-notice" id="validationNotice">
                                 <div class="notice-icon" id="noticeIcon">
                                 </div>
@@ -21,7 +20,7 @@
 			                        <div class="notice-title">行数统计中...</div>
 			                        <div class="notice-message">正在校验SQL语法并统计结果行数，请稍候...</div>
 			                    </div>
-			                    <button class="close-notice" id="closeNotice" title="关闭">
+			                    <button class="close-notice" id="closeNotice" title="{% trans 'Close' %}">
 			                        &times;
 			                    </button>
                                 <div class="progress-bar">
@@ -76,7 +75,7 @@
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="实例" data-placeholder="请选择实例！"
                                         title="请选择实例"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
+                                        data-live-search="true" data-live-search-placeholder="{% trans 'Search instances in your group' %}" required>
                                 {% for name, engine in engines.items %}
                                     <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
                                 {%  endfor %}
@@ -89,7 +88,7 @@
                                         data-live-search="true" data-live-search-placeholder="搜索要提交的数据库"
                                         title="请选择数据库"
                                         required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                                    <option value="is-empty" disabled="" selected="selected">{% trans "Select Database:" %}</option>
                                 </select>
                             </div>
                             {% if enable_backup_switch %}
@@ -104,7 +103,7 @@
                                     </select>
                                 </div>
                             {% endif %}
-                            <!--可执行范围时间-->
+                            <!--可执行范围时间--> <!-- Executable time range -->
                             <div class='form-group'>
                                 <input type="hidden" id="run_date_start" name="run_date_start">
                                 <input type="hidden" id="run_date_end" name="run_date_end">
@@ -117,15 +116,16 @@
                                             class="glyphicon glyphicon-time"></span></span>
                                 </div>
                             </div>
-                            <!--审批流程-->
+                            <!-- 审批流程 / Approval process -->
                             <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
                                    data-placeholder="请配置审批流程！" required>
+                            <!--审批流程--> <!-- Approval workflow -->
                             <div id="div-workflow_auditors" class="form-group" style="display: none">
                                 <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
                             </div>
                             <!--button-->
                             <div class="form-group">
-                                <button type="button" id="btn-format" class="btn btn-info">美化</button>
+                                <button type="button" id="btn-format" class="btn btn-info">{% trans "Format" %}</button>
                                 <button type="button" id="btn-autoreview" data-loading-text="检测中..."
                                         class="btn btn-danger">SQL检测
                                 </button>
@@ -156,7 +156,8 @@
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
 
-    <!-- 校验提示  notice/css/notice.css-->
+    <!--初始化时间控件 --> <!-- Initialize time control -->
+    <!-- 校验提示  notice/css/notice.css--> <!-- Validation prompt notice/css/notice.css -->
     <script>
 	    const validationNotice = document.getElementById('validationNotice');
 	    const closeNotice = document.getElementById('closeNotice');
@@ -166,7 +167,7 @@
 	    validationNotice.style.display = 'none';
         let timeoutId;
         
-        // 重置校验通知
+        
         function resetValidationNotice() {
             clearTimeout(timeoutId);
             closeNotice.style.display = 'none';
@@ -179,34 +180,34 @@
             validationNotice.classList.remove('status-success', 'status-error', 'status-warning');
         }
 
-        // 关闭提示按钮
+        // 关闭提示按钮 / Close tip button
         closeNotice.addEventListener('click', function(e) {
             e.preventDefault();
             validationNotice.style.display = 'none';
         });
 
         function showStatusNotice(options = {}) {
-            // 解构配置参数并提供默认值
+            
             const {
-                element = validationNotice,   // 默认使用validationNotice元素
-                noticeIconClass = '',         // 通知图标元素
+                element = validationNotice,   
+                noticeIconClass = '',         
                 statusClass = 'status-error', // 状态类名
-                title = '校验失败',            // 默认标题
-                message = '',                 // 默认消息
-                params = {},                  // 消息中的替换参数
-                delay = 5000,                 // 默认5秒后消失
+                title = '校验失败',            
+                message = '',                 
+                params = {},                  
+                delay = 5000,                 
             } = options;
             
             clearTimeout(timeoutId);
 
-            // 替换消息中的占位符 {key} => value
+            
             const formatMessage = (msg, values) => {
                 return msg.replace(/\{(\w+)\}/g, (_, key) => values[key] || '');
             };
         
             const formattedMessage = formatMessage(message, params);
 
-            // 更新显示内容
+            
             closeNotice.style.display = 'flex';
             noticeIcon.classList.remove('icon-loading');
             noticeIcon.classList.add(noticeIconClass);
@@ -214,7 +215,7 @@
             element.querySelector('.notice-title').textContent = title;
             element.querySelector('.notice-message').textContent = formattedMessage;
 
-            // 进度条
+            
             progressBar.style.width = '100%';
             progressBar.style.transition = 'none';
             void progressBar.offsetWidth;
@@ -224,7 +225,7 @@
             setAutoClose(delay);
         }
 
-        // 设置自动隐藏
+        
         function setAutoClose(delay) {
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
@@ -233,7 +234,7 @@
             }, delay);
         }
 
-        // 鼠标悬停暂停
+        
         validationNotice.addEventListener('mouseenter', () => {
             if (validationNotice.classList.contains('status-success') || validationNotice.classList.contains('status-error')) {
                 clearTimeout(timeoutId);
@@ -241,7 +242,7 @@
                 progressBar.style.width = '100%';
             }
         });
-        // 鼠标离开重新倒计时关闭
+        
         validationNotice.addEventListener('mouseleave', () => {
             if (validationNotice.classList.contains('status-success') || validationNotice.classList.contains('status-error')) {
                 const remainingWidth = progressBar.offsetWidth;
@@ -253,7 +254,7 @@
         });
     </script>
 
-    <!--初始化时间控件 -->
+    <!-- 初始化时间控件 / Initialize time control -->
     <script>
         $("#run_date_range").daterangepicker({
             timePicker: true,
@@ -269,7 +270,7 @@
                 "applyLabel": "确定",
                 "cancelLabel": "清空",
                 "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
-                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
                 "firstDay": 1
             },
         }).on('apply.daterangepicker', function (ev, picker) {
@@ -286,7 +287,7 @@
     </script>
     <!--ace -->
     <script>
-        // 实例变更获取数据库补全提示
+        
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             $("#div-backup").show();
@@ -294,7 +295,7 @@
                 $("#div-backup").hide();
                 $("#is_backup").val("False");
             }
-            //将数据通过ajax提交给获取db_name
+            
             $.ajax({
                 type: "get",
                 url: "/instance/instance_resource/",
@@ -307,7 +308,7 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const urlSource = urlParams.get('source');
                     if (urlSource === "resubmit") {
-                        //填充库名
+                        
                         $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
                         if ($("#db_name").val()) {
                             $("#db_name").selectpicker().trigger("change");
@@ -324,7 +325,7 @@
                         }
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
-                        //自动补全提示
+                        
                         setDbsCompleteData(result)
                     } else {
                         alert(data.msg);
@@ -335,9 +336,9 @@
                 }
             });
         });
-        //数据库变更获取表名称补全提示
+        //数据库变更获取表名称补全提示 / Get table name autocomplete on DB change
         $("#db_name").change(function () {
-            //将数据通过ajax提交给获取db_name
+            
             $.ajax({
                 type: "get",
                 url: "/instance/instance_resource/",
@@ -351,7 +352,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        //自动补全提示
+                        
                         setTablesCompleteData(data.data)
                     } else {
                         alert(data.msg);
@@ -371,7 +372,7 @@
                 function () {
                     var fieldElement = $(this);
                     var fieldId = $(this).attr('id');
-                    //如果为null则设置为''
+                    
                     var value = fieldElement.val() || '';
                     if (value) {
                         value = value.trim();
@@ -391,7 +392,7 @@
             return result;
         }
 
-        //美化
+        
         $("#btn-format").click(function () {
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
                 if (select_sqlContent) {
@@ -408,18 +409,18 @@
     </script>
     <!--check-->
     <script>
-        // 监听sql文本，若sql发生变化则禁用提交按钮
+        
         editor.getSession().on('change', function(e) {
             $("#btn-submitsql").prop("disabled", true);
         });
 
-        // 监听选区变化，若选取变化则禁用提交按钮
+        
         editor.getSession().selection.on('changeSelection', function(e) {
             $("#btn-submitsql").prop("disabled", true);
         });
 
         function checkRunDate(gap = 60) {
-            // 结束时间与开始时间的间隔不应该太短
+            
             var start = $("#run_date_start").val();
             var end = $("#run_date_end").val();
             if (start && end) {
@@ -456,7 +457,7 @@
             }
         });
 
-        //表单验证
+        
         function sqlquery_validate() {
             var result = true;
             var instance_name = $("#instance_name").val();
@@ -467,19 +468,19 @@
                 sqlContent = select_sqlContent
             }
             var isOfflineExport = $("#btn-submitsql").is(':hidden') ? 0 : 1;
-            // 移除单行注释和多行注释后再统计语句数量
+            // 移除单行注释和多行注释后再统计语句数量 / Remove comments before counting statements
             let processedSql = sqlContent.replace(/--.*$/gm, ''); // 移除单行注释
             processedSql = processedSql.replace(/\/\*[\s\S]*?\*\//gm, ''); // 移除多行注释
             var totalSqlCnt = processedSql.split(';')
-                .map(stmt => stmt.trim()) // 去除每个语句两端的空白
-                .filter(stmt => stmt.length > 0) // 过滤掉空语句
-                .length; // 统计语句数量
+                .map(stmt => stmt.trim()) 
+                .filter(stmt => stmt.length > 0) 
+                .length; 
 
-            // 检查SQL开头
+            // 检查SQL开头 / Check SQL beginning
             let trimmedSQL = sqlContent.trim().toUpperCase();
-            // 跳过所有开头的注释（单行/多行）
+            
             while (true) {
-                // 跳过单行注释 (--)
+                
                 if (trimmedSQL.startsWith("--")) {
                     const nlIndex = trimmedSQL.indexOf('\n');
                     trimmedSQL = (nlIndex > -1) 
@@ -487,10 +488,10 @@
                         : "";
                     continue;
                 }
-                // 跳过多行注释 (/*...*/)
+                
                 if (trimmedSQL.startsWith("/*")) {
                     const endIndex = trimmedSQL.indexOf("*/");
-                    if (endIndex === -1) break; // 未闭合注释不处理
+                    if (endIndex === -1) break; 
                     trimmedSQL = trimmedSQL.substring(endIndex + 2).trim();
                     continue;
                 }
@@ -515,7 +516,7 @@
             return result;
         }
         
-        //count行数统计
+        //count行数统计 / Row count statistics
         function sqlcount(sql) {
             var result = true;
             var optgroup = $('#instance_name :selected').parent().attr('label');
@@ -529,7 +530,7 @@
             var sqlContent = sqlContent.trim().replace(/;$/, '');
             var sqlContent = 'select count(1) from (' + sqlContent + '\n) t'
              
-            //提交请求
+            
             $.ajax({
                 type: "post",
                 url: "/query/",
@@ -558,9 +559,9 @@
             });
         }
 
-        //SQL提交
+        //SQL提交 / SQL Submit
         $("#btn-submitsql").click(function () {
-            //获取form对象，判断输入，通过则提交
+            //获取form对象，判断输入，通过则提交 / Get form object, validate input, then submit
             $("#sql_content").val(editor.getValue());
             if (validateForm($("#form-submitsql")) && checkRunDate()) {
                 resetValidationNotice()
@@ -572,7 +573,7 @@
             }
         });
 
-        // 校验返回的结果
+        
         function validate_data(data) {
             var result = data.data;
             if (data.status === 0) {
@@ -614,7 +615,7 @@
             }
         }
 
-        // 提交sql
+        
         function sqlSubmit() {
             let formData = $('#form-submitsql').serializeArray().reduce(function (obj, item) {
                 obj[item.name] = item.value;
@@ -669,7 +670,7 @@
     </script>
     <!--group -->
     <script>
-        // 获取实例信息和审批流程
+        // 获取实例信息和审批流程 / Get instance info and approval flow
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
@@ -683,7 +684,7 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const urlSource = urlParams.get('source');
                     if (urlSource === "resubmit") {
-                        //填充实例信息
+                        
                         $('#instance_name').selectpicker('val', sessionStorage.getItem('editClustername'));
                         if ($("#instance_name").val()) {
                             $("#instance_name").selectpicker().trigger("change");
@@ -740,9 +741,9 @@
     <!--init -->
     <script>
         $(document).ready(function () {
-            // 清空id, 只允许新增不允许修改
+            
             sessionStorage.removeItem('editWorkflowDetailId');
-            //获取url参数置入对应的初始化内容
+            //获取url参数置入对应的初始化内容 / Get URL params and initialize content
             const urlParams = new URLSearchParams(window.location.search);
             const urlSource = urlParams.get('source');
             if (urlSource == "resubmit") {
@@ -754,7 +755,7 @@
                 editor.setValue(sessionStorage.getItem('submitSqlContent'));
                 editor.clearSelection();
             } else {
-                //重置页面内容
+                
                 editor.setValue("");
                 $(".selectpicker").selectpicker('val', '');
                 $(".selectpicker").selectpicker('render');

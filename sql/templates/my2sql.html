@@ -1,19 +1,20 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    操作选项
+                    {% trans "Operations" %}Options
                 </div>
                 <div class="panel-body">
                     <div class="form-group">
-                        <h5 class="control-label text-bold">选择实例：</h5>
+                        <h5 class="control-label text-bold">{% trans "Select Instance:" %}</h5>
                         <div class="form-group">
                             <select id="instance_name" name="instance_name"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    title="请选择实例:"
+                                    title="{% trans 'Select Instance:' %}"
                                     data-live-search="true" required>
                             </select>
                         </div>
@@ -23,13 +24,13 @@
                             <div class="checkbox">
                                 <label>
                                     <input id="save_sql" type="checkbox">
-                                    是否保存到文件(异步操作)
+                                    Save to file(Async operation)
                                 </label>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">解析模式：</h5>
+                        <h5 class="control-label text-bold">Parse mode：</h5>
                         <div class="form-group">
                             <div class="checkbox">
                                 <label>
@@ -70,67 +71,67 @@
                         </div>
                     </div>
                     <div class="form-group">
-                    <h5 class="control-label text-bold">解析线程数：</h5>
+                    <h5 class="control-label text-bold">{% trans 'Parse Threads:' %}</h5>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="threads" placeholder="默认4"
+                            <input type="number" class="form-control" id="threads" placeholder="{% trans 'Default 4' %}"
 
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">解析范围控制：</h5>
+                        <h5 class="control-label text-bold">{% trans "Parse Range Control:" %}</h5>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="num" placeholder="页面解析行数，默认30"
+                            <input type="number" class="form-control" id="num" placeholder="{% trans 'Parse row count per page, default 30' %}"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
                             <select id="start_file" class="selectpicker form-control"
-                                    title="起始解析文件:"
+                                    title="{% trans 'Start parse file:' %}"
                                     required>
                             </select>
                         </div>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="start_pos" placeholder="起始解析位置(可选)"
+                            <input type="number" class="form-control" id="start_pos" placeholder="{% trans 'Start parse position (optional)' %}"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
                             <select id="end_file" class="selectpicker form-control"
-                                    title="终止解析文件(可选):"
+                                    title="{% trans 'End parse file (optional):' %}"
                                     required>
                             </select>
                         </div>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="end_pos" placeholder="终止解析位置(可选)"
+                            <input type="number" class="form-control" id="end_pos" placeholder="{% trans 'End parse position (optional)' %}"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
                             <input type="text" class="form-control form_datetime" id="start_time"
-                                   placeholder="起始解析时间(不建议)">
+                                   placeholder="{% trans 'Start parse time (not recommended)' %}">
                         </div>
                         <div class="form-group">
                             <input type="text" class="form-control form_datetime" id="stop_time"
-                                   placeholder="终止解析时间(可选)">
+                                   placeholder="{% trans 'End parse time (optional)' %}">
                         </div>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">对象过滤：</h5>
+                        <h5 class="control-label text-bold">{% trans "Object Filter:" %}</h5>
                         <div class="form-group">
                             <select id="only_schemas" class="selectpicker form-control "
                                     data-live-search="true"
-                                    title="数据库过滤(可选):"
+                                    title="{% trans 'Database filter (optional):' %}"
                                     required>
                             </select>
                         </div>
                         <div class="form-group">
                             <select id="only_tables" class="selectpicker form-control "
                                     data-live-search="true"
-                                    title="表过滤(可选):"
+                                    title="{% trans 'Table filter (optional):' %}"
                                     multiple="multiple" required>
                             </select>
                         </div>
                         <select id="sql_type" class="selectpicker form-control "
                                 data-live-search="true"
-                                title="类型过滤(可选):"
+                                title="{% trans 'Type filter (optional):' %}"
                                 multiple="multiple" required>
                             <option value="insert">INSERT</option>
                             <option value="update">UPDATE</option>
@@ -138,7 +139,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <button id="my2sql" class="btn btn-danger">获取SQL</button>
+                        <button id="my2sql" class="btn btn-danger">getSQL</button>
                     </div>
                 </div>
             </div>
@@ -146,12 +147,11 @@
         <div class="col-md-9 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL语句
+                    {% trans "SQL Statements" %}
                 </div>
                 <div class="panel-body">
                     <h5 class="control-label text-bold" style="color: red">
-                        <b>前端展示数量由解析范围参数控制，如果勾选了保存到文件，则会异步获取完整的SQL文件，
-                            保存到项目downloads目录，在开启消息通知后，执行结束会发送通知给操作人</b>
+                        <b>{% trans "Frontend display count is controlled by parse range parameter. If 'Save to file' is checked, complete SQL file will be asynchronously saved to downloads directory. Notification will be sent to operator after execution ends (if message notification is enabled)." %}</b>
                     </h5>
                     <br>
                     <table id="tb-my2sql" data-toggle="table" class="table table-condensed"
@@ -171,9 +171,12 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        // Get current locale for bootstrap-table
+        var currentLocale = '{% if LANGUAGE_CODE == "zh-hans" %}zh-CN{% elif LANGUAGE_CODE == "es" %}es-ES{% else %}en-US{% endif %}';
+
         $(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii:ss', language: 'zh-CN', autoclose: true});
 
-        //获取用户实例列表
+        //getUserInstancelist
         $(function () {
             $.ajax({
                 type: "get",
@@ -204,9 +207,9 @@
             });
         });
 
-        //实例变更获取数据库BINLOG
+        
         $("#instance_name").change(function () {
-            //获取db_name
+            //getdb_name
             $.ajax({
                 type: "get",
                 url: "/instance/instance_resource/",
@@ -232,7 +235,7 @@
                     }
                 }
             });
-            //获取binlog
+            //getbinlog
             $.ajax({
                 type: "post",
                 url: "/binlog/list/",
@@ -263,19 +266,19 @@
             });
         });
 
-        //start-file变更重置start-pos
+        //Reset start-pos when start-file changes
         $("#start_file").change(function () {
             $("#start_pos").val('');
         });
 
-        //end-file变更重置end-pos
+        //Reset end-pos when end-file changes
         $("#end_file").change(function () {
             $("#end_pos").val('');
         });
 
-        //数据库变更获取表名称
+        //Get table names when database changes
         $("#only_schemas").change(function () {
-            //将数据通过ajax提交给获取db_name
+            
             $.ajax({
                 type: "get",
                 url: "/instance/instance_resource/",
@@ -295,7 +298,7 @@
                             var name = "<option>" + result[i] + "</option>";
                             $("#only_tables").append(name);
                         }
-                        $("#only_tables").prepend("<option value=\"is-empty\" disabled=\"\">表过滤(可选):</option>");
+                        $("#only_tables").prepend("<option value=\"is-empty\" disabled=\"\">" + gettext("Table filter (optional):") + "</option>");
                         $('#only_tables').selectpicker('render');
                         $('#only_tables').selectpicker('refresh');
                     } else {
@@ -305,7 +308,7 @@
             });
         });
 
-        //获取语句
+        //Get SQL statements
         $("#my2sql").click(function () {
             if ($("#instance_name").val() && $("#start_file").val()) {
                 if (!$("#end_file").val()) {
@@ -353,37 +356,37 @@
                         if (data.status === 0) {
                             $('#tb-my2sql').bootstrapTable('destroy').bootstrapTable({
                                 escape: true,
-                                striped: true,                      //是否显示行间隔色
-                                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                                pagination: true,                   //是否显示分页（*）
-                                sortable: true,                     //是否启用排序
-                                sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-                                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                                pageSize: 100,                       //每页的记录行数（*）
-                                pageList: [100, 500, 1000],   //可供选择的每页的行数（*）
-                                search: false,                       //是否显示表格搜索
-                                strictSearch: false,                //是否全匹配搜索
-                                showColumns: true,                  //是否显示所有的列（选择显示的列）
-                                showRefresh: false,                  //是否显示刷新按钮
+                                striped: true,                      //Show row stripes
+                                cache: false,                       //Use cache，Default istrue，so usually need to set this property（*）
+                                pagination: true,                   //Show pagination（*）
+                                sortable: true,                     //Enable sorting
+                                sidePagination: "client",           //Pagination mode：clientClient-side pagination，serverServer-side pagination（*）
+                                pageNumber: 1,                      //Initialize load first page，Default first page,and record
+                                pageSize: 100,                       //Records per page（*）
+                                pageList: [100, 500, 1000],   //Selectable rows per page（*）
+                                search: false,                       //Show table search
+                                strictSearch: false,                //Exact match search
+                                showColumns: true,                  //Show all columns（Select columns to display）
+                                showRefresh: false,                  //Show refresh button
                                 showExport: true,
                                 exportDataType: "all",
-                                minimumCountColumns: 1,             //最少允许的列数
-                                clickToSelect: false,                //是否启用点击选中行
-                                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                                cardView: false,                    //是否显示详细视图
-                                locale: 'zh-CN',                    //本地化
-                                detailView: true,                   //是否显示父子表
-                                //格式化详情
+                                minimumCountColumns: 1,             //Minimum columns allowed
+                                clickToSelect: false,                //Enable click to select row
+                                uniqueId: "id",                     //Unique identifier for each row，Usually primary key column
+                                showToggle: true,                   //Show toggle button for detail/list view
+                                cardView: false,                    //Show detail view
+                                locale: currentLocale,                    //Localization
+                                detailView: true,                   //Show parent-child table
+                                
                                 detailFormatter: function (index, row) {
                                     var html = [];
                                     $.each(row, function (key, value) {
                                         if (key === 'sql') {
                                             var sql = window.sqlFormatter.format(value);
-                                            //替换所有的换行符
+                                            
                                             sql = sql.replace(/\r\n/g, "<br>");
                                             sql = sql.replace(/\n/g, "<br>");
-                                            //替换所有的空格
+                                            
                                             sql = sql.replace(/\s/g, "&nbsp;");
                                             html.push('<span>' + sql + '</span>');
                                         }
@@ -406,9 +409,9 @@
                                         }
                                     }
                                 }, {
-                                    title: '完整SQL',
+                                    title: gettext('Full SQL'),
                                     field: 'sql',
-                                    visible: false // 默认不显示
+                                    visible: false 
                                 }],
                                 onLoadSuccess: function () {
                                     
@@ -421,7 +424,7 @@
                     }
                 });
             } else {
-                alert("请选择实例和起始解析文件！")
+                alert(gettext("Please select instance and start parse file!"))
             }
 
         })

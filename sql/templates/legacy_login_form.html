@@ -1,14 +1,15 @@
+{% load i18n %}
 <div class="form-group is-focused">
-    <label class="control-label" for="inputUsername">Username</label>
+    <label class="control-label" for="inputUsername">{% trans "Username" %}</label>
     <input class="form-control ng-valid ng-dirty ng-touched" id="inputUsername" name="username" type="text"
            required>
 </div>
 <div class="form-group is-focused">
-    <label class="control-label" for="inputPassword">Password</label>
+    <label class="control-label" for="inputPassword">{% trans "Password" %}</label>
     <input class="form-control ng-valid ng-dirty ng-touched" id="inputPassword" name="password"
            type="password" required>
 </div>
 <br/>
 <div class="form-group">
-    <button class="btn btn-primary btn-block" id="btnLogin" type="button"><i class="fa-lock"></i>登录{{ custom_title_suffix  }}</button>
+    <button class="btn btn-primary btn-block" id="btnLogin" type="button"><i class="fa-lock"></i>{% trans "Login" %}{{ custom_title_suffix }}</button>
 </div>

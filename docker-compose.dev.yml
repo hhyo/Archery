@@ -1,0 +1,120 @@
+version: '3'
+
+# Docker Compose for development/testing with i18n changes
+# Run with: docker compose -f docker-compose.dev.yml up -d
+
+services:
+  redis:
+    image: redis:5
+    container_name: archery-redis
+    restart: always
+    command: redis-server --requirepass 123456
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "123456", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mysql:
+    image: mysql:5.7
+    container_name: archery-mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - "archery-mysql-data:/var/lib/mysql"
+    environment:
+      MYSQL_DATABASE: archery
+      MYSQL_ROOT_PASSWORD: 123456
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "-p123456", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  goinception:
+    image: hanchuanchuan/goinception
+    container_name: archery-goinception
+    restart: always
+    ports:
+      - "4000:4000"
+
+  archery:
+    # Use latest image that has all engines
+    image: hhyo/archery:latest
+    container_name: archery-app
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    ports:
+      - "9123:9123"
+    volumes:
+      # i18n config override (loaded by container's settings.py)
+      - "./docker_local_settings.py:/opt/archery/local_settings.py"
+      # Locale translation files
+      - "./locale:/opt/archery/locale"
+      # Modified templates with i18n tags - common/
+      - "./common/templates/login.html:/opt/archery/common/templates/login.html"
+      - "./common/templates/base.html:/opt/archery/common/templates/base.html"
+      - "./common/templates/2fa.html:/opt/archery/common/templates/2fa.html"
+      - "./common/templates/config.html:/opt/archery/common/templates/config.html"
+      - "./common/templates/dashboard.html:/opt/archery/common/templates/dashboard.html"
+      - "./common/templates/dictionaryexport.html:/opt/archery/common/templates/dictionaryexport.html"
+      # Modified templates with i18n tags - sql/
+      - "./sql/templates/legacy_login_form.html:/opt/archery/sql/templates/legacy_login_form.html"
+      - "./sql/templates/sqlworkflow.html:/opt/archery/sql/templates/sqlworkflow.html"
+      - "./sql/templates/sqlanalyze.html:/opt/archery/sql/templates/sqlanalyze.html"
+      - "./sql/templates/instance.html:/opt/archery/sql/templates/instance.html"
+      - "./sql/templates/sqlquery.html:/opt/archery/sql/templates/sqlquery.html"
+      - "./sql/templates/database.html:/opt/archery/sql/templates/database.html"
+      - "./sql/templates/dbdiagnostic.html:/opt/archery/sql/templates/dbdiagnostic.html"
+      - "./sql/templates/instanceaccount.html:/opt/archery/sql/templates/instanceaccount.html"
+      - "./sql/templates/param.html:/opt/archery/sql/templates/param.html"
+      - "./sql/templates/audit.html:/opt/archery/sql/templates/audit.html"
+      - "./sql/templates/audit_sqlquery.html:/opt/archery/sql/templates/audit_sqlquery.html"
+      - "./sql/templates/audit_sqlworkflow.html:/opt/archery/sql/templates/audit_sqlworkflow.html"
+      - "./sql/templates/group.html:/opt/archery/sql/templates/group.html"
+      - "./sql/templates/groupmgmt.html:/opt/archery/sql/templates/groupmgmt.html"
+      - "./sql/templates/workflow.html:/opt/archery/sql/templates/workflow.html"
+      - "./sql/templates/workflow_display.html:/opt/archery/sql/templates/workflow_display.html"
+      - "./sql/templates/detail.html:/opt/archery/sql/templates/detail.html"
+      - "./sql/templates/rollback.html:/opt/archery/sql/templates/rollback.html"
+      - "./sql/templates/sqlsubmit.html:/opt/archery/sql/templates/sqlsubmit.html"
+      - "./sql/templates/sqladvisor.html:/opt/archery/sql/templates/sqladvisor.html"
+      - "./sql/templates/slowquery.html:/opt/archery/sql/templates/slowquery.html"
+      - "./sql/templates/data_dictionary.html:/opt/archery/sql/templates/data_dictionary.html"
+      - "./sql/templates/dbaprinciples.html:/opt/archery/sql/templates/dbaprinciples.html"
+      - "./sql/templates/archive.html:/opt/archery/sql/templates/archive.html"
+      - "./sql/templates/archivedetail.html:/opt/archery/sql/templates/archivedetail.html"
+      - "./sql/templates/my2sql.html:/opt/archery/sql/templates/my2sql.html"
+      - "./sql/templates/schemasync.html:/opt/archery/sql/templates/schemasync.html"
+      - "./sql/templates/sqlexportsubmit.html:/opt/archery/sql/templates/sqlexportsubmit.html"
+      - "./sql/templates/sqlexportworkflow.html:/opt/archery/sql/templates/sqlexportworkflow.html"
+      - "./sql/templates/queryapplylist.html:/opt/archery/sql/templates/queryapplylist.html"
+      - "./sql/templates/queryapplydetail.html:/opt/archery/sql/templates/queryapplydetail.html"
+      - "./sql/templates/queryuserprivileges.html:/opt/archery/sql/templates/queryuserprivileges.html"
+      # URL config with i18n route
+      - "./archery/urls.py:/opt/archery/archery/urls.py"
+      # SQL migrations (required by Django)
+      - "./sql/migrations:/opt/archery/sql/migrations"
+      # Standard volumes
+      - "archery-logs:/opt/archery/logs"
+      - "archery-downloads:/opt/archery/downloads"
+    environment:
+      - DEBUG=true
+      - DATABASE_URL=mysql://root:123456@mysql:3306/archery
+      - CACHE_URL=redis://redis:6379/0?PASSWORD=123456
+      - SECRET_KEY=devkey-change-in-production-abc123xyz789
+      - CSRF_TRUSTED_ORIGINS=http://127.0.0.1:9123,http://localhost:9123
+    entrypoint: "bash /opt/archery/src/docker/startup.sh"
+
+volumes:
+  archery-mysql-data:
+  archery-logs:
+  archery-downloads:

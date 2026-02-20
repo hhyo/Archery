@@ -22,7 +22,7 @@
             smartLists: false,
             smartypants: false
         });
-        //增加的代码，用于个性化输出table
+        //Added code for customized table output
         rendererMD.table = function (header, body) {
             return '<div class="table-responsive"><table class="table table-condensed">' + header + body + '</table></div>'
         };
