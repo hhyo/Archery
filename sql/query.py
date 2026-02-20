@@ -18,6 +18,7 @@ from sql.query_privileges import query_priv_check
 from sql.utils.resource_group import user_instances
 from sql.utils.tasks import add_kill_conn_schedule, del_schedule
 from .models import QueryLog, Instance
+from django.utils.translation import gettext as _
 from sql.engines import get_engine
 
 logger = logging.getLogger("default")
@@ -43,13 +44,13 @@ def query(request):
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
         result["status"] = 1
-        result["msg"] = "你所在组未关联该实例"
+        result["msg"] = _("Your group is not associated with this instance")  # 你所在组未关联该实例
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 服务器端参数验证
     if None in [sql_content, db_name, instance_name, limit_num]:
         result["status"] = 1
-        result["msg"] = "页面提交参数可能为空"
+        result["msg"] = _("Submitted parameters may be empty")  # 页面提交参数可能为空
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     try:
@@ -130,7 +131,7 @@ def query(request):
                     # 开启query_check，直接返回异常，禁止执行
                     if config.get("query_check"):
                         result["status"] = 1
-                        result["msg"] = f"数据脱敏异常：{masking_result.error}"
+                        result["msg"] = _("Data masking error: {}").format(masking_result.error)  # 数据脱敏异常：{}
                     # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                     else:
                         logger.warning(
@@ -146,7 +147,7 @@ def query(request):
                 # 抛出未定义异常，并且开启query_check，直接返回异常，禁止执行
                 if config.get("query_check"):
                     result["status"] = 1
-                    result["msg"] = f"数据脱敏异常，请联系管理员，错误信息：{msg}"
+                    result["msg"] = _("Data masking error, please contact the administrator. Error: {}").format(msg)  # 数据脱敏异常，请联系管理员，错误信息：{}
                 # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                 else:
                     logger.warning(
@@ -188,7 +189,7 @@ def query(request):
             f"查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}"
         )
         result["status"] = 1
-        result["msg"] = f"查询异常报错，错误信息：{e}"
+        result["msg"] = _("Query error, error message: {}").format(e)  # 查询异常报错，错误信息：{}
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 返回查询结果
     try:
@@ -327,7 +328,7 @@ def generate_sql(request):
     db_type = request.POST.get("db_type")
     if not query_desc or not db_type:
         return HttpResponse(
-            json.dumps({"status": 1, "msg": "query_desc or db_type不存在", "data": []}),
+            json.dumps({"status": 1, "msg": _("query_desc or db_type is missing"), "data": []}),  # query_desc or db_type不存在
             content_type="application/json",
         )
 
@@ -336,7 +337,7 @@ def generate_sql(request):
         instance = Instance.objects.get(instance_name=instance_name)
     except Instance.DoesNotExist:
         return HttpResponse(
-            json.dumps({"status": 1, "msg": "实例不存在", "data": []}),
+            json.dumps({"status": 1, "msg": _("Instance does not exist"), "data": []}),  # 实例不存在
             content_type="application/json",
         )
     db_name = request.POST.get("db_name")
@@ -377,7 +378,7 @@ def check_openai(request):
             json.dumps(
                 {
                     "status": 1,
-                    "msg": "openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]",
+                    "msg": _("OpenAI configuration is missing. Required: [openai_base_url, openai_api_key, default_chat_model]"),  # openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]
                     "data": False,
                 }
             ),

@@ -1637,3 +1637,242 @@ msgstr "workflow_review_pass"
 
 msgid "workflow_timingtask"
 msgstr "workflow_timingtask"
+
+# Backend messages (auth, check, workflow, query, notify)
+
+msgid "Archery email send test"
+msgstr "Archery 邮件发送测试"
+
+msgid "Archery email send test..."
+msgstr "Archery 邮件发送测试..."
+
+msgid "Archive table: {table}\nArchive mode: {mode}\nArchive condition: {condition}\n"
+msgstr "归档表：{}\n归档模式：{}\n归档条件：{}\n"
+
+msgid "Audit failed: {error}"
+msgstr "审核失败: {error}"
+
+msgid "Authorization expires: {auth_ends_at}\nResult set limit: {limit_num}\n"
+msgstr "授权截止时间：{auth_ends_at}\n结果集：{limit_num}\n"
+
+msgid "Cancellation reason cannot be empty"
+msgstr "终止原因不能为空"
+
+msgid "Custom parameter format error, please enter valid JSON format"
+msgstr "自定义参数格式错误，请输入有效的JSON格式"
+
+msgid "Data masking error, please contact the administrator. Error: {}"
+msgstr "数据脱敏异常，请联系管理员，错误信息：{}"
+
+msgid "Data masking error: {}"
+msgstr "数据脱敏异常：{}"
+
+msgid "Database list: {db_list}\n"
+msgstr "数据库清单：{db_list}\n"
+
+msgid "Database: {db_list}\nTable list: {table_list}\n"
+msgstr "数据库：{db_list}\n表清单：{table_list}\n"
+
+msgid "Execute workflow"
+msgstr "执行工单"
+
+msgid "Failed to create approval workflow, please contact the administrator"
+msgstr "新建审批流失败, 请联系管理员"
+
+msgid "Incorrect username or password, please try again!"
+msgstr "用户名或密码错误，请重新输入！"
+
+msgid "Instance does not exist"
+msgstr "实例不存在"
+
+msgid "Invalid audit_status parameter, {error}"
+msgstr "audit_status 参数错误, {error}"
+
+msgid "Invalid workflow status"
+msgstr "工单状态不正确"
+
+msgid "Invalid workflow type"
+msgstr "工单类型不正确"
+
+msgid "JSON decode failed. Execution result JSON parsing failed, please contact the administrator"
+msgstr "执行结果Json解析失败, 请联系管理员"
+
+msgid "Manual execution confirmed complete"
+msgstr "确认手工执行结束"
+
+msgid "Manual workflow"
+msgstr "手工工单"
+
+msgid "Not within the executable time range. If you need to change the execution time, please resubmit the workflow!"
+msgstr "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+
+msgid "OpenAI configuration is missing. Required: [openai_base_url, openai_api_key, default_chat_model]"
+msgstr "openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]"
+
+msgid "Parameter type error: %s"
+msgstr "参数类型错误"
+
+msgid "Please complete the current user's email information first!"
+msgstr "请先完善当前用户邮箱信息！"
+
+msgid "Please enable email notifications first!"
+msgstr "请先开启邮件通知！"
+
+msgid "Please enter your display name"
+msgstr "请填写中文名"
+
+msgid "Please fill in all required fields"
+msgstr "请填写完整"
+
+msgid "Port number must be a positive integer"
+msgstr "端口号只能为正整数"
+
+msgid "Query error, error message: {}"
+msgstr "查询异常报错，错误信息：{}"
+
+msgid "Registration is not enabled, please contact the administrator"
+msgstr "注册未启用,请联系管理员开启"
+
+msgid "Review failed, error: {}"
+msgstr "审核失败, 错误信息: {}"
+
+msgid "Scheduled execution"
+msgstr "定时执行"
+
+msgid "Scheduled execution time: {}"
+msgstr "定时执行时间：{}"
+
+msgid "Service error, please contact the administrator"
+msgstr "服务异常，请联系管理员处理"
+
+msgid "Storage connection test error"
+msgstr "存储连接测试异常"
+
+msgid "Storage connection test failed"
+msgstr "存储连接测试失败"
+
+msgid "Submitted at: {create_time}\nSubmitted by: {engineer}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nWorkflow name: {workflow_name}\nWorkflow URL: {url}\nWorkflow details preview: {preview}"
+msgstr "发起时间/发起人/组/目标实例/数据库/审批流程/工单名称/工单地址/工单详情预览"
+
+msgid "Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nCurrent approver: {current_node}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nWorkflow details preview: {workflow_content}"
+msgstr "发起时间/发起人/组/目标实例/数据库/审批流程/当前审批/工单名称/工单地址/工单详情预览"
+
+msgid "Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nWorkflow details preview: {workflow_content}\n"
+msgstr "发起时间/发起人/组/目标实例/数据库/审批流程/工单名称/工单地址/工单详情预览\n"
+
+msgid "Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nAbort reason: {remark}"
+msgstr "发起时间/发起人/组/目标实例/数据库/工单名称/工单地址/终止原因"
+
+msgid "Submitted at: {create_time}\nTarget instance: {instance}\nDatabase: {db_name}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nRejection reason: {remark}\nNote: This workflow was rejected, please revise according to the rejection reason!"
+msgstr "发起时间/目标实例/数据库/工单名称/工单地址/驳回原因/提醒"
+
+msgid "Submitted by: {engineer}\nChange group: {group_name}\nChange instance: {instance}\nChange database: {db_name}\nWorkflow name: {workflow_name}\nWorkflow URL: {url}\nWorkflow preview: {preview}"
+msgstr "发起人/变更组/变更实例/变更数据库/工单名称/工单地址/工单预览"
+
+msgid "Submitted parameters may be empty"
+msgstr "页面提交参数可能为空"
+
+msgid "The parsed SQL files are in the {file_path} directory, please check"
+msgstr "解析的SQL文件在{file_path}目录下，请前往查看"
+
+msgid "The privilege to be modified does not exist"
+msgstr "待操作权限不存在"
+
+msgid "The two passwords do not match"
+msgstr "两次输入密码不一致"
+
+msgid "Time cannot be earlier than the current time"
+msgstr "时间不能小于当前时间"
+
+msgid "Time cannot be empty"
+msgstr "时间不能为空"
+
+msgid "Too many failed login attempts, account is locked! Please wait about %d seconds before trying again"
+msgstr "登录失败超过限制，该账号已被锁定！请等候大约{lock_time}秒再试"
+
+msgid "Unable to connect to goInception backup database\n%s"
+msgstr "无法连接goInception备份库"
+
+msgid "Unable to connect to goInception\n%s"
+msgstr "无法连接goInception"
+
+msgid "Unable to connect to instance,\n%s"
+msgstr "无法连接实例"
+
+msgid "Unable to verify query statement permissions, please contact the administrator. Error: {msg}"
+msgstr "无法校验查询语句权限，请联系管理员，错误信息：{msg}"
+
+msgid "User has no valid permissions!"
+msgstr "用户无任何有效权限！"
+
+msgid "Username already exists"
+msgstr "用户名已存在"
+
+msgid "Username and password cannot be empty"
+msgstr "用户名和密码不能为空"
+
+msgid "Workflow does not exist"
+msgstr "工单不存在"
+
+msgid "Workflow execution queued"
+msgstr "工单执行排队中"
+
+msgid "WorkflowAudit or workflow must be provided"
+msgstr "需要提供 WorkflowAudit 或 workflow"
+
+msgid "You already have full permission for database {db_name} on instance {instance_name}, cannot apply again"
+msgstr "你已拥有{instance_name}实例{db_name}库的全部权限，不能重复申请"
+
+msgid "You already have permission for database {db_name} on instance {instance_name}, cannot apply again"
+msgstr "你已拥有{instance_name}实例{db_name}库权限，不能重复申请"
+
+msgid "You already have query permission for table {db_name}.{tb_name} on instance {instance_name}, cannot apply again"
+msgstr "你已拥有{instance_name}实例{db_name}.{tb_name}表的查询权限，不能重复申请"
+
+msgid "You do not have permission to operate on this workflow!"
+msgstr "你无权操作当前工单！"
+
+msgid "You do not have query permission for database {db_name}! Please apply in Query Privileges Management first"
+msgstr "你无{db_name}数据库的查询权限！请先到查询权限管理进行申请"
+
+msgid "You do not have query permission for table {schema}.{name}! Please apply in Query Privileges Management first"
+msgstr "你无{schema}.{name}表的查询权限！请先到查询权限管理进行申请"
+
+msgid "Your group is not associated with this instance"
+msgstr "你所在组未关联该实例"
+
+msgid "Your group is not associated with this instance!"
+msgstr "你所在组未关联该实例！"
+
+msgid "[Archery] My2SQL execution completed"
+msgstr "[Archery 通知]My2SQL执行结束"
+
+msgid "[Archery] My2SQL execution failed"
+msgstr "[Archery 通知]My2SQL执行失败"
+
+msgid "[Archery] New DDL statement executed #{audit_id}"
+msgstr "[Archery]有新的DDL语句执行完成#{audit_id}"
+
+msgid "[{workflow_type}] New workflow application #{audit_id}"
+msgstr "[{workflow_type}]新的工单申请#{audit_id}"
+
+msgid "[{workflow_type}] Workflow aborted by submitter #{audit_id}"
+msgstr "[{workflow_type}]提交人主动终止工单#{audit_id}"
+
+msgid "[{workflow_type}] Workflow approved #{audit_id}"
+msgstr "[{workflow_type}]工单审核通过#{audit_id}"
+
+msgid "[{workflow_type}] Workflow rejected #{audit_id}"
+msgstr "[{workflow_type}]工单被驳回#{audit_id}"
+
+msgid "[{workflow_type}] Workflow {status} #{audit_id}"
+msgstr "[{workflow_type}]工单{status}#{audit_id}"
+
+msgid "max_export_rows must be an integer"
+msgstr "max_export_rows 必须是整数"
+
+msgid "query_desc or db_type is missing"
+msgstr "query_desc or db_type不存在"
+
+msgid "workflow_id parameter is empty."
+msgstr "workflow_id参数为空."

@@ -1637,3 +1637,242 @@ msgstr "workflow_review_pass"
 
 msgid "workflow_timingtask"
 msgstr "workflow_timingtask"
+
+# Backend messages (auth, check, workflow, query, notify)
+
+msgid "Archery email send test"
+msgstr "Archery email send test"
+
+msgid "Archery email send test..."
+msgstr "Archery email send test..."
+
+msgid "Archive table: {table}\nArchive mode: {mode}\nArchive condition: {condition}\n"
+msgstr "Archive table: {table}\nArchive mode: {mode}\nArchive condition: {condition}\n"
+
+msgid "Audit failed: {error}"
+msgstr "Audit failed: {error}"
+
+msgid "Authorization expires: {auth_ends_at}\nResult set limit: {limit_num}\n"
+msgstr "Authorization expires: {auth_ends_at}\nResult set limit: {limit_num}\n"
+
+msgid "Cancellation reason cannot be empty"
+msgstr "Cancellation reason cannot be empty"
+
+msgid "Custom parameter format error, please enter valid JSON format"
+msgstr "Custom parameter format error, please enter valid JSON format"
+
+msgid "Data masking error, please contact the administrator. Error: {}"
+msgstr "Data masking error, please contact the administrator. Error: {}"
+
+msgid "Data masking error: {}"
+msgstr "Data masking error: {}"
+
+msgid "Database list: {db_list}\n"
+msgstr "Database list: {db_list}\n"
+
+msgid "Database: {db_list}\nTable list: {table_list}\n"
+msgstr "Database: {db_list}\nTable list: {table_list}\n"
+
+msgid "Execute workflow"
+msgstr "Execute workflow"
+
+msgid "Failed to create approval workflow, please contact the administrator"
+msgstr "Failed to create approval workflow, please contact the administrator"
+
+msgid "Incorrect username or password, please try again!"
+msgstr "Incorrect username or password, please try again!"
+
+msgid "Instance does not exist"
+msgstr "Instance does not exist"
+
+msgid "Invalid audit_status parameter, {error}"
+msgstr "Invalid audit_status parameter, {error}"
+
+msgid "Invalid workflow status"
+msgstr "Invalid workflow status"
+
+msgid "Invalid workflow type"
+msgstr "Invalid workflow type"
+
+msgid "JSON decode failed. Execution result JSON parsing failed, please contact the administrator"
+msgstr "JSON decode failed. Execution result JSON parsing failed, please contact the administrator"
+
+msgid "Manual execution confirmed complete"
+msgstr "Manual execution confirmed complete"
+
+msgid "Manual workflow"
+msgstr "Manual workflow"
+
+msgid "Not within the executable time range. If you need to change the execution time, please resubmit the workflow!"
+msgstr "Not within the executable time range. If you need to change the execution time, please resubmit the workflow!"
+
+msgid "OpenAI configuration is missing. Required: [openai_base_url, openai_api_key, default_chat_model]"
+msgstr "OpenAI configuration is missing. Required: [openai_base_url, openai_api_key, default_chat_model]"
+
+msgid "Parameter type error: %s"
+msgstr "Parameter type error: %s"
+
+msgid "Please complete the current user's email information first!"
+msgstr "Please complete the current user's email information first!"
+
+msgid "Please enable email notifications first!"
+msgstr "Please enable email notifications first!"
+
+msgid "Please enter your display name"
+msgstr "Please enter your display name"
+
+msgid "Please fill in all required fields"
+msgstr "Please fill in all required fields"
+
+msgid "Port number must be a positive integer"
+msgstr "Port number must be a positive integer"
+
+msgid "Query error, error message: {}"
+msgstr "Query error, error message: {}"
+
+msgid "Registration is not enabled, please contact the administrator"
+msgstr "Registration is not enabled, please contact the administrator"
+
+msgid "Review failed, error: {}"
+msgstr "Review failed, error: {}"
+
+msgid "Scheduled execution"
+msgstr "Scheduled execution"
+
+msgid "Scheduled execution time: {}"
+msgstr "Scheduled execution time: {}"
+
+msgid "Service error, please contact the administrator"
+msgstr "Service error, please contact the administrator"
+
+msgid "Storage connection test error"
+msgstr "Storage connection test error"
+
+msgid "Storage connection test failed"
+msgstr "Storage connection test failed"
+
+msgid "Submitted at: {create_time}\nSubmitted by: {engineer}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nWorkflow name: {workflow_name}\nWorkflow URL: {url}\nWorkflow details preview: {preview}"
+msgstr "Submitted at: {create_time}\nSubmitted by: {engineer}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nWorkflow name: {workflow_name}\nWorkflow URL: {url}\nWorkflow details preview: {preview}"
+
+msgid "Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nCurrent approver: {current_node}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nWorkflow details preview: {workflow_content}"
+msgstr "Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nCurrent approver: {current_node}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nWorkflow details preview: {workflow_content}"
+
+msgid "Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nWorkflow details preview: {workflow_content}\n"
+msgstr "Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nWorkflow details preview: {workflow_content}\n"
+
+msgid "Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nAbort reason: {remark}"
+msgstr "Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nAbort reason: {remark}"
+
+msgid "Submitted at: {create_time}\nTarget instance: {instance}\nDatabase: {db_name}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nRejection reason: {remark}\nNote: This workflow was rejected, please revise according to the rejection reason!"
+msgstr "Submitted at: {create_time}\nTarget instance: {instance}\nDatabase: {db_name}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nRejection reason: {remark}\nNote: This workflow was rejected, please revise according to the rejection reason!"
+
+msgid "Submitted by: {engineer}\nChange group: {group_name}\nChange instance: {instance}\nChange database: {db_name}\nWorkflow name: {workflow_name}\nWorkflow URL: {url}\nWorkflow preview: {preview}"
+msgstr "Submitted by: {engineer}\nChange group: {group_name}\nChange instance: {instance}\nChange database: {db_name}\nWorkflow name: {workflow_name}\nWorkflow URL: {url}\nWorkflow preview: {preview}"
+
+msgid "Submitted parameters may be empty"
+msgstr "Submitted parameters may be empty"
+
+msgid "The parsed SQL files are in the {file_path} directory, please check"
+msgstr "The parsed SQL files are in the {file_path} directory, please check"
+
+msgid "The privilege to be modified does not exist"
+msgstr "The privilege to be modified does not exist"
+
+msgid "The two passwords do not match"
+msgstr "The two passwords do not match"
+
+msgid "Time cannot be earlier than the current time"
+msgstr "Time cannot be earlier than the current time"
+
+msgid "Time cannot be empty"
+msgstr "Time cannot be empty"
+
+msgid "Too many failed login attempts, account is locked! Please wait about %d seconds before trying again"
+msgstr "Too many failed login attempts, account is locked! Please wait about %d seconds before trying again"
+
+msgid "Unable to connect to goInception backup database\n%s"
+msgstr "Unable to connect to goInception backup database\n%s"
+
+msgid "Unable to connect to goInception\n%s"
+msgstr "Unable to connect to goInception\n%s"
+
+msgid "Unable to connect to instance,\n%s"
+msgstr "Unable to connect to instance,\n%s"
+
+msgid "Unable to verify query statement permissions, please contact the administrator. Error: {msg}"
+msgstr "Unable to verify query statement permissions, please contact the administrator. Error: {msg}"
+
+msgid "User has no valid permissions!"
+msgstr "User has no valid permissions!"
+
+msgid "Username already exists"
+msgstr "Username already exists"
+
+msgid "Username and password cannot be empty"
+msgstr "Username and password cannot be empty"
+
+msgid "Workflow does not exist"
+msgstr "Workflow does not exist"
+
+msgid "Workflow execution queued"
+msgstr "Workflow execution queued"
+
+msgid "WorkflowAudit or workflow must be provided"
+msgstr "WorkflowAudit or workflow must be provided"
+
+msgid "You already have full permission for database {db_name} on instance {instance_name}, cannot apply again"
+msgstr "You already have full permission for database {db_name} on instance {instance_name}, cannot apply again"
+
+msgid "You already have permission for database {db_name} on instance {instance_name}, cannot apply again"
+msgstr "You already have permission for database {db_name} on instance {instance_name}, cannot apply again"
+
+msgid "You already have query permission for table {db_name}.{tb_name} on instance {instance_name}, cannot apply again"
+msgstr "You already have query permission for table {db_name}.{tb_name} on instance {instance_name}, cannot apply again"
+
+msgid "You do not have permission to operate on this workflow!"
+msgstr "You do not have permission to operate on this workflow!"
+
+msgid "You do not have query permission for database {db_name}! Please apply in Query Privileges Management first"
+msgstr "You do not have query permission for database {db_name}! Please apply in Query Privileges Management first"
+
+msgid "You do not have query permission for table {schema}.{name}! Please apply in Query Privileges Management first"
+msgstr "You do not have query permission for table {schema}.{name}! Please apply in Query Privileges Management first"
+
+msgid "Your group is not associated with this instance"
+msgstr "Your group is not associated with this instance"
+
+msgid "Your group is not associated with this instance!"
+msgstr "Your group is not associated with this instance!"
+
+msgid "[Archery] My2SQL execution completed"
+msgstr "[Archery] My2SQL execution completed"
+
+msgid "[Archery] My2SQL execution failed"
+msgstr "[Archery] My2SQL execution failed"
+
+msgid "[Archery] New DDL statement executed #{audit_id}"
+msgstr "[Archery] New DDL statement executed #{audit_id}"
+
+msgid "[{workflow_type}] New workflow application #{audit_id}"
+msgstr "[{workflow_type}] New workflow application #{audit_id}"
+
+msgid "[{workflow_type}] Workflow aborted by submitter #{audit_id}"
+msgstr "[{workflow_type}] Workflow aborted by submitter #{audit_id}"
+
+msgid "[{workflow_type}] Workflow approved #{audit_id}"
+msgstr "[{workflow_type}] Workflow approved #{audit_id}"
+
+msgid "[{workflow_type}] Workflow rejected #{audit_id}"
+msgstr "[{workflow_type}] Workflow rejected #{audit_id}"
+
+msgid "[{workflow_type}] Workflow {status} #{audit_id}"
+msgstr "[{workflow_type}] Workflow {status} #{audit_id}"
+
+msgid "max_export_rows must be an integer"
+msgstr "max_export_rows must be an integer"
+
+msgid "query_desc or db_type is missing"
+msgstr "query_desc or db_type is missing"
+
+msgid "workflow_id parameter is empty."
+msgstr "workflow_id parameter is empty."
