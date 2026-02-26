@@ -25,8 +25,33 @@ class DorisEngine(MysqlEngine):
     def server_version(self):
         sql = "show frontends"
         result = self.query(sql=sql)
-        version = result.rows[0][-1].split("-")[0]
-        return tuple([int(n) for n in version.split(".")[:3]])
+
+        # Find Version column by name (robust against column reordering/additions)
+        if not result.rows:
+            raise ValueError("No frontend information returned from 'show frontends'")
+
+        version_col_index = None
+        if result.column_list:
+            # Search for 'Version' column by name
+            for idx, col_name in enumerate(result.column_list):
+                if col_name.lower() == "version":
+                    version_col_index = idx
+                    break
+
+        # Fallback: if no column_list or Version column not found, use -2 (second-to-last)
+        if version_col_index is None:
+            version_col_index = -2
+
+        # Extract version string: "doris-2.1.11-rc01-97b77e6cda"
+        version_string = result.rows[0][version_col_index]
+
+        # Parse version: "doris-2.1.11-..." -> "2.1.11"
+        parts = version_string.split("-")
+        if len(parts) < 2:
+            raise ValueError(f"Unexpected version format: '{version_string}'")
+
+        version_numbers = parts[1]  # Get "2.1.11" from "doris-2.1.11-..."
+        return tuple([int(n) for n in version_numbers.split(".")[:3]])
 
     forbidden_databases = [
         "__internal_schema",
