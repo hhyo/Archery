@@ -11,38 +11,53 @@ def test_doris_server_info(db_instance, mocker: MockFixture):
     # Mock realistic "show frontends" output with 19 columns
     # Include column_list to enable column name lookup
     column_names = [
-        "Name", "IP", "EditLogPort", "HttpPort", "QueryPort", "RpcPort",
-        "ArrowFlightSqlPort", "Role", "IsMaster", "ClusterId", "Join",
-        "Alive", "ReplayedJournalId", "LastStartTime", "LastHeartbeat",
-        "IsHelper", "ErrMsg", "Version", "Status"
+        "Name",
+        "IP",
+        "EditLogPort",
+        "HttpPort",
+        "QueryPort",
+        "RpcPort",
+        "ArrowFlightSqlPort",
+        "Role",
+        "IsMaster",
+        "ClusterId",
+        "Join",
+        "Alive",
+        "ReplayedJournalId",
+        "LastStartTime",
+        "LastHeartbeat",
+        "IsHelper",
+        "ErrMsg",
+        "Version",
+        "Status",
     ]
 
     mock_row = [
-        "fe_id",          # 0: Name
+        "fe_id",  # 0: Name
         "192.168.1.100",  # 1: IP
-        "9010",           # 2: EditLogPort
-        "8030",           # 3: HttpPort
-        "9030",           # 4: QueryPort
-        "9020",           # 5: RpcPort
-        "-1",             # 6: ArrowFlightSqlPort
-        "FOLLOWER",       # 7: Role
-        "true",           # 8: IsMaster
-        "1234567890",     # 9: ClusterId
-        "true",           # 10: Join
-        "true",           # 11: Alive
-        "8210343",        # 12: ReplayedJournalId
+        "9010",  # 2: EditLogPort
+        "8030",  # 3: HttpPort
+        "9030",  # 4: QueryPort
+        "9020",  # 5: RpcPort
+        "-1",  # 6: ArrowFlightSqlPort
+        "FOLLOWER",  # 7: Role
+        "true",  # 8: IsMaster
+        "1234567890",  # 9: ClusterId
+        "true",  # 10: Join
+        "true",  # 11: Alive
+        "8210343",  # 12: ReplayedJournalId
         "2026-01-15 03:20:09",  # 13: LastStartTime
         "2026-02-24 07:13:44",  # 14: LastHeartbeat
-        "true",           # 15: IsHelper
-        "",               # 16: ErrMsg
+        "true",  # 15: IsHelper
+        "",  # 16: ErrMsg
         "doris-2.1.0-rc01-97b77e6cda",  # 17: Version (column name: "Version")
-        "Yes"             # 18: Status
+        "Yes",  # 18: Status
     ]
 
     mock_query.return_value = ResultSet(
         full_sql="show frontends",
         rows=[mock_row],
-        column_list=column_names  # Add column names for robust lookup
+        column_list=column_names,  # Add column names for robust lookup
     )
     db_instance.db_type = "doris"
     engine = DorisEngine(instance=db_instance)
@@ -84,24 +99,52 @@ def test_doris_version_parsing_no_db(mocker: MockFixture):
 
     # Mock the query method
     column_names = [
-        "Name", "IP", "EditLogPort", "HttpPort", "QueryPort", "RpcPort",
-        "ArrowFlightSqlPort", "Role", "IsMaster", "ClusterId", "Join",
-        "Alive", "ReplayedJournalId", "LastStartTime", "LastHeartbeat",
-        "IsHelper", "ErrMsg", "Version", "Status"
+        "Name",
+        "IP",
+        "EditLogPort",
+        "HttpPort",
+        "QueryPort",
+        "RpcPort",
+        "ArrowFlightSqlPort",
+        "Role",
+        "IsMaster",
+        "ClusterId",
+        "Join",
+        "Alive",
+        "ReplayedJournalId",
+        "LastStartTime",
+        "LastHeartbeat",
+        "IsHelper",
+        "ErrMsg",
+        "Version",
+        "Status",
     ]
 
     mock_row = [
-        "fe_id", "192.168.1.100", "9010", "8030", "9030", "9020",
-        "-1", "FOLLOWER", "true", "1234567890", "true",
-        "true", "8210343", "2026-01-15 03:20:09", "2026-02-24 07:13:44",
-        "true", "", "doris-2.1.11-rc01-97b77e6cda", "Yes"
+        "fe_id",
+        "192.168.1.100",
+        "9010",
+        "8030",
+        "9030",
+        "9020",
+        "-1",
+        "FOLLOWER",
+        "true",
+        "1234567890",
+        "true",
+        "true",
+        "8210343",
+        "2026-01-15 03:20:09",
+        "2026-02-24 07:13:44",
+        "true",
+        "",
+        "doris-2.1.11-rc01-97b77e6cda",
+        "Yes",
     ]
 
     mock_query = mocker.patch.object(engine, "query")
     mock_query.return_value = ResultSet(
-        full_sql="show frontends",
-        rows=[mock_row],
-        column_list=column_names
+        full_sql="show frontends", rows=[mock_row], column_list=column_names
     )
 
     version = engine.server_version
@@ -127,9 +170,7 @@ def test_doris_version_fallback_no_db(mocker: MockFixture):
 
     mock_query = mocker.patch.object(engine, "query")
     mock_query.return_value = ResultSet(
-        full_sql="show frontends",
-        rows=[mock_row],
-        column_list=None
+        full_sql="show frontends", rows=[mock_row], column_list=None
     )
 
     version = engine.server_version
@@ -162,13 +203,13 @@ def test_doris_version_formats_no_db(mocker: MockFixture):
 
         mock_query = mocker.patch.object(engine, "query")
         mock_query.return_value = ResultSet(
-            full_sql="show frontends",
-            rows=[mock_row],
-            column_list=column_names
+            full_sql="show frontends", rows=[mock_row], column_list=column_names
         )
 
         version = engine.server_version
-        assert version == expected, f"Expected {expected}, got {version} for '{version_string}'"
+        assert (
+            version == expected
+        ), f"Expected {expected}, got {version} for '{version_string}'"
 
 
 def test_doris_original_bug_fixed_no_db(mocker: MockFixture):
@@ -188,17 +229,47 @@ def test_doris_original_bug_fixed_no_db(mocker: MockFixture):
     # Simulate production scenario with 19 columns
     # Column -1 is "Yes" (Status), Column -2 is version string
     column_names = [
-        "Name", "IP", "EditLogPort", "HttpPort", "QueryPort", "RpcPort",
-        "ArrowFlightSqlPort", "Role", "IsMaster", "ClusterId", "Join",
-        "Alive", "ReplayedJournalId", "LastStartTime", "LastHeartbeat",
-        "IsHelper", "ErrMsg", "Version", "Status"
+        "Name",
+        "IP",
+        "EditLogPort",
+        "HttpPort",
+        "QueryPort",
+        "RpcPort",
+        "ArrowFlightSqlPort",
+        "Role",
+        "IsMaster",
+        "ClusterId",
+        "Join",
+        "Alive",
+        "ReplayedJournalId",
+        "LastStartTime",
+        "LastHeartbeat",
+        "IsHelper",
+        "ErrMsg",
+        "Version",
+        "Status",
     ]
 
     mock_row = [
-        "fe_id", "192.168.1.100", "9010", "8030", "9030", "9020",
-        "-1", "FOLLOWER", "true", "1234567890", "true",
-        "true", "8210343", "2026-01-15 03:20:09", "2026-02-24 07:13:44",
-        "true", "", "doris-2.1.11-rc01-97b77e6cda", "Yes"
+        "fe_id",
+        "192.168.1.100",
+        "9010",
+        "8030",
+        "9030",
+        "9020",
+        "-1",
+        "FOLLOWER",
+        "true",
+        "1234567890",
+        "true",
+        "true",
+        "8210343",
+        "2026-01-15 03:20:09",
+        "2026-02-24 07:13:44",
+        "true",
+        "",
+        "doris-2.1.11-rc01-97b77e6cda",
+        "Yes",
     ]
 
     # Verify the bug would have occurred with old code
@@ -207,9 +278,7 @@ def test_doris_original_bug_fixed_no_db(mocker: MockFixture):
 
     mock_query = mocker.patch.object(engine, "query")
     mock_query.return_value = ResultSet(
-        full_sql="show frontends",
-        rows=[mock_row],
-        column_list=column_names
+        full_sql="show frontends", rows=[mock_row], column_list=column_names
     )
 
     # Should not raise ValueError anymore
@@ -237,9 +306,7 @@ def test_doris_version_column_reordering_no_db(mocker: MockFixture):
 
     mock_query = mocker.patch.object(engine, "query")
     mock_query.return_value = ResultSet(
-        full_sql="show frontends",
-        rows=[mock_row],
-        column_list=column_names
+        full_sql="show frontends", rows=[mock_row], column_list=column_names
     )
 
     # Should still work because we search by column name, not position
