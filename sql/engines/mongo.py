@@ -27,6 +27,7 @@ logger = logging.getLogger("default")
 # mongo shell 客户端优先使用旧版 mongo，不存在时回退到 mongosh
 DEFAULT_MONGO_SHELL = shutil.which("mongo") or shutil.which("mongosh") or "mongo"
 
+
 # 自定义异常
 class mongo_error(Exception):
     def __init__(self, error_info):
