@@ -385,14 +385,27 @@ class MongoEngine(EngineBase):
 
     def get_master(self):
         """获得主节点的port和host"""
-
         sql = "rs.isMaster().primary"
-        master = self.exec_cmd(sql)
-        if master != "undefined":
-            sp_host = master.replace('"', "").split(":")
-            self.host = sp_host[0]
-            self.port = int(sp_host[1])
-        # return master
+        master = (self.exec_cmd(sql) or "").strip()
+        # 空、undefined 直接返回，不更新 host/port
+        if not master or master == "undefined":
+            return
+        # 明显是错误/异常信息的情况，直接忽略，避免炸 worker
+        lower = master.lower()
+        if any(x in lower for x in ["error", "exception", "typeerror", "failed"]):
+            logger.warning(f"Mongo get_master 返回异常内容: {master}")
+            return
+        # 正常 host:port 场景
+        parts = master.replace('"', "").split(":")
+        if len(parts) >= 2 and parts[0] and parts[1]:
+            self.host = parts[0]
+            try:
+                self.port = int(parts[1])
+            except ValueError:
+                logger.warning(f"Mongo get_master 端口解析失败: {master}")
+        else:
+            # 没有冒号或格式不对，也不要抛异常
+            logger.warning(f"Mongo get_master 返回非 host:port 格式: {master}")
 
     def get_slave(self):
         """获得从节点的port和host"""
