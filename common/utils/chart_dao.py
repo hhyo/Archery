@@ -148,27 +148,29 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
         return self.__query(sql)
 
     # 慢日志db/user维度统计
-    def slow_query_count_by_db_by_user(self, start_date, end_date):
+    def slow_query_count_by_db_by_user(self):
         sql = """
         select
             concat(db_max,' user: ' ,user_max),
             sum(ts_cnt) 
         from mysql_slow_query_review_history 
-        where ts_min >= '{}' and ts_min <= '{}'
+        where ts_min >= date_sub(now(),INTERVAL 24 hour)
+        and db_max is not null
         group by db_max,user_max order by sum(ts_cnt) desc limit 50;
-        """.format(start_date, end_date)
+        """
         return self.__query(sql)
 
     # 慢日志db维度统计
-    def slow_query_count_by_db(self, start_date, end_date):
+    def slow_query_count_by_db(self):
         sql = """
         select
             db_max,
             sum(ts_cnt) 
         from mysql_slow_query_review_history 
-        where ts_min >= '{}' and ts_min <= '{}'
+        where ts_min >= date_sub(now(),INTERVAL 24 hour)
+        and db_max is not null
         group by db_max order by sum(ts_cnt) desc limit 50;
-        """.format(start_date, end_date)
+        """
         return self.__query(sql)
 
     # 数据库实例类型统计
