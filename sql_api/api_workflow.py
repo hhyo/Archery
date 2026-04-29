@@ -143,7 +143,11 @@ class WorkflowList(generics.ListAPIView):
             if sys_config.get("notify_phase_control")
             else True
         )
-        if workflow_content.workflow.status == "workflow_manreviewing" and is_notified:
+        if (
+            workflow_content.workflow.status
+            in ["workflow_manreviewing", "workflow_review_pass"]
+            and is_notified
+        ):
             # 获取审核信息
             workflow_audit = Audit.detail_by_workflow_id(
                 workflow_id=workflow_content.workflow.id,
