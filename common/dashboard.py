@@ -160,13 +160,13 @@ def get_chart_data(start_date, end_date):
     pie5 = create_pie_chart(attr, value)
 
     # 慢查询db/user维度统计
-    data = chart_dao.slow_query_count_by_db_by_user(start_date, end_date)
+    data = chart_dao.slow_query_count_by_db_by_user()
     attr = [row[0] for row in data["rows"]]
     value = [int(row[1]) for row in data["rows"]]
     pie3 = create_pie_chart(attr, value)
 
     # 慢查询db维度统计
-    data = chart_dao.slow_query_count_by_db(start_date, end_date)
+    data = chart_dao.slow_query_count_by_db()
     attr = [row[0] for row in data["rows"]]
     value = [row[1] for row in data["rows"]]
     bar3 = create_bar_chart(attr, value)
