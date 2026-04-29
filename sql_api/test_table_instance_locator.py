@@ -57,7 +57,9 @@ def test_default_table_instance_locator_found(monkeypatch, db_instance):
 
 @pytest.mark.django_db
 def test_resolve_table_instances_with_custom_locator(settings, db_instance):
-    settings.TABLE_INSTANCE_LOCATOR = "sql_api.test_table_instance_locator:custom_locator"
+    settings.TABLE_INSTANCE_LOCATOR = (
+        "sql_api.test_table_instance_locator:custom_locator"
+    )
 
     result = resolve_table_instances("orders", [db_instance])
 
@@ -66,10 +68,10 @@ def test_resolve_table_instances_with_custom_locator(settings, db_instance):
 
 
 @pytest.mark.django_db
-def test_resolve_table_instances_custom_locator_must_return_list(
-    settings, db_instance
-):
-    settings.TABLE_INSTANCE_LOCATOR = "sql_api.test_table_instance_locator:invalid_locator"
+def test_resolve_table_instances_custom_locator_must_return_list(settings, db_instance):
+    settings.TABLE_INSTANCE_LOCATOR = (
+        "sql_api.test_table_instance_locator:invalid_locator"
+    )
 
     with pytest.raises(ValueError):
         resolve_table_instances("orders", [db_instance])
