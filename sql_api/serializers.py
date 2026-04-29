@@ -286,6 +286,24 @@ class InstanceResourceListSerializer(serializers.Serializer):
     result = serializers.ListField()
 
 
+class TableInstanceLookupSerializer(serializers.Serializer):
+    table_name = serializers.CharField(label="表名", max_length=256)
+
+
+class TableInstanceSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    db_type = serializers.CharField()
+    db_name = serializers.CharField()
+
+
+class TableInstanceLookupResponseSerializer(serializers.Serializer):
+    status = serializers.IntegerField()
+    msg = serializers.CharField()
+    count = serializers.IntegerField()
+    data = TableInstanceSerializer(many=True)
+
+
 class ExecuteCheckSerializer(serializers.Serializer):
     instance_id = serializers.IntegerField(label="实例id")
     db_name = serializers.CharField(label="数据库名")

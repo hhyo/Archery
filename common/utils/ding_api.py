@@ -11,7 +11,11 @@ from sql.models import Users
 from sql.utils.tasks import add_sync_ding_user_schedule
 
 logger = logging.getLogger("default")
-rs = get_redis_connection("default")
+try:
+    rs = get_redis_connection("default")
+except Exception as e:
+    logger.error(f"连接Redis出错:{e}")
+    rs = None
 
 
 def get_access_token():

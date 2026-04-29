@@ -160,6 +160,59 @@ def instance_tag(db):
     tag.delete()
 
 
+# ─── Table Instance Locator shared fixtures ───────────────────────────────────
+
+
+class _FakeResult:
+    def __init__(self, rows=None, error=None):
+        self.rows = rows or []
+        self.error = error
+
+
+class _FakeEngine:
+    """Fake engine for table-instance-locator unit tests.
+
+    Args:
+        instance: the Instance object (provides regex attributes).
+        db_tables: dict mapping db_name -> list of table names.
+        db_error: if set, get_all_databases() returns an error result.
+    """
+
+    def __init__(self, instance, db_tables=None, db_error=None):
+        self.instance = instance
+        self._db_tables = db_tables or {}
+        self._db_error = db_error
+
+    def get_all_databases(self):
+        if self._db_error:
+            return _FakeResult(error=self._db_error)
+        return _FakeResult(rows=list(self._db_tables.keys()))
+
+    def get_all_tables(self, db_name, **kwargs):
+        return _FakeResult(rows=self._db_tables.get(db_name, []))
+
+
+@pytest.fixture
+def fake_engine_class():
+    """Exposes the _FakeEngine class for use in tests."""
+    return _FakeEngine
+
+
+@pytest.fixture
+def fake_locator_request():
+    """Factory for building TableLocatorRequest objects in tests."""
+    from sql_api.table_instance_locator import TableLocatorRequest
+
+    def _make(table_name=None, table_pattern=None, user_id=None):
+        return TableLocatorRequest(
+            table_name=table_name,
+            table_pattern=table_pattern,
+            request_user_id=user_id,
+        )
+
+    return _make
+
+
 @pytest.fixture
 def create_resource_group(db):
     resource_group = ResourceGroup.objects.create(

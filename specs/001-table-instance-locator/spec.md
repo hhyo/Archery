@@ -1,0 +1,107 @@
+# Feature Specification: Table Instance Locator API
+
+**Feature Branch**: `001-add-table-locator-api`  
+**Created**: 2026-04-28  
+**Status**: Draft  
+**Input**: User description: "新增一个 api 可获取某个 table 在哪个实例内, 默认实现可直接遍历用户自身有查询权限的所有实例, 逐个实例获取 db 和 table 列表, 然后返回给用户符合条件的列表.
+
+要提供入口来替换实现, 为了方便实现, 入参和返回都要用数据结构固定, 入参为 table 名字或 pattern, 出参为一个列表, 列表内为固定的对象."
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - 按表名快速定位实例 (Priority: P1)
+
+作为具备查询权限的用户，我希望输入表名或匹配模式后，系统直接返回我有权限范围内包含该表的实例列表，以便快速定位目标实例并继续查询分析。
+
+**Why this priority**: 这是核心业务价值，直接减少人工逐实例排查成本，是该功能的最小可用闭环。
+
+**Independent Test**: 在仅实现该故事时，用户可提交一个表名或 pattern 并获得匹配实例列表；无需依赖替换实现能力也可独立交付价值。
+
+**Acceptance Scenarios**:
+
+1. **Given** 用户对多个实例拥有查询权限，**When** 用户按精确表名发起定位，**Then** 返回所有包含该表且用户有权限的实例结果。
+2. **Given** 用户对多个实例拥有查询权限，**When** 用户按 pattern 发起定位，**Then** 返回所有匹配 pattern 的表及其所属实例结果。
+3. **Given** 用户仅对部分实例有查询权限，**When** 发起定位，**Then** 结果中不出现无权限实例信息。
+
+---
+
+### User Story 2 - 支持可替换定位实现 (Priority: P2)
+
+作为平台维护者，我希望在不改变调用方入参与出参结构的前提下替换表定位实现，以便在不同环境中采用更高效或更合规的数据来源策略。
+
+**Why this priority**: 保障功能可扩展性，避免后续替换时影响调用方与已有流程。
+
+**Independent Test**: 将默认实现替换为自定义实现后，调用方仍可按原请求结构调用并解析同结构结果，业务流程不中断。
+
+**Acceptance Scenarios**:
+
+1. **Given** 平台配置了替换实现，**When** 用户发起定位请求，**Then** 系统使用替换实现处理并返回相同结构的结果。
+2. **Given** 未配置替换实现，**When** 用户发起定位请求，**Then** 系统使用默认遍历实现返回结果。
+
+---
+
+### User Story 3 - 无结果与异常可解释反馈 (Priority: P3)
+
+作为使用者，我希望在无匹配结果或部分实例不可用时仍获得明确反馈，以便判断下一步是修改查询条件还是稍后重试。
+
+**Why this priority**: 改善可用性和可诊断性，降低误判为系统故障的概率。
+
+**Independent Test**: 在无匹配和部分实例访问失败场景下，接口仍返回可解析响应，用户可据此采取行动。
+
+**Acceptance Scenarios**:
+
+1. **Given** 用户输入条件在授权范围内无匹配，**When** 调用定位接口，**Then** 返回空列表并明确说明无匹配。
+2. **Given** 遍历过程中部分实例暂不可访问，**When** 调用定位接口，**Then** 返回已匹配结果并提供可读的部分失败提示。
+
+### Edge Cases
+
+- 用户输入空白 table 名称或无效 pattern 时，系统应返回可理解的参数错误信息，不执行遍历。
+- 用户没有任何实例查询权限时，系统应返回空结果并提示权限范围为空。
+- 同名表存在于同一实例的多个数据库时，结果应逐条区分实例与数据库维度。
+- 单次请求匹配结果过多时，系统应采用一致的结果顺序与可预期的返回策略，避免同条件下结果漂移。
+- 部分实例元数据暂时不可读时，不应导致整次请求失败，应返回部分成功结果与失败摘要。
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+- **FR-001**: 系统 MUST 提供一个“表定位”查询接口，接收固定结构请求对象，支持 `table_name`（精确匹配）或 `table_pattern`（模式匹配）两种输入方式之一。
+- **FR-002**: 系统 MUST 校验请求对象结构与字段约束；当输入不满足规则时返回明确错误，不进入定位流程。
+- **FR-003**: 在未配置替换实现时，系统 MUST 使用默认定位流程：仅在用户拥有查询权限的实例范围内执行表定位。
+- **FR-004**: 默认定位流程 MUST 在每个授权实例内获取数据库与表清单，并基于请求条件筛选匹配项。
+- **FR-005**: 系统 MUST 返回固定结构的结果列表；列表中每个对象至少包含实例标识、数据库标识、表名与匹配类型（精确/模式）。
+- **FR-006**: 系统 MUST 提供可替换实现入口；替换实现 MUST 使用与默认实现一致的请求结构与响应结构。
+- **FR-007**: 不论使用默认还是替换实现，系统 MUST 对无权限实例进行结果隔离，不得泄露实例、数据库或表的可识别信息。
+- **FR-008**: 当定位过程中出现部分实例不可用时，系统 MUST 仍返回可用实例的匹配结果，并附带可读的部分失败摘要。
+- **FR-009**: 在相同输入与相同权限范围下，系统 MUST 提供稳定、可重复的结果排序规则。
+
+### Test Strategy Constraints *(mandatory)*
+
+- **TSC-001**: Validation plan MUST prioritize pytest unit tests for engine adapters, SQL guards, and permission logic.
+- **TSC-002**: Shared test setup MUST be implemented using conftest.py and reusable fixtures; duplicated setup blocks are not allowed.
+- **TSC-003**: Integration tests MUST be limited to cross-boundary behaviors that cannot be proven via unit tests.
+- **TSC-004**: Any added integration test MUST include a short rationale describing why a unit test is insufficient.
+
+### Key Entities *(include if feature involves data)*
+
+- **TableLocatorRequest**: 表定位请求对象，包含匹配输入（`table_name` 或 `table_pattern`）、调用上下文信息，以及用于一致性校验的固定字段集合。
+- **TableLocationItem**: 定位结果对象，表示单条“实例-数据库-表”匹配记录，包含实例标识、数据库标识、表名、匹配类型与可选状态说明。
+- **LocatorExecutionSummary**: 执行摘要对象，表示本次查询的整体状态（如处理实例数、成功/失败实例计数、失败原因摘要）。
+- **LocatorProvider**: 定位提供方抽象，定义默认实现与替换实现共同遵循的输入输出契约。
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: 90% 以上有权限用户可在 1 次调用内定位到目标表所属实例，无需人工逐实例排查。
+- **SC-002**: 在包含 50 个授权实例的典型场景下，95% 的定位请求在 5 秒内返回可用结果（含部分成功场景）。
+- **SC-003**: 对于无匹配请求，100% 返回空列表与可理解说明，不出现误报匹配。
+- **SC-004**: 在启用替换实现后，既有调用方零改动即可继续解析响应，兼容性回归问题为 0。
+
+## Assumptions
+
+- 当前系统已具备“用户-实例查询权限”判定能力，可用于限定定位范围。
+- 输入匹配默认区分精确匹配与模式匹配两类，不要求在 v1 引入更复杂的全文检索能力。
+- v1 仅覆盖“实例内数据库与表元数据定位”，不包含列级别定位。
+- 定位接口仅返回用户有权限看到的信息，结果可用于后续人工或系统化查询流程。
+- 当未显式提供替换实现时，系统总是回退到默认定位流程。

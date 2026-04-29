@@ -62,7 +62,9 @@
 运行测试
 ===============
 ```
-python manage.py test -v 3
+pytest -q
+# 或按模块执行
+pytest -q sql common sql_api
 ```
 
 依赖清单

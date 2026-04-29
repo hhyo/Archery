@@ -1,0 +1,9 @@
+{
+  "ai": "copilot",
+  "branch_numbering": "sequential",
+  "context_file": ".github/copilot-instructions.md",
+  "here": true,
+  "integration": "copilot",
+  "script": "sh",
+  "speckit_version": "0.8.1"
+}
