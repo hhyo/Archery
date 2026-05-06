@@ -72,7 +72,7 @@ class ReviewInfo:
         steps = []
         for index, n in enumerate(self.nodes):
             if not n.group:
-                steps.append("系统自动审核")
+                steps.append("系统自动通过")
                 continue
             if n.is_current_node:
                 self.current_node_index = index
@@ -82,7 +82,7 @@ class ReviewInfo:
                 steps.append(f"{n.group.name}(passed)")
                 continue
             steps.append(n.group.name)
-        return " -> ".join(steps) if steps else "系统自动审核"
+        return " -> ".join(steps) if steps else "系统自动通过"
 
     @property
     def current_node(self) -> ReviewNode:
