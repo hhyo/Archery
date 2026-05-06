@@ -593,7 +593,10 @@ class ClickHouseEngine(EngineBase):
                         database = %(db_name)s
                     ORDER BY name"""
         result = self.query(
-            db_name=db_name, sql=sql_tbs, close_conn=False, parameters={"db_name": db_name}
+            db_name=db_name,
+            sql=sql_tbs,
+            close_conn=False,
+            parameters={"db_name": db_name},
         )
         tbs = []
         for row in result.rows:
