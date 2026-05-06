@@ -1655,9 +1655,13 @@ class MongoTest(TestCase):
         check_result = self.engine.filter_sql(sql, 0)
         self.assertEqual(check_result, "db.job.find().count().explain()")
 
-    @patch("sql.engines.mongo.MongoEngine.exec_cmd")
-    def test_get_slave(self, mock_exec_cmd):
-        mock_exec_cmd.return_value = "172.30.2.123:27017"
+    @patch("sql.engines.mongo.MongoEngine.get_connection")
+    def test_get_slave(self, mock_get_connection):
+        mock_conn = Mock()
+        mock_conn.admin.command.return_value = {
+            "members": [{"stateStr": "SECONDARY", "name": "172.30.2.123:27017"}]
+        }
+        mock_get_connection.return_value = mock_conn
         flag = self.engine.get_slave()
         self.assertEqual(True, flag)
 
@@ -1790,44 +1794,32 @@ class MongoTest(TestCase):
         check_result = self.engine.execute_check("some_db", sql)
         self.assertEqual(check_result.rows[0].__dict__["stagestatus"], "语法错误")
 
-    @patch("sql.engines.mongo.MongoEngine.exec_cmd")
+    @patch("sql.engines.mongo.MongoEngine._execute_shell_sql")
     @patch("sql.engines.mongo.MongoEngine.get_master")
-    def test_execute(self, mock_get_master, mock_exec_cmd):
+    def test_execute(self, mock_get_master, mock_execute_shell_sql):
         sql = """db.job.find().createIndex({"skuId":1},{background:true})"""
-        mock_exec_cmd.return_value = """{
-                                        "createdCollectionAutomatically" : false,
-                                        "numIndexesBefore" : 2,
-                                        "numIndexesAfter" : 3,
-                                        "ok" : 1
-                                      }"""
+        mock_execute_shell_sql.return_value = (True, '{"ok": 1}', 0)
 
         check_result = self.engine.execute("some_db", sql)
         mock_get_master.assert_called_once()
         self.assertEqual(check_result.rows[0].__dict__["errlevel"], 0)
 
-    @patch("sql.engines.mongo.MongoEngine.exec_cmd")
+    @patch("sql.engines.mongo.MongoEngine._execute_shell_sql")
     @patch("sql.engines.mongo.MongoEngine.get_master")
-    def test_execute_on_dml(self, mock_get_master, mock_exec_cmd):
+    def test_execute_on_dml(self, mock_get_master, mock_execute_shell_sql):
         sql = """db.job.insertMany([{"title":"test1"},{"title":test2"},{"title":test3"}]);"""
-        mock_exec_cmd.return_value = """{
-                                            "acknowledged" : true,
-                                            "insertedIds" : [
-                                                ObjectId("63b77b53afab4917dfd48a20"),
-                                                ObjectId("63b77b53afab4917dfd48a21"),
-                                                ObjectId("63b77b53afab4917dfd48a22")
-                                            ]
-                                        }"""
+        mock_execute_shell_sql.return_value = (True, '{"acknowledged": true}', 3)
 
         check_result = self.engine.execute("some_db", sql)
         mock_get_master.assert_called_once()
         self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 3)
 
-    @patch("sql.engines.mongo.MongoEngine.exec_cmd")
+    @patch("sql.engines.mongo.MongoEngine._execute_shell_sql")
     @patch("sql.engines.mongo.MongoEngine.get_master")
-    def test_execute_return_error(self, mock_get_master, mock_exec_cmd):
+    def test_execute_return_error(self, mock_get_master, mock_execute_shell_sql):
         sql = """db.job.insertMany({"title":"test1"},{"title":test2"},{"title":test3"});"""
-        mock_exec_cmd.return_value = (
-            """uncaught exception: TypeError: documents.map is not a function"""
+        mock_execute_shell_sql.return_value = (
+            False, "uncaught exception: TypeError: documents.map is not a function", 0
         )
         check_result = self.engine.execute("some_db", sql)
         mock_get_master.assert_called_once()
