@@ -8,6 +8,7 @@ import subprocess
 import simplejson as json
 import datetime
 import tempfile
+import shutil
 from bson.son import SON
 from bson import json_util
 from pymongo.errors import OperationFailure
@@ -23,8 +24,8 @@ from common.config import SysConfig
 
 logger = logging.getLogger("default")
 
-# mongo客户端安装在本机的位置
-mongo = "mongo"
+# mongo shell 客户端优先使用旧版 mongo，不存在时回退到 mongosh
+DEFAULT_MONGO_SHELL = shutil.which("mongo") or shutil.which("mongosh") or "mongo"
 
 
 # 自定义异常
@@ -282,6 +283,10 @@ class MongoEngine(EngineBase):
     error = None
     warning = None
     methodStr = None
+    mongo = DEFAULT_MONGO_SHELL
+
+    def _get_mongo_shell(self):
+        return getattr(self, "mongo", None) or DEFAULT_MONGO_SHELL
 
     def test_connection(self):
         return self.get_all_databases()
@@ -353,7 +358,7 @@ class MongoEngine(EngineBase):
     ):
         # 提取公共参数
         common_params = {
-            "mongo": "mongo",
+            "mongo": self._get_mongo_shell(),
             "host": self.host,
             "port": self.port,
             "db_name": db_name,
