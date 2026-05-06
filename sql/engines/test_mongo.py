@@ -8,8 +8,8 @@ from bson.int64 import Int64
 from sql.engines.mongo import MongoEngine, JsonDecoder, mongo_error
 from sql.engines.models import ResultSet
 
-
 # ====================== Fixtures ======================
+
 
 @pytest.fixture
 def mongo_engine():
@@ -38,6 +38,7 @@ def _mock_collection(mongo_engine):
 
 # ====================== mongo_error ======================
 
+
 class TestMongoError:
     def test_mongo_error_str(self):
         err = mongo_error("failed")
@@ -45,6 +46,7 @@ class TestMongoError:
 
 
 # ====================== JsonDecoder ======================
+
 
 class TestJsonDecoder:
     def setup_method(self):
@@ -79,7 +81,7 @@ class TestJsonDecoder:
         assert self.de.decode("") is None
 
     def test_decode_invalid_start(self):
-        with pytest.raises(Exception, match='Json must start with'):
+        with pytest.raises(Exception, match="Json must start with"):
             self.de.decode("123")
 
     def test_decode_objectid(self):
@@ -105,6 +107,7 @@ class TestJsonDecoder:
 
 
 # ====================== __split_args ======================
+
 
 class TestSplitArgs:
     def test_basic_args(self, mongo_engine):
@@ -138,6 +141,7 @@ class TestSplitArgs:
 
 
 # ====================== _execute_shell_sql ======================
+
 
 class TestExecuteShellSql:
     def _mock_collection(self, mongo_engine):
@@ -450,6 +454,7 @@ class TestExecuteShellSql:
 
 # ====================== get_master ======================
 
+
 class TestGetMaster:
     def test_get_master_success(self, mongo_engine):
         mock_conn = MagicMock()
@@ -486,6 +491,7 @@ class TestGetMaster:
 
 
 # ====================== get_slave ======================
+
 
 class TestGetSlave:
     def test_get_slave_success(self, mongo_engine):
@@ -533,6 +539,7 @@ class TestGetSlave:
 
 
 # ====================== execute ======================
+
 
 class TestExecute:
     @patch.object(MongoEngine, "get_master")
@@ -590,10 +597,13 @@ class TestExecute:
 
 # ====================== execute_check ======================
 
+
 class TestExecuteCheck:
     @patch("sql.engines.mongo.SysConfig")
     @patch.object(MongoEngine, "get_all_tables")
-    def test_execute_check_insertOne(self, mock_get_tables, mock_sys_config, mongo_engine):
+    def test_execute_check_insertOne(
+        self, mock_get_tables, mock_sys_config, mongo_engine
+    ):
         mock_get_tables.return_value = MagicMock(rows=["test"])
         mock_sys_config.return_value.get.return_value = False
         result = mongo_engine.execute_check(
@@ -604,7 +614,9 @@ class TestExecuteCheck:
 
     @patch("sql.engines.mongo.SysConfig")
     @patch.object(MongoEngine, "get_all_tables")
-    def test_execute_check_unsupported(self, mock_get_tables, mock_sys_config, mongo_engine):
+    def test_execute_check_unsupported(
+        self, mock_get_tables, mock_sys_config, mongo_engine
+    ):
         mock_get_tables.return_value = MagicMock(rows=["test"])
         mock_sys_config.return_value.get.return_value = False
         result = mongo_engine.execute_check(
@@ -615,7 +627,9 @@ class TestExecuteCheck:
 
     @patch("sql.engines.mongo.SysConfig")
     @patch.object(MongoEngine, "get_all_tables")
-    def test_execute_check_no_semicolon(self, mock_get_tables, mock_sys_config, mongo_engine):
+    def test_execute_check_no_semicolon(
+        self, mock_get_tables, mock_sys_config, mongo_engine
+    ):
         mock_get_tables.return_value = MagicMock(rows=["test"])
         mock_sys_config.return_value.get.return_value = False
         with pytest.raises(Exception, match="请以分号结尾"):
@@ -625,12 +639,12 @@ class TestExecuteCheck:
 
     @patch("sql.engines.mongo.SysConfig")
     @patch.object(MongoEngine, "get_all_tables")
-    def test_execute_check_table_not_exists(self, mock_get_tables, mock_sys_config, mongo_engine):
+    def test_execute_check_table_not_exists(
+        self, mock_get_tables, mock_sys_config, mongo_engine
+    ):
         mock_get_tables.return_value = MagicMock(rows=["other"])
         mock_sys_config.return_value.get.return_value = False
-        result = mongo_engine.execute_check(
-            db_name="test_db", sql="db.test.drop();"
-        )
+        result = mongo_engine.execute_check(db_name="test_db", sql="db.test.drop();")
         assert result.error_count == 1
         assert result.rows[0].stagestatus == "文档不存在"
 
@@ -675,6 +689,7 @@ class TestExecuteCheck:
 
 
 # ====================== get_connection / close ======================
+
 
 class TestGetConnection:
     @patch("sql.engines.mongo.pymongo.MongoClient")
@@ -722,6 +737,7 @@ class TestClose:
 
 
 # ====================== get_all_databases / tables ======================
+
 
 class TestGetAllDatabases:
     def test_get_all_databases(self, mongo_engine):
@@ -835,6 +851,7 @@ class TestDescribeTable:
 
 # ====================== get_roles ======================
 
+
 class TestGetRoles:
     def test_get_roles(self, mongo_engine):
         mock_result = MagicMock()
@@ -852,6 +869,7 @@ class TestGetRoles:
 
 
 # ====================== dispose_pair / dispose_str ======================
+
 
 class TestDisposePair:
     def test_dispose_pair_simple(self, mongo_engine):
@@ -877,6 +895,7 @@ class TestDisposePair:
 
 # ====================== parse_query_sentence ======================
 
+
 class TestParseQuerySentence:
     def test_find(self, mongo_engine):
         qd = mongo_engine.parse_query_sentence("db.test.find({'a':1})")
@@ -890,9 +909,7 @@ class TestParseQuerySentence:
         assert qd["projection"] == "{'name':1}"
 
     def test_getCollection(self, mongo_engine):
-        qd = mongo_engine.parse_query_sentence(
-            'db.getCollection("my_coll").find({})'
-        )
+        qd = mongo_engine.parse_query_sentence('db.getCollection("my_coll").find({})')
         assert qd["collection"] == "my_coll"
 
     def test_count(self, mongo_engine):
@@ -939,6 +956,7 @@ class TestParseQuerySentence:
 
 # ====================== filter_sql ======================
 
+
 class TestFilterSql:
     def test_filter_sql_plain(self, mongo_engine):
         assert mongo_engine.filter_sql("db.test.find({})") == "db.test.find({})"
@@ -953,25 +971,20 @@ class TestFilterSql:
 
 # ====================== query_check ======================
 
+
 class TestQueryCheck:
     def test_query_check_valid(self, mongo_engine):
         mongo_engine.get_all_tables = MagicMock(return_value=MagicMock(rows=["test"]))
-        result = mongo_engine.query_check(
-            db_name="test_db", sql="db.test.find({});"
-        )
+        result = mongo_engine.query_check(db_name="test_db", sql="db.test.find({});")
         assert result["bad_query"] is False
 
     def test_query_check_invalid_syntax(self, mongo_engine):
-        result = mongo_engine.query_check(
-            db_name="test_db", sql="SELECT * FROM test"
-        )
+        result = mongo_engine.query_check(db_name="test_db", sql="SELECT * FROM test")
         assert result["bad_query"] is True
 
     def test_query_check_table_not_exist(self, mongo_engine):
         mongo_engine.get_all_tables = MagicMock(return_value=MagicMock(rows=["other"]))
-        result = mongo_engine.query_check(
-            db_name="test_db", sql="db.test.find({});"
-        )
+        result = mongo_engine.query_check(db_name="test_db", sql="db.test.find({});")
         assert result["bad_query"] is True
         assert "不存在" in result["msg"]
 
@@ -984,6 +997,7 @@ class TestQueryCheck:
 
 
 # ====================== query ======================
+
 
 class TestQuery:
     def test_query_count(self, mongo_engine):
@@ -1077,6 +1091,7 @@ class TestQuery:
 
 # ====================== processlist / kill_op ======================
 
+
 class TestProcesslist:
     def test_processlist_active(self, mongo_engine):
         mock_conn = MagicMock()
@@ -1146,6 +1161,7 @@ class TestKillOp:
 
 
 # ====================== instance users ======================
+
 
 class TestInstanceUsers:
     def test_get_all_databases_summary(self, mongo_engine):
@@ -1230,6 +1246,7 @@ class TestInstanceUsers:
 
 # ====================== query_masking ======================
 
+
 class TestQueryMasking:
     @patch("sql.engines.mongo.data_masking")
     def test_query_masking(self, mock_masking, mongo_engine):
@@ -1242,6 +1259,7 @@ class TestQueryMasking:
 
 
 # ====================== parse_tuple / fill_query_columns ======================
+
 
 class TestParseTuple:
     def test_fill_query_columns(self):
@@ -1266,9 +1284,7 @@ class TestParseTuple:
             return_value=MagicMock(rows=["_id", "name"])
         )
         cursor = [{"_id": "1", "name": "archery"}]
-        rows, columns = mongo_engine.parse_tuple(
-            cursor, "test_db", "test"
-        )
+        rows, columns = mongo_engine.parse_tuple(cursor, "test_db", "test")
         assert "mongodballdata" in columns
         assert len(rows) == 1
 
