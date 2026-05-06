@@ -1819,7 +1819,9 @@ class MongoTest(TestCase):
     def test_execute_return_error(self, mock_get_master, mock_execute_shell_sql):
         sql = """db.job.insertMany({"title":"test1"},{"title":test2"},{"title":test3"});"""
         mock_execute_shell_sql.return_value = (
-            False, "uncaught exception: TypeError: documents.map is not a function", 0
+            False,
+            "uncaught exception: TypeError: documents.map is not a function",
+            0,
         )
         check_result = self.engine.execute("some_db", sql)
         mock_get_master.assert_called_once()
