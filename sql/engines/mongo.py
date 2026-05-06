@@ -22,6 +22,7 @@ from common.config import SysConfig
 
 logger = logging.getLogger("default")
 
+
 # 自定义异常
 class mongo_error(Exception):
     def __init__(self, error_info):
@@ -333,7 +334,9 @@ class MongoEngine(EngineBase):
                     if len(sp_host) > 1:
                         self.port = int(sp_host[1])
         except Exception:
-            logger.warning(f"mongodb获取主节点信息错误，错误信息{traceback.format_exc()}")
+            logger.warning(
+                f"mongodb获取主节点信息错误，错误信息{traceback.format_exc()}"
+            )
 
     def get_slave(self):
         """获得从节点的port和host"""
@@ -358,7 +361,9 @@ class MongoEngine(EngineBase):
             else:
                 return False
         except Exception:
-            logger.warning(f"mongodb获取从节点信息错误，错误信息{traceback.format_exc()}")
+            logger.warning(
+                f"mongodb获取从节点信息错误，错误信息{traceback.format_exc()}"
+            )
             return False
 
     def get_table_conut(self, table_name, db_name):
@@ -552,9 +557,7 @@ class MongoEngine(EngineBase):
                 opts = _normalize_bool_opts(
                     parsed_args[2] if len(parsed_args) > 2 else {}
                 )
-                result = coll.update_one(
-                    parsed_args[0], parsed_args[1], **(opts or {})
-                )
+                result = coll.update_one(parsed_args[0], parsed_args[1], **(opts or {}))
                 affected_rows = result.modified_count
                 result_doc = {
                     "acknowledged": result.acknowledged,
@@ -579,17 +582,11 @@ class MongoEngine(EngineBase):
                     parsed_args[2] if len(parsed_args) > 2 else {}
                 )
                 opts = opts or {}
-                use_many = (
-                    opts.get("multi", False) if isinstance(opts, dict) else False
-                )
+                use_many = opts.get("multi", False) if isinstance(opts, dict) else False
                 if use_many:
-                    result = coll.update_many(
-                        parsed_args[0], parsed_args[1], **opts
-                    )
+                    result = coll.update_many(parsed_args[0], parsed_args[1], **opts)
                 else:
-                    result = coll.update_one(
-                        parsed_args[0], parsed_args[1], **opts
-                    )
+                    result = coll.update_one(parsed_args[0], parsed_args[1], **opts)
                 affected_rows = result.modified_count
                 result_doc = {
                     "acknowledged": result.acknowledged,
@@ -692,7 +689,11 @@ class MongoEngine(EngineBase):
                 affected_rows = 0
                 result_doc = {"ok": 1}
             elif method == "convertToCapped":
-                size = parsed_args[0].get("size", 0) if isinstance(parsed_args[0], dict) else parsed_args[0]
+                size = (
+                    parsed_args[0].get("size", 0)
+                    if isinstance(parsed_args[0], dict)
+                    else parsed_args[0]
+                )
                 result = db.command("convertToCapped", collection, size=size)
                 affected_rows = 0
                 result_doc = result
@@ -746,9 +747,7 @@ class MongoEngine(EngineBase):
 
                 result = coll.bulk_write(operations, **(opts or {}))
                 affected_rows = (
-                    result.modified_count
-                    + result.deleted_count
-                    + result.inserted_count
+                    result.modified_count + result.deleted_count + result.inserted_count
                 )
                 result_doc = {
                     "acknowledged": result.acknowledged,
@@ -1317,7 +1316,7 @@ class MongoEngine(EngineBase):
                             query_dict["findOne_filter"] = fo_condition or "{}"
                             # dispose_pair 返回的 p_index 指向闭合大括号本身，需跳过
                             fo_projection = (
-                                re_char[p_index + 1:].strip().lstrip(",").strip()
+                                re_char[p_index + 1 :].strip().lstrip(",").strip()
                             )
                             if fo_projection:
                                 query_dict["findOne_projection"] = fo_projection
@@ -1332,13 +1331,9 @@ class MongoEngine(EngineBase):
                             p_index, cd_condition = self.dispose_pair(
                                 re_char, 0, "{", "}"
                             )
-                            query_dict["countDocuments_filter"] = (
-                                cd_condition or "{}"
-                            )
+                            query_dict["countDocuments_filter"] = cd_condition or "{}"
                             # dispose_pair 返回的 p_index 指向闭合大括号本身，需跳过
-                            cd_opts = (
-                                re_char[p_index + 1:].strip().lstrip(",").strip()
-                            )
+                            cd_opts = re_char[p_index + 1 :].strip().lstrip(",").strip()
                             if cd_opts:
                                 query_dict["countDocuments_options"] = cd_opts
                         except Exception:
@@ -1423,7 +1418,11 @@ class MongoEngine(EngineBase):
             if method == "find":
                 condition = de.decode(query_dict["condition"])
             if method == "count":
-                condition = de.decode(query_dict["condition"]) if query_dict.get("condition") else {}
+                condition = (
+                    de.decode(query_dict["condition"])
+                    if query_dict.get("condition")
+                    else {}
+                )
                 condition = condition or {}
             find_cmd += "(condition)"
         if "projection" in query_dict and query_dict["projection"]:
@@ -1457,9 +1456,7 @@ class MongoEngine(EngineBase):
 
         # 覆盖 findOne/countDocuments/distinct/stats 对应的 pymongo 命令
         if method == "findOne":
-            findone_filter = (
-                de.decode(query_dict.get("findOne_filter", "{}")) or {}
-            )
+            findone_filter = de.decode(query_dict.get("findOne_filter", "{}")) or {}
             if "findOne_projection" in query_dict:
                 findone_projection = de.decode(query_dict["findOne_projection"])
                 find_cmd = "collection.find_one(findone_filter, findone_projection)"
@@ -1470,21 +1467,17 @@ class MongoEngine(EngineBase):
                 de.decode(query_dict.get("countDocuments_filter", "{}")) or {}
             )
             if "countDocuments_options" in query_dict:
-                countdoc_options = (
-                    de.decode(query_dict["countDocuments_options"]) or {}
-                )
+                countdoc_options = de.decode(query_dict["countDocuments_options"]) or {}
                 find_cmd = (
                     "collection.count_documents(countdoc_filter, **countdoc_options)"
                 )
             else:
                 find_cmd = "collection.count_documents(countdoc_filter)"
         elif method == "distinct":
-            distinct_parts = self.__split_args(
-                query_dict.get("distinct_args", "")
-            ) or [""]
-            distinct_field = (
-                distinct_parts[0].strip().strip('"').strip("'")
-            )
+            distinct_parts = self.__split_args(query_dict.get("distinct_args", "")) or [
+                ""
+            ]
+            distinct_field = distinct_parts[0].strip().strip('"').strip("'")
             if len(distinct_parts) > 1 and distinct_parts[1].strip():
                 distinct_filter = de.decode(distinct_parts[1]) or {}
                 find_cmd = "collection.distinct(distinct_field, distinct_filter)"
