@@ -495,6 +495,150 @@ class ClickHouseEngine(EngineBase):
             self.close()
         return result
 
+    def get_group_tables_by_db(self, db_name):
+        """获取首字符分组的table列表，返回一个dict"""
+        data = {}
+        sql = f"""SELECT
+                    name,
+                    comment
+                FROM
+                    system.tables
+                WHERE
+                    database = %(db_name)s"""
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
+        for row in result.rows:
+            table_name, table_cmt = row[0], row[1]
+            if table_name[0] not in data:
+                data[table_name[0]] = list()
+            data[table_name[0]].append([table_name, table_cmt])
+        return data
+
+    def get_table_meta_data(self, db_name, tb_name, **kwargs):
+        """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
+        sql = f"""SELECT
+                    name as table_name,
+                    engine,
+                    total_rows as table_rows,
+                    formatReadableSize(total_bytes) as data_length,
+                    partition_key,
+                    sorting_key,
+                    primary_key,
+                    sampling_key,
+                    metadata_modification_time as create_time,
+                    comment as table_comment
+                FROM
+                    system.tables
+                WHERE
+                    database = %(db_name)s
+                    AND name = %(tb_name)s"""
+        _meta_data = self.query(
+            db_name=db_name,
+            sql=sql,
+            parameters={"db_name": db_name, "tb_name": tb_name},
+        )
+        return {"column_list": _meta_data.column_list, "rows": _meta_data.rows[0]}
+
+    def get_table_desc_data(self, db_name, tb_name, **kwargs):
+        """获取表格字段信息"""
+        sql = f"""SELECT
+                    name as `列名`,
+                    type as `列类型`,
+                    default_kind as `默认值类型`,
+                    default_expression as `默认值`,
+                    is_in_partition_key as `分区键`,
+                    is_in_sorting_key as `排序键`,
+                    is_in_primary_key as `主键`,
+                    comment as `列说明`
+                FROM
+                    system.columns
+                WHERE
+                    database = %(db_name)s
+                    AND table = %(tb_name)s
+                ORDER BY position"""
+        _desc_data = self.query(
+            db_name=db_name,
+            sql=sql,
+            parameters={"db_name": db_name, "tb_name": tb_name},
+        )
+        return {"column_list": _desc_data.column_list, "rows": _desc_data.rows}
+
+    def get_table_index_data(self, db_name, tb_name, **kwargs):
+        """获取表格索引信息（ClickHouse的data skipping index）"""
+        sql = f"""SELECT
+                    name as `索引名`,
+                    type_full as `索引类型`,
+                    expr as `索引表达式`,
+                    granularity as `粒度`
+                FROM
+                    system.data_skipping_indices
+                WHERE
+                    database = %(db_name)s
+                    AND table = %(tb_name)s"""
+        _index_data = self.query(
+            db_name=db_name,
+            sql=sql,
+            parameters={"db_name": db_name, "tb_name": tb_name},
+        )
+        return {"column_list": _index_data.column_list, "rows": _index_data.rows}
+
+    def get_tables_metas_data(self, db_name, **kwargs):
+        """获取数据库所有表格信息，用作数据字典导出接口"""
+        sql_tbs = f"""SELECT
+                        name as TABLE_NAME,
+                        comment as TABLE_COMMENT,
+                        engine as ENGINE
+                    FROM
+                        system.tables
+                    WHERE
+                        database = %(db_name)s
+                    ORDER BY name"""
+        result = self.query(
+            db_name=db_name,
+            sql=sql_tbs,
+            close_conn=False,
+            parameters={"db_name": db_name},
+        )
+        tbs = []
+        for row in result.rows:
+            tbs.append(dict(zip(result.column_list, row)))
+
+        table_metas = []
+        for tb in tbs:
+            _meta = dict()
+            engine_keys = [
+                {"key": "COLUMN_NAME", "value": "字段名"},
+                {"key": "COLUMN_TYPE", "value": "数据类型"},
+                {"key": "COLUMN_DEFAULT", "value": "默认值"},
+                {"key": "IS_IN_PRIMARY_KEY", "value": "是否主键"},
+                {"key": "COLUMN_COMMENT", "value": "备注"},
+            ]
+            _meta["ENGINE_KEYS"] = engine_keys
+            _meta["TABLE_INFO"] = tb
+            sql_cols = f"""SELECT
+                            name as COLUMN_NAME,
+                            type as COLUMN_TYPE,
+                            default_expression as COLUMN_DEFAULT,
+                            is_in_primary_key as IS_IN_PRIMARY_KEY,
+                            comment as COLUMN_COMMENT
+                        FROM
+                            system.columns
+                        WHERE
+                            database = %(db_name)s
+                            AND table = %(tb_name)s
+                        ORDER BY position"""
+            query_result = self.query(
+                db_name=db_name,
+                sql=sql_cols,
+                close_conn=False,
+                parameters={"db_name": db_name, "tb_name": tb["TABLE_NAME"]},
+            )
+            columns = []
+            for row in query_result.rows:
+                columns.append(dict(zip(query_result.column_list, row)))
+            _meta["COLUMNS"] = tuple(columns)
+            table_metas.append(_meta)
+        return table_metas
+
     def close(self):
         if self.conn:
             self.conn.close()

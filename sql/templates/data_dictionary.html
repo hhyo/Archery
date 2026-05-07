@@ -13,6 +13,7 @@
                         <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                         <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                         <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+                        <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
                     </select>
                 </div>
                 <div class="form-group">
@@ -196,6 +197,80 @@
                         </div>
                     </div>
                 </div> <!--modal-body-->
+                <div class="modal-body" id="modal-body-clickhouse" >
+                    <div class="panel panel-default">
+                        <div class="panel-heading">表信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                    <tr>
+                                        <th>表名</th>
+                                        <td id="table_name"></td>
+                                        <th>引擎</th>
+                                        <td id="engine"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>表行数</th>
+                                        <td id="table_rows"></td>
+                                        <th>数据大小</th>
+                                        <td id="data_length"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>分区键</th>
+                                        <td id="partition_key"></td>
+                                        <th>排序键</th>
+                                        <td id="sorting_key"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>主键</th>
+                                        <td id="primary_key"></td>
+                                        <th>采样键</th>
+                                        <td id="sampling_key"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>创建时间</th>
+                                        <td id="create_time"></td>
+                                        <th>表说明</th>
+                                        <td id="table_comment"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">列信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="field-list-clickhouse" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="index-list-clickhouse" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">建表语句</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="create-table-sql-clickhouse" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-->
                 <div class="modal-body" id="modal-body-oracle" >
                     <div class="panel panel-default">
                         <div class="panel-heading">表信息</div>
@@ -290,7 +365,7 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql', 'mssql', 'oracle']
+                        db_type: ['mysql', 'mssql', 'oracle', 'clickhouse']
                     },
                     complete: function () {
                         if ($('#instance_name').val()) {
@@ -305,6 +380,7 @@
                             $("#optgroup-mysql").empty();
                             $("#optgroup-mssql").empty();
                             $("#optgroup-oracle").empty();
+                            $("#optgroup-clickhouse").empty();
                             console.log(instance_result);
                             for (let i = 0; i < result.length; i++) {
                                 let instance_name = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
@@ -314,6 +390,8 @@
                                     $("#optgroup-mssql").append(instance_name);
                                 } else if (result[i]['db_type'] === 'oracle') {
                                     $("#optgroup-oracle").append(instance_name);
+                                } else if (result[i]['db_type'] === 'clickhouse') {
+                                    $("#optgroup-clickhouse").append(instance_name);
                                 }
                             }
                             $('#instance_name').selectpicker('render');
@@ -459,7 +537,6 @@
                         var result = data.data;
                         if (inst_db_type === 'mysql') {
                             showModalBody('mysql');
-                            //console.log("hide_oracle");
 
                             $("#create-table-sql").bootstrapTable('destroy').bootstrapTable({
                                 data: result['create_sql'],
@@ -467,20 +544,33 @@
                                     field: 1,
                                     formatter: function (value, row, index) {
                                         var sql = window.sqlFormatter.format(value);
-                                        //替换所有的换行符
                                         sql = sql.replace(/\r\n/g, "<br>");
                                         sql = sql.replace(/\n/g, "<br>");
-                                        //替换所有的空格
                                         sql = sql.replace(/\s/g, " ");
                                         return sql;
+                                    }
+                                }],
+                                locale: 'zh-CN'
+                            });
+                        } else if (inst_db_type === 'clickhouse') {
+                            showModalBody('clickhouse');
 
+                            $("#create-table-sql-clickhouse").bootstrapTable('destroy').bootstrapTable({
+                                data: result['create_sql'],
+                                columns: [{
+                                    field: 0,
+                                    formatter: function (value, row, index) {
+                                        var sql = value;
+                                        sql = sql.replace(/\r\n/g, "<br>");
+                                        sql = sql.replace(/\n/g, "<br>");
+                                        sql = sql.replace(/\s/g, " ");
+                                        return sql;
                                     }
                                 }],
                                 locale: 'zh-CN'
                             });
                         } else if (inst_db_type === 'oracle') {
                             showModalBody('oracle');
-                            //console.log("hide_mysql");
                         } else if (inst_db_type === 'mssql') {
                             showModalBody('mssql');
                         }

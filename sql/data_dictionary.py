@@ -3,7 +3,6 @@ import datetime
 import os
 from urllib.parse import quote
 
-import MySQLdb
 import simplejson as json
 from django.template import loader
 from django.conf import settings
@@ -71,8 +70,8 @@ def table_info(request):
                 db_name=db_name, tb_name=tb_name
             )
 
-            # mysql数据库可以获取创建表格的SQL语句，mssql暂无找到生成创建表格的SQL语句
-            if instance.db_type == "mysql":
+            # mysql和clickhouse数据库可以获取创建表格的SQL语句
+            if instance.db_type in ("mysql", "clickhouse"):
                 _create_sql = query_engine.query(
                     db_name, "show create table `%s`;" % tb_name
                 )
@@ -108,7 +107,7 @@ def export(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mssql", "oracle"]
+            request.user, db_type=["mysql", "mssql", "oracle", "clickhouse"]
         ).get(instance_name=instance_name)
         query_engine = get_engine(instance=instance)
     except Instance.DoesNotExist:
