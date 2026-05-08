@@ -147,6 +147,26 @@ where checksum = '{checksum}'
 group by date(date_add(ts_min, interval 8 HOUR));"""
         return self.__query(sql)
 
+    # Redis慢日志历史趋势图(按次数)
+    def redis_slow_query_review_history_by_cnt(self, checksum, hostnames):
+        hostname_list = "','".join(hostnames)
+        sql = f"""select sum(cnt),date(ts_min)
+from redis_slow_query_review_history
+where checksum = '{checksum}'
+and hostname in ('{hostname_list}')
+group by date(ts_min);"""
+        return self.__query(sql)
+
+    # Redis慢日志历史趋势图(按时长)
+    def redis_slow_query_review_history_by_pct_95_time(self, checksum, hostnames):
+        hostname_list = "','".join(hostnames)
+        sql = f"""select truncate(duration_pct_95,6),date(ts_min)
+from redis_slow_query_review_history
+where checksum = '{checksum}'
+and hostname in ('{hostname_list}')
+group by date(ts_min);"""
+        return self.__query(sql)
+
     # 慢日志db/user维度统计
     def slow_query_count_by_db_by_user(self):
         sql = """

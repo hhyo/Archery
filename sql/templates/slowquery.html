@@ -114,11 +114,25 @@
 
         //实例变动自动获取数据库
         $("#instance_name").change(function () {
-            sessionStorage.setItem('slow_query_instance_name', $("#instance_name").val());
+            var selected = $("#instance_name option:selected");
+            var db_type = selected.data('db-type');
+            sessionStorage.setItem('slow_query_instance_name', selected.val());
+            sessionStorage.setItem('slow_query_db_type', db_type);
             sessionStorage.removeItem('slow_query_db_name');
             sessionStorage.removeItem('SQLId');
-            get_db_list();
-
+            // Redis不显示数据库选择框
+            if (db_type === 'redis') {
+                $("#db_name").closest('.form-group').hide();
+                var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id') || 'slowsql_tab';
+                if (slowsql_active_li_id === 'slowsql_tab') {
+                    slowquery_review()
+                } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+                    slowquery_review_history()
+                }
+            } else {
+                $("#db_name").closest('.form-group').show();
+                get_db_list();
+            }
         });
 
         //获取数据库列表,并且获取日志数据
@@ -133,7 +147,7 @@
                     resource_type: "database"
                 },
                 complete: function () {
-                    var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
+                    var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id') || 'slowsql_tab';
                     if (slowsql_active_li_id === 'slowsql_tab') {
                         slowquery_review()
                     } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
@@ -184,7 +198,7 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql']
+                        db_type: ['mysql', 'redis']
                     },
                     complete: function () {
                         //保留如果已选择instance_name，进入页面自动加载
@@ -207,7 +221,7 @@
                             $("#instance_name").empty();
                             $("#target_instance_name").empty();
                             for (let i = 0; i < result.length; i++) {
-                                let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                let instance = "<option value=\"" + result[i]['instance_name'] + "\" data-db-type=\"" + result[i]['db_type'] + "\">" + result[i]['instance_name'] + "</option>";
                                 $("#instance_name").append(instance);
                                 $("#target_instance_name").append(instance);
                             }
@@ -276,97 +290,56 @@
         function slowquery_review() {
             $("#sqladvisor-toolbar").hide();
             var instance_name = $("#instance_name").val();
+            var db_type = sessionStorage.getItem('slow_query_db_type') || 'mysql';
             if (instance_name) {
-                //初始化table
-                $('#slowsql-list').bootstrapTable('destroy').bootstrapTable({
-                    escape: true,
-                    method: 'post',
-                    contentType: "application/x-www-form-urlencoded",
-                    url: "/slowquery/review/",
-                    striped: true,                      //是否显示行间隔色
-                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                    pagination: true,                   //是否显示分页（*）
-                    sortable: true,                     //开启排序
-                    sortName: "MySQLTotalExecutionCounts", //默认排序字段名称
-                    sortOrder: "desc",                   //默认排序方式
-                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                    pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
-                    search: true,                      //是否显示表格搜索
-                    strictSearch: false,                //是否全匹配搜索
-                    showColumns: true,                  //是否显示所有的列（选择显示的列）
-                    showRefresh: true,                  //是否显示刷新按钮
-                    showExport: true,                   //是否显示导出按钮
-                    exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
-                    exportOptions: {
-                        ignoreColumn: [0],  //忽略某些列的索引数组
-                        fileName: 'slowquery_review'  //文件名称设置
-                    },
-                    minimumCountColumns: 2,             //最少允许的列数
-                    clickToSelect: true,                //是否启用点击选中行
-                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                    cardView: false,                    //是否显示详细视图
-                    detailView: true,                  //是否显示父子表
-                    queryParamsType: 'limit',
-                    queryParams: function (params) {
-                        var instance_name = $("#instance_name").val();
-                        var db_name = $("#db_name").val();
-                        var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
-                        var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
-                        //console.info(params);
-                        //console.info('params='+JSON.stringify(params));
-
-                        return {
-                            instance_name: instance_name,
-                            db_name: db_name,
-                            StartTime: StartTime,
-                            EndTime: EndTime,
-                            limit: params.limit,
-                            offset: params.offset,
-                            search: params.search,
-                            sortName: params.sort,
-                            sortOrder: params.order
-                        }
-                    },
-                    //格式化详情
-                    detailFormatter: function (index, row) {
-                        let html = [];
-                        $.each(row, function (key, value) {
-                            if (key === 'SQLText') {
-                                let sql = window.sqlFormatter.format(value);
-                                //替换所有的换行符
-                                sql = sql.replace(/\r\n/g, "<br>");
-                                sql = sql.replace(/\n/g, "<br>");
-                                //替换所有的空格
-                                sql = sql.replace(/\s/g, "&nbsp;");
-                                html.push('<div class="col-lg-4">' + sql + '</div>');
-                            }
-                        });
-                        $.ajax({
-                            type: "get",
-                            url: "/slowquery/report/",
-                            async: false,
-                            dataType: "json",
-                            data: {
-                                checksum: row.SQLId,
-                            },
-                            complete: function () {
-                            },
-                            success: function (data) {
-                                if (data.status === 0) {
-                                    let chart = data.data;
-                                    html.push('<div class="col-lg-8">' + chart + '</div>')
+                var is_redis = db_type === 'redis';
+                var sortName = is_redis ? "TotalExecutionCounts" : "MySQLTotalExecutionCounts";
+                var columns = is_redis ? [{
+                        title: '日志统计时间',
+                        field: 'CreateTime',
+                        sortable:true
+                    }, {
+                        title: '命令模板',
+                        field: 'SQLText',
+                        cellStyle:
+                            function formatTableUnit(value, row, index) {
+                                return {
+                                    css: {
+                                        "color": '#06C',
+                                        "text-decoration": 'underline',
+                                        "cursor": 'pointer'
+                                    }
                                 }
                             },
-                            error: function (XMLHttpRequest, textStatus, errorThrown) {
-                                alert(errorThrown);
+                        formatter: function (value, row, index) {
+                            if (value.length > 100) {
+                                var sql = value.substr(0, 100) + '...';
+                                return sql;
+                            } else {
+                                return value
                             }
-                        });
-                        return html.join('');
-                    },
-                    columns: [{
+                        }
+                    }, {
+                        title: '完整命令',
+                        field: 'SQLText',
+                        visible: false
+                    }, {
+                        title: '执行总次数',
+                        field: 'TotalExecutionCounts',
+                        sortable:true
+                    }, {
+                        title: '执行总时长(秒)',
+                        field: 'TotalExecutionTimes',
+                        sortable:true
+                    }, {
+                        title: '平均执行时长(微秒)',
+                        field: 'QueryTimeAvg',
+                        sortable:true
+                    }, {
+                        title: '95%耗时(微秒)',
+                        field: 'DurationPct95',
+                        sortable:true
+                    }] : [{
                         title: '日志统计时间',
                         field: 'CreateTime',
                         sortable:true
@@ -377,7 +350,7 @@
                     }, {
                         title: 'SQL语句',
                         field: 'SQLText',
-                        cellStyle:      //突出sql统计信息
+                        cellStyle:
                             function formatTableUnit(value, row, index) {
                                 return {
                                     css: {
@@ -398,7 +371,7 @@
                     }, {
                         title: '完整SQL语句',
                         field: 'SQLText',
-                        visible: false // 默认不显示
+                        visible: false
                     }, {
                         title: '执行总次数',
                         field: 'MySQLTotalExecutionCounts',
@@ -427,77 +400,48 @@
                         title: '平均返回行数',
                         field: 'ReturnRowAvg',
                         sortable:true
-                    }],
-                    locale: 'zh-CN',
-                    onLoadError: onLoadErrorCallback,
-                    onSearch: function(e) {
-                        //传搜索参数给服务器
-                        //console.info('search='+e);
-                        //queryParams(e);
-                    },
-                    responseHandler: function(res) {
-                        //在ajax获取到数据，渲染表格之前，修改数据源
-                        return res;
-                    },onSort: function(sortName,order){
-                        //console.info('onSort: name='+sortName+'; order='+order+';');
-                    }
-                });
-            } else {
-                alert('请选择实例')
-            }
-        }
-
-        // 获取慢日志明细
-        function slowquery_review_history() {
-            $("#sqladvisor-toolbar").show();
-            var instance_name = $("#instance_name").val();
-            if (instance_name) {
+                    }];
                 //初始化table
-                $('#slowsqlinfo-list').bootstrapTable('destroy').bootstrapTable({
+                $('#slowsql-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
-                    url: "/slowquery/review_history/",
-                    striped: true,                      //是否显示行间隔色
-                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                    pagination: true,                   //是否显示分页（*）
-                    sortable: true,                     //开启排序
-                    sortName: "ParseRowCounts",         //默认排序字段名称
-                    sortOrder: "desc",                   //默认排序方式
-                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
-                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                    pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
-                    search: true,                      //是否显示表格搜索
-                    strictSearch: false,                //是否全匹配搜索
-                    showColumns: true,                  //是否显示所有的列（选择显示的列）
-                    showRefresh: true,                  //是否显示刷新按钮
-                    showExport: true,                   //是否显示导出按钮
+                    url: "/slowquery/review/",
+                    striped: true,
+                    cache: false,
+                    pagination: true,
+                    sortable: true,
+                    sortName: sortName,
+                    sortOrder: "desc",
+                    sidePagination: "server",
+                    pageNumber: 1,
+                    pageSize: 30,
+                    pageList: [30, 50, 100, 1000],
+                    search: true,
+                    strictSearch: false,
+                    showColumns: true,
+                    showRefresh: true,
+                    showExport: true,
                     exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                     exportOptions: {
-                        ignoreColumn: [0],  //忽略某些列的索引数组
-                        fileName: 'slowquery_review_history'  //文件名称设置
+                        ignoreColumn: [0],
+                        fileName: 'slowquery_review'
                     },
-                    minimumCountColumns: 2,             //最少允许的列数
-                    clickToSelect: true,                //是否启用点击选中行
-                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                    cardView: false,                    //是否显示详细视图
-                    detailView: true,                  //是否显示父子表
+                    minimumCountColumns: 2,
+                    clickToSelect: true,
+                    uniqueId: "id",
+                    showToggle: true,
+                    cardView: false,
+                    detailView: true,
                     queryParamsType: 'limit',
                     queryParams: function (params) {
                         var instance_name = $("#instance_name").val();
                         var db_name = $("#db_name").val();
-                        var SQLId = sessionStorage.getItem('SQLId');
                         var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
                         var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
-                        //console.info(params);
-                        //console.info('params='+JSON.stringify(params));
-
                         return {
                             instance_name: instance_name,
                             db_name: db_name,
-                            SQLId: SQLId,
                             StartTime: StartTime,
                             EndTime: EndTime,
                             limit: params.limit,
@@ -507,23 +451,108 @@
                             sortOrder: params.order
                         }
                     },
-                    //格式化详情
                     detailFormatter: function (index, row) {
-                        var html = [];
+                        let html = [];
                         $.each(row, function (key, value) {
                             if (key === 'SQLText') {
-                                var sql = window.sqlFormatter.format(value);
-                                //替换所有的换行符
-                                sql = sql.replace(/\r\n/g, "<br>");
-                                sql = sql.replace(/\n/g, "<br>");
-                                //替换所有的空格
-                                sql = sql.replace(/\s/g, "&nbsp;");
-                                html.push('<span>' + sql + '</span>');
+                                if (is_redis) {
+                                    html.push('<div class="col-lg-12"><pre>' + value + '</pre></div>');
+                                } else {
+                                    let sql = window.sqlFormatter.format(value);
+                                    sql = sql.replace(/\r\n/g, "<br>");
+                                    sql = sql.replace(/\n/g, "<br>");
+                                    sql = sql.replace(/\s/g, "&nbsp;");
+                                    html.push('<div class="col-lg-4">' + sql + '</div>');
+                                }
+                            }
+                        });
+                        var report_params = {checksum: row.SQLId};
+                        if (is_redis) {
+                            report_params.instance_name = $("#instance_name").val();
+                        }
+                        $.ajax({
+                            type: "get",
+                            url: "/slowquery/report/",
+                            async: false,
+                            dataType: "json",
+                            data: report_params,
+                            complete: function () {
+                            },
+                            success: function (data) {
+                                if (data.status === 0) {
+                                    let chart = data.data;
+                                    html.push('<div class="col-lg-8">' + chart + '</div>')
+                                }
+                            },
+                            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                                alert(errorThrown);
                             }
                         });
                         return html.join('');
                     },
-                    columns: [{
+                    columns: columns,
+                    locale: 'zh-CN',
+                    onLoadError: onLoadErrorCallback,
+                    onSearch: function(e) {
+                    },
+                    responseHandler: function(res) {
+                        return res;
+                    },onSort: function(sortName,order){
+                    }
+                });
+            } else {
+                alert('请选择实例')
+            }
+        }
+
+        // 获取慢日志明细
+        function slowquery_review_history() {
+            var db_type = sessionStorage.getItem('slow_query_db_type') || 'mysql';
+            var is_redis = db_type === 'redis';
+            if (is_redis) {
+                $("#sqladvisor-toolbar").hide();
+            } else {
+                $("#sqladvisor-toolbar").show();
+            }
+            var instance_name = $("#instance_name").val();
+            if (instance_name) {
+                var sortName = is_redis ? "TotalExecutionCounts" : "ParseRowCounts";
+                var columns = is_redis ? [{
+                        title: '执行开始时间',
+                        field: 'ExecutionStartTime',
+                        sortable:true
+                    }, {
+                        title: 'Redis节点',
+                        field: 'HostName',
+                        sortable:true
+                    }, {
+                        title: '命令',
+                        field: 'SQLText',
+                        formatter: function (value, row, index) {
+                            if (value.length > 100) {
+                                var sql = value.substr(0, 100) + '...';
+                                return sql;
+                            } else {
+                                return value
+                            }
+                        }
+                    }, {
+                        title: '完整命令',
+                        field: 'SQLText',
+                        visible: false
+                    }, {
+                        title: '执行次数',
+                        field: 'TotalExecutionCounts',
+                        sortable:true
+                    }, {
+                        title: '95%耗时(微秒)',
+                        field: 'QueryTimePct95',
+                        sortable:true
+                    }, {
+                        title: '总耗时(秒)',
+                        field: 'QueryTimes',
+                        sortable:true
+                    }] : [{
                         title: '',
                         field: 'checkbox',
                         checkbox: true
@@ -553,7 +582,7 @@
                     }, {
                         title: '完整SQL语句',
                         field: 'SQLText',
-                        visible: false // 默认不显示
+                        visible: false
                     }, {
                         title: '执行总次数',
                         field: 'TotalExecutionCounts',
@@ -578,19 +607,86 @@
                         title: '返回总行数',
                         field: 'ReturnRowCounts',
                         sortable:true
-                    }],
-                    singleSelect: true,
-                    toolbar: "#sqladvisor-toolbar", //指明自定义的toolbar
+                    }];
+                //初始化table
+                $('#slowsqlinfo-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    method: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/slowquery/review_history/",
+                    striped: true,
+                    cache: false,
+                    pagination: true,
+                    sortable: true,
+                    sortName: sortName,
+                    sortOrder: "desc",
+                    sidePagination: "server",
+                    pageNumber: 1,
+                    pageSize: 30,
+                    pageList: [30, 50, 100, 1000],
+                    search: true,
+                    strictSearch: false,
+                    showColumns: true,
+                    showRefresh: true,
+                    showExport: true,
+                    exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
+                    exportOptions: {
+                        ignoreColumn: [0],
+                        fileName: 'slowquery_review_history'
+                    },
+                    minimumCountColumns: 2,
+                    clickToSelect: true,
+                    uniqueId: "id",
+                    showToggle: true,
+                    cardView: false,
+                    detailView: true,
+                    queryParamsType: 'limit',
+                    queryParams: function (params) {
+                        var instance_name = $("#instance_name").val();
+                        var db_name = $("#db_name").val();
+                        var SQLId = sessionStorage.getItem('SQLId');
+                        var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
+                        var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
+                        return {
+                            instance_name: instance_name,
+                            db_name: db_name,
+                            SQLId: SQLId,
+                            StartTime: StartTime,
+                            EndTime: EndTime,
+                            limit: params.limit,
+                            offset: params.offset,
+                            search: params.search,
+                            sortName: params.sort,
+                            sortOrder: params.order
+                        }
+                    },
+                    detailFormatter: function (index, row) {
+                        var html = [];
+                        $.each(row, function (key, value) {
+                            if (key === 'SQLText') {
+                                if (is_redis) {
+                                    html.push('<pre>' + value + '</pre>');
+                                } else {
+                                    var sql = window.sqlFormatter.format(value);
+                                    sql = sql.replace(/\r\n/g, "<br>");
+                                    sql = sql.replace(/\n/g, "<br>");
+                                    sql = sql.replace(/\s/g, "&nbsp;");
+                                    html.push('<span>' + sql + '</span>');
+                                }
+                            }
+                        });
+                        return html.join('');
+                    },
+                    columns: columns,
+                    singleSelect: !is_redis,
+                    toolbar: is_redis ? undefined : "#sqladvisor-toolbar",
                     locale: 'zh-CN',
                     onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
-                        //传搜索参数给服务器
                         queryParams(e)
                     },onSort: function(sortName,order){
-                        //console.info('onSort: name='+sortName+'; order='+order+';');
                     },
                     responseHandler: function (res) {
-                        //在ajax获取到数据，渲染表格之前，修改数据源
                         return res;
                     }
                 });
