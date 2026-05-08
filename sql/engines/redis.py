@@ -61,8 +61,8 @@ class RedisEngine(EngineBase):
         """
         if self.mode != "cluster":
             return [f"{self.host}:{self.port}"]
-        conn = self.get_connection()
         try:
+            conn = self.get_connection()
             nodes_info = conn.execute_command("CLUSTER", "NODES")
             masters = []
             for line in nodes_info.split("\n"):
@@ -89,8 +89,8 @@ class RedisEngine(EngineBase):
         :return:
         """
         result = ResultSet(full_sql="CONFIG GET databases")
-        conn = self.get_connection()
         try:
+            conn = self.get_connection()
             rows = conn.config_get("databases")["databases"]
         except Exception as e:
             """
