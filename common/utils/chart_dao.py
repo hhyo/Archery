@@ -141,7 +141,7 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
 
     # 慢日志历史趋势图(按时长)
     def slow_query_review_history_by_pct_95_time(self, checksum):
-        sql = f"""select truncate(Query_time_pct_95,6),date(date_add(ts_min, interval 8 HOUR))
+        sql = f"""select truncate(MAX(Query_time_pct_95),6),date(date_add(ts_min, interval 8 HOUR))
 from mysql_slow_query_review_history
 where checksum = '{checksum}'
 group by date(date_add(ts_min, interval 8 HOUR));"""
@@ -160,7 +160,7 @@ group by date(ts_min);"""
     # Redis慢日志历史趋势图(按时长)
     def redis_slow_query_review_history_by_pct_95_time(self, checksum, hostnames):
         hostname_list = "','".join(hostnames)
-        sql = f"""select truncate(duration_pct_95,6),date(ts_min)
+        sql = f"""select truncate(MAX(duration_pct_95),6),date(ts_min)
 from redis_slow_query_review_history
 where checksum = '{checksum}'
 and hostname in ('{hostname_list}')
