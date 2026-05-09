@@ -72,7 +72,8 @@ class RedisEngine(EngineBase):
                 if len(parts) >= 8 and "master" in parts[2] and "fail" not in parts[2]:
                     # 处理格式: 127.0.0.1:7001@17001、[2001:db8::10]:6379@16379、2001:db8::10:6379@16379
                     # 截取@之前的字符串，去掉[]即为 host:port
-                    host_port = parts[1].split("@")[0].replace("[", "").replace("]", "")
+                    # 兼容redis7.2,hostname有可能在@之前，例如：ip:port,hostname@cport
+                    host_port = parts[1].split("@")[0].split(",")[0].replace("[", "").replace("]", "")
                     masters.append(host_port)
             return masters if masters else [f"{self.host}:{self.port}"]
         except Exception as e:
