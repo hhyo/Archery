@@ -28,7 +28,12 @@ from sql.utils.workflow_audit import (
     AuditSetting,
     AuditException,
     ReviewNodeType,
+    ReviewNode,
+    ReviewInfo,
+    get_auditor,
 )
+from sql.models import WorkflowAuditDetail
+from unittest.mock import patch, MagicMock
 
 
 class TestAudit(TestCase):
@@ -634,3 +639,305 @@ def test_auto_reject_not_applicable(sql_workflow, setup_sys_config):
     audit.workflow.sqlworkflowcontent.review_content = json.dumps([{"errlevel": 0}])
     audit.workflow.sqlworkflowcontent.save()
     assert audit.is_auto_reject() is False
+
+
+def test_review_info(sql_query_apply, fake_generate_audit_setting, create_auth_group):
+    """测试 review_info property 正常返回"""
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[create_auth_group.id]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    audit_auth_group, current_audit_auth_group = audit.review_info
+    assert create_auth_group.name in audit_auth_group
+    assert current_audit_auth_group == create_auth_group.name
+
+
+def test_review_info_auto_pass(sql_query_apply, fake_generate_audit_setting):
+    """测试 review_info 在无需审批时的返回"""
+    fake_generate_audit_setting.return_value = AuditSetting(auto_pass=True)
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    audit_auth_group, current_audit_auth_group = audit.review_info
+    assert audit_auth_group == "无需审批"
+    assert current_audit_auth_group is None
+
+
+def test_review_info_group_not_exist(sql_query_apply, fake_generate_audit_setting):
+    """测试 review_info 在权限组不存在时的降级返回"""
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[99999]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    audit_auth_group, current_audit_auth_group = audit.review_info
+    assert audit_auth_group == "99999"
+    assert str(current_audit_auth_group) == "99999"
+
+
+def test_create_audit_auto_reject(sql_workflow, mocker: MockFixture):
+    """测试 create_audit 在 auto_reject 时的处理"""
+    workflow, _ = sql_workflow
+    mocker.patch.object(AuditV2, "is_auto_reject").return_value = True
+    mocker.patch.object(AuditV2, "is_auto_review").return_value = False
+    mock_generate = mocker.patch.object(AuditV2, "generate_audit_setting")
+    mock_generate.return_value = AuditSetting(auto_reject=True, audit_auth_groups=[])
+    audit = AuditV2(workflow=workflow)
+    result = audit.create_audit()
+    assert result == "直接审核不通过"
+    assert audit.audit.current_status == WorkflowStatus.REJECTED
+    log = WorkflowLog.objects.filter(
+        audit_id=audit.audit.audit_id, operation_type=WorkflowAction.SUBMIT
+    ).first()
+    assert log is not None
+    assert "系统直接审核不通过" in log.operation_info
+
+
+def test_can_operate_abort_by_creator(sql_query_apply, fake_generate_audit_setting, normal_user, create_auth_group):
+    """测试工单创建者可以撤回工单"""
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[create_auth_group.id]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    audit.audit.create_user = normal_user.username
+    audit.audit.save()
+    assert audit.can_operate(WorkflowAction.ABORT, normal_user) is True
+
+
+def test_can_operate_abort_by_others(sql_query_apply, fake_generate_audit_setting, normal_user, super_user, create_auth_group):
+    """测试非工单创建者不能撤回工单"""
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[create_auth_group.id]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    audit.audit.create_user = normal_user.username
+    audit.audit.save()
+    with pytest.raises(AuditException) as exc_info:
+        audit.can_operate(WorkflowAction.ABORT, super_user)
+    assert "只有工单提交者可以撤回工单" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "action",
+    [
+        WorkflowAction.EXECUTE_START,
+        WorkflowAction.EXECUTE_END,
+        WorkflowAction.EXECUTE_SET_TIME,
+    ],
+)
+def test_can_operate_execute_actions(sql_query_apply, fake_generate_audit_setting, super_user, action, create_auth_group):
+    """测试执行类操作默认放行"""
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[create_auth_group.id]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    audit.audit.current_status = WorkflowStatus.PASSED
+    audit.audit.save()
+    assert audit.can_operate(action, super_user) is True
+
+
+def test_can_operate_no_permission(sql_query_apply, fake_generate_audit_setting, normal_user):
+    """测试用户缺少审批权限时抛出异常"""
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[1]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    with pytest.raises(AuditException) as exc_info:
+        audit.can_operate(WorkflowAction.PASS, normal_user)
+    assert "用户无相关审批权限" in str(exc_info.value)
+
+
+@patch("sql.utils.workflow_audit.Group.objects.get")
+def test_can_operate_group_not_exist(mock_group_get, sql_query_apply, fake_generate_audit_setting, normal_user):
+    """测试当前审批权限组不存在时抛出异常"""
+    from django.contrib.auth.models import Permission
+    query_review = Permission.objects.get(codename="query_review")
+    normal_user.user_permissions.add(query_review)
+    mock_group_get.side_effect = Group.DoesNotExist()
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[1]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    with pytest.raises(AuditException) as exc_info:
+        audit.can_operate(WorkflowAction.PASS, normal_user)
+    assert "当前审批权限组不存在" in str(exc_info.value)
+
+
+@patch("sql.utils.workflow_audit.auth_group_users")
+def test_can_operate_not_in_resource_group(mock_auth_group_users, sql_query_apply, fake_generate_audit_setting, normal_user):
+    """测试用户不在流程相关资源组内时抛出异常"""
+    from django.contrib.auth.models import Permission
+    query_review = Permission.objects.get(codename="query_review")
+    normal_user.user_permissions.add(query_review)
+    from sql.models import Users
+    mock_auth_group_users.return_value = Users.objects.none()
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    with pytest.raises(AuditException) as exc_info:
+        audit.can_operate(WorkflowAction.PASS, normal_user)
+    assert "用户不在流程相关资源组内" in str(exc_info.value)
+
+
+def test_can_operate_not_in_auth_group(sql_query_apply, fake_generate_audit_setting, normal_user):
+    """测试用户不在当前节点的审核组内时抛出异常"""
+    from django.contrib.auth.models import Permission
+    query_review = Permission.objects.get(codename="query_review")
+    normal_user.user_permissions.add(query_review)
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    with patch("sql.utils.workflow_audit.auth_group_users") as mock_auth_group_users:
+        from sql.models import Users
+        mock_auth_group_users.return_value = Users.objects.filter(id=normal_user.id)
+        with pytest.raises(AuditException) as exc_info:
+            audit.can_operate(WorkflowAction.PASS, normal_user)
+        assert "用户不在当前节点的审核组内" in str(exc_info.value)
+
+
+def test_operate_reject(sql_query_apply, fake_generate_audit_setting, super_user):
+    """测试 operate 执行拒绝操作"""
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[1]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    result = audit.operate(WorkflowAction.REJECT, super_user, "不符合规范")
+    assert isinstance(result, WorkflowAuditDetail)
+    assert result.audit_status == WorkflowStatus.REJECTED
+    audit.audit.refresh_from_db()
+    assert audit.audit.current_status == WorkflowStatus.REJECTED
+    log = WorkflowLog.objects.filter(
+        audit_id=audit.audit.audit_id, operation_type=WorkflowAction.REJECT
+    ).first()
+    assert log is not None
+    assert "不符合规范" in log.operation_info
+
+
+def test_operate_abort(sql_query_apply, fake_generate_audit_setting, normal_user):
+    """测试 operate 执行撤回操作"""
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[1]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    audit.audit.create_user = normal_user.username
+    audit.audit.save()
+    result = audit.operate(WorkflowAction.ABORT, normal_user, "不想提交了")
+    assert isinstance(result, WorkflowAuditDetail)
+    assert result.audit_status == WorkflowStatus.ABORTED
+    audit.audit.refresh_from_db()
+    assert audit.audit.current_status == WorkflowStatus.ABORTED
+    log = WorkflowLog.objects.filter(
+        audit_id=audit.audit.audit_id, operation_type=WorkflowAction.ABORT
+    ).first()
+    assert log is not None
+    assert "不想提交了" in log.operation_info
+
+
+def test_operate_no_audit(sql_query_apply, normal_user):
+    """测试 operate 在 audit 未绑定时抛出异常"""
+    audit = AuditV2(workflow=sql_query_apply)
+    with pytest.raises(AuditException) as exc_info:
+        audit.operate(WorkflowAction.PASS, normal_user, "test")
+    assert "给定工单未绑定审批信息" in str(exc_info.value)
+
+
+def test_operate_pass_next_group_not_exist(sql_query_apply, super_user, fake_generate_audit_setting, create_auth_group):
+    """测试 operate_pass 在下级审批组不存在时的降级处理"""
+    fake_generate_audit_setting.return_value = AuditSetting(
+        auto_pass=False, audit_auth_groups=[create_auth_group.id, 99999]
+    )
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+
+    with patch("sql.utils.workflow_audit.Group.objects.get") as mock_group_get:
+        def side_effect(*args, **kwargs):
+            pk = kwargs.get("id")
+            if str(pk) == "99999":
+                raise Group.DoesNotExist()
+            return Group.objects.get(id=pk)
+
+        mock_group_get.side_effect = side_effect
+        result = audit.operate(WorkflowAction.PASS, super_user, "ok")
+
+    assert result is not None
+    assert audit.audit.current_status == WorkflowStatus.WAITING
+    assert str(audit.audit.current_audit) == "99999"
+    log = WorkflowLog.objects.filter(
+        audit_id=audit.audit.audit_id, operation_type=WorkflowAction.PASS
+    ).order_by("-id").first()
+    assert "99999" in log.operation_info
+
+
+def test_get_workflow_for_archive(archive_apply, resource_group, fake_generate_audit_setting):
+    """测试通过 audit 初始化 Archive 类型 workflow"""
+    audit = AuditV2(workflow=archive_apply, resource_group=resource_group.group_name)
+    audit.create_audit()
+    audit2 = AuditV2(audit=audit.audit)
+    assert audit2.workflow == archive_apply
+    assert audit2.workflow_type == audit.workflow_type
+    assert audit2.resource_group == resource_group.group_name
+    assert audit2.resource_group_id == resource_group.group_id
+
+
+def test_add_log(create_audit_workflow):
+    """测试 Audit.add_log 静态方法"""
+    log = Audit.add_log(
+        audit_id=create_audit_workflow.audit_id,
+        operation_type=1,
+        operation_type_desc="测试",
+        operation_info="测试信息",
+        operator="test_user",
+        operator_display="测试用户",
+    )
+    assert log is not None
+    assert log.audit_id == create_audit_workflow.audit_id
+    assert log.operation_type_desc == "测试"
+
+
+def test_get_auditor(sql_query_apply):
+    """测试 get_auditor 工厂函数"""
+    auditor = get_auditor(workflow=sql_query_apply)
+    assert isinstance(auditor, AuditV2)
+    assert auditor.workflow == sql_query_apply
+
+
+def test_review_node_post_init_error():
+    """测试 ReviewNode 在缺少 group 时抛出异常"""
+    with pytest.raises(ValueError) as exc_info:
+        ReviewNode(node_type=ReviewNodeType.GROUP, group=None)
+    assert "group not provided" in str(exc_info.value)
+
+
+def test_review_info_current_node():
+    """测试 ReviewInfo.current_node 与 readable_info"""
+    g1 = MagicMock()
+    g1.name = "g1"
+    g2 = MagicMock()
+    g2.name = "g2"
+    node1 = ReviewNode(group=g1, is_passed_node=True)
+    node2 = ReviewNode(group=g2, is_current_node=True)
+    review_info = ReviewInfo(nodes=[node1, node2])
+    assert review_info.current_node == node2
+    info = review_info.readable_info
+    assert "g1(passed)" in info
+    assert "g2(current)" in info
+
+
+def test_post_init_sys_config_none(sql_query_apply):
+    """测试显式传入 sys_config=None 时会被重置"""
+    audit = AuditV2(workflow=sql_query_apply, sys_config=None)
+    assert audit.sys_config is not None
+
+
+class TestAuditExtra(TestCase):
+    """补充老版 Audit 的单元测试"""
+
+    def test_change_settings_resource_group_not_exist(self):
+        """测试 change_settings 在资源组不存在时抛出异常"""
+        with self.assertRaises(ResourceGroup.DoesNotExist):
+            Audit.change_settings(group_id=99999, workflow_type=1, audit_auth_groups="1,2")
