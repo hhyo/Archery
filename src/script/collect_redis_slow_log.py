@@ -2,7 +2,9 @@ import redis
 import hashlib
 from datetime import datetime
 import pymysql
+import calendar
 import re
+import math
 
 # 配置
 # redis节点信息，由于redis cluster架构每个节点都有单独的slowlog，所以需要写全redis cluster所有节点
@@ -33,6 +35,7 @@ REDIS_LIST = [
     {"host": "127.0.0.1", "port": 9002, "username": "", "password": ""},
     {"host": "127.0.0.1", "port": 9003, "username": "", "password": ""},
 ]
+# archery数据库
 MYSQL_DSN = {
     "host": "127.0.0.1",
     "user": "root",
@@ -75,13 +78,21 @@ def collect_slowlog_for_node(
     db = pymysql.connect(**MYSQL_DSN)
     cursor = db.cursor()
 
+    # 查询 MySQL 时区偏移（秒），用于将 naive datetime 转为 UTC 时间戳
+    cursor.execute("SELECT TIMEDIFF(NOW(), UTC_TIMESTAMP)")
+    tz_offset_seconds = cursor.fetchone()[0].total_seconds()
+
     # 1. 获取上次处理的最大ID
     cursor.execute(
-        "SELECT last_processed_id FROM redis_slowlog_cursor WHERE hostname = %s",
+        "SELECT last_processed_id,updated_at FROM redis_slowlog_cursor WHERE hostname = %s",
         (node_name,),
     )
     row = cursor.fetchone()
     last_id = row[0] if row else 0
+    # 将 MySQL naive datetime 转为 UTC 时间戳，与 Redis start_time 对齐
+    last_updated_at = (
+        calendar.timegm(row[1].timetuple()) - tz_offset_seconds if row and row[1] else 0
+    )
 
     # 2. 获取最近5000条慢日志
     slowlogs = r.slowlog_get(5000)
@@ -95,7 +106,9 @@ def collect_slowlog_for_node(
     max_new_id = last_id
     for entry in slowlogs:
         entry_id = entry["id"]
-        if entry_id > last_id:
+        if entry_id > last_id or entry["start_time"] > last_updated_at:
+            # print(entry["start_time"],last_updated_at)
+            # print(entry)
             new_logs.append(entry)
             if entry_id > max_new_id:
                 max_new_id = entry_id
@@ -109,7 +122,9 @@ def collect_slowlog_for_node(
     # 3. 处理每条新日志
     groups = {}
     for log in new_logs:
-        fingerprint = normalize_command(log["command"].decode("utf-8"))
+        fingerprint = normalize_command(
+            log["command"].decode("utf-8", errors="replace")
+        )
         checksum = hashlib.md5(fingerprint.encode()).hexdigest()
         timestamp = datetime.fromtimestamp(log["start_time"])
         duration = log["duration"]  # 微秒
@@ -121,7 +136,7 @@ def collect_slowlog_for_node(
             ON DUPLICATE KEY UPDATE
                 last_seen = IF(VALUES(last_seen) > last_seen, VALUES(last_seen), last_seen)
         """
-        sample = log["command"].decode("utf-8")
+        sample = log["command"].decode("utf-8", errors="replace")
         cursor.execute(
             sql_review, (checksum, fingerprint, sample, timestamp, timestamp)
         )
@@ -144,8 +159,13 @@ def collect_slowlog_for_node(
         duration_min = min(durations)
         duration_max = max(durations)
         durations_sorted = sorted(durations)
-        duration_median = durations_sorted[cnt // 2]
-        p95_idx = int(cnt * 0.95) - 1
+        if cnt % 2 == 1:
+            duration_median = durations_sorted[cnt // 2]
+        else:
+            duration_median = (
+                durations_sorted[cnt // 2 - 1] + durations_sorted[cnt // 2]
+            ) / 2
+        p95_idx = math.ceil(cnt * 0.95) - 1
         duration_pct_95 = (
             durations_sorted[p95_idx] if p95_idx >= 0 else durations_sorted[-1]
         )
@@ -189,9 +209,9 @@ def collect_slowlog_for_node(
     # 5. 更新游标
     cursor.execute(
         """
-        INSERT INTO redis_slowlog_cursor (hostname, last_processed_id, updated_at)
-        VALUES (%s, %s, NOW())
-        ON DUPLICATE KEY UPDATE last_processed_id = VALUES(last_processed_id), updated_at = NOW()
+        INSERT INTO redis_slowlog_cursor (hostname, last_processed_id)
+        VALUES (%s, %s)
+        ON DUPLICATE KEY UPDATE last_processed_id = VALUES(last_processed_id)
     """,
         (node_name, max_new_id),
     )

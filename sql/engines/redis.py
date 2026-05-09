@@ -70,11 +70,10 @@ class RedisEngine(EngineBase):
                     continue
                 parts = line.split()
                 if len(parts) >= 8 and "master" in parts[2] and "fail" not in parts[2]:
-                    host_port = parts[1]
-                    # 处理格式: 127.0.0.1:7001@17001
-                    host = host_port.split(":")[0]
-                    port = host_port.split(":")[1].split("@")[0]
-                    masters.append(f"{host}:{port}")
+                    # 处理格式: 127.0.0.1:7001@17001、[2001:db8::10]:6379@16379、2001:db8::10:6379@16379
+                    # 截取@之前的字符串，去掉[]即为 host:port
+                    host_port = parts[1].split("@")[0].replace("[", "").replace("]", "")
+                    masters.append(host_port)
             return masters if masters else [f"{self.host}:{self.port}"]
         except Exception as e:
             logger.warning(f"获取Redis集群节点失败: {e}")

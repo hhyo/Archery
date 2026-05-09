@@ -40,7 +40,11 @@ def slowquery_review(request):
     limit = int(request.POST.get("limit"))
     offset = int(request.POST.get("offset"))
     # 获取实例信息
-    instance_info = Instance.objects.get(instance_name=instance_name)
+    try:
+        instance_info = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {"status": 1, "msg": "实例不存在", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
     # 服务端权限校验
     try:
         user_instances(request.user, db_type=[instance_info.db_type]).get(
@@ -182,7 +186,11 @@ def slowquery_review_history(request):
     limit = int(request.POST.get("limit"))
     offset = int(request.POST.get("offset"))
     # 获取实例信息
-    instance_info = Instance.objects.get(instance_name=instance_name)
+    try:
+        instance_info = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {"status": 1, "msg": "实例不存在", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
     # 服务端权限校验
     try:
         user_instances(request.user, db_type=[instance_info.db_type]).get(
