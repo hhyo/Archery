@@ -112,6 +112,10 @@
                                     SQL提交
                                 </button>
                             </div>
+                            <!--描述信息-->
+                            <div class="text-info">
+                                <li id="mongo-hint-info" style="display:none">支持mongo原生命令，例如：<code>db.users.updateOne({ name: "Charlie" }, { $set: { phone: "123456789", status: "active" } });</code></li>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -257,6 +261,12 @@
             if (optgroup != "MySQL" && optgroup != "Oracle") {
                 $("#div-backup").hide();
                 $("#is_backup").val("False");
+            }
+            // MongoDB提示信息
+            if (optgroup === "Mongo") {
+                $("#mongo-hint-info").show();
+            } else {
+                $("#mongo-hint-info").hide();
             }
             //将数据通过ajax提交给获取db_name
             $.ajax({
