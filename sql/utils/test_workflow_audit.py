@@ -693,7 +693,9 @@ def test_create_audit_auto_reject(sql_workflow, mocker: MockFixture):
     assert "系统直接审核不通过" in log.operation_info
 
 
-def test_can_operate_abort_by_creator(sql_query_apply, fake_generate_audit_setting, normal_user, create_auth_group):
+def test_can_operate_abort_by_creator(
+    sql_query_apply, fake_generate_audit_setting, normal_user, create_auth_group
+):
     """测试工单创建者可以撤回工单"""
     fake_generate_audit_setting.return_value = AuditSetting(
         auto_pass=False, audit_auth_groups=[create_auth_group.id]
@@ -705,7 +707,13 @@ def test_can_operate_abort_by_creator(sql_query_apply, fake_generate_audit_setti
     assert audit.can_operate(WorkflowAction.ABORT, normal_user) is True
 
 
-def test_can_operate_abort_by_others(sql_query_apply, fake_generate_audit_setting, normal_user, super_user, create_auth_group):
+def test_can_operate_abort_by_others(
+    sql_query_apply,
+    fake_generate_audit_setting,
+    normal_user,
+    super_user,
+    create_auth_group,
+):
     """测试非工单创建者不能撤回工单"""
     fake_generate_audit_setting.return_value = AuditSetting(
         auto_pass=False, audit_auth_groups=[create_auth_group.id]
@@ -727,7 +735,9 @@ def test_can_operate_abort_by_others(sql_query_apply, fake_generate_audit_settin
         WorkflowAction.EXECUTE_SET_TIME,
     ],
 )
-def test_can_operate_execute_actions(sql_query_apply, fake_generate_audit_setting, super_user, action, create_auth_group):
+def test_can_operate_execute_actions(
+    sql_query_apply, fake_generate_audit_setting, super_user, action, create_auth_group
+):
     """测试执行类操作默认放行"""
     fake_generate_audit_setting.return_value = AuditSetting(
         auto_pass=False, audit_auth_groups=[create_auth_group.id]
@@ -739,7 +749,9 @@ def test_can_operate_execute_actions(sql_query_apply, fake_generate_audit_settin
     assert audit.can_operate(action, super_user) is True
 
 
-def test_can_operate_no_permission(sql_query_apply, fake_generate_audit_setting, normal_user):
+def test_can_operate_no_permission(
+    sql_query_apply, fake_generate_audit_setting, normal_user
+):
     """测试用户缺少审批权限时抛出异常"""
     fake_generate_audit_setting.return_value = AuditSetting(
         auto_pass=False, audit_auth_groups=[1]
@@ -752,9 +764,12 @@ def test_can_operate_no_permission(sql_query_apply, fake_generate_audit_setting,
 
 
 @patch("sql.utils.workflow_audit.Group.objects.get")
-def test_can_operate_group_not_exist(mock_group_get, sql_query_apply, fake_generate_audit_setting, normal_user):
+def test_can_operate_group_not_exist(
+    mock_group_get, sql_query_apply, fake_generate_audit_setting, normal_user
+):
     """测试当前审批权限组不存在时抛出异常"""
     from django.contrib.auth.models import Permission
+
     query_review = Permission.objects.get(codename="query_review")
     normal_user.user_permissions.add(query_review)
     mock_group_get.side_effect = Group.DoesNotExist()
@@ -769,12 +784,16 @@ def test_can_operate_group_not_exist(mock_group_get, sql_query_apply, fake_gener
 
 
 @patch("sql.utils.workflow_audit.auth_group_users")
-def test_can_operate_not_in_resource_group(mock_auth_group_users, sql_query_apply, fake_generate_audit_setting, normal_user):
+def test_can_operate_not_in_resource_group(
+    mock_auth_group_users, sql_query_apply, fake_generate_audit_setting, normal_user
+):
     """测试用户不在流程相关资源组内时抛出异常"""
     from django.contrib.auth.models import Permission
+
     query_review = Permission.objects.get(codename="query_review")
     normal_user.user_permissions.add(query_review)
     from sql.models import Users
+
     mock_auth_group_users.return_value = Users.objects.none()
     audit = AuditV2(workflow=sql_query_apply)
     audit.create_audit()
@@ -783,15 +802,19 @@ def test_can_operate_not_in_resource_group(mock_auth_group_users, sql_query_appl
     assert "用户不在流程相关资源组内" in str(exc_info.value)
 
 
-def test_can_operate_not_in_auth_group(sql_query_apply, fake_generate_audit_setting, normal_user):
+def test_can_operate_not_in_auth_group(
+    sql_query_apply, fake_generate_audit_setting, normal_user
+):
     """测试用户不在当前节点的审核组内时抛出异常"""
     from django.contrib.auth.models import Permission
+
     query_review = Permission.objects.get(codename="query_review")
     normal_user.user_permissions.add(query_review)
     audit = AuditV2(workflow=sql_query_apply)
     audit.create_audit()
     with patch("sql.utils.workflow_audit.auth_group_users") as mock_auth_group_users:
         from sql.models import Users
+
         mock_auth_group_users.return_value = Users.objects.filter(id=normal_user.id)
         with pytest.raises(AuditException) as exc_info:
             audit.can_operate(WorkflowAction.PASS, normal_user)
@@ -846,7 +869,9 @@ def test_operate_no_audit(sql_query_apply, normal_user):
     assert "给定工单未绑定审批信息" in str(exc_info.value)
 
 
-def test_operate_pass_next_group_not_exist(sql_query_apply, super_user, fake_generate_audit_setting, create_auth_group):
+def test_operate_pass_next_group_not_exist(
+    sql_query_apply, super_user, fake_generate_audit_setting, create_auth_group
+):
     """测试 operate_pass 在下级审批组不存在时的降级处理"""
     fake_generate_audit_setting.return_value = AuditSetting(
         auto_pass=False, audit_auth_groups=[create_auth_group.id, 99999]
@@ -855,6 +880,7 @@ def test_operate_pass_next_group_not_exist(sql_query_apply, super_user, fake_gen
     audit.create_audit()
 
     with patch("sql.utils.workflow_audit.Group.objects.get") as mock_group_get:
+
         def side_effect(*args, **kwargs):
             pk = kwargs.get("id")
             if str(pk) == "99999":
@@ -867,13 +893,19 @@ def test_operate_pass_next_group_not_exist(sql_query_apply, super_user, fake_gen
     assert result is not None
     assert audit.audit.current_status == WorkflowStatus.WAITING
     assert str(audit.audit.current_audit) == "99999"
-    log = WorkflowLog.objects.filter(
-        audit_id=audit.audit.audit_id, operation_type=WorkflowAction.PASS
-    ).order_by("-id").first()
+    log = (
+        WorkflowLog.objects.filter(
+            audit_id=audit.audit.audit_id, operation_type=WorkflowAction.PASS
+        )
+        .order_by("-id")
+        .first()
+    )
     assert "99999" in log.operation_info
 
 
-def test_get_workflow_for_archive(archive_apply, resource_group, fake_generate_audit_setting):
+def test_get_workflow_for_archive(
+    archive_apply, resource_group, fake_generate_audit_setting
+):
     """测试通过 audit 初始化 Archive 类型 workflow"""
     audit = AuditV2(workflow=archive_apply, resource_group=resource_group.group_name)
     audit.create_audit()
@@ -940,4 +972,6 @@ class TestAuditExtra(TestCase):
     def test_change_settings_resource_group_not_exist(self):
         """测试 change_settings 在资源组不存在时抛出异常"""
         with self.assertRaises(ResourceGroup.DoesNotExist):
-            Audit.change_settings(group_id=99999, workflow_type=1, audit_auth_groups="1,2")
+            Audit.change_settings(
+                group_id=99999, workflow_type=1, audit_auth_groups="1,2"
+            )
