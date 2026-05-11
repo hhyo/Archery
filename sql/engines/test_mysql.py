@@ -337,9 +337,7 @@ class TestMysql(TestCase):
             "security_type",
             "routine_comment",
         ]
-        meta.rows = [
-            ("f1", "some_db", "int", "root@%", None, None, "", "DEFINER", "")
-        ]
+        meta.rows = [("f1", "some_db", "int", "root@%", None, None, "", "DEFINER", "")]
         create = ResultSet()
         create.rows = [("f1", "", "CREATE FUNCTION f1() RETURNS INT RETURN 1", "", "")]
         mock_query.side_effect = [meta, create]
@@ -380,13 +378,34 @@ class TestMysql(TestCase):
         ]
         meta.rows = [
             (
-                "e1", "some_db", "root@%", "RECURRING", 1, "DAY",
-                "ENABLED", None, None, None, None, "NOT PRESERVE",
-                None, None, "",
+                "e1",
+                "some_db",
+                "root@%",
+                "RECURRING",
+                1,
+                "DAY",
+                "ENABLED",
+                None,
+                None,
+                None,
+                None,
+                "NOT PRESERVE",
+                None,
+                None,
+                "",
             )
         ]
         create = ResultSet()
-        create.rows = [("e1", "", "", "CREATE EVENT e1 ON SCHEDULE EVERY 1 DAY DO SELECT 1", "", "")]
+        create.rows = [
+            (
+                "e1",
+                "",
+                "",
+                "CREATE EVENT e1 ON SCHEDULE EVERY 1 DAY DO SELECT 1",
+                "",
+                "",
+            )
+        ]
         mock_query.side_effect = [meta, create]
         engine = MysqlEngine(instance=self.ins1)
         data = engine.get_event_detail(db_name="some_db", event_name="e1")
