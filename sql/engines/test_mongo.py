@@ -1303,3 +1303,401 @@ class TestParseTuple:
         )
         # 缺失的字段被填充为 "(N/A)"
         assert any("(N/A)" in str(item) for row in rows for item in row)
+
+
+# ====================== tablespace / tablespace_count ======================
+
+
+class TestTablespace:
+    def _build_mock_conn(self, mongo_engine, db_collections):
+        """构建 mock 连接对象。
+
+        db_collections 格式：
+            {
+                "db1": {
+                    "collections": ["coll1", "coll2"],
+                    "stats": {
+                        "coll1": {"storageStats": {"ns": "db1.coll1", ...}},
+                        "coll2": {...},
+                    }
+                }
+            }
+        如果省略 stats，则 aggregate 默认返回空迭代器。
+        """
+        mock_conn = MagicMock()
+
+        def _get_db(name):
+            db_mock = MagicMock()
+            db_mock.list_collection_names.return_value = db_collections[name][
+                "collections"
+            ]
+
+            stats_map = db_collections[name].get("stats", {})
+
+            def _get_coll(coll_name):
+                coll_mock = MagicMock()
+                stat_data = stats_map.get(coll_name)
+                if stat_data is not None:
+                    coll_mock.aggregate.return_value = [stat_data]
+                else:
+                    coll_mock.aggregate.return_value = iter([])
+                return coll_mock
+
+            db_mock.__getitem__ = MagicMock(side_effect=_get_coll)
+            return db_mock
+
+        mock_conn.__getitem__ = MagicMock(side_effect=_get_db)
+        mock_conn.list_database_names.return_value = list(db_collections.keys())
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+        return mock_conn
+
+    def test_tablespace_basic(self, mongo_engine):
+        """基本功能：两个集合，验证字段和排序"""
+        db_collections = {
+            "mydb": {
+                "collections": ["small_coll", "big_coll"],
+                "stats": {
+                    "small_coll": {
+                        "storageStats": {
+                            "ns": "mydb.small_coll",
+                            "totalSize": 10 * 1024 * 1024,  # 10 MB
+                            "count": 100,
+                            "size": 8 * 1024 * 1024,
+                            "avgObjSize": 80,
+                            "storageSize": 4 * 1024 * 1024,
+                            "freeStorageSize": 1 * 1024 * 1024,
+                            "capped": False,
+                            "nindexes": 2,
+                            "totalIndexSize": 2 * 1024 * 1024,
+                        }
+                    },
+                    "big_coll": {
+                        "storageStats": {
+                            "ns": "mydb.big_coll",
+                            "totalSize": 100 * 1024 * 1024,  # 100 MB
+                            "count": 1000,
+                            "size": 80 * 1024 * 1024,
+                            "avgObjSize": 800,
+                            "storageSize": 50 * 1024 * 1024,
+                            "freeStorageSize": 5 * 1024 * 1024,
+                            "capped": True,
+                            "nindexes": 3,
+                            "totalIndexSize": 10 * 1024 * 1024,
+                        }
+                    },
+                },
+            }
+        }
+        self._build_mock_conn(mongo_engine, db_collections)
+
+        result = mongo_engine.tablespace(offset=0, row_count=14)
+        assert result.error is None
+        assert len(result.rows) == 2
+        # 按 totalSize 倒序
+        assert result.rows[0]["ns"] == "mydb.big_coll"
+        assert result.rows[1]["ns"] == "mydb.small_coll"
+        # 验证 MB 转换
+        assert result.rows[0]["totalSize"] == 100.0
+        assert result.rows[1]["totalSize"] == 10.0
+        assert result.rows[0]["size"] == 80.0
+        assert result.rows[0]["storageSize"] == 50.0
+        assert result.rows[0]["freeStorageSize"] == 5.0
+        assert result.rows[0]["totalIndexSize"] == 10.0
+        # 不转换的字段
+        assert result.rows[0]["count"] == 1000
+        assert result.rows[0]["avgObjSize"] == 800
+        assert result.rows[0]["capped"] is True
+        assert result.rows[0]["nindexes"] == 3
+        # column_list
+        assert result.column_list == [
+            "ns",
+            "totalSize",
+            "count",
+            "size",
+            "avgObjSize",
+            "storageSize",
+            "freeStorageSize",
+            "capped",
+            "nindexes",
+            "totalIndexSize",
+        ]
+
+    def test_tablespace_excludes_system_dbs(self, mongo_engine):
+        """排除系统库 admin / config / local"""
+        db_collections = {
+            "admin": {"collections": ["system.users"], "stats": {}},
+            "config": {"collections": ["mongos"], "stats": {}},
+            "local": {"collections": ["startup_log"], "stats": {}},
+            "mydb": {
+                "collections": ["users"],
+                "stats": {
+                    "users": {
+                        "storageStats": {
+                            "ns": "mydb.users",
+                            "totalSize": 1 * 1024 * 1024,
+                            "count": 10,
+                            "size": 0.5 * 1024 * 1024,
+                            "avgObjSize": 50,
+                            "storageSize": 0.3 * 1024 * 1024,
+                            "freeStorageSize": 0,
+                            "capped": False,
+                            "nindexes": 1,
+                            "totalIndexSize": 0,
+                        }
+                    }
+                },
+            },
+        }
+        self._build_mock_conn(mongo_engine, db_collections)
+
+        result = mongo_engine.tablespace()
+        assert result.error is None
+        assert len(result.rows) == 1
+        assert result.rows[0]["ns"] == "mydb.users"
+
+    def test_tablespace_pagination(self, mongo_engine):
+        """分页：offset 和 row_count"""
+        db_collections = {
+            "mydb": {
+                "collections": ["c1", "c2", "c3"],
+                "stats": {
+                    "c1": {
+                        "storageStats": {
+                            "ns": "mydb.c1",
+                            "totalSize": 30 * 1024 * 1024,
+                            "count": 1,
+                            "size": 0,
+                            "avgObjSize": 0,
+                            "storageSize": 0,
+                            "freeStorageSize": 0,
+                            "capped": False,
+                            "nindexes": 0,
+                            "totalIndexSize": 0,
+                        }
+                    },
+                    "c2": {
+                        "storageStats": {
+                            "ns": "mydb.c2",
+                            "totalSize": 20 * 1024 * 1024,
+                            "count": 1,
+                            "size": 0,
+                            "avgObjSize": 0,
+                            "storageSize": 0,
+                            "freeStorageSize": 0,
+                            "capped": False,
+                            "nindexes": 0,
+                            "totalIndexSize": 0,
+                        }
+                    },
+                    "c3": {
+                        "storageStats": {
+                            "ns": "mydb.c3",
+                            "totalSize": 10 * 1024 * 1024,
+                            "count": 1,
+                            "size": 0,
+                            "avgObjSize": 0,
+                            "storageSize": 0,
+                            "freeStorageSize": 0,
+                            "capped": False,
+                            "nindexes": 0,
+                            "totalIndexSize": 0,
+                        }
+                    },
+                },
+            }
+        }
+        self._build_mock_conn(mongo_engine, db_collections)
+
+        # 第1页，每页2条
+        result = mongo_engine.tablespace(offset=0, row_count=2)
+        assert len(result.rows) == 2
+        assert result.rows[0]["ns"] == "mydb.c1"
+        assert result.rows[1]["ns"] == "mydb.c2"
+
+        # 第2页，每页2条
+        result = mongo_engine.tablespace(offset=2, row_count=2)
+        assert len(result.rows) == 1
+        assert result.rows[0]["ns"] == "mydb.c3"
+
+    def test_tablespace_operation_failure_fallback(self, mongo_engine):
+        """list_database_names 抛出 OperationFailure 时回退到 db_name"""
+        from pymongo.errors import OperationFailure
+
+        mock_conn = MagicMock()
+        mock_conn.list_database_names.side_effect = OperationFailure("no auth")
+        mock_db = MagicMock()
+        mock_db.list_collection_names.return_value = ["coll1"]
+        mock_coll = MagicMock()
+        mock_coll.aggregate.return_value = [
+            {
+                "storageStats": {
+                    "ns": "test_db.coll1",
+                    "totalSize": 5 * 1024 * 1024,
+                    "count": 50,
+                    "size": 3 * 1024 * 1024,
+                    "avgObjSize": 60,
+                    "storageSize": 2 * 1024 * 1024,
+                    "freeStorageSize": 0,
+                    "capped": False,
+                    "nindexes": 1,
+                    "totalIndexSize": 1 * 1024 * 1024,
+                }
+            }
+        ]
+        mock_db.__getitem__ = MagicMock(return_value=mock_coll)
+        mock_conn.__getitem__ = MagicMock(return_value=mock_db)
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+        mongo_engine.db_name = "test_db"
+
+        result = mongo_engine.tablespace()
+        assert result.error is None
+        assert len(result.rows) == 1
+        assert result.rows[0]["ns"] == "test_db.coll1"
+
+    def test_tablespace_collection_error_skipped(self, mongo_engine):
+        """单个集合获取存储信息报错时跳过，不影响其他集合"""
+        mock_conn = MagicMock()
+        mock_conn.list_database_names.return_value = ["mydb"]
+
+        db_mock = MagicMock()
+        db_mock.list_collection_names.return_value = ["good_coll", "bad_coll"]
+
+        good_coll_mock = MagicMock()
+        good_coll_mock.aggregate.return_value = [
+            {
+                "storageStats": {
+                    "ns": "mydb.good_coll",
+                    "totalSize": 1 * 1024 * 1024,
+                    "count": 5,
+                    "size": 0,
+                    "avgObjSize": 0,
+                    "storageSize": 0,
+                    "freeStorageSize": 0,
+                    "capped": False,
+                    "nindexes": 0,
+                    "totalIndexSize": 0,
+                }
+            }
+        ]
+
+        bad_coll_mock = MagicMock()
+        bad_coll_mock.aggregate.side_effect = Exception("stats error")
+
+        def _get_coll(name):
+            if name == "good_coll":
+                return good_coll_mock
+            return bad_coll_mock
+
+        db_mock.__getitem__ = MagicMock(side_effect=_get_coll)
+        mock_conn.__getitem__ = MagicMock(return_value=db_mock)
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+
+        result = mongo_engine.tablespace()
+        assert result.error is None
+        assert len(result.rows) == 1
+        assert result.rows[0]["ns"] == "mydb.good_coll"
+
+    def test_tablespace_connection_error(self, mongo_engine):
+        """连接失败时返回错误"""
+        mongo_engine.get_connection = MagicMock(side_effect=Exception("conn failed"))
+
+        result = mongo_engine.tablespace()
+        assert result.error is not None
+        assert "conn failed" in result.error
+
+    def test_tablespace_defaults_on_missing_stats(self, mongo_engine):
+        """storageStats 中部分字段缺失时使用默认值"""
+        db_collections = {
+            "mydb": {
+                "collections": ["sparse_coll"],
+                "stats": {
+                    "sparse_coll": {
+                        "storageStats": {
+                            # 只提供 ns 和 totalSize
+                            "ns": "mydb.sparse_coll",
+                            "totalSize": 2 * 1024 * 1024,
+                        }
+                    }
+                },
+            }
+        }
+        self._build_mock_conn(mongo_engine, db_collections)
+
+        result = mongo_engine.tablespace()
+        assert result.error is None
+        assert len(result.rows) == 1
+        row = result.rows[0]
+        assert row["ns"] == "mydb.sparse_coll"
+        assert row["totalSize"] == 2.0
+        assert row["count"] == 0
+        assert row["size"] == 0.0
+        assert row["avgObjSize"] == 0
+        assert row["storageSize"] == 0.0
+        assert row["freeStorageSize"] == 0.0
+        assert row["capped"] is False
+        assert row["nindexes"] == 0
+        assert row["totalIndexSize"] == 0.0
+
+
+class TestTablespaceCount:
+    def test_tablespace_count_basic(self, mongo_engine):
+        """基本功能：统计非系统库的集合数量"""
+        mock_conn = MagicMock()
+        mock_conn.list_database_names.return_value = ["mydb", "admin", "mydb2"]
+
+        db_mydb = MagicMock()
+        db_mydb.list_collection_names.return_value = ["coll1", "coll2"]
+
+        db_admin = MagicMock()
+        db_admin.list_collection_names.return_value = ["system.users"]
+
+        db_mydb2 = MagicMock()
+        db_mydb2.list_collection_names.return_value = ["coll3"]
+
+        def _get_db(name):
+            if name == "mydb":
+                return db_mydb
+            elif name == "admin":
+                return db_admin
+            return db_mydb2
+
+        mock_conn.__getitem__ = MagicMock(side_effect=_get_db)
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+
+        result = mongo_engine.tablespace_count()
+        assert result.error is None
+        assert result.rows[0][0] == 3  # 2 (mydb) + 1 (mydb2), admin excluded
+
+    def test_tablespace_count_operation_failure(self, mongo_engine):
+        """list_database_names 抛出 OperationFailure 时回退"""
+        from pymongo.errors import OperationFailure
+
+        mock_conn = MagicMock()
+        mock_conn.list_database_names.side_effect = OperationFailure("no auth")
+        mock_db = MagicMock()
+        mock_db.list_collection_names.return_value = ["coll1", "coll2"]
+        mock_conn.__getitem__ = MagicMock(return_value=mock_db)
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+        mongo_engine.db_name = "test_db"
+
+        result = mongo_engine.tablespace_count()
+        assert result.error is None
+        assert result.rows[0][0] == 2
+
+    def test_tablespace_count_connection_error(self, mongo_engine):
+        """连接失败时返回错误"""
+        mongo_engine.get_connection = MagicMock(side_effect=Exception("conn failed"))
+
+        result = mongo_engine.tablespace_count()
+        assert result.error is not None
+        assert "conn failed" in result.error
+
+    def test_tablespace_count_empty(self, mongo_engine):
+        """没有任何非系统库时返回 0"""
+        mock_conn = MagicMock()
+        mock_conn.list_database_names.return_value = ["admin", "config", "local"]
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+
+        result = mongo_engine.tablespace_count()
+        assert result.error is None
+        assert result.rows[0][0] == 0

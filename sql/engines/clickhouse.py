@@ -639,6 +639,34 @@ class ClickHouseEngine(EngineBase):
             table_metas.append(_meta)
         return table_metas
 
+    def tablespace(self, offset=0, row_count=14):
+        """获取表空间信息"""
+        sql = """SELECT
+            database AS table_schema,
+            table AS table_name,
+            engine AS engine,
+            round((sum(bytes_on_disk) + sum(marks_bytes)) / 1024 / 1024, 2) AS total_size,
+            sum(rows) AS table_rows,
+            round(sum(bytes_on_disk) / 1024 / 1024, 2) AS data_size,
+            round(sum(marks_bytes) / 1024 / 1024, 2) AS index_size,
+            0 AS data_free,
+            0 AS pct_free
+        FROM system.parts
+        WHERE active
+            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema')
+        GROUP BY database, table, engine
+        ORDER BY total_size DESC
+        LIMIT {},{};""".format(offset, row_count)
+        return self.query(sql=sql)
+
+    def tablespace_count(self):
+        """获取表空间数量"""
+        sql = """SELECT count(DISTINCT (database, table))
+        FROM system.parts
+        WHERE active
+            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema')"""
+        return self.query(sql=sql)
+
     def close(self):
         if self.conn:
             self.conn.close()

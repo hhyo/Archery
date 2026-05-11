@@ -603,3 +603,86 @@ def test_get_tables_metas_data(mock_query, mock_instance):
     assert ret[0]["TABLE_INFO"]["TABLE_NAME"] == "t1"
     assert len(ret[0]["COLUMNS"]) == 2
     assert ret[0]["COLUMNS"][0]["COLUMN_NAME"] == "id"
+
+
+# ----------------- tablespace -----------------
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(
+        column_list=[
+            "table_schema",
+            "table_name",
+            "engine",
+            "total_size",
+            "table_rows",
+            "data_size",
+            "index_size",
+            "data_free",
+            "pct_free",
+        ],
+        rows=[
+            ("my_db", "t1", "MergeTree", 1024.5, 1000000, 800.0, 224.5, 0, 0),
+            ("my_db", "t2", "ReplacingMergeTree", 512.0, 500000, 400.0, 112.0, 0, 0),
+        ],
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.tablespace(offset=0, row_count=14)
+    mock_query.assert_called_once()
+    assert isinstance(rs, ResultSet)
+    assert rs.column_list[0] == "table_schema"
+    assert rs.rows[0][0] == "my_db"
+    assert rs.rows[0][1] == "t1"
+    assert rs.rows[0][2] == "MergeTree"
+    assert len(rs.rows) == 2
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace_with_offset(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(
+        column_list=[
+            "table_schema",
+            "table_name",
+            "engine",
+            "total_size",
+            "table_rows",
+            "data_size",
+            "index_size",
+            "data_free",
+            "pct_free",
+        ],
+        rows=[
+            ("my_db", "t3", "MergeTree", 256.0, 200000, 200.0, 56.0, 0, 0),
+        ],
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.tablespace(offset=14, row_count=14)
+    mock_query.assert_called_once()
+    # 验证传给 query 的 SQL 包含正确的 LIMIT 偏移
+    call_sql = mock_query.call_args.kwargs.get("sql", "") or mock_query.call_args[
+        1
+    ].get("sql", "")
+    assert "LIMIT 14,14" in call_sql
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace_count(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(
+        column_list=["count()"],
+        rows=[(42,)],
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.tablespace_count()
+    mock_query.assert_called_once()
+    assert isinstance(rs, ResultSet)
+    assert rs.rows[0][0] == 42
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace_count_empty(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(
+        column_list=["count()"],
+        rows=[(0,)],
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.tablespace_count()
+    assert rs.rows[0][0] == 0
