@@ -642,20 +642,20 @@ class ClickHouseEngine(EngineBase):
     def tablespace(self, offset=0, row_count=14):
         """获取表空间信息"""
         sql = """SELECT
-            database AS table_schema,
-            table AS table_name,
-            engine AS engine,
-            round((sum(bytes_on_disk) + sum(marks_bytes)) / 1024 / 1024, 2) AS total_size,
+            database,
+            table,
+            engine,
             sum(rows) AS table_rows,
-            round(sum(bytes_on_disk) / 1024 / 1024, 2) AS data_size,
-            round(sum(marks_bytes) / 1024 / 1024, 2) AS index_size,
-            0 AS data_free,
-            0 AS pct_free
+            formatReadableSize(sum(bytes_on_disk)) AS total_size,
+            formatReadableSize(sum(marks_bytes)) AS marks_bytes,
+            formatReadableSize(sum(data_uncompressed_bytes)) AS data_uncompressed,
+            formatReadableSize(sum(data_compressed_bytes)) AS data_compressed,
+            round((sum(data_compressed_bytes) / sum(data_uncompressed_bytes)) * 100, 2) AS compress_ratio
         FROM system.parts
-        WHERE active
+        WHERE active = 1
             AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema')
         GROUP BY database, table, engine
-        ORDER BY total_size DESC
+        ORDER BY table_rows DESC
         LIMIT {},{};""".format(offset, row_count)
         return self.query(sql=sql)
 
