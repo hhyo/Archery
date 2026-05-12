@@ -100,6 +100,8 @@ def kill_session(request):
         r = engine.kill_op(json.loads(thread_ids))
     elif instance.db_type == "oracle":
         r = engine.kill_session(json.loads(thread_ids))
+    elif instance.db_type == "tdengine":
+        r = engine.kill_query(json.loads(thread_ids))
     else:
         result = {
             "status": 1,

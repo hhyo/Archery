@@ -155,6 +155,7 @@ DB_TYPE_CHOICES = (
     ("elasticsearch", "Elasticsearch"),
     ("opensearch", "OpenSearch"),
     ("memcached", "Memcached"),
+    ("tdengine", "TDengine"),
 )
 
 

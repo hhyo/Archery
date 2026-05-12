@@ -472,3 +472,115 @@ const oracleDiagnosticInfo = {
         }
     ],
 }
+
+const tdengineDiagnosticInfo = {
+    fieldsProcesslist: [
+        'tdengine',
+        ["All"],
+        [{
+            title: '',
+            field: 'checkbox',
+            checkbox: true
+        }, {
+            title: 'Kill ID',
+            field: 'kill_id',
+        }, {
+            title: 'Query ID',
+            field: 'query_id',
+        }, {
+            title: 'Conn ID',
+            field: 'conn_id',
+        }, {
+            title: 'Sub Status',
+            field: 'sub_status',
+            sortable: true,
+            formatter: function (value, row, index) {
+                if (row.sub_status.length > 50) {
+                    let sub_status = row.sub_status.substr(0, 50) + '...';
+                    return sub_status;
+                } else {
+                    return value
+                }
+            }
+        }, {
+            title: 'App',
+            field: 'app',
+            sortable: true
+        }, {
+            title: 'PID',
+            field: 'pid',
+            visible: false
+        }, {
+            title: 'User',
+            field: 'user',
+            sortable: true
+        }, {
+            title: 'End Point',
+            field: 'end_point',
+            sortable: true
+        }, {
+            title: 'Exec Sec',
+            field: 'exec_usec',
+            sortable: true,
+            formatter: function (value, row, index) {
+                return (value / 1000000).toFixed(3);
+            }
+        }, {
+            title: 'Stable Query',
+            field: 'stable_query',
+            visible: false
+        }, {
+            title: 'Sub Query',
+            field: 'sub_query',
+            visible: false
+        }, {
+            title: 'Sub Num',
+            field: 'sub_num',
+            visible: false
+        }, {
+            title: 'SQL',
+            field: 'sql',
+            sortable: true,
+            formatter: function (value, row, index) {
+                if (row.sql.length > 60) {
+                    let sql = row.sql.substr(0, 60) + '...';
+                    return sql;
+                } else {
+                    return value
+                }
+            }
+        }, {
+            title: 'FULL SQL',
+            field: 'sql',
+            visible: false,
+            sortable: true
+        }, {
+            title: 'Create Time',
+            field: 'create_time',
+            sortable: true
+        }, {
+            title: 'User App',
+            field: 'user_app',
+            visible: false
+        }, {
+            title: 'User IP',
+            field: 'user_ip',
+            sortable: true
+        }],
+        function (index, row) {
+            var html = [];
+            $.each(row, function (key, value) {
+                if (key === 'sql') {
+                    var sql = window.sqlFormatter.format(value);
+                    //替换所有的换行符
+                    sql = sql.replace(/\r\n/g, "<br>");
+                    sql = sql.replace(/\n/g, "<br>");
+                    //替换所有的空格
+                    sql = sql.replace(/\s/g, "&nbsp;");
+                    html.push('<span>' + sql + '</span>');
+                }
+            });
+            return html.join('');
+        }
+    ],
+}
