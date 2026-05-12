@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import datetime
+import logging
 import os
 from urllib.parse import quote
 
@@ -13,6 +14,8 @@ from django.http import HttpResponse, JsonResponse, FileResponse
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.resource_group import user_instances
 from .models import Instance
+
+logger = logging.getLogger("default")
 
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
@@ -34,7 +37,8 @@ def table_list(request):
         except Instance.DoesNotExist:
             res = {"status": 1, "msg": "Instance.DoesNotExist"}
         except Exception as e:
-            res = {"status": 1, "msg": str(e)}
+            logger.exception("获取数据字典表列表失败")
+            res = {"status": 1, "msg": "获取数据失败，请联系管理员查看日志"}
     else:
         res = {"status": 1, "msg": "非法调用！"}
     return HttpResponse(
@@ -80,7 +84,8 @@ def table_info(request):
         except Instance.DoesNotExist:
             res = {"status": 1, "msg": "Instance.DoesNotExist"}
         except Exception as e:
-            res = {"status": 1, "msg": str(e)}
+            logger.exception("获取数据字典表信息失败")
+            res = {"status": 1, "msg": "获取数据失败，请联系管理员查看日志"}
     else:
         res = {"status": 1, "msg": "非法调用！"}
     return HttpResponse(
@@ -212,7 +217,8 @@ def _dict_list(request, db_type_required, engine_method):
         except Instance.DoesNotExist:
             res = {"status": 1, "msg": "Instance.DoesNotExist"}
         except Exception as e:
-            res = {"status": 1, "msg": str(e)}
+            logger.exception("获取数据字典对象列表失败")
+            res = {"status": 1, "msg": "获取数据失败，请联系管理员查看日志"}
     else:
         res = {"status": 1, "msg": "非法调用！"}
     return HttpResponse(
@@ -250,7 +256,8 @@ def _dict_detail(request, db_type_required, engine_method, name_param, engine_kw
         except Instance.DoesNotExist:
             res = {"status": 1, "msg": "Instance.DoesNotExist"}
         except Exception as e:
-            res = {"status": 1, "msg": str(e)}
+            logger.exception("获取数据字典对象详情失败")
+            res = {"status": 1, "msg": "获取数据失败，请联系管理员查看日志"}
     else:
         res = {"status": 1, "msg": "非法调用！"}
     return HttpResponse(
