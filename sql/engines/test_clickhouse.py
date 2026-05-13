@@ -604,6 +604,7 @@ def test_get_tables_metas_data(mock_query, mock_instance):
     assert len(ret[0]["COLUMNS"]) == 2
     assert ret[0]["COLUMNS"][0]["COLUMN_NAME"] == "id"
 
+
 # ----------------- processlist -----------------
 @patch.object(ClickHouseEngine, "query")
 def test_processlist(mock_query, mock_instance):
