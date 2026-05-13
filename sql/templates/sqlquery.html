@@ -1081,6 +1081,11 @@
                 if (sql === 'explain') {
                     sqlContent = 'SET SHOWPLAN_ALL ON; ' + sqlContent + '; SET SHOWPLAN_ALL OFF;'
                 }
+            } else if (optgroup === "TDengine") {
+                //查看执行计划
+                if (sql === 'explain') {
+                    sqlContent = 'explain ' + sqlContent
+                }
             }
             //提交请求
             $.ajax({
@@ -1318,7 +1323,11 @@
                                 $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">查看集合字段:</option>")
                             }
                             for (var i = 0; i < result.length; i++) {
-                                var name = "<option>" + result[i] + "</option>";
+                                if (optgroup == 'TDengine' && (result[i] === "普通表" || result[i] === "超级表")) {
+                                    var name = "<option value=\"is-empty\" disabled=\"\">" + result[i] + ":</option>";
+                                } else {
+                                    var name = "<option>" + result[i] + "</option>";
+                                }
                                 $("#table_name").append(name);
                             }
                             $('#table_name').selectpicker('render');

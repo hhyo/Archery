@@ -31,6 +31,7 @@
                         <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                         <optgroup id="optgroup-doris" label="Doris"></optgroup>
                         <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
+                        <optgroup id="optgroup-tdengine" label="TDengine"></optgroup>
                 </select>
             </div>
             <div id="command-div" class="form-group">
@@ -127,6 +128,9 @@
         }
         if (typeof dorisDiagnosticInfo !== "undefined" && Array.isArray(dorisDiagnosticInfo.fieldsProcesslist)) {
             processListTableInfos.push(dorisDiagnosticInfo?.fieldsProcesslist);
+        }
+        if (typeof tdengineDiagnosticInfo !== "undefined" && Array.isArray(tdengineDiagnosticInfo.fieldsProcesslist)) {
+            processListTableInfos.push(tdengineDiagnosticInfo?.fieldsProcesslist);
         }
          
 
@@ -713,7 +717,9 @@
                             AllSelectionIds.push(AllSelections[i]['opid'])  // mongo
                         } else if (AllSelections[i]['SID']) {
                             AllSelectionIds.push([AllSelections[i]['SID'],AllSelections[i]['SERIAL#']])  // oracle
-                        }
+                        } else if (AllSelections[i]['kill_id']) {
+                            AllSelectionIds.push(AllSelections[i]['kill_id'])  // tdengine
+                        } 
                     }
                     var instance_name = $("#instance_name").val();
 
@@ -762,6 +768,8 @@
                         AllSelectionIds.push(AllSelections[i]['opid'])  // mongo
                     } else if (AllSelections[i]['SID']) {
                         AllSelectionIds.push([AllSelections[i]['SID'],AllSelections[i]['SERIAL#']])  // oracle
+                    } else if (AllSelections[i]['kill_id']) {
+                        AllSelectionIds.push(AllSelections[i]['kill_id'])    // tdengine
                     }
                 }
                 var instance_name = $("#instance_name").val();
@@ -801,7 +809,7 @@
                 //获取用户实例列表
                 $(function () {
                     // 会话管理-支持的数据库类型
-                    supportedDbType=['mysql','mongo', 'oracle','redis','pgsql','doris','clickhouse']
+                    supportedDbType=['mysql', 'mongo', 'oracle', 'redis', 'pgsql', 'doris', 'tdengine', 'clickhouse']
                     $.ajax({
                         type: "get",
                         url: "/group/user_all_instances/",
