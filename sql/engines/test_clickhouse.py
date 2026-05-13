@@ -603,3 +603,118 @@ def test_get_tables_metas_data(mock_query, mock_instance):
     assert ret[0]["TABLE_INFO"]["TABLE_NAME"] == "t1"
     assert len(ret[0]["COLUMNS"]) == 2
     assert ret[0]["COLUMNS"][0]["COLUMN_NAME"] == "id"
+
+# ----------------- processlist -----------------
+@patch.object(ClickHouseEngine, "query")
+def test_processlist(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(
+        column_list=[
+            "query_id",
+            "user",
+            "ip",
+            "port",
+            "current_database",
+            "time",
+            "total_rows_approx",
+            "memory",
+            "query_kind",
+            "query",
+        ],
+        rows=[
+            (
+                "qid-1",
+                "default",
+                "127.0.0.1",
+                9000,
+                "my_db",
+                0.1,
+                100,
+                "1.00 MiB",
+                "Select",
+                "select 1",
+            )
+        ],
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.processlist(command_type="Process")
+    mock_query.assert_called_once()
+    call_sql = mock_query.call_args.kwargs.get(
+        "sql", mock_query.call_args[1].get("sql")
+    )
+    # 校验关键字段都出现在 SQL 中
+    assert "system.processes" in call_sql
+    assert "query_id" in call_sql
+    assert "IPv6NumToString" in call_sql
+    assert isinstance(rs, ResultSet)
+    assert rs.rows[0][0] == "qid-1"
+    assert rs.rows[0][2] == "127.0.0.1"
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_processlist_empty(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(rows=[])
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.processlist(command_type="Process")
+    assert rs.rows == []
+
+
+# ----------------- get_kill_command -----------------
+def test_get_kill_command_empty(mock_instance):
+    engine = ClickHouseEngine(instance=mock_instance)
+    assert engine.get_kill_command([]) == ""
+
+
+def test_get_kill_command_single(mock_instance):
+    engine = ClickHouseEngine(instance=mock_instance)
+    cmd = engine.get_kill_command(["qid-1"])
+    assert cmd == "KILL QUERY WHERE query_id = 'qid-1';"
+
+
+def test_get_kill_command_multiple(mock_instance):
+    engine = ClickHouseEngine(instance=mock_instance)
+    cmd = engine.get_kill_command(["qid-1", "qid-2", "qid-3"])
+    assert cmd.count("KILL QUERY WHERE query_id = ") == 3
+    assert "'qid-1'" in cmd
+    assert "'qid-2'" in cmd
+    assert "'qid-3'" in cmd
+    # 多条语句以分号分隔
+    assert cmd.endswith(";")
+
+
+def test_get_kill_command_escape(mock_instance):
+    """包含特殊字符的 query_id 应被转义"""
+    engine = ClickHouseEngine(instance=mock_instance)
+    cmd = engine.get_kill_command(["a'b"])
+    # 转义后的字符串不应等于原始字符串
+    assert "a'b" not in cmd or cmd != "KILL QUERY WHERE query_id = 'a'b';"
+    assert cmd.startswith("KILL QUERY WHERE query_id = '")
+    assert cmd.endswith("';")
+
+
+# ----------------- kill -----------------
+def test_kill_empty_ids(mock_instance):
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.kill([])
+    assert isinstance(rs, ResultSet)
+    assert rs.rows == []
+
+
+@patch.object(ClickHouseEngine, "execute")
+def test_kill_with_ids(mock_execute, mock_instance):
+    mock_execute.return_value = ResultSet()
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.kill(["qid-1", "qid-2"])
+    mock_execute.assert_called_once()
+    call_kwargs = mock_execute.call_args.kwargs
+    call_sql = call_kwargs.get("sql") or mock_execute.call_args[0][0]
+    assert "KILL QUERY" in call_sql
+    assert "qid-1" in call_sql
+    assert "qid-2" in call_sql
+    assert isinstance(rs, ResultSet)
+
+
+@patch.object(ClickHouseEngine, "execute")
+def test_kill_does_not_call_execute_when_no_ids(mock_execute, mock_instance):
+    engine = ClickHouseEngine(instance=mock_instance)
+    engine.kill([])
+    mock_execute.assert_not_called()

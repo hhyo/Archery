@@ -94,7 +94,7 @@ def kill_session(request):
 
     engine = get_engine(instance=instance)
     r = None
-    if instance.db_type in ["mysql", "doris"]:
+    if instance.db_type in ["mysql", "doris", "clickhouse"]:
         r = engine.kill(json.loads(thread_ids))
     elif instance.db_type == "mongo":
         r = engine.kill_op(json.loads(thread_ids))
