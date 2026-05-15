@@ -11,6 +11,7 @@ import re
 import shlex
 
 import redis
+import rediscluster
 import logging
 import traceback
 
@@ -27,9 +28,8 @@ class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name
         if self.mode == "cluster":
-            return redis.cluster.RedisCluster(
-                host=self.host,
-                port=self.port,
+            return rediscluster.RedisCluster(
+                startup_nodes=[{"host": self.host, "port": self.port}],
                 username=self.user,
                 password=self.password or None,
                 encoding_errors="ignore",
@@ -54,38 +54,129 @@ class RedisEngine(EngineBase):
 
     info = "Redis engine"
 
+    def get_cluster_master_nodes(self):
+        """
+        获取Redis集群所有主节点的host:port列表
+        单机模式返回当前实例的host:port
+        """
+        if self.mode != "cluster":
+            return [f"{self.host}:{self.port}"]
+        try:
+            conn = self.get_connection()
+            nodes_info = conn.execute_command("CLUSTER", "NODES")
+            masters = []
+            for line in nodes_info.split("\n"):
+                if not line.strip():
+                    continue
+                parts = line.split()
+                if len(parts) >= 8 and "master" in parts[2] and "fail" not in parts[2]:
+                    # 处理格式: 127.0.0.1:7001@17001、[2001:db8::10]:6379@16379、2001:db8::10:6379@16379
+                    # 截取@之前的字符串，去掉[]即为 host:port
+                    # 兼容redis7.2,hostname有可能在@之前，例如：ip:port,hostname@cport
+                    host_port = (
+                        parts[1]
+                        .split("@")[0]
+                        .split(",")[0]
+                        .replace("[", "")
+                        .replace("]", "")
+                    )
+                    masters.append(host_port)
+            return masters if masters else [f"{self.host}:{self.port}"]
+        except Exception as e:
+            logger.warning(f"获取Redis集群节点失败: {e}")
+            return [f"{self.host}:{self.port}"]
+
     def test_connection(self):
-        return self.get_all_databases()
+        """
+        使用 PING 命令测试实例连通性。
+        - 单节点(redis.Redis): ping() 仅对当前连接节点发送 PING，返回 True/b'PONG'。
+        - 集群(rediscluster.RedisCluster): ping() 为广播命令，会向集群中所有主节点发送 PING，
+          任一节点不可达即抛出异常；返回值在不同版本可能为 True 或 {node: 'PONG'} 字典。
+        """
+        result = ResultSet(full_sql="PING")
+        result.column_list = ["PING"]
+        try:
+            conn = self.get_connection()
+            ping_result = conn.ping()
+            if self.mode == "cluster" and isinstance(ping_result, dict):
+                # 集群模式下展开每个主节点的 PING 结果
+                rows = [[node, str(resp)] for node, resp in ping_result.items()]
+                result.column_list = ["node", "PING"]
+                result.rows = tuple(rows)
+                result.affected_rows = len(rows)
+            else:
+                result.rows = ([str(ping_result)],)
+                result.affected_rows = 1
+        except Exception as e:
+            logger.warning(f"Redis PING 执行报错，异常信息：{e}")
+            result.error = str(e)
+        return result
 
     def get_all_databases(self, **kwargs):
         """
-        获取数据库列表
-        :return:
+        获取数据库列表，使用 INFO Keyspace 命令
+        单节点模式：返回 db0~db15，补充缺失的库（keys为0），显示格式如 db0[100]
+        集群模式：只有 db0，汇总所有主节点的 keys 数量
+        :return: ResultSet，rows 为字典列表 [{"value": "0", "text": "db0[100]"}, ...]
         """
-        result = ResultSet(full_sql="CONFIG GET databases")
-        conn = self.get_connection()
+        result = ResultSet(full_sql="INFO Keyspace")
         try:
-            rows = conn.config_get("databases")["databases"]
+            if self.mode == "cluster":
+                # 集群模式：只有 db0，汇总各主节点的 keys
+                total_keys = 0
+                master_nodes = self.get_cluster_master_nodes()
+                for node in master_nodes:
+                    try:
+                        host_port = node.split(":")
+                        host = host_port[0]
+                        port = int(host_port[1]) if len(host_port) > 1 else self.port
+                        node_conn = redis.Redis(
+                            host=host,
+                            port=port,
+                            username=self.user,
+                            password=self.password or None,
+                            encoding_errors="ignore",
+                            decode_responses=True,
+                            socket_connect_timeout=10,
+                            ssl=self.instance.is_ssl,
+                        )
+                        info = node_conn.info("Keyspace")
+                        if "db0" in info:
+                            total_keys += info["db0"].get("keys", 0)
+                        node_conn.close()
+                    except Exception as e:
+                        logger.warning(
+                            f"Redis集群节点 {node} INFO Keyspace 执行报错，异常信息：{e}"
+                        )
+                text = f"db0[{total_keys}]" if total_keys > 0 else "db0"
+                result.rows = [{"value": "0", "text": text}]
+            else:
+                # 单节点模式：获取 Keyspace 信息，补充 0~15 号库
+                conn = self.get_connection()
+                info = conn.info("Keyspace")
+                # 解析 Keyspace 信息，构建 db_num -> keys 的映射
+                db_keys = {}
+                for key, val in info.items():
+                    parts = key.split("db")
+                    if len(parts) == 2 and parts[1].isdigit():
+                        db_num = int(parts[1])
+                        db_keys[db_num] = val.get("keys", 0)
+                # 确定最大库号，至少到 15
+                max_db = max(list(db_keys.keys()) + [15])
+                # 构建结果列表，补充缺失的库
+                db_list = []
+                for i in range(max_db + 1):
+                    keys = db_keys.get(i, 0)
+                    text = f"db{i}[{keys}]" if keys > 0 else f"db{i}"
+                    db_list.append({"value": str(i), "text": text})
+                result.rows = db_list
         except Exception as e:
-            """
-            由于尝试获取databases配置失败，下面的代码块将通过解析info命令的输出来确定数据库的数量。
-            失败场景1：AWS-ElastiCache(Redis)服务不支持部分命令行。比如: config get xx, acl 部分命令
-            失败场景2：使用了没有管理员权限（-@admin）的Redis用户。 （异常信息：this user has no permissions to run the 'config' command or its subcommand）
-            步骤：
-            - 通过info("Keyspace")获取所有的数据库键空间信息。
-            - 从键空间信息中提取数据库编号（如db0, db1等）。
-            - 计算数据库数量，至少会返回0到15共16个数据库。
-            """
-            logger.warning(f"Redis CONFIG GET databases 执行报错，异常信息：{e}")
-            dbs = [
-                int(i.split("db")[1])
-                for i in conn.info("Keyspace").keys()
-                if len(i.split("db")) == 2
-            ]
-            rows = max(dbs + [15]) + 1
-
-        db_list = [str(x) for x in range(int(rows))]
-        result.rows = db_list
+            logger.warning(f"Redis INFO Keyspace 执行报错，异常信息：{e}")
+            # 回退：返回默认的 0~15 号库
+            db_list = []
+            for i in range(16):
+                db_list.append({"value": str(i), "text": f"db{i}"})
+            result.rows = db_list
         return result
 
     def get_all_tables(self, db_name, **kwargs):
@@ -109,43 +200,146 @@ class RedisEngine(EngineBase):
     def query_check(self, db_name=None, sql="", limit_num=0):
         """提交查询前的检查"""
         result = {"msg": "", "bad_query": True, "filtered_sql": sql, "has_star": False}
-        safe_cmd = [
-            "scan",
+
+        # 单单词查询命令（需要单词边界，防止 get 匹配 getdel）
+        safe_single_cmds = [
+            # 字符串
+            "get",
+            "mget",
+            "strlen",
+            "getrange",
+            "getbit",
+            # Bitmap
+            "bitcount",
+            "bitpos",
+            # Hash
+            "hget",
+            "hmget",
+            "hgetall",
+            "hkeys",
+            "hvals",
+            "hlen",
+            "hexists",
+            "hstrlen",
+            # List
+            "llen",
+            "lindex",
+            "lrange",
+            # Set
+            "scard",
+            "smembers",
+            "sismember",
+            "srandmember",
+            "sdiff",
+            "sinter",
+            "sunion",
+            # Sorted Set
+            "zcard",
+            "zcount",
+            "zrange",
+            "zrevrange",
+            "zrangebyscore",
+            "zrevrangebyscore",
+            "zscore",
+            "zrank",
+            "zrevrank",
+            "zlexcount",
+            "zrangebylex",
+            "zrevrangebylex",
+            "zmscore",
+            # HyperLogLog
+            "pfcount",
+            # Geo
+            "geopos",
+            "geodist",
+            "geohash",
+            "georadius",
+            "georadiusbymember",
+            "geosearch",
+            # 通用
             "exists",
             "ttl",
             "pttl",
             "type",
-            "get",
-            "mget",
-            "strlen",
-            "hgetall",
-            "hlen",
-            "hexists",
-            "hget",
-            "hmget",
-            "hkeys",
-            "hvals",
-            "smembers",
-            "scard",
-            "sdiff",
-            "sunion",
-            "sismember",
-            "llen",
-            "lrange",
-            "lindex",
-            "zrange",
-            "zrangebyscore",
-            "zscore",
-            "zcard",
-            "zcount",
-            "zrank",
-            "info",
+            "dbsize",
+            # "randomkey",  # 禁用 randomkey 命令，防止随机扫描
+            "dump",
+            # "keys",  # 禁用 keys 命令，防止全库扫描
+            "scan",
+            # Streams
+            "xlen",
+            "xrange",
+            "xrevrange",
+            "xread",
+            "xpending",
+            # 服务器
+            # "info",  # 禁用 info 命令，防止获取敏感信息
+            "time",
+            "command",
+            "readonly",
         ]
-        # 命令校验，仅可以执行safe_cmd内的命令
-        for cmd in safe_cmd:
-            if re.match(rf"^{cmd}", sql.strip(), re.I):
+
+        # 多单词查询命令
+        safe_multi_cmds = [
+            "object encoding",
+            "object idletime",
+            "object refcount",
+            "memory usage",
+            "memory stats",
+            "memory doctor",
+            "client list",
+            "client info",
+            "client getname",
+            "client getredir",
+            "client trackinginfo",
+            # "config get",  # 禁用 config 命令，防止获取密码等敏感信息
+            "slowlog get",
+            "slowlog len",
+            # "pubsub channels",  # 禁用 pubsub 命令，防止获取敏感信息
+            # "pubsub numsub",
+            # "pubsub numpat",
+            # "acl list",  # 禁用 acl 命令，防止获取敏感信息
+            # "acl getuser",
+            # "acl cat",
+            # "acl whoami",
+            # "acl log",
+            # "acl help",
+            # "module list",  # 禁用 module 命令，防止获取敏感信息
+            # "module help",
+            # "function list",  # 禁用 function 命令，防止获取敏感信息
+            # "function dump",
+            # "function stats",
+            # "function help",
+            # "latency doctor",  # 禁用 latency 命令，防止获取敏感信息
+            # "latency graph",
+            # "latency history",
+            # "latency latest",
+            # "cluster nodes",  # 禁用 cluster 命令，防止获取敏感信息
+            # "cluster info",
+            # "cluster slots",
+            # "cluster shards",
+            # "cluster keyslot",
+            # "cluster countkeysinslot",
+            # "xinfo stream",  # 禁用 xinfo 命令，防止获取敏感信息
+            # "xinfo groups",
+            # "xinfo consumers",
+        ]
+
+        sql_stripped = sql.strip()
+        lower_sql = sql_stripped.lower()
+
+        # 先匹配多单词命令（更具体的优先）
+        for cmd in safe_multi_cmds:
+            if lower_sql.startswith(cmd):
                 result["bad_query"] = False
                 break
+        else:
+            # 再匹配单单词命令（需要单词边界）
+            for cmd in safe_single_cmds:
+                if re.match(rf"^{cmd}\b", sql_stripped, re.I):
+                    result["bad_query"] = False
+                    break
+
         if result["bad_query"]:
             result["msg"] = "禁止执行该命令！"
         return result
@@ -156,13 +350,25 @@ class RedisEngine(EngineBase):
         result_set = ResultSet(full_sql=sql)
         conn = self.get_connection(db_name=0)
         clients = conn.client_list()
-        # 根据空闲时间排序
+
+        # 处理集群模式返回值: 单节点返回 [dict, ...]，集群返回 {node: [dict, ...]}
+        all_clients = []
+        if isinstance(clients, dict):
+            for node_clients in clients.values():
+                if isinstance(node_clients, list):
+                    all_clients.extend(node_clients)
+        elif isinstance(clients, list):
+            all_clients = clients
+
+        # 根据空闲时间排序，过滤掉非字典项
         sort_by = "idle"
         reverse = False
-        clients = sorted(
-            clients, key=lambda client: client.get(sort_by), reverse=reverse
+        all_clients = sorted(
+            [c for c in all_clients if isinstance(c, dict)],
+            key=lambda client: client.get(sort_by, 0),
+            reverse=reverse,
         )
-        result_set.rows = clients
+        result_set.rows = all_clients
         return result_set
 
     def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
@@ -221,16 +427,210 @@ class RedisEngine(EngineBase):
         check_result = ReviewSet(full_sql=sql)
         split_sql = [cmd.strip() for cmd in sql.split("\n") if cmd.strip()]
         line = 1
+
+        # 单单词执行命令（写命令）
+        exec_single_cmds = [
+            # 字符串
+            "append",
+            "decr",
+            "decrby",
+            "getdel",
+            "getex",
+            "incr",
+            "incrby",
+            "incrbyfloat",
+            "mset",
+            "msetnx",
+            "psetex",
+            "set",
+            "setex",
+            "setnx",
+            "setrange",
+            # Hash
+            "hdel",
+            "hincrby",
+            "hincrbyfloat",
+            "hmset",
+            "hset",
+            "hsetnx",
+            # List
+            "blmove",
+            "blmpop",
+            "blpop",
+            "brpop",
+            "brpoplpush",
+            "linsert",
+            "lmove",
+            "lmpop",
+            "lpop",
+            "lpush",
+            "lpushx",
+            "lrem",
+            "lset",
+            "ltrim",
+            "rpop",
+            "rpoplpush",
+            "rpush",
+            "rpushx",
+            # Set
+            "sadd",
+            "sdiffstore",
+            "sinterstore",
+            "smove",
+            "spop",
+            "srem",
+            "sunionstore",
+            # Sorted Set
+            "zadd",
+            "zdiffstore",
+            "zincrby",
+            "zinterstore",
+            "zmpop",
+            "zpopmax",
+            "zpopmin",
+            "zrangestore",
+            "zrem",
+            "zremrangebylex",
+            "zremrangebyrank",
+            "zremrangebyscore",
+            "zunionstore",
+            # Bitmap
+            "setbit",
+            # HyperLogLog
+            "pfadd",
+            "pfmerge",
+            # Geo
+            "geoadd",
+            "geosearchstore",
+            # 通用
+            "copy",
+            "del",
+            "expire",
+            "expireat",
+            "move",
+            "persist",
+            "pexpire",
+            "pexpireat",
+            "rename",
+            "renamenx",
+            # "restore",  # 禁用 restore 命令，防止RDB数据恢复
+            "sort",
+            "touch",
+            "unlink",
+            # "flushdb",  # 禁用 flushdb 命令，防止数据丢失
+            # "flushall",  # 禁用 flushall 命令，防止数据丢失
+            # "swapdb",  # 禁用 swapdb 命令，防止数据丢失
+            # 事务
+            "discard",
+            "exec",
+            "multi",
+            "unwatch",
+            "watch",
+            # 脚本
+            # "eval",  # 禁用 eval 命令，防止执行任意代码
+            # "evalsha",
+            # 流
+            "xack",
+            "xadd",
+            "xautoclaim",
+            "xclaim",
+            "xdel",
+            "xtrim",
+            # 连接
+            # "select",  # 禁用 select 命令，防止数据库切换
+            # 服务器
+            # "save",  # 禁用 save 命令，阻塞式持久化
+            "bgsave",
+            # "slaveof",  # 禁用 slaveof 命令，防止数据复制
+            # "replicaof",
+        ]
+
+        # 多单词执行命令（写命令），更具体的命令优先匹配
+        exec_multi_cmds = [
+            # ACL
+            # "acl deluser",  # 禁用 acl 命令，防止设置敏感信息
+            # "acl genpass",
+            # "acl save",
+            # "acl setuser",
+            # 客户端
+            # "client setname",  # 禁用 client 命令，防止设置客户端名称
+            # "client kill",  # 禁用 client 命令，防止客户端断开连接
+            # 配置
+            # "config set",  # 禁用 config 命令，防止设置敏感信息
+            # "config rewrite",
+            # "config resetstat",
+            # 延迟
+            # "latency reset",  # 禁用 latency 命令，防止重置延迟监控数据
+            # 内存
+            # "memory purge",  # 禁用 memory 命令，防止内存操作
+            # 模块
+            # "module load",  # 禁用 module 命令，防止加载任意模块
+            # "module unload",
+            # 脚本
+            # "script debug",  # 禁用 script 命令，防止执行任意代码
+            # "script flush",
+            # "script kill",
+            # "script load",
+            # 流组
+            "xgroup create",
+            "xgroup createconsumer",
+            "xgroup delconsumer",
+            "xgroup destroy",
+            "xgroup setid",
+        ]
+
         for cmd in split_sql:
-            result = ReviewResult(
-                id=line,
-                errlevel=0,
-                stagestatus="Audit completed",
-                errormessage="暂不支持显示影响行数",
-                sql=cmd,
-                affected_rows=0,
-                execute_time=0,
-            )
+            sql_stripped = cmd.strip()
+            lower_sql = sql_stripped.lower()
+
+            # 先检测是否为查询命令，执行工单中禁止使用查询命令
+            query_check_result = self.query_check(db_name=db_name, sql=cmd)
+            if not query_check_result["bad_query"]:
+                result = ReviewResult(
+                    id=line,
+                    errlevel=2,
+                    stagestatus="Audit failed",
+                    errormessage="禁止使用查询命令！",
+                    sql=cmd,
+                    affected_rows=0,
+                    execute_time=0,
+                )
+                check_result.rows += [result]
+                line += 1
+                continue
+
+            # 再检测是否为合法执行命令（多单词优先，更具体）
+            is_valid = False
+            for safe_cmd in exec_multi_cmds:
+                if lower_sql.startswith(safe_cmd):
+                    is_valid = True
+                    break
+            else:
+                for safe_cmd in exec_single_cmds:
+                    if re.match(rf"^{safe_cmd}\b", sql_stripped, re.I):
+                        is_valid = True
+                        break
+
+            if is_valid:
+                result = ReviewResult(
+                    id=line,
+                    errlevel=0,
+                    stagestatus="Audit completed",
+                    errormessage="暂不支持显示影响行数",
+                    sql=cmd,
+                    affected_rows=0,
+                    execute_time=0,
+                )
+            else:
+                result = ReviewResult(
+                    id=line,
+                    errlevel=2,
+                    stagestatus="Audit failed",
+                    errormessage="禁止执行该命令！",
+                    sql=cmd,
+                    affected_rows=0,
+                    execute_time=0,
+                )
             check_result.rows += [result]
             line += 1
         return check_result

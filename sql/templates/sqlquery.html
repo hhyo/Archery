@@ -1256,12 +1256,22 @@
                         var result = data.data;
                         var dbs = [];
                         for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            var item = result[i];
+                            // 支持字典格式 {"value": "0", "text": "db0[100]"}
+                            if (typeof item === 'object' && item !== null) {
+                                var name = "<option value=\"" + item.value + "\">" + item.text + "</option>";
+                                var valForComplete = item.value;
+                                var captionForComplete = item.text;
+                            } else {
+                                var name = "<option value=\"" + item + "\">" + item + "</option>";
+                                var valForComplete = item;
+                                var captionForComplete = item;
+                            }
                             $("#db_name").append(name);
                             dbs.push({
-                                name: result[i],
-                                value: result[i],
-                                caption: result[i],
+                                name: captionForComplete,
+                                value: valForComplete,
+                                caption: captionForComplete,
                                 meta: 'databases',
                                 score: '100'
                             })
