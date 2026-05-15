@@ -195,9 +195,7 @@ class TestRedis(TestCase):
         mock_info.assert_called_once_with("Keyspace")
 
     @patch("redis.Redis.info")
-    def test_get_all_databases_with_empty_return_value(
-        self, mock_info
-    ):
+    def test_get_all_databases_with_empty_return_value(self, mock_info):
         """
         测试当info命令返回空Keyspace信息时，
         get_all_databases方法应正确处理并返回包含从0到15的数据库索引列表。
