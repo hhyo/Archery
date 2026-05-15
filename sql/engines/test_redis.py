@@ -315,7 +315,9 @@ def test_get_all_databases_fallback_with_high_db(mock_get_conn, redis_engine):
 
 @patch.object(RedisEngine, "get_cluster_master_nodes")
 @patch("sql.engines.redis.redis.Redis")
-def test_get_all_databases_cluster(mock_redis_cls, mock_get_masters, redis_cluster_engine):
+def test_get_all_databases_cluster(
+    mock_redis_cls, mock_get_masters, redis_cluster_engine
+):
     """测试集群模式获取数据库列表，只有 db0，汇总各主节点 keys"""
     mock_get_masters.return_value = ["127.0.0.1:7001", "127.0.0.1:7002"]
 
@@ -335,7 +337,9 @@ def test_get_all_databases_cluster(mock_redis_cls, mock_get_masters, redis_clust
 
 @patch.object(RedisEngine, "get_cluster_master_nodes")
 @patch("sql.engines.redis.redis.Redis")
-def test_get_all_databases_cluster_no_keys(mock_redis_cls, mock_get_masters, redis_cluster_engine):
+def test_get_all_databases_cluster_no_keys(
+    mock_redis_cls, mock_get_masters, redis_cluster_engine
+):
     """测试集群模式 db0 无 keys 时显示 db0"""
     mock_get_masters.return_value = ["127.0.0.1:7001"]
 
