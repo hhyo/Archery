@@ -30,6 +30,7 @@
                         <optgroup id="optgroup-redis" label="Redis"></optgroup>
                         <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                         <optgroup id="optgroup-doris" label="Doris"></optgroup>
+                        <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
                         <optgroup id="optgroup-tdengine" label="TDengine"></optgroup>
                 </select>
             </div>
@@ -255,6 +256,72 @@
         ]
         let dorisTableInfo = ['doris',tablespaceListTableInfos[0][1]]
         tablespaceListTableInfos.push(dorisTableInfo)
+        let clickhouseTableInfo = ['clickhouse',
+            [{
+                title: '数据库',
+                field: 'database'
+            }, {
+                title: '表名',
+                field: 'table'
+            }, {
+                title: '存储引擎',
+                field: 'engine'
+            }, {
+                title: '行数',
+                field: 'table_rows'
+            }, {
+                title: '总空间',
+                field: 'total_size'
+            }, {
+                title: '索引空间',
+                field: 'marks_bytes'
+            }, {
+                title: '数据空间(未压缩)',
+                field: 'data_uncompressed'
+            }, {
+                title: '数据空间(压缩后)',
+                field: 'data_compressed'
+            }, {
+                title: '压缩率',
+                field: 'compress_ratio'
+            }]
+        ]
+        tablespaceListTableInfos.push(clickhouseTableInfo)
+        let mongoTableInfo = [
+            'mongo',
+            [{
+                title: '集合名',
+                field: 'ns'
+            }, {
+                title: '总空间(MB)',
+                field: 'totalSize'
+            }, {
+                title: '行数',
+                field: 'count'
+            }, {
+                title: '未压缩的数据空间(MB)',
+                field: 'size'
+            }, {
+                title: '每行平均(B)',
+                field: 'avgObjSize'
+            }, {
+                title: '压缩后的数据空间(MB)',
+                field: 'storageSize'
+            }, {
+                title: '碎片空间(MB)',
+                field: 'freeStorageSize'
+            }, {
+                title: '固定集合',
+                field: 'capped'
+            }, {
+                title: '索引数',
+                field: 'nindexes'
+            }, {
+                title: '索引空间(MB)',
+                field: 'totalIndexSize'
+            }]
+        ]
+        tablespaceListTableInfos.push(mongoTableInfo)
 
         // 问题诊断--表空间列表
         function get_space_list() {
@@ -742,7 +809,7 @@
                 //获取用户实例列表
                 $(function () {
                     // 会话管理-支持的数据库类型
-                    supportedDbType = ['mysql', 'mongo', 'oracle', 'redis', 'pgsql', 'doris', 'tdengine']
+                    supportedDbType=['mysql', 'mongo', 'oracle', 'redis', 'pgsql', 'doris', 'tdengine', 'clickhouse']
                     $.ajax({
                         type: "get",
                         url: "/group/user_all_instances/",
