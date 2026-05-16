@@ -4,16 +4,15 @@ import time
 import pymongo
 import logging
 import traceback
-import subprocess
 import simplejson as json
 import datetime
-import tempfile
 from bson.son import SON
 from bson import json_util
 from pymongo.errors import OperationFailure
 from dateutil.parser import parse
 from bson.objectid import ObjectId
 from bson.int64 import Int64
+from bson.regex import Regex
 
 from sql.utils.data_masking import data_masking
 
@@ -22,9 +21,6 @@ from .models import ResultSet, ReviewSet, ReviewResult
 from common.config import SysConfig
 
 logger = logging.getLogger("default")
-
-# mongo客户端安装在本机的位置
-mongo = "mongo"
 
 
 # 自定义异常
@@ -189,6 +185,42 @@ class JsonDecoder:
             else:
                 return int(expr)
 
+        def __next_regex(self):
+            """处理 MongoDB 原生正则字面量 /pattern/flags，返回 bson.regex.Regex"""
+            self.__move_i()  # 跳过起始的 /
+            pattern = ""
+            trans_flag = False
+            while self.__cur_char() != "":
+                ch = self.__cur_char()
+                if trans_flag:
+                    # 保留反斜杠与转义字符，交给正则引擎自行解析
+                    pattern += ch
+                    trans_flag = False
+                    self.__move_i()
+                    continue
+                if ch == "\\":
+                    pattern += ch
+                    trans_flag = True
+                    self.__move_i()
+                    continue
+                if ch == "/":
+                    break
+                pattern += ch
+                self.__move_i()
+            if self.__cur_char() != "/":
+                raise Exception('missing closing "/" in regex')
+
+            # 读取 flags: i m s x (MongoDB 支持的正则选项)
+            self.__move_i()  # 跳过闭合的 /
+            flags_str = ""
+            while self.__cur_char() in ("i", "m", "s", "x"):
+                flags_str += self.__cur_char()
+                self.__move_i()
+            # 回退一步，让外层 next() 的 __move_i 推进到下一个字符
+            self.__move_i(-1)
+
+            return Regex(pattern, flags_str)
+
         def __next_const(self):
             """处理没有被''和""包含的字符，如true和ObjectId"""
             outstr = ""
@@ -212,8 +244,9 @@ class JsonDecoder:
 
             self.__move_i(-1)
 
-            if outstr in ("true", "false", "null"):
-                return {"true": True, "false": False, "null": None}[outstr]
+            stripped = outstr.strip()
+            if stripped in ("true", "false", "null"):
+                return {"true": True, "false": False, "null": None}[stripped]
             elif data_type == "ObjectId":
                 ojStr = re.findall(r"ObjectId\(.*?\)", outstr)  # 单独处理ObjectId
                 if len(ojStr) > 0:
@@ -241,8 +274,8 @@ class JsonDecoder:
                     id_str = re.findall(r"\(.*?\)", nuStr[0])
                     nlong = id_str[0].replace(" ", "")[2:-2]
                     return Int64(nlong)
-            elif outstr:
-                return outstr
+            elif stripped:
+                return stripped
             raise Exception('Invalid symbol "%s"' % outstr)
 
         def next(self):
@@ -267,6 +300,8 @@ class JsonDecoder:
                 cur_token = self.__next_const()
             elif ch.isdigit() or ch in (".", "-", "+"):  # 检测字符串是否只由数字组成
                 cur_token = self.__next_number()
+            elif ch == "/":  # MongoDB 原生正则字面量 /pattern/flags
+                cur_token = self.__next_regex()
             else:
                 raise Exception('Invalid symbol "%s"' % ch)
             self.__move_i()
@@ -286,145 +321,451 @@ class MongoEngine(EngineBase):
     def test_connection(self):
         return self.get_all_databases()
 
-    def exec_cmd(self, sql, db_name=None, slave_ok=""):
-        """审核时执行的语句"""
-
-        if self.port and self.host:
-            msg = ""
-            auth_db = self.instance.db_name or "admin"
-            sql_len = len(sql)
-            is_load = False  # 默认不使用load方法执行mongodb sql语句
-            try:
-                if not sql.startswith("var host=") and sql_len > 4000:
-                    # 在master节点执行的情况，如果sql长度大于4000,就采取load js的方法
-                    # 因为用mongo load方法执行js脚本，所以需要重新改写一下sql，以便回显js执行结果
-                    sql = "var result = " + sql + "\nprintjson(result);"
-                    # 因为要知道具体的临时文件位置，所以用了NamedTemporaryFile模块
-                    fp = tempfile.NamedTemporaryFile(
-                        suffix=".js", prefix="mongo_", dir="/tmp/", delete=True
-                    )
-                    fp.write(sql.encode("utf-8"))
-                    fp.seek(0)  # 把文件指针指向开始，这样写的sql内容才能落到磁盘文件上
-                    cmd = self._build_cmd(
-                        db_name, auth_db, slave_ok, fp.name, is_load=True
-                    )
-                    is_load = True  # 标记使用了load方法，用来在finally里面判断是否需要强制删除临时文件
-                elif (
-                    not sql.startswith("var host=") and sql_len < 4000
-                ):  # 在master节点执行的情况， 如果sql长度小于4000,就直接用mongo shell执行，减少磁盘交换，节省性能
-                    cmd = self._build_cmd(db_name, auth_db, slave_ok, sql=sql)
-                else:
-                    cmd = self._build_cmd(
-                        db_name, auth_db, sql=sql, slave_ok="rs.slaveOk();"
-                    )
-                p = subprocess.Popen(
-                    cmd,
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    universal_newlines=True,
-                )
-                re_msg = []
-                for line in iter(p.stdout.read, ""):
-                    re_msg.append(line)
-                # 因为返回的line中也有可能带有换行符，因此需要先全部转换成字符串
-                __msg = "\n".join(re_msg)
-                _re_msg = []
-                for _line in __msg.split("\n"):
-                    if not _re_msg and re.match("WARNING.*", _line):
-                        # 第一行可能是WARNING语句，因此跳过
-                        continue
-                    _re_msg.append(_line)
-
-                msg = "\n".join(_re_msg)
-                msg = msg.replace("true\n", "")
-            except Exception as e:
-                logger.warning(
-                    f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}"
-                )
-            finally:
-                if is_load:
-                    fp.close()
-        return msg
-
-    # 用来进行判断是否有用户名与密码以及是否需要临时文件的情况，进而返回要执行的mongo命令
-    def _build_cmd(
-        self, db_name, auth_db, slave_ok="", tempfile_=None, sql=None, is_load=False
-    ):
-        # 提取公共参数
-        common_params = {
-            "mongo": "mongo",
-            "host": self.host,
-            "port": self.port,
-            "db_name": db_name,
-            "auth_db": auth_db,
-            "slave_ok": slave_ok,
-        }
-        if is_load:
-            cmd_template = (
-                "{mongo} --quiet {auth_options} {host}:{port}/{auth_db} <<\\EOF\n"
-                "db=db.getSiblingDB('{db_name}');{slave_ok}load('{tempfile_}')\nEOF"
-            )
-            # 长度超限使用loadjs的方式运行，使用临时文件
-            common_params["tempfile_"] = tempfile_
-        else:
-            cmd_template = (
-                "{mongo} --quiet {auth_options} {host}:{port}/{auth_db} <<\\EOF\n"
-                "db=db.getSiblingDB('{db_name}');{slave_ok}{sql}\nEOF"
-            )
-            # 长度不超限直接mongo shell，无需临时文件
-            common_params["sql"] = sql
-        # 如果有账号密码，则添加选项
-        if self.user and self.password:
-            common_params["auth_options"] = "-u {uname} -p '{password}'".format(
-                uname=self.user, password=self.password
-            )
-        else:
-            common_params["auth_options"] = ""
-        return cmd_template.format(**common_params)
-
     def get_master(self):
         """获得主节点的port和host"""
-
-        sql = "rs.isMaster().primary"
-        master = self.exec_cmd(sql)
-        if master != "undefined":
-            sp_host = master.replace('"', "").split(":")
-            self.host = sp_host[0]
-            self.port = int(sp_host[1])
-        # return master
+        try:
+            conn = self.get_connection()
+            master = conn.admin.command("isMaster").get("primary")
+            if master:
+                master = master.strip().replace('"', "").replace("'", "")
+                if master != "undefined" and ":" in master:
+                    sp_host = master.split(":")
+                    self.host = sp_host[0]
+                    if len(sp_host) > 1:
+                        self.port = int(sp_host[1])
+        except Exception:
+            logger.warning(
+                f"mongodb获取主节点信息错误，错误信息{traceback.format_exc()}"
+            )
 
     def get_slave(self):
         """获得从节点的port和host"""
-
-        sql = """var host=""; rs.status().members.forEach(function(item) {i=1; if (item.stateStr =="SECONDARY") \
-        {host=item.name } }); print(host);"""
-        slave_msg = self.exec_cmd(sql, db_name=self.db_name)
-        # 如果是阿里云的云mongodb，会获取不到备节点真实的ip和端口，那就干脆不获取，直接用主节点来执行sql
-        # 如果是自建mongodb，获取到备节点的ip是192.168.1.33:27019这样的值；但如果是阿里云mongodb，获取到的备节点ip是SECONDARY、hiddenNode这样的值
-        # 所以，为了使代码更加通用，通过有无冒号来判断自建Mongod还是阿里云mongdb；没有冒号就判定为阿里云mongodb，直接返回false；
-        if ":" not in slave_msg:
-            return False
-        if slave_msg.lower().find("undefined") < 0:
-            sp_host = slave_msg.replace('"', "").split(":")
-            self.host = sp_host[0]
-            self.port = int(sp_host[1])
-            return True
-        else:
+        try:
+            conn = self.get_connection()
+            rs_status = conn.admin.command("replSetGetStatus")
+            slave_msg = ""
+            for member in rs_status.get("members", []):
+                if member.get("stateStr") == "SECONDARY":
+                    slave_msg = member.get("name", "")
+                    break
+            # 如果是阿里云的云mongodb，会获取不到备节点真实的ip和端口，那就干脆不获取，直接用主节点来执行sql
+            # 如果是自建mongodb，获取到备节点的ip是192.168.1.33:27019这样的值；但如果是阿里云mongodb，获取到的备节点ip是SECONDARY、hiddenNode这样的值
+            # 所以，为了使代码更加通用，通过有无冒号来判断自建Mongod还是阿里云mongdb；没有冒号就判定为阿里云mongodb，直接返回false；
+            if ":" not in slave_msg:
+                return False
+            if slave_msg.lower().find("undefined") < 0:
+                sp_host = slave_msg.replace('"', "").split(":")
+                self.host = sp_host[0]
+                self.port = int(sp_host[1])
+                return True
+            else:
+                return False
+        except Exception:
+            logger.warning(
+                f"mongodb获取从节点信息错误，错误信息{traceback.format_exc()}"
+            )
             return False
 
     def get_table_conut(self, table_name, db_name):
         try:
-            count_sql = f"db.{table_name}.count()"
-            status = self.get_slave()  # 查询总数据要求在slave节点执行
-            if self.host and self.port and status:
-                count = int(self.exec_cmd(count_sql, db_name, slave_ok="rs.slaveOk();"))
-            else:
-                count = int(self.exec_cmd(count_sql, db_name))
+            self.get_slave()  # 查询总数据要求在slave节点执行，会更新 self.host/port
+            conn = self.get_connection(db_name)
+            db = conn[db_name]
+            count = db[table_name].count_documents({})
             return count
         except Exception as e:
             logger.debug("get_table_conut:" + str(e))
             return 0
+
+    def __split_args(self, args_str):
+        """安全地按逗号分割参数，忽略 {}[]() 和字符串内部的逗号"""
+        args = []
+        current = []
+        depth = 0
+        in_string = False
+        string_char = None
+
+        for i, ch in enumerate(args_str):
+            if ch in ('"', "'") and (i == 0 or args_str[i - 1] != "\\"):
+                if not in_string:
+                    in_string = True
+                    string_char = ch
+                elif ch == string_char:
+                    in_string = False
+                    string_char = None
+                current.append(ch)
+            elif in_string:
+                current.append(ch)
+            elif ch in ("{", "[", "("):
+                depth += 1
+                current.append(ch)
+            elif ch in ("}", "]", ")"):
+                depth -= 1
+                current.append(ch)
+            elif ch == "," and depth == 0:
+                args.append("".join(current).strip())
+                current = []
+            else:
+                current.append(ch)
+
+        if current:
+            args.append("".join(current).strip())
+
+        return args
+
+    def _execute_shell_sql(self, sql, db_name):
+        """
+        解析 MongoDB shell 语句并通过 pymongo 执行
+        返回 (success: bool, result_json: str, affected_rows: int)
+        """
+        sql = sql.strip().rstrip(";")
+
+        # 找到最后一个 ".method(" 的位置
+        last_dot_pos = -1
+        in_string = False
+        string_char = None
+        paren_depth = 0
+
+        for i, ch in enumerate(sql):
+            if ch in ('"', "'") and (i == 0 or sql[i - 1] != "\\"):
+                if not in_string:
+                    in_string = True
+                    string_char = ch
+                elif ch == string_char:
+                    in_string = False
+                    string_char = None
+            elif not in_string:
+                if ch == "(":
+                    paren_depth += 1
+                elif ch == ")":
+                    paren_depth -= 1
+                elif ch == "." and paren_depth == 0:
+                    last_dot_pos = i
+
+        if last_dot_pos < 0:
+            return False, f"无法解析语句: {sql}", 0
+
+        method_part = sql[last_dot_pos + 1 :]
+        paren_pos = method_part.find("(")
+        if paren_pos < 0:
+            return False, f"无法解析方法参数: {sql}", 0
+
+        method = method_part[:paren_pos].strip()
+
+        # 提取参数
+        _, args_with_parens = self.dispose_pair(
+            sql, last_dot_pos + 1 + paren_pos, "(", ")"
+        )
+        args_str = args_with_parens.strip("()")
+        args = self.__split_args(args_str)
+
+        # 解析参数为 Python 对象
+        de = JsonDecoder()
+        parsed_args = []
+        for arg in args:
+            arg = arg.strip()
+            if not arg:
+                continue
+            if arg.startswith("{") or arg.startswith("["):
+                parsed_args.append(de.decode(arg))
+            elif arg.startswith('"') or arg.startswith("'"):
+                parsed_args.append(arg[1:-1])
+            elif arg.isdigit():
+                parsed_args.append(int(arg))
+            elif arg == "true":
+                parsed_args.append(True)
+            elif arg == "false":
+                parsed_args.append(False)
+            else:
+                parsed_args.append(arg)
+
+        # 提取 collection
+        head = sql[:last_dot_pos].strip()
+
+        conn = self.get_connection(db_name)
+        db = conn[db_name]
+
+        if method == "createCollection":
+            coll = None
+            coll_name = parsed_args[0] if parsed_args else None
+        else:
+            if "getCollection" in head:
+                gc_start = head.find("getCollection")
+                _, gc_args = self.dispose_pair(
+                    head, gc_start + len("getCollection"), "(", ")"
+                )
+                collection = gc_args.strip("()").strip().strip('"').strip("'")
+            else:
+                collection = head.replace("db.", "").strip()
+            coll = db[collection]
+
+        affected_rows = 0
+
+        def _to_bool(v):
+            """将整数 1/0、字符串 '1'/'0'/'true'/'false' 归一化为布尔值"""
+            if isinstance(v, bool):
+                return v
+            if isinstance(v, (int, float)):
+                return bool(v)
+            if isinstance(v, str):
+                s = v.strip().lower()
+                if s in ("true", "1"):
+                    return True
+                if s in ("false", "0"):
+                    return False
+            return v
+
+        def _normalize_bool_opts(opts, keys=("upsert", "multi", "justOne")):
+            """对 opts 中已知布尔选项做类型归一化，避免 pymongo 校验报错"""
+            if isinstance(opts, dict):
+                for k in keys:
+                    if k in opts:
+                        opts[k] = _to_bool(opts[k])
+            return opts
+
+        try:
+            if method == "insertOne":
+                result = coll.insert_one(parsed_args[0])
+                affected_rows = 1
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "insertedId": str(result.inserted_id),
+                }
+            elif method == "insertMany":
+                result = coll.insert_many(parsed_args[0])
+                affected_rows = len(result.inserted_ids)
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "insertedIds": [str(i) for i in result.inserted_ids],
+                }
+            elif method == "insert":
+                if isinstance(parsed_args[0], list):
+                    result = coll.insert_many(parsed_args[0])
+                    affected_rows = len(result.inserted_ids)
+                    result_doc = {
+                        "acknowledged": result.acknowledged,
+                        "insertedIds": [str(i) for i in result.inserted_ids],
+                    }
+                else:
+                    result = coll.insert_one(parsed_args[0])
+                    affected_rows = 1
+                    result_doc = {
+                        "acknowledged": result.acknowledged,
+                        "insertedId": str(result.inserted_id),
+                    }
+            elif method == "updateOne":
+                opts = _normalize_bool_opts(
+                    parsed_args[2] if len(parsed_args) > 2 else {}
+                )
+                result = coll.update_one(parsed_args[0], parsed_args[1], **(opts or {}))
+                affected_rows = result.modified_count
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "matchedCount": result.matched_count,
+                    "modifiedCount": result.modified_count,
+                }
+            elif method == "updateMany":
+                opts = _normalize_bool_opts(
+                    parsed_args[2] if len(parsed_args) > 2 else {}
+                )
+                result = coll.update_many(
+                    parsed_args[0], parsed_args[1], **(opts or {})
+                )
+                affected_rows = result.modified_count
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "matchedCount": result.matched_count,
+                    "modifiedCount": result.modified_count,
+                }
+            elif method == "update":
+                opts = _normalize_bool_opts(
+                    parsed_args[2] if len(parsed_args) > 2 else {}
+                )
+                opts = opts or {}
+                use_many = opts.get("multi", False) if isinstance(opts, dict) else False
+                if use_many:
+                    result = coll.update_many(parsed_args[0], parsed_args[1], **opts)
+                else:
+                    result = coll.update_one(parsed_args[0], parsed_args[1], **opts)
+                affected_rows = result.modified_count
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "matchedCount": result.matched_count,
+                    "modifiedCount": result.modified_count,
+                }
+            elif method == "replaceOne":
+                opts = _normalize_bool_opts(
+                    parsed_args[2] if len(parsed_args) > 2 else {}
+                )
+                result = coll.replace_one(
+                    parsed_args[0], parsed_args[1], **(opts or {})
+                )
+                affected_rows = result.modified_count
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "matchedCount": result.matched_count,
+                    "modifiedCount": result.modified_count,
+                }
+            elif method == "deleteOne":
+                opts = _normalize_bool_opts(
+                    parsed_args[1] if len(parsed_args) > 1 else {}
+                )
+                result = coll.delete_one(parsed_args[0], **(opts or {}))
+                affected_rows = result.deleted_count
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "deletedCount": result.deleted_count,
+                }
+            elif method == "deleteMany":
+                opts = _normalize_bool_opts(
+                    parsed_args[1] if len(parsed_args) > 1 else {}
+                )
+                result = coll.delete_many(parsed_args[0], **(opts or {}))
+                affected_rows = result.deleted_count
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "deletedCount": result.deleted_count,
+                }
+            elif method == "remove":
+                opts = _normalize_bool_opts(
+                    parsed_args[1] if len(parsed_args) > 1 else {}
+                )
+                opts = opts or {}
+                just_one = (
+                    opts.get("justOne", False) if isinstance(opts, dict) else False
+                )
+                if just_one:
+                    result = coll.delete_one(parsed_args[0])
+                else:
+                    result = coll.delete_many(parsed_args[0])
+                affected_rows = result.deleted_count
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "deletedCount": result.deleted_count,
+                }
+            elif method == "drop":
+                coll.drop()
+                affected_rows = 0
+                result_doc = {"ok": 1}
+            elif method == "createCollection":
+                coll_name = parsed_args[0] if parsed_args else None
+                opts = parsed_args[1] if len(parsed_args) > 1 else {}
+                db.create_collection(coll_name, **(opts or {}))
+                affected_rows = 0
+                result_doc = {"ok": 1}
+            elif method in ("createIndex", "ensureIndex"):
+                keys = parsed_args[0]
+                if isinstance(keys, dict):
+                    keys = list(keys.items())
+                opts = parsed_args[1] if len(parsed_args) > 1 else {}
+                idx_name = coll.create_index(keys, **(opts or {}))
+                affected_rows = 0
+                result_doc = {"ok": 1, "indexName": idx_name}
+            elif method == "createIndexes":
+                from pymongo.operations import IndexModel
+
+                indexes = []
+                for idx_def in parsed_args[0]:
+                    keys = idx_def.get("key", {})
+                    if isinstance(keys, dict):
+                        keys = list(keys.items())
+                    opts = {k: v for k, v in idx_def.items() if k != "key"}
+                    indexes.append(IndexModel(keys, **opts))
+                idx_names = coll.create_indexes(indexes)
+                affected_rows = 0
+                result_doc = {"ok": 1, "indexNames": idx_names}
+            elif method == "dropIndex":
+                coll.drop_index(parsed_args[0])
+                affected_rows = 0
+                result_doc = {"ok": 1}
+            elif method == "dropIndexes":
+                coll.drop_indexes()
+                affected_rows = 0
+                result_doc = {"ok": 1}
+            elif method == "renameCollection":
+                new_name = parsed_args[0] if parsed_args else None
+                opts = parsed_args[1] if len(parsed_args) > 1 else {}
+                coll.rename(new_name, **(opts or {}))
+                affected_rows = 0
+                result_doc = {"ok": 1}
+            elif method == "convertToCapped":
+                size = (
+                    parsed_args[0].get("size", 0)
+                    if isinstance(parsed_args[0], dict)
+                    else parsed_args[0]
+                )
+                result = db.command("convertToCapped", collection, size=size)
+                affected_rows = 0
+                result_doc = result
+            elif method == "bulkWrite":
+                from pymongo.operations import (
+                    InsertOne,
+                    UpdateOne,
+                    UpdateMany,
+                    DeleteOne,
+                    DeleteMany,
+                    ReplaceOne,
+                )
+
+                operations = []
+                ops_list = parsed_args[0]
+                opts = parsed_args[1] if len(parsed_args) > 1 else {}
+
+                for op in ops_list:
+                    op_type = list(op.keys())[0]
+                    op_detail = op[op_type]
+                    if op_type == "insertOne":
+                        operations.append(InsertOne(op_detail["document"]))
+                    elif op_type == "updateOne":
+                        operations.append(
+                            UpdateOne(
+                                op_detail["filter"],
+                                op_detail["update"],
+                                upsert=_to_bool(op_detail.get("upsert", False)),
+                            )
+                        )
+                    elif op_type == "updateMany":
+                        operations.append(
+                            UpdateMany(
+                                op_detail["filter"],
+                                op_detail["update"],
+                                upsert=_to_bool(op_detail.get("upsert", False)),
+                            )
+                        )
+                    elif op_type == "deleteOne":
+                        operations.append(DeleteOne(op_detail["filter"]))
+                    elif op_type == "deleteMany":
+                        operations.append(DeleteMany(op_detail["filter"]))
+                    elif op_type == "replaceOne":
+                        operations.append(
+                            ReplaceOne(
+                                op_detail["filter"],
+                                op_detail["replacement"],
+                                upsert=_to_bool(op_detail.get("upsert", False)),
+                            )
+                        )
+
+                result = coll.bulk_write(operations, **(opts or {}))
+                affected_rows = (
+                    result.modified_count + result.deleted_count + result.inserted_count
+                )
+                result_doc = {
+                    "acknowledged": result.acknowledged,
+                    "insertedCount": result.inserted_count,
+                    "matchedCount": result.matched_count,
+                    "modifiedCount": result.modified_count,
+                    "deletedCount": result.deleted_count,
+                    "upsertedCount": result.upserted_count,
+                }
+            else:
+                return False, f"暂不支持的语句: {sql}", 0
+
+            return True, json.dumps(result_doc, ensure_ascii=False), affected_rows
+        except Exception:
+            logger.warning(
+                f"mongo pymongo执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+            )
+            return False, str(traceback.format_exc()), 0
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
@@ -444,28 +785,14 @@ class MongoEngine(EngineBase):
             if not exec_sql == "":
                 exec_sql = exec_sql.strip()
                 try:
-                    # DeprecationWarning: time.clock has been deprecated in Python 3.3 and will be removed from Python 3.8: use time.perf_counter or time.process_time instead
                     start = time.perf_counter()
-                    r = self.exec_cmd(exec_sql, db_name)
+
+                    success, r, actual_affected_rows = self._execute_shell_sql(
+                        exec_sql, db_name
+                    )
                     end = time.perf_counter()
                     line += 1
-                    logger.debug("执行结果：" + r)
-                    # 如果执行中有错误
-                    rz = r.replace(" ", "").replace('"', "")
-                    tr = 1
-                    if (
-                        r.lower().find("syntaxerror") >= 0
-                        or rz.find("ok:0") >= 0
-                        or rz.find("error:invalid") >= 0
-                        or rz.find("ReferenceError") >= 0
-                        or rz.find("getErrorWithCode") >= 0
-                        or rz.find("failedtoconnect") >= 0
-                        or rz.find("Error:") >= 0
-                    ):
-                        tr = 0
-                    if (rz.find("errmsg") >= 0 or tr == 0) and (
-                        r.lower().find("already exist") < 0
-                    ):
+                    if not success:
                         execute_result.error = r
                         result = ReviewResult(
                             id=line,
@@ -476,70 +803,11 @@ class MongoEngine(EngineBase):
                             sql=exec_sql,
                         )
                     else:
-                        try:
-                            r = json.loads(r)
-                        except Exception as e:
-                            logger.info(str(e))
-                        finally:
-                            methodStr = exec_sql.split(").")[-1].split("(")[0].strip()
-                            if "." in methodStr:
-                                methodStr = methodStr.split(".")[-1]
-                            if methodStr == "insert":
-                                m = re.search(r'"nInserted"\s*:\s*(\d+)', r)
-                                actual_affected_rows = int(m.group(1))
-                            elif methodStr in ("insertOne", "insertMany"):
-                                if isinstance(r, dict):
-                                    # mongosh / driver JSON formats
-                                    if "nInserted" in r:  # BulkWriteResult style
-                                        actual_affected_rows = r["nInserted"]
-                                    elif (
-                                        "insertedIds" in r
-                                    ):  # CLI acknowledged + insertedIds
-                                        actual_affected_rows = len(r["insertedIds"])
-                                    elif "insertedId" in r:  # insertOne single id
-                                        actual_affected_rows = 1
-                                    else:
-                                        actual_affected_rows = 0
-                                elif isinstance(r, str):
-                                    # mongo 4.x CLI string outputs
-                                    m = re.search(r'"nInserted"\s*:\s*(\d+)', r)
-                                    actual_affected_rows = (
-                                        int(m.group(1)) if m else r.count("ObjectId")
-                                    )
-                                    actual_affected_rows = r.count("ObjectId")
-                                else:
-                                    actual_affected_rows = 0
-                            elif methodStr == "update":
-                                m = re.search(
-                                    r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)',
-                                    r,
-                                )
-                                actual_affected_rows = int(m.group(1))
-                            elif methodStr in ("updateOne", "updateMany"):
-                                if isinstance(r, dict):
-                                    actual_affected_rows = r.get(
-                                        "modifiedCount", r.get("nModified", 0)
-                                    )
-                                elif isinstance(r, str):
-                                    m = re.search(
-                                        r'(?:"modifiedCount"|"nModified")\s*:\s*(\d+)',
-                                        r,
-                                    )
-                                    actual_affected_rows = int(m.group(1)) if m else 0
-                                else:
-                                    actual_affected_rows = 0
-                            elif methodStr in ("deleteOne", "deleteMany"):
-                                actual_affected_rows = r.get("deletedCount", 0)
-                            elif methodStr == "remove":
-                                actual_affected_rows = r.get("nRemoved", 0)
-                            else:
-                                actual_affected_rows = 0
-                        # 把结果转换为ReviewSet
                         result = ReviewResult(
                             id=line,
                             errlevel=0,
                             stagestatus="执行结束",
-                            errormessage=str(r),
+                            errormessage=r,
                             execute_time=round(end - start, 6),
                             affected_rows=actual_affected_rows,
                             sql=exec_sql,
@@ -1033,6 +1301,50 @@ class MongoEngine(EngineBase):
                     query_dict["collection"] = collection
                 elif method.lower() == "getindexes":
                     query_dict["method"] = "index_information"
+                elif method == "count":
+                    query_dict["method"] = "count"
+                    if "condition" not in query_dict:
+                        query_dict["condition"] = re_char
+                    query_dict["count"] = re_char
+                elif method == "findOne":
+                    query_dict["method"] = method
+                    if re_char.strip():
+                        try:
+                            p_index, fo_condition = self.dispose_pair(
+                                re_char, 0, "{", "}"
+                            )
+                            query_dict["findOne_filter"] = fo_condition or "{}"
+                            # dispose_pair 返回的 p_index 指向闭合大括号本身，需跳过
+                            fo_projection = (
+                                re_char[p_index + 1 :].strip().lstrip(",").strip()
+                            )
+                            if fo_projection:
+                                query_dict["findOne_projection"] = fo_projection
+                        except Exception:
+                            query_dict["findOne_filter"] = "{}"
+                    else:
+                        query_dict["findOne_filter"] = "{}"
+                elif method == "countDocuments":
+                    query_dict["method"] = method
+                    if re_char.strip():
+                        try:
+                            p_index, cd_condition = self.dispose_pair(
+                                re_char, 0, "{", "}"
+                            )
+                            query_dict["countDocuments_filter"] = cd_condition or "{}"
+                            # dispose_pair 返回的 p_index 指向闭合大括号本身，需跳过
+                            cd_opts = re_char[p_index + 1 :].strip().lstrip(",").strip()
+                            if cd_opts:
+                                query_dict["countDocuments_options"] = cd_opts
+                        except Exception:
+                            query_dict["countDocuments_filter"] = "{}"
+                    else:
+                        query_dict["countDocuments_filter"] = "{}"
+                elif method == "distinct":
+                    query_dict["method"] = method
+                    query_dict["distinct_args"] = re_char
+                elif method == "stats":
+                    query_dict["method"] = method
                 else:
                     query_dict[method] = re_char
             index += 1
@@ -1105,6 +1417,13 @@ class MongoEngine(EngineBase):
                 condition.append({"$limit": limit_num})
             if method == "find":
                 condition = de.decode(query_dict["condition"])
+            if method == "count":
+                condition = (
+                    de.decode(query_dict["condition"])
+                    if query_dict.get("condition")
+                    else {}
+                )
+                condition = condition or {}
             find_cmd += "(condition)"
         if "projection" in query_dict and query_dict["projection"]:
             projection = de.decode(query_dict["projection"])
@@ -1135,6 +1454,38 @@ class MongoEngine(EngineBase):
         if "explain" in query_dict:
             find_cmd += ".explain()"
 
+        # 覆盖 findOne/countDocuments/distinct/stats 对应的 pymongo 命令
+        if method == "findOne":
+            findone_filter = de.decode(query_dict.get("findOne_filter", "{}")) or {}
+            if "findOne_projection" in query_dict:
+                findone_projection = de.decode(query_dict["findOne_projection"])
+                find_cmd = "collection.find_one(findone_filter, findone_projection)"
+            else:
+                find_cmd = "collection.find_one(findone_filter)"
+        elif method == "countDocuments":
+            countdoc_filter = (
+                de.decode(query_dict.get("countDocuments_filter", "{}")) or {}
+            )
+            if "countDocuments_options" in query_dict:
+                countdoc_options = de.decode(query_dict["countDocuments_options"]) or {}
+                find_cmd = (
+                    "collection.count_documents(countdoc_filter, **countdoc_options)"
+                )
+            else:
+                find_cmd = "collection.count_documents(countdoc_filter)"
+        elif method == "distinct":
+            distinct_parts = self.__split_args(query_dict.get("distinct_args", "")) or [
+                ""
+            ]
+            distinct_field = distinct_parts[0].strip().strip('"').strip("'")
+            if len(distinct_parts) > 1 and distinct_parts[1].strip():
+                distinct_filter = de.decode(distinct_parts[1]) or {}
+                find_cmd = "collection.distinct(distinct_field, distinct_filter)"
+            else:
+                find_cmd = "collection.distinct(distinct_field)"
+        elif method == "stats":
+            find_cmd = 'db.command("collStats", collection_name)'
+
         try:
             conn = self.get_connection()
             db = conn[db_name]
@@ -1159,6 +1510,27 @@ class MongoEngine(EngineBase):
                 columns.append("index_list")
                 for k, v in cursor.items():
                     rows.append({k: v})
+            elif method == "findOne":
+                columns.append("findOne")
+                if cursor is None:
+                    rows = []
+                else:
+                    doc = json.loads(json_util.dumps(cursor))
+                    rows = [doc]
+            elif method == "countDocuments":
+                columns.append("count")
+                rows.append({"count": cursor})
+            elif method == "distinct":
+                columns.append("distinct")
+                distinct_values = json.loads(json_util.dumps(cursor))
+                for v in distinct_values:
+                    rows.append({"value": v})
+            elif method == "stats":
+                columns.append("stats")
+                stats_result = json.loads(json_util.dumps(cursor))
+                for k, v in stats_result.items():
+                    if k != "ok":
+                        rows.append({k: v})
             elif method == "aggregate" and sql.find("$group") >= 0:  # 生成聚合数据
                 row = []
                 columns.insert(0, "mongodballdata")
@@ -1368,6 +1740,113 @@ class MongoEngine(EngineBase):
                 )
                 result.error = str(e)
         return result
+
+    # 排除的系统库
+    forbidden_databases = [
+        "admin",
+        "config",
+        "local",
+    ]
+
+    def tablespace(self, offset=0, row_count=14):
+        """获取表空间信息"""
+        result_set = ResultSet(
+            full_sql="db.collection.aggregate([ { $collStats: { storageStats: { } } } ])"
+        )
+        try:
+            conn = self.get_connection()
+            try:
+                db_list = conn.list_database_names()
+            except OperationFailure:
+                db_list = [self.db_name]
+
+            rows = []
+            for db_name in db_list:
+                if db_name in self.forbidden_databases:
+                    continue
+                db = conn[db_name]
+                collection_names = db.list_collection_names()
+                for coll_name in collection_names:
+                    try:
+                        stats_cursor = db[coll_name].aggregate(
+                            [{"$collStats": {"storageStats": {}}}]
+                        )
+                        for stats in stats_cursor:
+                            storage = stats.get("storageStats", {})
+                            row = {
+                                "ns": storage.get("ns", f"{db_name}.{coll_name}"),
+                                "totalSize": round(
+                                    storage.get("totalSize", 0) / 1024 / 1024, 2
+                                ),
+                                "count": storage.get("count", 0),
+                                "size": round(storage.get("size", 0) / 1024 / 1024, 2),
+                                "avgObjSize": storage.get("avgObjSize", 0),
+                                "storageSize": round(
+                                    storage.get("storageSize", 0) / 1024 / 1024, 2
+                                ),
+                                "freeStorageSize": round(
+                                    storage.get("freeStorageSize", 0) / 1024 / 1024, 2
+                                ),
+                                "capped": storage.get("capped", False),
+                                "nindexes": storage.get("nindexes", 0),
+                                "totalIndexSize": round(
+                                    storage.get("totalIndexSize", 0) / 1024 / 1024, 2
+                                ),
+                            }
+                            rows.append(row)
+                    except Exception as e:
+                        logger.warning(
+                            f"mongodb获取集合{db_name}.{coll_name}存储信息错误，错误信息{str(e)}"
+                        )
+                        continue
+
+            # 按照 totalSize 倒序
+            rows.sort(key=lambda x: x["totalSize"], reverse=True)
+            # 分页
+            rows = rows[offset : offset + row_count]
+            result_set.rows = rows
+            result_set.column_list = [
+                "ns",
+                "totalSize",
+                "count",
+                "size",
+                "avgObjSize",
+                "storageSize",
+                "freeStorageSize",
+                "capped",
+                "nindexes",
+                "totalIndexSize",
+            ]
+        except Exception as e:
+            logger.warning(
+                f"mongodb获取表空间信息错误，错误信息{traceback.format_exc()}"
+            )
+            result_set.error = str(e)
+        return result_set
+
+    def tablespace_count(self):
+        """获取表空间数量"""
+        result_set = ResultSet()
+        try:
+            conn = self.get_connection()
+            try:
+                db_list = conn.list_database_names()
+            except OperationFailure:
+                db_list = [self.db_name]
+
+            count = 0
+            for db_name in db_list:
+                if db_name in self.forbidden_databases:
+                    continue
+                db = conn[db_name]
+                count += len(db.list_collection_names())
+            result_set.rows = [(count,)]
+        except Exception as e:
+            logger.warning(
+                f"mongodb获取表空间数量错误，错误信息{traceback.format_exc()}"
+            )
+            result_set.error = str(e)
+        return result_set
 
     def get_all_databases_summary(self):
         """实例数据库管理功能，获取实例所有的数据库描述信息"""

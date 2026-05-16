@@ -155,6 +155,7 @@ DB_TYPE_CHOICES = (
     ("elasticsearch", "Elasticsearch"),
     ("opensearch", "OpenSearch"),
     ("memcached", "Memcached"),
+    ("tdengine", "TDengine"),
 )
 
 
@@ -1314,6 +1315,60 @@ class SlowQueryHistory(models.Model):
         index_together = ("hostname_max", "ts_min")
         verbose_name = "慢日志明细"
         verbose_name_plural = "慢日志明细"
+
+
+class RedisSlowQuery(models.Model):
+    """
+    Redis慢日志统计
+    """
+
+    checksum = models.CharField(max_length=32, primary_key=True)
+    fingerprint = models.TextField()
+    sample = models.TextField()
+    first_seen = models.DateTimeField(blank=True, null=True)
+    last_seen = models.DateTimeField(blank=True, null=True, db_index=True)
+
+    class Meta:
+        managed = False
+        db_table = "redis_slow_query_review"
+        verbose_name = "Redis慢日志统计"
+        verbose_name_plural = "Redis慢日志统计"
+
+
+class RedisSlowQueryHistory(models.Model):
+    """
+    Redis慢日志明细
+    """
+
+    id = models.AutoField(primary_key=True)
+    checksum = models.ForeignKey(
+        RedisSlowQuery,
+        db_constraint=False,
+        to_field="checksum",
+        db_column="checksum",
+        on_delete=models.CASCADE,
+    )
+    sample = models.TextField()
+    hostname = models.CharField(max_length=64)
+    ts_min = models.DateTimeField(db_index=True)
+    ts_max = models.DateTimeField()
+    cnt = models.IntegerField(default=0)
+    duration_sum = models.BigIntegerField(blank=True, null=True)
+    duration_min = models.BigIntegerField(blank=True, null=True)
+    duration_max = models.BigIntegerField(blank=True, null=True)
+    duration_pct_95 = models.BigIntegerField(blank=True, null=True)
+    duration_stddev = models.DecimalField(
+        max_digits=20, decimal_places=4, blank=True, null=True
+    )
+    duration_median = models.BigIntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "redis_slow_query_review_history"
+        unique_together = ("checksum", "hostname", "ts_min", "ts_max")
+        index_together = ("hostname", "ts_min")
+        verbose_name = "Redis慢日志明细"
+        verbose_name_plural = "Redis慢日志明细"
 
 
 class AuditEntry(models.Model):

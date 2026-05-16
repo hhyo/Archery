@@ -136,6 +136,7 @@
                         <div class="text-info">
                             <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
                             <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
+                            <li id="mongo-hint-info" style="display:none">支持mongo原生查询语句，例如：<code>db.users.find({ age: { $eq: 25 } });</code></li>
                         </div>
                     </form>
                 </div>
@@ -1080,6 +1081,11 @@
                 if (sql === 'explain') {
                     sqlContent = 'SET SHOWPLAN_ALL ON; ' + sqlContent + '; SET SHOWPLAN_ALL OFF;'
                 }
+            } else if (optgroup === "TDengine") {
+                //查看执行计划
+                if (sql === 'explain') {
+                    sqlContent = 'explain ' + sqlContent
+                }
             }
             //提交请求
             $.ajax({
@@ -1157,6 +1163,7 @@
             showFormat: true,
             showExplain: true,
             showRedisHelp: false,
+            showMongoHint: false,
         }
         const createDisplayConfig = function(extraArgs = null) {
             if (extraArgs === null) {
@@ -1169,7 +1176,7 @@
                 showRedisHelp: true,
                 showFormat: false, showExplain: false}),
             "PgSQL": createDisplayConfig({showSchemaName: true}),
-            "Mongo": createDisplayConfig({showFormat: false}),
+            "Mongo": createDisplayConfig({showFormat: false, showMongoHint: true}),
             "Phoenix": createDisplayConfig({showExplain: false}),
             "Cassandra": createDisplayConfig({showExplain: false}),
             // 如有特殊的显示需求, 在此处添加配置, 并在下方的optgroup_control中添加对应的控制逻辑
@@ -1204,6 +1211,11 @@
                     redis_help_tab_add();
                 } else {
                     redis_help_tab_remove();
+                }
+                if (displayConfig.showMongoHint) {
+                    $("#mongo-hint-info").show();
+                } else {
+                    $("#mongo-hint-info").hide();
                 }
             }
         }
@@ -1311,7 +1323,11 @@
                                 $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">查看集合字段:</option>")
                             }
                             for (var i = 0; i < result.length; i++) {
-                                var name = "<option>" + result[i] + "</option>";
+                                if (optgroup == 'TDengine' && (result[i] === "普通表" || result[i] === "超级表")) {
+                                    var name = "<option value=\"is-empty\" disabled=\"\">" + result[i] + ":</option>";
+                                } else {
+                                    var name = "<option>" + result[i] + "</option>";
+                                }
                                 $("#table_name").append(name);
                             }
                             $('#table_name').selectpicker('render');

@@ -13,6 +13,7 @@
                         <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                         <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                         <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+                        <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
                     </select>
                 </div>
                 <div class="form-group">
@@ -20,6 +21,18 @@
                             name="db_name"
                             title="请选择数据库"
                             data-live-search="true">
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="obj_type" class="form-control selectpicker"
+                            name="obj_type"
+                            title="对象类型">
+                        <option value="table" selected>表</option>
+                        <option value="view">视图</option>
+                        <option value="trigger">触发器</option>
+                        <option value="procedure">存储过程</option>
+                        <option value="function">函数</option>
+                        <option value="event">定时任务</option>
                     </select>
                 </div>
                 {% if perms.sql.data_dictionary_export %}
@@ -196,6 +209,80 @@
                         </div>
                     </div>
                 </div> <!--modal-body-->
+                <div class="modal-body" id="modal-body-clickhouse" >
+                    <div class="panel panel-default">
+                        <div class="panel-heading">表信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                    <tr>
+                                        <th>表名</th>
+                                        <td id="table_name"></td>
+                                        <th>引擎</th>
+                                        <td id="engine"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>表行数</th>
+                                        <td id="table_rows"></td>
+                                        <th>数据大小</th>
+                                        <td id="data_length"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>分区键</th>
+                                        <td id="partition_key"></td>
+                                        <th>排序键</th>
+                                        <td id="sorting_key"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>主键</th>
+                                        <td id="primary_key"></td>
+                                        <th>采样键</th>
+                                        <td id="sampling_key"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>创建时间</th>
+                                        <td id="create_time"></td>
+                                        <th>表说明</th>
+                                        <td id="table_comment"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">列信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="field-list-clickhouse" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="index-list-clickhouse" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">建表语句</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="create-table-sql-clickhouse" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-->
                 <div class="modal-body" id="modal-body-oracle" >
                     <div class="panel panel-default">
                         <div class="panel-heading">表信息</div>
@@ -272,6 +359,246 @@
                         </div>
                     </div>
                 </div> <!--modal-body-->
+                <div class="modal-body" id="modal-body-view">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">视图信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data_view" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                    <tr>
+                                        <th>视图名</th>
+                                        <td id="view_name"></td>
+                                        <th>定义者</th>
+                                        <td id="view_definer"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>安全类型</th>
+                                        <td id="view_security_type"></td>
+                                        <th>检查选项</th>
+                                        <td id="view_check_option"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>是否可更新</th>
+                                        <td id="view_is_updatable"></td>
+                                        <th>字符集</th>
+                                        <td id="view_character_set_client"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">列信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="field-list-view" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">视图定义 SQL</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <pre id="view_definition_sql" style="white-space:pre-wrap;word-break:break-all;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-view-->
+                <div class="modal-body" id="modal-body-trigger">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">触发器信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data_trigger" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                    <tr>
+                                        <th>触发器名</th>
+                                        <td id="trigger_name"></td>
+                                        <th>触发时机</th>
+                                        <td id="trigger_action_timing"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>事件</th>
+                                        <td id="trigger_event_manipulation"></td>
+                                        <th>关联表</th>
+                                        <td id="trigger_event_object_table"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>作用粒度</th>
+                                        <td id="trigger_action_orientation"></td>
+                                        <th>定义者</th>
+                                        <td id="trigger_definer"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>创建时间</th>
+                                        <td id="trigger_created"></td>
+                                        <th>SQL Mode</th>
+                                        <td id="trigger_sql_mode"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">触发器体 SQL</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <pre id="trigger_action_statement" style="white-space:pre-wrap;word-break:break-all;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-trigger-->
+                <div class="modal-body" id="modal-body-procedure">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">存储过程信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data_procedure" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                    <tr>
+                                        <th>名称</th>
+                                        <td id="proc_routine_name"></td>
+                                        <th>所属数据库</th>
+                                        <td id="proc_routine_schema"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>定义者</th>
+                                        <td id="proc_definer"></td>
+                                        <th>安全类型</th>
+                                        <td id="proc_security_type"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>创建时间</th>
+                                        <td id="proc_created"></td>
+                                        <th>修改时间</th>
+                                        <td id="proc_last_altered"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>SQL Mode</th>
+                                        <td id="proc_sql_mode"></td>
+                                        <th>备注</th>
+                                        <td id="proc_routine_comment"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">创建语句</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <pre id="proc_create_sql" style="white-space:pre-wrap;word-break:break-all;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-procedure-->
+                <div class="modal-body" id="modal-body-function">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">函数信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data_function" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                    <tr>
+                                        <th>名称</th>
+                                        <td id="func_routine_name"></td>
+                                        <th>返回类型</th>
+                                        <td id="func_return_type"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>定义者</th>
+                                        <td id="func_definer"></td>
+                                        <th>所属数据库</th>
+                                        <td id="func_routine_schema"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>创建时间</th>
+                                        <td id="func_created"></td>
+                                        <th>修改时间</th>
+                                        <td id="func_last_altered"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>SQL Mode</th>
+                                        <td id="func_sql_mode"></td>
+                                        <th>备注</th>
+                                        <td id="func_routine_comment"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">创建语句</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <pre id="func_create_sql" style="white-space:pre-wrap;word-break:break-all;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-function-->
+                <div class="modal-body" id="modal-body-event">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">事件信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data_event" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                    <tr>
+                                        <th>名称</th>
+                                        <td id="event_name"></td>
+                                        <th>状态</th>
+                                        <td id="event_status"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>调度类型</th>
+                                        <td id="event_event_type"></td>
+                                        <th>间隔</th>
+                                        <td id="event_interval"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>开始时间</th>
+                                        <td id="event_starts"></td>
+                                        <th>结束时间</th>
+                                        <td id="event_ends"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>上次执行时间</th>
+                                        <td id="event_last_executed"></td>
+                                        <th>定义者</th>
+                                        <td id="event_definer"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>完成后行为</th>
+                                        <td id="event_on_completion"></td>
+                                        <th>备注</th>
+                                        <td id="event_event_comment"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">事件定义 SQL</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <pre id="event_create_sql" style="white-space:pre-wrap;word-break:break-all;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-event-->
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
@@ -290,7 +617,7 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql', 'mssql', 'oracle']
+                        db_type: ['mysql', 'mssql', 'oracle', 'clickhouse']
                     },
                     complete: function () {
                         if ($('#instance_name').val()) {
@@ -305,6 +632,7 @@
                             $("#optgroup-mysql").empty();
                             $("#optgroup-mssql").empty();
                             $("#optgroup-oracle").empty();
+                            $("#optgroup-clickhouse").empty();
                             console.log(instance_result);
                             for (let i = 0; i < result.length; i++) {
                                 let instance_name = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
@@ -314,6 +642,8 @@
                                     $("#optgroup-mssql").append(instance_name);
                                 } else if (result[i]['db_type'] === 'oracle') {
                                     $("#optgroup-oracle").append(instance_name);
+                                } else if (result[i]['db_type'] === 'clickhouse') {
+                                    $("#optgroup-clickhouse").append(instance_name);
                                 }
                             }
                             $('#instance_name').selectpicker('render');
@@ -332,6 +662,24 @@
         //实例变动获取库
         $("#instance_name").change(function () {
             $('#db_name').empty();
+            // 根据 db_type 调整 obj_type 可选项
+            var _ins_name = $("#instance_name").val();
+            var _ind = instance_result.findIndex((value)=>value.instance_name==_ins_name);
+            var _db_type = _ind >= 0 ? instance_result[_ind]['db_type'] : '';
+            if (_db_type === 'mysql') {
+                $('#obj_type option').prop('disabled', false);
+            } else {
+                // 非MySQL仅显示“表”
+                $('#obj_type option').each(function () {
+                    if ($(this).val() === 'table') {
+                        $(this).prop('disabled', false);
+                    } else {
+                        $(this).prop('disabled', true);
+                    }
+                });
+                $('#obj_type').val('table');
+            }
+            $('#obj_type').selectpicker('refresh');
             $.ajax({
                 type: "get",
                 url: "/instance/instance_resource/",
@@ -368,8 +716,39 @@
 
         //库变动获取表
         $("#db_name").change(function () {
-            get_table_list()
+            getObjectList();
         });
+
+        //对象类型变动重新加载
+        $("#obj_type").change(function () {
+            getObjectList();
+        });
+
+        // 获取当前选择的实例 db_type
+        function getCurrentDbType() {
+            var instance_name = $("#instance_name").val();
+            if (!instance_name) return '';
+            var ind = instance_result.findIndex((value)=>value.instance_name==instance_name);
+            if (ind < 0) return '';
+            return instance_result[ind]['db_type'];
+        }
+
+        // 统一对象列表入口
+        function getObjectList() {
+            var obj_type = $('#obj_type').val() || 'table';
+            var db_type = getCurrentDbType();
+            // 非MySQL实例强制重置为 table
+            if (db_type && db_type !== 'mysql' && obj_type !== 'table') {
+                $('#obj_type').val('table');
+                $('#obj_type').selectpicker('refresh');
+                obj_type = 'table';
+            }
+            if (obj_type === 'table') {
+                get_table_list();
+            } else {
+                get_dict_list(obj_type);
+            }
+        }
 
         // 获取表
         function get_table_list() {
@@ -459,7 +838,6 @@
                         var result = data.data;
                         if (inst_db_type === 'mysql') {
                             showModalBody('mysql');
-                            //console.log("hide_oracle");
 
                             $("#create-table-sql").bootstrapTable('destroy').bootstrapTable({
                                 data: result['create_sql'],
@@ -467,20 +845,33 @@
                                     field: 1,
                                     formatter: function (value, row, index) {
                                         var sql = window.sqlFormatter.format(value);
-                                        //替换所有的换行符
                                         sql = sql.replace(/\r\n/g, "<br>");
                                         sql = sql.replace(/\n/g, "<br>");
-                                        //替换所有的空格
                                         sql = sql.replace(/\s/g, " ");
                                         return sql;
+                                    }
+                                }],
+                                locale: 'zh-CN'
+                            });
+                        } else if (inst_db_type === 'clickhouse') {
+                            showModalBody('clickhouse');
 
+                            $("#create-table-sql-clickhouse").bootstrapTable('destroy').bootstrapTable({
+                                data: result['create_sql'],
+                                columns: [{
+                                    field: 0,
+                                    formatter: function (value, row, index) {
+                                        var sql = value;
+                                        sql = sql.replace(/\r\n/g, "<br>");
+                                        sql = sql.replace(/\n/g, "<br>");
+                                        sql = sql.replace(/\s/g, " ");
+                                        return sql;
                                     }
                                 }],
                                 locale: 'zh-CN'
                             });
                         } else if (inst_db_type === 'oracle') {
                             showModalBody('oracle');
-                            //console.log("hide_mysql");
                         } else if (inst_db_type === 'mssql') {
                             showModalBody('mssql');
                         }
@@ -552,6 +943,362 @@
                     alert(errorThrown);
                 },
                 complete: function () {
+                }
+            });
+        }
+
+        // 对象类型到接口、详情函数的映射
+        var OBJ_TYPE_CONFIG = {
+            view: {
+                listUrl: '/data_dictionary/view_list/',
+                showFn: 'showViewInfo'
+            },
+            trigger: {
+                listUrl: '/data_dictionary/trigger_list/',
+                showFn: 'showTriggerInfo'
+            },
+            procedure: {
+                listUrl: '/data_dictionary/procedure_list/',
+                showFn: 'showProcedureInfo'
+            },
+            function: {
+                listUrl: '/data_dictionary/function_list/',
+                showFn: 'showFunctionInfo'
+            },
+            event: {
+                listUrl: '/data_dictionary/event_list/',
+                showFn: 'showEventInfo'
+            }
+        };
+
+        // 通用列表获取（视图/触发器/存储过程/函数/事件）
+        function get_dict_list(obj_type) {
+            var conf = OBJ_TYPE_CONFIG[obj_type];
+            if (!conf) return;
+            var instance_name = $("#instance_name").val();
+            var db_name = $('#db_name').val();
+            var db_type = getCurrentDbType();
+            if (instance_name === "" || db_name === "") {
+                alert("请先选择实例和数据库！");
+                return;
+            }
+            $.ajax({
+                type: "get",
+                url: conf.listUrl,
+                dataType: "json",
+                data: {
+                    instance_name: instance_name,
+                    db_name: db_name,
+                    db_type: db_type
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        $('#btn_export_dict').removeClass('disabled');
+                        $('#btn_export_dict').prop('disabled', false);
+                        $('#jumpbox').empty();
+                        $('#indexTable').empty();
+                        var result = data.data;
+                        for (var k in result) {
+                            var jumpBoxStr = '<a href="#cap-' + k + '" style="margin-left:0.4em;"><strong>' + k + '</strong></a>';
+                            $('#jumpbox').append(jumpBoxStr);
+                            $('#indexTable').append('<tr class="cap" id="cap-' + k + '">' +
+                                '<td></td>' +
+                                '<td><strong>' + k + '</strong></td>' +
+                                '<td></td>' +
+                                '</tr>');
+                            for (var i = 0; i < result[k].length; i++) {
+                                var objName = result[k][i][0];
+                                var objDesc = result[k][i][1] == null ? '' : result[k][i][1];
+                                var indexTableStr = '<tr>' +
+                                    '<td></td>' +
+                                    '<td><a href="javascript:;" onclick="' + conf.showFn + '(\'' + instance_name + '\',\'' + db_name + '\',\'' + objName + '\')" >' +
+                                    '<code class="xref">' + objName + '</code>' +
+                                    '</a></td>' +
+                                    '<td>' + objDesc + '</td>' +
+                                    '</tr>';
+                                $('#indexTable').append(indexTableStr);
+                            }
+                        }
+                        $('#indexTable').prepend('<tr class="pcap"><td>&#160;</td></tr>');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        // 填充 meta_data table，通用工具
+        function fillMetaTable(tableSelector, idPrefix, meta_data) {
+            if (!meta_data || !meta_data.column_list) return;
+            var cols = meta_data.column_list;
+            var vals = meta_data.rows || [];
+            for (var i = 0; i < cols.length; i++) {
+                var v = vals[i];
+                if (v === null || v === undefined) v = '';
+                $(tableSelector + ' #' + idPrefix + cols[i]).text(v);
+            }
+        }
+
+        // 格式化 SQL 到 pre 元素
+        function renderSqlToPre(preSelector, sqlText) {
+            if (sqlText === null || sqlText === undefined) sqlText = '';
+            try {
+                if (window.sqlFormatter && typeof window.sqlFormatter.format === 'function') {
+                    sqlText = window.sqlFormatter.format(sqlText);
+                }
+            } catch (e) { /* ignore */ }
+            $(preSelector).text(sqlText);
+        }
+
+        // 展示视图详情
+        function showViewInfo(ins_name, db_name, view_name) {
+            $.ajax({
+                type: "get",
+                url: "/data_dictionary/view_info/",
+                dataType: "json",
+                data: {
+                    instance_name: ins_name,
+                    db_name: db_name,
+                    view_name: view_name,
+                    db_type: 'mysql'
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        showModalBody('view');
+                        // 填充基本信息
+                        var meta = result['meta_data'] || {};
+                        var cols = meta.column_list || [];
+                        var vals = meta.rows || [];
+                        var mp = {};
+                        for (var i = 0; i < cols.length; i++) mp[cols[i]] = vals[i];
+                        $('#view_name').text(mp['view_name'] || '');
+                        $('#view_definer').text(mp['definer'] || '');
+                        $('#view_security_type').text(mp['security_type'] || '');
+                        $('#view_check_option').text(mp['check_option'] || '');
+                        $('#view_is_updatable').text(mp['is_updatable'] || '');
+                        $('#view_character_set_client').text(mp['character_set_client'] || '');
+                        // 列信息
+                        var desc = result['desc'] || {column_list: [], rows: []};
+                        var columns_field = [];
+                        $.each(desc.column_list, function (i, column) {
+                            columns_field.push({"field": i, "title": column, "sortable": true});
+                        });
+                        $("#field-list-view").bootstrapTable('destroy').bootstrapTable({
+                            escape: true,
+                            data: desc.rows,
+                            columns: columns_field,
+                            striped: true,
+                            pagination: true,
+                            pageSize: 30,
+                            pageList: [30, 50, 100, 500, 1000],
+                            locale: 'zh-CN'
+                        });
+                        renderSqlToPre('#view_definition_sql', result['view_definition']);
+                        $('#showModal').modal('show');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        // 展示触发器详情
+        function showTriggerInfo(ins_name, db_name, trigger_name) {
+            $.ajax({
+                type: "get",
+                url: "/data_dictionary/trigger_info/",
+                dataType: "json",
+                data: {
+                    instance_name: ins_name,
+                    db_name: db_name,
+                    trigger_name: trigger_name,
+                    db_type: 'mysql'
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        showModalBody('trigger');
+                        var cols = result.column_list || [];
+                        var vals = result.rows || [];
+                        var mp = {};
+                        for (var i = 0; i < cols.length; i++) mp[cols[i]] = vals[i];
+                        $('#trigger_name').text(mp['trigger_name'] || '');
+                        $('#trigger_action_timing').text(mp['action_timing'] || '');
+                        $('#trigger_event_manipulation').text(mp['event_manipulation'] || '');
+                        $('#trigger_event_object_table').text(mp['event_object_table'] || '');
+                        $('#trigger_action_orientation').text(mp['action_orientation'] || '');
+                        $('#trigger_definer').text(mp['definer'] || '');
+                        $('#trigger_created').text(mp['created'] || '');
+                        $('#trigger_sql_mode').text(mp['sql_mode'] || '');
+                        renderSqlToPre('#trigger_action_statement', mp['action_statement']);
+                        $('#showModal').modal('show');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        // 从 create_sql 结果中提取 SQL 文本
+        function extractCreateSqlText(createSqlRows) {
+            if (!createSqlRows || !createSqlRows.length) return '';
+            var row = createSqlRows[0];
+            if (!row) return '';
+            // SHOW CREATE PROCEDURE/FUNCTION 中第3列为语句
+            // SHOW CREATE EVENT 第4列为语句
+            // 遵循 bootstrapTable field 索引，尝试常见位置
+            if (typeof row === 'object' && !Array.isArray(row)) {
+                // 将对象转为数组
+                var arr = [];
+                for (var k in row) arr.push(row[k]);
+                row = arr;
+            }
+            // 选取最长的字符串字段作为 SQL
+            var best = '';
+            for (var i = 0; i < row.length; i++) {
+                var v = row[i];
+                if (typeof v === 'string' && v.length > best.length) best = v;
+            }
+            return best;
+        }
+
+        // 展示存储过程详情
+        function showProcedureInfo(ins_name, db_name, proc_name) {
+            $.ajax({
+                type: "get",
+                url: "/data_dictionary/procedure_info/",
+                dataType: "json",
+                data: {
+                    instance_name: ins_name,
+                    db_name: db_name,
+                    proc_name: proc_name,
+                    db_type: 'mysql'
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        showModalBody('procedure');
+                        var meta = result['meta_data'] || {};
+                        var cols = meta.column_list || [];
+                        var vals = meta.rows || [];
+                        var mp = {};
+                        for (var i = 0; i < cols.length; i++) mp[cols[i]] = vals[i];
+                        $('#proc_routine_name').text(mp['routine_name'] || '');
+                        $('#proc_routine_schema').text(mp['routine_schema'] || '');
+                        $('#proc_definer').text(mp['definer'] || '');
+                        $('#proc_security_type').text(mp['security_type'] || '');
+                        $('#proc_created').text(mp['created'] || '');
+                        $('#proc_last_altered').text(mp['last_altered'] || '');
+                        $('#proc_sql_mode').text(mp['sql_mode'] || '');
+                        $('#proc_routine_comment').text(mp['routine_comment'] || '');
+                        renderSqlToPre('#proc_create_sql', extractCreateSqlText(result['create_sql']));
+                        $('#showModal').modal('show');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        // 展示函数详情
+        function showFunctionInfo(ins_name, db_name, func_name) {
+            $.ajax({
+                type: "get",
+                url: "/data_dictionary/function_info/",
+                dataType: "json",
+                data: {
+                    instance_name: ins_name,
+                    db_name: db_name,
+                    func_name: func_name,
+                    db_type: 'mysql'
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        showModalBody('function');
+                        var meta = result['meta_data'] || {};
+                        var cols = meta.column_list || [];
+                        var vals = meta.rows || [];
+                        var mp = {};
+                        for (var i = 0; i < cols.length; i++) mp[cols[i]] = vals[i];
+                        $('#func_routine_name').text(mp['routine_name'] || '');
+                        $('#func_return_type').text(mp['return_type'] || '');
+                        $('#func_definer').text(mp['definer'] || '');
+                        $('#func_routine_schema').text(mp['routine_schema'] || '');
+                        $('#func_created').text(mp['created'] || '');
+                        $('#func_last_altered').text(mp['last_altered'] || '');
+                        $('#func_sql_mode').text(mp['sql_mode'] || '');
+                        $('#func_routine_comment').text(mp['routine_comment'] || '');
+                        renderSqlToPre('#func_create_sql', extractCreateSqlText(result['create_sql']));
+                        $('#showModal').modal('show');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        // 展示事件详情
+        function showEventInfo(ins_name, db_name, event_name) {
+            $.ajax({
+                type: "get",
+                url: "/data_dictionary/event_info/",
+                dataType: "json",
+                data: {
+                    instance_name: ins_name,
+                    db_name: db_name,
+                    event_name: event_name,
+                    db_type: 'mysql'
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        showModalBody('event');
+                        var meta = result['meta_data'] || {};
+                        var cols = meta.column_list || [];
+                        var vals = meta.rows || [];
+                        var mp = {};
+                        for (var i = 0; i < cols.length; i++) mp[cols[i]] = vals[i];
+                        $('#event_name').text(mp['event_name'] || '');
+                        $('#event_status').text(mp['status'] || '');
+                        $('#event_event_type').text(mp['event_type'] || '');
+                        var interval_desc = '';
+                        if (mp['interval_value']) {
+                            interval_desc = mp['interval_value'] + ' ' + (mp['interval_field'] || '');
+                        } else if (mp['execute_at']) {
+                            interval_desc = 'AT ' + mp['execute_at'];
+                        }
+                        $('#event_interval').text(interval_desc);
+                        $('#event_starts').text(mp['starts'] || '');
+                        $('#event_ends').text(mp['ends'] || '');
+                        $('#event_last_executed').text(mp['last_executed'] || '');
+                        $('#event_definer').text(mp['definer'] || '');
+                        $('#event_on_completion').text(mp['on_completion'] || '');
+                        $('#event_event_comment').text(mp['event_comment'] || '');
+                        renderSqlToPre('#event_create_sql', extractCreateSqlText(result['create_sql']));
+                        $('#showModal').modal('show');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
                 }
             });
         }
