@@ -383,34 +383,52 @@ def user_query_priv(request):
 @permission_required("sql.query_mgtpriv", raise_exception=True)
 def query_priv_modify(request):
     """
-    变更权限信息
+    变更权限信息，支持单条和批量操作
     :param request:
     :return:
     """
-    privilege_id = request.POST.get("privilege_id")
     type = request.POST.get("type")
     result = {"status": 0, "msg": "ok", "data": []}
 
-    # type=1删除权限,type=2变更权限
-    try:
-        privilege = QueryPrivileges.objects.get(privilege_id=int(privilege_id))
-    except QueryPrivileges.DoesNotExist:
+    # 支持批量操作：privilege_ids 为逗号分隔的 id 列表，privilege_id 为单条操作
+    privilege_ids_str = request.POST.get("privilege_ids", "")
+    privilege_id = request.POST.get("privilege_id", "")
+
+    if privilege_ids_str:
+        try:
+            id_list = [int(i) for i in privilege_ids_str.split(",") if i.strip()]
+        except ValueError:
+            result["msg"] = "privilege_ids 参数格式错误"
+            result["status"] = 1
+            return HttpResponse(json.dumps(result), content_type="application/json")
+    elif privilege_id:
+        try:
+            id_list = [int(privilege_id)]
+        except ValueError:
+            result["msg"] = "privilege_id 参数格式错误"
+            result["status"] = 1
+            return HttpResponse(json.dumps(result), content_type="application/json")
+    else:
+        result["msg"] = "请传入 privilege_id 或 privilege_ids"
+        result["status"] = 1
+        return HttpResponse(json.dumps(result), content_type="application/json")
+
+    privileges = QueryPrivileges.objects.filter(privilege_id__in=id_list)
+    if not privileges.exists():
         result["msg"] = "待操作权限不存在"
         result["status"] = 1
         return HttpResponse(json.dumps(result), content_type="application/json")
 
+    # type=1删除权限,type=2变更权限
     if int(type) == 1:
-        # 删除权限
-        privilege.is_deleted = 1
-        privilege.save(update_fields=["is_deleted"])
+        # 批量删除权限
+        privileges.update(is_deleted=1)
         return HttpResponse(json.dumps(result), content_type="application/json")
     elif int(type) == 2:
-        # 变更权限
+        # 批量变更权限
         valid_date = request.POST.get("valid_date")
         limit_num = request.POST.get("limit_num")
-        privilege.valid_date = valid_date
-        privilege.limit_num = limit_num
-        privilege.save(update_fields=["valid_date", "limit_num"])
+        privileges.update(valid_date=valid_date, limit_num=limit_num)
         return HttpResponse(json.dumps(result), content_type="application/json")
 
 
