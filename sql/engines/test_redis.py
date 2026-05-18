@@ -430,9 +430,10 @@ def test_query_check_safe_cmd_hgetall(redis_engine):
 
 
 def test_query_check_safe_cmd_info(redis_engine):
-    """测试安全命令 info 通过检查"""
+    """测试 info 命令被禁用（防止获取敏感信息）"""
     result = redis_engine.query_check(sql="info")
-    assert result["bad_query"] is False
+    assert result["bad_query"] is True
+    assert result["msg"] == "禁止执行该命令！"
 
 
 def test_query_check_safe_cmd_scan(redis_engine):
@@ -466,7 +467,7 @@ def test_query_check_case_insensitive(redis_engine):
     assert result["bad_query"] is False
 
     result2 = redis_engine.query_check(sql="INFO memory")
-    assert result2["bad_query"] is False
+    assert result2["bad_query"] is True
 
 
 def test_query_check_filtered_sql_preserved(redis_engine):
@@ -912,7 +913,6 @@ def test_query_check_all_safe_commands(redis_engine):
         "zcard zset",
         "zcount zset 0 100",
         "zrank zset member",
-        "info",
     ]
     for cmd in safe_commands:
         result = redis_engine.query_check(sql=cmd)
