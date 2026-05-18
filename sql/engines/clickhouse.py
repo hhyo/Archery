@@ -673,6 +673,7 @@ class ClickHouseEngine(EngineBase):
         if not kill_sql:
             return ResultSet(full_sql="")
         return self.execute(sql=kill_sql)
+
     def tablespace(self, offset=0, row_count=14):
         """获取表空间信息"""
         sql = """SELECT
