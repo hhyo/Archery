@@ -1548,9 +1548,15 @@ class OracleEngine(EngineBase):
             kill_sql = kill_sql + row[0]
         return self.execute(sql=kill_sql)
 
-    def tablespace(self, offset=0, row_count=14):
+    def tablespace(self, offset=0, row_count=14, search=""):
         """获取表空间信息"""
         row_count = offset + row_count
+        search_condition = ""
+        if search:
+            search_escaped = self.escape_string(search)
+            search_condition = " AND a.tablespace_name LIKE '%{keyword}%'".format(
+                keyword=search_escaped
+            )
         sql = """
         select f.* from (
             select rownum rownumber, e.* from (
@@ -1563,7 +1569,7 @@ class OracleEngine(EngineBase):
                 from sys.sm$ts_avail a, sys.sm$ts_used b, sys.sm$ts_free c, dba_tablespaces d
                 where a.tablespace_name = b.tablespace_name
                 and a.tablespace_name = c.tablespace_name
-                and a.tablespace_name = d.tablespace_name
+                and a.tablespace_name = d.tablespace_name{search_condition}
                 order by total_space desc ) e
                 where rownum <=:row_count
         ) f where f.rownumber >=:offset;"""
@@ -1571,9 +1577,17 @@ class OracleEngine(EngineBase):
             sql=sql, parameters={"row_count": row_count, "offset": offset}
         )
 
-    def tablespace_count(self):
+    def tablespace_count(self, search=""):
         """获取表空间数量"""
-        sql = """select count(*) from dba_tablespaces where contents != 'TEMPORARY'"""
+        search_condition = ""
+        if search:
+            search_escaped = self.escape_string(search)
+            search_condition = " AND tablespace_name LIKE '%{keyword}%'".format(
+                keyword=search_escaped
+            )
+        sql = """select count(*) from dba_tablespaces where contents != 'TEMPORARY'{search_condition}""".format(
+            search_condition=search_condition
+        )
         return self.query(sql=sql)
 
     def lock_info(self):
