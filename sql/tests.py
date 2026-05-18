@@ -1964,6 +1964,176 @@ class TestDataDictionary(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertDictEqual(json.loads(r.content), {"msg": "test error", "status": 1})
 
+    # ===== 视图/触发器/存储过程/函数/事件 测试 =====
+    @patch("sql.data_dictionary.get_engine")
+    def test_view_list(self, _get_engine):
+        _get_engine.return_value.get_views_list.return_value = {
+            "v": [["v1", "select 1"]]
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/view_list/", data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(
+            json.loads(r.content),
+            {"status": 0, "data": {"v": [["v1", "select 1"]]}},
+        )
+
+    def test_view_list_non_mysql(self):
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "db_type": "oracle",
+        }
+        r = self.client.get(path="/data_dictionary/view_list/", data=data)
+        self.assertDictEqual(
+            json.loads(r.content), {"status": 1, "msg": "仅MySQL支持该功能"}
+        )
+
+    @patch("sql.data_dictionary.get_engine")
+    def test_view_info(self, _get_engine):
+        _get_engine.return_value.get_view_detail.return_value = {
+            "meta_data": {"column_list": [], "rows": []},
+            "desc": {"column_list": [], "rows": []},
+            "view_definition": "select 1",
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "view_name": "v1",
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/view_info/", data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(json.loads(r.content)["status"], 0)
+
+    @patch("sql.data_dictionary.get_engine")
+    def test_trigger_list(self, _get_engine):
+        _get_engine.return_value.get_triggers_list.return_value = {
+            "t": [["tg1", "BEFORE INSERT ON t1"]]
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/trigger_list/", data=data)
+        self.assertEqual(json.loads(r.content)["status"], 0)
+
+    @patch("sql.data_dictionary.get_engine")
+    def test_trigger_info(self, _get_engine):
+        _get_engine.return_value.get_trigger_detail.return_value = {
+            "column_list": ["trigger_name"],
+            "rows": ["tg1"],
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "trigger_name": "tg1",
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/trigger_info/", data=data)
+        self.assertEqual(json.loads(r.content)["status"], 0)
+
+    @patch("sql.data_dictionary.get_engine")
+    def test_procedure_list(self, _get_engine):
+        _get_engine.return_value.get_procedures_list.return_value = {
+            "p": [["p1", "cmt"]]
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/procedure_list/", data=data)
+        self.assertEqual(json.loads(r.content)["status"], 0)
+
+    @patch("sql.data_dictionary.get_engine")
+    def test_procedure_info(self, _get_engine):
+        _get_engine.return_value.get_procedure_detail.return_value = {
+            "meta_data": {"column_list": [], "rows": []},
+            "create_sql": [],
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "proc_name": "p1",
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/procedure_info/", data=data)
+        self.assertEqual(json.loads(r.content)["status"], 0)
+
+    @patch("sql.data_dictionary.get_engine")
+    def test_function_list(self, _get_engine):
+        _get_engine.return_value.get_functions_list.return_value = {
+            "f": [["f1", "cmt"]]
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/function_list/", data=data)
+        self.assertEqual(json.loads(r.content)["status"], 0)
+
+    @patch("sql.data_dictionary.get_engine")
+    def test_function_info(self, _get_engine):
+        _get_engine.return_value.get_function_detail.return_value = {
+            "meta_data": {"column_list": [], "rows": []},
+            "create_sql": [],
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "func_name": "f1",
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/function_info/", data=data)
+        self.assertEqual(json.loads(r.content)["status"], 0)
+
+    @patch("sql.data_dictionary.get_engine")
+    def test_event_list(self, _get_engine):
+        _get_engine.return_value.get_events_list.return_value = {
+            "e": [["e1", "ENABLED EVERY 1 DAY"]]
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/event_list/", data=data)
+        self.assertEqual(json.loads(r.content)["status"], 0)
+
+    @patch("sql.data_dictionary.get_engine")
+    def test_event_info(self, _get_engine):
+        _get_engine.return_value.get_event_detail.return_value = {
+            "meta_data": {"column_list": [], "rows": []},
+            "create_sql": [],
+        }
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "event_name": "e1",
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/event_info/", data=data)
+        self.assertEqual(json.loads(r.content)["status"], 0)
+
+    def test_event_info_non_mysql(self):
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": self.db_name,
+            "event_name": "e1",
+            "db_type": "oracle",
+        }
+        r = self.client.get(path="/data_dictionary/event_info/", data=data)
+        self.assertDictEqual(
+            json.loads(r.content), {"status": 1, "msg": "仅MySQL支持该功能"}
+        )
+
     def test_export_instance_does_not_exist(self):
         """
         测试导出实例不存在

@@ -11,6 +11,7 @@ import re
 import shlex
 
 import redis
+import rediscluster
 import logging
 import traceback
 
@@ -27,9 +28,8 @@ class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name
         if self.mode == "cluster":
-            return redis.cluster.RedisCluster(
-                host=self.host,
-                port=self.port,
+            return rediscluster.RedisCluster(
+                startup_nodes=[{"host": self.host, "port": self.port}],
                 username=self.user,
                 password=self.password or None,
                 encoding_errors="ignore",
@@ -54,6 +54,38 @@ class RedisEngine(EngineBase):
 
     info = "Redis engine"
 
+    def get_cluster_master_nodes(self):
+        """
+        获取Redis集群所有主节点的host:port列表
+        单机模式返回当前实例的host:port
+        """
+        if self.mode != "cluster":
+            return [f"{self.host}:{self.port}"]
+        try:
+            conn = self.get_connection()
+            nodes_info = conn.execute_command("CLUSTER", "NODES")
+            masters = []
+            for line in nodes_info.split("\n"):
+                if not line.strip():
+                    continue
+                parts = line.split()
+                if len(parts) >= 8 and "master" in parts[2] and "fail" not in parts[2]:
+                    # 处理格式: 127.0.0.1:7001@17001、[2001:db8::10]:6379@16379、2001:db8::10:6379@16379
+                    # 截取@之前的字符串，去掉[]即为 host:port
+                    # 兼容redis7.2,hostname有可能在@之前，例如：ip:port,hostname@cport
+                    host_port = (
+                        parts[1]
+                        .split("@")[0]
+                        .split(",")[0]
+                        .replace("[", "")
+                        .replace("]", "")
+                    )
+                    masters.append(host_port)
+            return masters if masters else [f"{self.host}:{self.port}"]
+        except Exception as e:
+            logger.warning(f"获取Redis集群节点失败: {e}")
+            return [f"{self.host}:{self.port}"]
+
     def test_connection(self):
         return self.get_all_databases()
 
@@ -63,8 +95,8 @@ class RedisEngine(EngineBase):
         :return:
         """
         result = ResultSet(full_sql="CONFIG GET databases")
-        conn = self.get_connection()
         try:
+            conn = self.get_connection()
             rows = conn.config_get("databases")["databases"]
         except Exception as e:
             """

@@ -1741,6 +1741,113 @@ class MongoEngine(EngineBase):
                 result.error = str(e)
         return result
 
+    # 排除的系统库
+    forbidden_databases = [
+        "admin",
+        "config",
+        "local",
+    ]
+
+    def tablespace(self, offset=0, row_count=14):
+        """获取表空间信息"""
+        result_set = ResultSet(
+            full_sql="db.collection.aggregate([ { $collStats: { storageStats: { } } } ])"
+        )
+        try:
+            conn = self.get_connection()
+            try:
+                db_list = conn.list_database_names()
+            except OperationFailure:
+                db_list = [self.db_name]
+
+            rows = []
+            for db_name in db_list:
+                if db_name in self.forbidden_databases:
+                    continue
+                db = conn[db_name]
+                collection_names = db.list_collection_names()
+                for coll_name in collection_names:
+                    try:
+                        stats_cursor = db[coll_name].aggregate(
+                            [{"$collStats": {"storageStats": {}}}]
+                        )
+                        for stats in stats_cursor:
+                            storage = stats.get("storageStats", {})
+                            row = {
+                                "ns": storage.get("ns", f"{db_name}.{coll_name}"),
+                                "totalSize": round(
+                                    storage.get("totalSize", 0) / 1024 / 1024, 2
+                                ),
+                                "count": storage.get("count", 0),
+                                "size": round(storage.get("size", 0) / 1024 / 1024, 2),
+                                "avgObjSize": storage.get("avgObjSize", 0),
+                                "storageSize": round(
+                                    storage.get("storageSize", 0) / 1024 / 1024, 2
+                                ),
+                                "freeStorageSize": round(
+                                    storage.get("freeStorageSize", 0) / 1024 / 1024, 2
+                                ),
+                                "capped": storage.get("capped", False),
+                                "nindexes": storage.get("nindexes", 0),
+                                "totalIndexSize": round(
+                                    storage.get("totalIndexSize", 0) / 1024 / 1024, 2
+                                ),
+                            }
+                            rows.append(row)
+                    except Exception as e:
+                        logger.warning(
+                            f"mongodb获取集合{db_name}.{coll_name}存储信息错误，错误信息{str(e)}"
+                        )
+                        continue
+
+            # 按照 totalSize 倒序
+            rows.sort(key=lambda x: x["totalSize"], reverse=True)
+            # 分页
+            rows = rows[offset : offset + row_count]
+            result_set.rows = rows
+            result_set.column_list = [
+                "ns",
+                "totalSize",
+                "count",
+                "size",
+                "avgObjSize",
+                "storageSize",
+                "freeStorageSize",
+                "capped",
+                "nindexes",
+                "totalIndexSize",
+            ]
+        except Exception as e:
+            logger.warning(
+                f"mongodb获取表空间信息错误，错误信息{traceback.format_exc()}"
+            )
+            result_set.error = str(e)
+        return result_set
+
+    def tablespace_count(self):
+        """获取表空间数量"""
+        result_set = ResultSet()
+        try:
+            conn = self.get_connection()
+            try:
+                db_list = conn.list_database_names()
+            except OperationFailure:
+                db_list = [self.db_name]
+
+            count = 0
+            for db_name in db_list:
+                if db_name in self.forbidden_databases:
+                    continue
+                db = conn[db_name]
+                count += len(db.list_collection_names())
+            result_set.rows = [(count,)]
+        except Exception as e:
+            logger.warning(
+                f"mongodb获取表空间数量错误，错误信息{traceback.format_exc()}"
+            )
+            result_set.error = str(e)
+        return result_set
+
     def get_all_databases_summary(self):
         """实例数据库管理功能，获取实例所有的数据库描述信息"""
         query_result = self.get_all_databases()

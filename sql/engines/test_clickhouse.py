@@ -633,11 +633,37 @@ def test_processlist(mock_query, mock_instance):
                 "1.00 MiB",
                 "Select",
                 "select 1",
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace_default(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(
+        column_list=[
+            "database",
+            "table",
+            "engine",
+            "table_rows",
+            "total_size",
+            "marks_bytes",
+            "data_uncompressed",
+            "data_compressed",
+            "compress_ratio",
+        ],
+        rows=[
+            (
+                "my_db",
+                "t1",
+                "MergeTree",
+                1000000,
+                "1.00 GiB",
+                "10.00 MiB",
+                "2.00 GiB",
+                "500.00 MiB",
+                24.41,
             )
         ],
     )
     engine = ClickHouseEngine(instance=mock_instance)
     rs = engine.processlist(command_type="Process")
+    rs = engine.tablespace()
     mock_query.assert_called_once()
     call_sql = mock_query.call_args.kwargs.get(
         "sql", mock_query.call_args[1].get("sql")
@@ -719,3 +745,66 @@ def test_kill_does_not_call_execute_when_no_ids(mock_execute, mock_instance):
     engine = ClickHouseEngine(instance=mock_instance)
     engine.kill([])
     mock_execute.assert_not_called()
+    assert "LIMIT 0,14" in call_sql
+    assert isinstance(rs, ResultSet)
+    assert rs.rows[0][0] == "my_db"
+    assert rs.rows[0][1] == "t1"
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace_custom_pagination(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(
+        column_list=["database", "table", "engine", "table_rows"],
+        rows=[("my_db", "t2", "Log", 1000000)],
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.tablespace(offset=14, row_count=7)
+    mock_query.assert_called_once()
+    call_sql = mock_query.call_args.kwargs.get(
+        "sql", mock_query.call_args[1].get("sql")
+    )
+    assert "LIMIT 14,7" in call_sql
+    assert rs.rows[0][1] == "t2"
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace_empty(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(
+        column_list=[
+            "database",
+            "table",
+            "engine",
+            "table_rows",
+            "total_size",
+            "marks_bytes",
+            "data_uncompressed",
+            "data_compressed",
+            "compress_ratio",
+        ],
+        rows=[],
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.tablespace()
+    assert rs.rows == []
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace_count(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(rows=[(5,)])
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.tablespace_count()
+    mock_query.assert_called_once()
+    call_sql = mock_query.call_args.kwargs.get(
+        "sql", mock_query.call_args[1].get("sql")
+    )
+    assert "count(DISTINCT" in call_sql
+    assert "system.parts" in call_sql
+    assert rs.rows[0][0] == 5
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace_count_zero(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(rows=[(0,)])
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.tablespace_count()
+    assert rs.rows[0][0] == 0

@@ -139,6 +139,46 @@ class EngineBase:
         """获取数据库所有表格信息，用作数据字典导出接口"""
         return list()
 
+    def get_views_list(self, db_name, **kwargs):
+        """获取视图列表, 返回 dict"""
+        return dict()
+
+    def get_view_detail(self, db_name, view_name, **kwargs):
+        """获取视图详情, 返回 dict"""
+        return dict()
+
+    def get_triggers_list(self, db_name, **kwargs):
+        """获取触发器列表, 返回 dict"""
+        return dict()
+
+    def get_trigger_detail(self, db_name, trigger_name, **kwargs):
+        """获取触发器详情, 返回 dict"""
+        return dict()
+
+    def get_procedures_list(self, db_name, **kwargs):
+        """获取存储过程列表, 返回 dict"""
+        return dict()
+
+    def get_procedure_detail(self, db_name, proc_name, **kwargs):
+        """获取存储过程详情, 返回 dict"""
+        return dict()
+
+    def get_functions_list(self, db_name, **kwargs):
+        """获取函数列表, 返回 dict"""
+        return dict()
+
+    def get_function_detail(self, db_name, func_name, **kwargs):
+        """获取函数详情, 返回 dict"""
+        return dict()
+
+    def get_events_list(self, db_name, **kwargs):
+        """获取定时任务列表, 返回 dict"""
+        return dict()
+
+    def get_event_detail(self, db_name, event_name, **kwargs):
+        """获取定时任务详情, 返回 dict"""
+        return dict()
+
     def get_all_databases_summary(self):
         """实例数据库管理功能，获取实例所有的数据库描述信息"""
         return ResultSet()

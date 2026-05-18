@@ -673,6 +673,33 @@ class ClickHouseEngine(EngineBase):
         if not kill_sql:
             return ResultSet(full_sql="")
         return self.execute(sql=kill_sql)
+    def tablespace(self, offset=0, row_count=14):
+        """获取表空间信息"""
+        sql = """SELECT
+            database,
+            table,
+            engine,
+            sum(rows) AS table_rows,
+            formatReadableSize(sum(bytes_on_disk)) AS total_size,
+            formatReadableSize(sum(marks_bytes)) AS marks_bytes,
+            formatReadableSize(sum(data_uncompressed_bytes)) AS data_uncompressed,
+            formatReadableSize(sum(data_compressed_bytes)) AS data_compressed,
+            round((sum(data_compressed_bytes) / sum(data_uncompressed_bytes)) * 100, 2) AS compress_ratio
+        FROM system.parts
+        WHERE active = 1
+            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema')
+        GROUP BY database, table, engine
+        ORDER BY table_rows DESC
+        LIMIT {},{};""".format(offset, row_count)
+        return self.query(sql=sql)
+
+    def tablespace_count(self):
+        """获取表空间数量"""
+        sql = """SELECT count(DISTINCT (database, table))
+        FROM system.parts
+        WHERE active
+            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema')"""
+        return self.query(sql=sql)
 
     def close(self):
         if self.conn:
