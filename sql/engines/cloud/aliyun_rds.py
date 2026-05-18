@@ -100,7 +100,8 @@ class AliyunRDS(MysqlEngine):
         if search and space_list:
             search_lower = search.lower()
             space_list = [
-                item for item in space_list
+                item
+                for item in space_list
                 if any(search_lower in str(v).lower() for v in item.values() if v)
             ]
 

@@ -1096,7 +1096,9 @@ class MysqlEngine(EngineBase):
         sql = """
         SELECT count(*)
         FROM information_schema.tables 
-        WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys'){search_condition}""".format(search_condition=search_condition)
+        WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys'){search_condition}""".format(
+            search_condition=search_condition
+        )
         return self.query("information_schema", sql)
 
     def trxandlocks(self):

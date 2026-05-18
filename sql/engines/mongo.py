@@ -1803,7 +1803,9 @@ class MongoEngine(EngineBase):
             # 搜索过滤
             if search:
                 search_lower = search.lower()
-                rows = [row for row in rows if search_lower in row.get("ns", "").lower()]
+                rows = [
+                    row for row in rows if search_lower in row.get("ns", "").lower()
+                ]
 
             # 按照 totalSize 倒序
             rows.sort(key=lambda x: x["totalSize"], reverse=True)
@@ -1848,7 +1850,8 @@ class MongoEngine(EngineBase):
                 if search:
                     search_lower = search.lower()
                     collection_names = [
-                        c for c in collection_names
+                        c
+                        for c in collection_names
                         if search_lower in f"{db_name}.{c}".lower()
                     ]
                 count += len(collection_names)

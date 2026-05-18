@@ -685,8 +685,10 @@ class ClickHouseEngine(EngineBase):
         search_condition = ""
         if search:
             search_escaped = self.escape_string(search)
-            search_condition = " AND (database LIKE '%{keyword}%' OR table LIKE '%{keyword}%')".format(
-                keyword=search_escaped
+            search_condition = (
+                " AND (database LIKE '%{keyword}%' OR table LIKE '%{keyword}%')".format(
+                    keyword=search_escaped
+                )
             )
         sql = """SELECT
             database,
@@ -711,13 +713,17 @@ class ClickHouseEngine(EngineBase):
         search_condition = ""
         if search:
             search_escaped = self.escape_string(search)
-            search_condition = " AND (database LIKE '%{keyword}%' OR table LIKE '%{keyword}%')".format(
-                keyword=search_escaped
+            search_condition = (
+                " AND (database LIKE '%{keyword}%' OR table LIKE '%{keyword}%')".format(
+                    keyword=search_escaped
+                )
             )
         sql = """SELECT count(DISTINCT (database, table))
         FROM system.parts
         WHERE active
-            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema'){search_condition}""".format(search_condition=search_condition)
+            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema'){search_condition}""".format(
+            search_condition=search_condition
+        )
         return self.query(sql=sql)
 
     def close(self):
