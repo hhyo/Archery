@@ -15,7 +15,14 @@ from sql.engines import get_engine
 
 from sql.utils.resource_group import user_instances
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from .models import Instance, SlowQuery, SlowQueryHistory, AliyunRdsConfig
+from .models import (
+    Instance,
+    SlowQuery,
+    SlowQueryHistory,
+    AliyunRdsConfig,
+    RedisSlowQuery,
+    RedisSlowQueryHistory,
+)
 
 
 import logging
@@ -32,22 +39,74 @@ def slowquery_review(request):
     db_name = request.POST.get("db_name")
     limit = int(request.POST.get("limit"))
     offset = int(request.POST.get("offset"))
+    # 获取实例信息
+    try:
+        instance_info = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {"status": 1, "msg": "实例不存在", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
     # 服务端权限校验
     try:
-        user_instances(request.user, db_type=["mysql"]).get(instance_name=instance_name)
+        user_instances(request.user, db_type=[instance_info.db_type]).get(
+            instance_name=instance_name
+        )
     except Exception:
         result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
-    # 判断是RDS还是其他实例
-    instance_info = Instance.objects.get(instance_name=instance_name)
-    if AliyunRdsConfig.objects.filter(instance=instance_info, is_enable=True).exists():
-        # 调用阿里云慢日志接口
+    if instance_info.db_type == "redis":
+        # ============ Redis 慢查询 ============
+        query_engine = get_engine(instance=instance_info)
+        hostnames = query_engine.get_cluster_master_nodes()
+        limit = offset + limit
+        search = request.POST.get("search")
+        sortName = str(request.POST.get("sortName"))
+        sortOrder = str(request.POST.get("sortOrder")).lower()
+        # 时间处理
+        end_time = datetime.datetime.strptime(
+            end_time, "%Y-%m-%d"
+        ) + datetime.timedelta(days=1)
+        slowsql_obj = (
+            RedisSlowQuery.objects.filter(
+                redisslowqueryhistory__hostname__in=hostnames,
+                redisslowqueryhistory__ts_min__range=(start_time, end_time),
+                fingerprint__icontains=search,
+            )
+            .annotate(SQLText=Max("fingerprint"), SQLId=F("checksum"))
+            .values("SQLText", "SQLId")
+            .annotate(
+                CreateTime=Max("redisslowqueryhistory__ts_max"),
+                TotalExecutionCounts=Sum("redisslowqueryhistory__cnt"),
+                TotalExecutionTimes=Sum("redisslowqueryhistory__duration_sum"),
+                QueryTimeAvg=Sum("redisslowqueryhistory__duration_sum")
+                / Sum("redisslowqueryhistory__cnt"),
+                DurationPct95=Max("redisslowqueryhistory__duration_pct_95"),
+            )
+        )
+        slow_sql_count = slowsql_obj.count()
+        slow_sql_list = slowsql_obj.order_by(
+            "-" + sortName if "desc".__eq__(sortOrder) else sortName
+        )[offset:limit]
+        sql_slow_log = []
+        for SlowLog in slow_sql_list:
+            avg = SlowLog["QueryTimeAvg"]
+            SlowLog["QueryTimeAvg"] = round(avg, 2) if avg else 0
+            total = SlowLog["TotalExecutionTimes"]
+            SlowLog["TotalExecutionTimes"] = round(total / 1000000, 6) if total else 0
+            pct = SlowLog["DurationPct95"]
+            SlowLog["DurationPct95"] = round(pct, 2) if pct else 0
+            sql_slow_log.append(SlowLog)
+        result = {"total": slow_sql_count, "rows": sql_slow_log}
+    elif AliyunRdsConfig.objects.filter(
+        instance=instance_info, is_enable=True
+    ).exists():
+        # ============ 阿里云RDS ============
         query_engine = get_engine(instance=instance_info)
         result = query_engine.slowquery_review(
             start_time, end_time, db_name, limit, offset
         )
     else:
+        # ============ MySQL 本地实例 ============
         limit = offset + limit
         search = request.POST.get("search")
         sortName = str(request.POST.get("sortName"))
@@ -66,7 +125,7 @@ def slowquery_review(request):
                 ),
                 slowqueryhistory__ts_min__range=(start_time, end_time),
                 fingerprint__icontains=search,
-                **filter_kwargs
+                **filter_kwargs,
             )
             .annotate(SQLText=Max("fingerprint"), SQLId=F("checksum"))
             .values("SQLText", "SQLId")
@@ -92,7 +151,7 @@ def slowquery_review(request):
             )
         )
         slow_sql_count = slowsql_obj.count()
-        # 默认“执行总次数”倒序排列
+        # 默认"执行总次数"倒序排列
         slow_sql_list = slowsql_obj.order_by(
             "-" + sortName if "desc".__eq__(sortOrder) else sortName
         )[offset:limit]
@@ -126,22 +185,77 @@ def slowquery_review_history(request):
     sql_id = request.POST.get("SQLId")
     limit = int(request.POST.get("limit"))
     offset = int(request.POST.get("offset"))
+    # 获取实例信息
+    try:
+        instance_info = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {"status": 1, "msg": "实例不存在", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
     # 服务端权限校验
     try:
-        user_instances(request.user, db_type=["mysql"]).get(instance_name=instance_name)
+        user_instances(request.user, db_type=[instance_info.db_type]).get(
+            instance_name=instance_name
+        )
     except Exception:
         result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
-    # 判断是RDS还是其他实例
-    instance_info = Instance.objects.get(instance_name=instance_name)
-    if AliyunRdsConfig.objects.filter(instance=instance_info, is_enable=True).exists():
-        # 调用阿里云慢日志接口
+    if instance_info.db_type == "redis":
+        # ============ Redis 慢查询明细 ============
+        query_engine = get_engine(instance=instance_info)
+        hostnames = query_engine.get_cluster_master_nodes()
+        search = request.POST.get("search")
+        sortName = str(request.POST.get("sortName"))
+        sortOrder = str(request.POST.get("sortOrder")).lower()
+        # 时间处理
+        end_time = datetime.datetime.strptime(
+            end_time, "%Y-%m-%d"
+        ) + datetime.timedelta(days=1)
+        limit = offset + limit
+        filter_kwargs = {}
+        filter_kwargs.update({"checksum": sql_id}) if sql_id else None
+        slow_sql_record_obj = RedisSlowQueryHistory.objects.filter(
+            hostname__in=hostnames,
+            ts_min__range=(start_time, end_time),
+            sample__icontains=search,
+            **filter_kwargs,
+        ).annotate(
+            ExecutionStartTime=F("ts_min"),
+            SQLText=F("sample"),
+            TotalExecutionCounts=F("cnt"),
+            QueryTimePct95=F("duration_pct_95"),
+            QueryTimes=F("duration_sum"),
+            HostName=F("hostname"),
+        )
+        slow_sql_record_count = slow_sql_record_obj.count()
+        slow_sql_record_list = slow_sql_record_obj.order_by(
+            "-" + sortName if "desc".__eq__(sortOrder) else sortName
+        )[offset:limit].values(
+            "ExecutionStartTime",
+            "SQLText",
+            "TotalExecutionCounts",
+            "QueryTimePct95",
+            "QueryTimes",
+            "HostName",
+        )
+        sql_slow_record = []
+        for SlowRecord in slow_sql_record_list:
+            pct = SlowRecord["QueryTimePct95"]
+            SlowRecord["QueryTimePct95"] = round(pct, 2) if pct else 0
+            total = SlowRecord["QueryTimes"]
+            SlowRecord["QueryTimes"] = round(total / 1000000, 6) if total else 0
+            sql_slow_record.append(SlowRecord)
+        result = {"total": slow_sql_record_count, "rows": sql_slow_record}
+    elif AliyunRdsConfig.objects.filter(
+        instance=instance_info, is_enable=True
+    ).exists():
+        # ============ 阿里云RDS ============
         query_engine = get_engine(instance=instance_info)
         result = query_engine.slowquery_review_history(
             start_time, end_time, db_name, sql_id, limit, offset
         )
     else:
+        # ============ MySQL 本地实例 ============
         search = request.POST.get("search")
         sortName = str(request.POST.get("sortName"))
         sortOrder = str(request.POST.get("sortOrder")).lower()
@@ -160,7 +274,7 @@ def slowquery_review_history(request):
             hostname_max=(instance_info.host + ":" + str(instance_info.port)),
             ts_min__range=(start_time, end_time),
             sample__icontains=search,
-            **filter_kwargs
+            **filter_kwargs,
         ).annotate(
             ExecutionStartTime=F(
                 "ts_min"
@@ -203,20 +317,43 @@ def slowquery_review_history(request):
             sql_slow_record.append(SlowRecord)
         result = {"total": slow_sql_record_count, "rows": sql_slow_record}
 
-        # 返回查询结果
+    # 返回查询结果
     return HttpResponse(
         json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
         content_type="application/json",
     )
 
 
-@cache_page(60 * 10)
+@cache_page(60 * 1)
 def report(request):
     """返回慢SQL历史趋势"""
     checksum = request.GET.get("checksum")
     checksum = pymysql.escape_string(checksum)
-    cnt_data = ChartDao().slow_query_review_history_by_cnt(checksum)
-    pct_data = ChartDao().slow_query_review_history_by_pct_95_time(checksum)
+    instance_name = request.GET.get("instance_name")
+    # 判断是否为Redis实例
+    is_redis = False
+    hostnames = None
+    if instance_name:
+        try:
+            instance_info = Instance.objects.get(instance_name=instance_name)
+            is_redis = instance_info.db_type == "redis"
+            if is_redis:
+                query_engine = get_engine(instance=instance_info)
+                hostnames = query_engine.get_cluster_master_nodes()
+        except Instance.DoesNotExist:
+            pass
+    if is_redis and hostnames:
+        # Redis慢查询历史趋势
+        cnt_data = ChartDao().redis_slow_query_review_history_by_cnt(
+            checksum, hostnames
+        )
+        pct_data = ChartDao().redis_slow_query_review_history_by_pct_95_time(
+            checksum, hostnames
+        )
+    else:
+        # MySQL慢查询历史趋势
+        cnt_data = ChartDao().slow_query_review_history_by_cnt(checksum)
+        pct_data = ChartDao().slow_query_review_history_by_pct_95_time(checksum)
     cnt_x_data = [row[1] for row in cnt_data["rows"]]
     cnt_y_data = [int(row[0]) for row in cnt_data["rows"]]
     pct_y_data = [str(row[0]) for row in pct_data["rows"]]

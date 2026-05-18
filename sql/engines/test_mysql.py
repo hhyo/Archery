@@ -188,6 +188,230 @@ class TestMysql(TestCase):
         new_engine.describe_table("some_db", "some_db")
         mock_query.assert_called_once()
 
+    @patch.object(MysqlEngine, "query")
+    def test_get_views_list(self, mock_query):
+        r = ResultSet()
+        r.rows = [("v1", "select 1"), ("v2", "select 2"), ("a_view", None)]
+        mock_query.return_value = r
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_views_list(db_name="some_db")
+        self.assertIn("v", data)
+        self.assertIn("a", data)
+        self.assertEqual(data["v"][0][0], "v1")
+
+    @patch.object(MysqlEngine, "get_table_desc_data")
+    @patch.object(MysqlEngine, "query")
+    def test_get_view_detail(self, mock_query, mock_desc):
+        r = ResultSet()
+        r.column_list = [
+            "view_name",
+            "view_definition",
+            "check_option",
+            "is_updatable",
+            "definer",
+            "security_type",
+            "character_set_client",
+            "collation_connection",
+        ]
+        r.rows = [
+            (
+                "v1",
+                "select 1",
+                "NONE",
+                "YES",
+                "root@%",
+                "DEFINER",
+                "utf8",
+                "utf8_general_ci",
+            )
+        ]
+        mock_query.return_value = r
+        mock_desc.return_value = {"column_list": [], "rows": []}
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_view_detail(db_name="some_db", view_name="v1")
+        self.assertEqual(data["view_definition"], "select 1")
+        self.assertIn("meta_data", data)
+        self.assertIn("desc", data)
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_triggers_list(self, mock_query):
+        r = ResultSet()
+        r.rows = [("tg1", "BEFORE", "INSERT", "t1")]
+        mock_query.return_value = r
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_triggers_list(db_name="some_db")
+        self.assertIn("t", data)
+        self.assertEqual(data["t"][0][0], "tg1")
+        self.assertIn("BEFORE", data["t"][0][1])
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_trigger_detail(self, mock_query):
+        r = ResultSet()
+        r.column_list = [
+            "trigger_name",
+            "action_timing",
+            "event_manipulation",
+            "event_object_table",
+            "action_orientation",
+            "action_statement",
+            "definer",
+            "created",
+            "sql_mode",
+            "character_set_client",
+            "collation_connection",
+        ]
+        r.rows = [
+            (
+                "tg1",
+                "BEFORE",
+                "INSERT",
+                "t1",
+                "ROW",
+                "BEGIN END",
+                "root@%",
+                None,
+                "",
+                "utf8",
+                "utf8",
+            )
+        ]
+        mock_query.return_value = r
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_trigger_detail(db_name="some_db", trigger_name="tg1")
+        self.assertIn("column_list", data)
+        self.assertTrue(len(data["rows"]) > 0)
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_procedures_list(self, mock_query):
+        r = ResultSet()
+        r.rows = [("p1", "comment1"), ("p2", "comment2")]
+        mock_query.return_value = r
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_procedures_list(db_name="some_db")
+        self.assertIn("p", data)
+        self.assertEqual(len(data["p"]), 2)
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_procedure_detail(self, mock_query):
+        meta = ResultSet()
+        meta.column_list = [
+            "routine_name",
+            "routine_schema",
+            "definer",
+            "created",
+            "last_altered",
+            "sql_mode",
+            "security_type",
+            "routine_comment",
+        ]
+        meta.rows = [("p1", "some_db", "root@%", None, None, "", "DEFINER", "")]
+        create = ResultSet()
+        create.rows = [("p1", "", "CREATE PROCEDURE p1() BEGIN END", "")]
+        mock_query.side_effect = [meta, create]
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_procedure_detail(db_name="some_db", proc_name="p1")
+        self.assertIn("meta_data", data)
+        self.assertEqual(data["create_sql"], create.rows)
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_functions_list(self, mock_query):
+        r = ResultSet()
+        r.rows = [("f1", "cmt"), ("f2", "cmt2")]
+        mock_query.return_value = r
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_functions_list(db_name="some_db")
+        self.assertIn("f", data)
+        self.assertEqual(len(data["f"]), 2)
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_function_detail(self, mock_query):
+        meta = ResultSet()
+        meta.column_list = [
+            "routine_name",
+            "routine_schema",
+            "return_type",
+            "definer",
+            "created",
+            "last_altered",
+            "sql_mode",
+            "security_type",
+            "routine_comment",
+        ]
+        meta.rows = [("f1", "some_db", "int", "root@%", None, None, "", "DEFINER", "")]
+        create = ResultSet()
+        create.rows = [("f1", "", "CREATE FUNCTION f1() RETURNS INT RETURN 1", "", "")]
+        mock_query.side_effect = [meta, create]
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_function_detail(db_name="some_db", func_name="f1")
+        self.assertIn("meta_data", data)
+        self.assertEqual(data["create_sql"], create.rows)
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_events_list(self, mock_query):
+        r = ResultSet()
+        r.rows = [("e1", "ENABLED", "RECURRING", 1, "DAY")]
+        mock_query.return_value = r
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_events_list(db_name="some_db")
+        self.assertIn("e", data)
+        self.assertIn("EVERY", data["e"][0][1])
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_event_detail(self, mock_query):
+        meta = ResultSet()
+        meta.column_list = [
+            "event_name",
+            "event_schema",
+            "definer",
+            "event_type",
+            "interval_value",
+            "interval_field",
+            "status",
+            "execute_at",
+            "starts",
+            "ends",
+            "last_executed",
+            "on_completion",
+            "created",
+            "last_altered",
+            "event_comment",
+        ]
+        meta.rows = [
+            (
+                "e1",
+                "some_db",
+                "root@%",
+                "RECURRING",
+                1,
+                "DAY",
+                "ENABLED",
+                None,
+                None,
+                None,
+                None,
+                "NOT PRESERVE",
+                None,
+                None,
+                "",
+            )
+        ]
+        create = ResultSet()
+        create.rows = [
+            (
+                "e1",
+                "",
+                "",
+                "CREATE EVENT e1 ON SCHEDULE EVERY 1 DAY DO SELECT 1",
+                "",
+                "",
+            )
+        ]
+        mock_query.side_effect = [meta, create]
+        engine = MysqlEngine(instance=self.ins1)
+        data = engine.get_event_detail(db_name="some_db", event_name="e1")
+        self.assertIn("meta_data", data)
+        self.assertEqual(data["create_sql"], create.rows)
+
     def testQueryCheck(self):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = "-- 测试\n select user from usertable"

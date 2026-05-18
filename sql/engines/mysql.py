@@ -299,6 +299,244 @@ class MysqlEngine(EngineBase):
         )
         return {"column_list": _index_data.column_list, "rows": _index_data.rows}
 
+    def get_views_list(self, db_name, **kwargs):
+        """获取视图列表，按首字符分组"""
+        data = {}
+        sql = """SELECT TABLE_NAME, VIEW_DEFINITION
+                    FROM information_schema.VIEWS
+                    WHERE TABLE_SCHEMA=%(db_name)s;"""
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
+        for row in result.rows:
+            view_name = row[0]
+            view_comment = row[1][:80] if row[1] else ""
+            if view_name[0] not in data:
+                data[view_name[0]] = list()
+            data[view_name[0]].append([view_name, view_comment])
+        return data
+
+    def get_view_detail(self, db_name, view_name, **kwargs):
+        """获取视图详情"""
+        sql = """SELECT
+                    TABLE_NAME as view_name,
+                    VIEW_DEFINITION as view_definition,
+                    CHECK_OPTION as check_option,
+                    IS_UPDATABLE as is_updatable,
+                    DEFINER as definer,
+                    SECURITY_TYPE as security_type,
+                    CHARACTER_SET_CLIENT as character_set_client,
+                    COLLATION_CONNECTION as collation_connection
+                FROM information_schema.VIEWS
+                WHERE TABLE_SCHEMA=%(db_name)s AND TABLE_NAME=%(view_name)s;"""
+        _meta = self.query(
+            db_name, sql, parameters={"db_name": db_name, "view_name": view_name}
+        )
+        meta_data = {
+            "column_list": _meta.column_list,
+            "rows": _meta.rows[0] if _meta.rows else [],
+        }
+        view_definition = ""
+        if _meta.rows:
+            # VIEW_DEFINITION 在第二列
+            view_definition = _meta.rows[0][1] or ""
+        desc = self.get_table_desc_data(db_name=db_name, tb_name=view_name)
+        return {
+            "meta_data": meta_data,
+            "desc": desc,
+            "view_definition": view_definition,
+        }
+
+    def get_triggers_list(self, db_name, **kwargs):
+        """获取触发器列表，按首字符分组"""
+        data = {}
+        sql = """SELECT
+                    TRIGGER_NAME,
+                    ACTION_TIMING,
+                    EVENT_MANIPULATION,
+                    EVENT_OBJECT_TABLE
+                FROM information_schema.TRIGGERS
+                WHERE TRIGGER_SCHEMA=%(db_name)s;"""
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
+        for row in result.rows:
+            trigger_name = row[0]
+            desc = f"{row[1]} {row[2]} ON {row[3]}"
+            if trigger_name[0] not in data:
+                data[trigger_name[0]] = list()
+            data[trigger_name[0]].append([trigger_name, desc])
+        return data
+
+    def get_trigger_detail(self, db_name, trigger_name, **kwargs):
+        """获取触发器详情"""
+        sql = """SELECT
+                    TRIGGER_NAME as trigger_name,
+                    ACTION_TIMING as action_timing,
+                    EVENT_MANIPULATION as event_manipulation,
+                    EVENT_OBJECT_TABLE as event_object_table,
+                    ACTION_ORIENTATION as action_orientation,
+                    ACTION_STATEMENT as action_statement,
+                    DEFINER as definer,
+                    CREATED as created,
+                    SQL_MODE as sql_mode,
+                    CHARACTER_SET_CLIENT as character_set_client,
+                    COLLATION_CONNECTION as collation_connection
+                FROM information_schema.TRIGGERS
+                WHERE TRIGGER_SCHEMA=%(db_name)s AND TRIGGER_NAME=%(trigger_name)s;"""
+        _data = self.query(
+            db_name,
+            sql,
+            parameters={"db_name": db_name, "trigger_name": trigger_name},
+        )
+        return {
+            "column_list": _data.column_list,
+            "rows": _data.rows[0] if _data.rows else [],
+        }
+
+    def get_procedures_list(self, db_name, **kwargs):
+        """获取存储过程列表，按首字符分组"""
+        data = {}
+        sql = """SELECT ROUTINE_NAME, ROUTINE_COMMENT
+                    FROM information_schema.ROUTINES
+                    WHERE ROUTINE_SCHEMA=%(db_name)s AND ROUTINE_TYPE='PROCEDURE';"""
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
+        for row in result.rows:
+            proc_name = row[0]
+            proc_cmt = row[1]
+            if proc_name[0] not in data:
+                data[proc_name[0]] = list()
+            data[proc_name[0]].append([proc_name, proc_cmt])
+        return data
+
+    def get_procedure_detail(self, db_name, proc_name, **kwargs):
+        """获取存储过程详情"""
+        sql_meta = """SELECT
+                    ROUTINE_NAME as routine_name,
+                    ROUTINE_SCHEMA as routine_schema,
+                    DEFINER as definer,
+                    CREATED as created,
+                    LAST_ALTERED as last_altered,
+                    SQL_MODE as sql_mode,
+                    SECURITY_TYPE as security_type,
+                    ROUTINE_COMMENT as routine_comment
+                FROM information_schema.ROUTINES
+                WHERE ROUTINE_SCHEMA=%(db_name)s
+                    AND ROUTINE_NAME=%(proc_name)s
+                    AND ROUTINE_TYPE='PROCEDURE';"""
+        _meta = self.query(
+            db_name,
+            sql_meta,
+            parameters={"db_name": db_name, "proc_name": proc_name},
+        )
+        meta_data = {
+            "column_list": _meta.column_list,
+            "rows": _meta.rows[0] if _meta.rows else [],
+        }
+        _create = self.query(db_name, f"SHOW CREATE PROCEDURE `{proc_name}`;")
+        create_sql = _create.rows
+        return {"meta_data": meta_data, "create_sql": create_sql}
+
+    def get_functions_list(self, db_name, **kwargs):
+        """获取函数列表，按首字符分组"""
+        data = {}
+        sql = """SELECT ROUTINE_NAME, ROUTINE_COMMENT
+                    FROM information_schema.ROUTINES
+                    WHERE ROUTINE_SCHEMA=%(db_name)s AND ROUTINE_TYPE='FUNCTION';"""
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
+        for row in result.rows:
+            func_name = row[0]
+            func_cmt = row[1]
+            if func_name[0] not in data:
+                data[func_name[0]] = list()
+            data[func_name[0]].append([func_name, func_cmt])
+        return data
+
+    def get_function_detail(self, db_name, func_name, **kwargs):
+        """获取函数详情"""
+        sql_meta = """SELECT
+                    ROUTINE_NAME as routine_name,
+                    ROUTINE_SCHEMA as routine_schema,
+                    DTD_IDENTIFIER as return_type,
+                    DEFINER as definer,
+                    CREATED as created,
+                    LAST_ALTERED as last_altered,
+                    SQL_MODE as sql_mode,
+                    SECURITY_TYPE as security_type,
+                    ROUTINE_COMMENT as routine_comment
+                FROM information_schema.ROUTINES
+                WHERE ROUTINE_SCHEMA=%(db_name)s
+                    AND ROUTINE_NAME=%(func_name)s
+                    AND ROUTINE_TYPE='FUNCTION';"""
+        _meta = self.query(
+            db_name,
+            sql_meta,
+            parameters={"db_name": db_name, "func_name": func_name},
+        )
+        meta_data = {
+            "column_list": _meta.column_list,
+            "rows": _meta.rows[0] if _meta.rows else [],
+        }
+        _create = self.query(db_name, f"SHOW CREATE FUNCTION `{func_name}`;")
+        create_sql = _create.rows
+        return {"meta_data": meta_data, "create_sql": create_sql}
+
+    def get_events_list(self, db_name, **kwargs):
+        """获取定时任务列表，按首字符分组"""
+        data = {}
+        sql = """SELECT
+                    EVENT_NAME,
+                    STATUS,
+                    EVENT_TYPE,
+                    INTERVAL_VALUE,
+                    INTERVAL_FIELD
+                FROM information_schema.EVENTS
+                WHERE EVENT_SCHEMA=%(db_name)s;"""
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
+        for row in result.rows:
+            event_name = row[0]
+            status = row[1]
+            event_type = row[2]
+            interval_value = row[3]
+            interval_field = row[4]
+            if event_type == "RECURRING":
+                desc = f"{status} EVERY {interval_value} {interval_field}"
+            else:
+                desc = f"{status} ONE TIME"
+            if event_name[0] not in data:
+                data[event_name[0]] = list()
+            data[event_name[0]].append([event_name, desc])
+        return data
+
+    def get_event_detail(self, db_name, event_name, **kwargs):
+        """获取定时任务详情"""
+        sql_meta = """SELECT
+                    EVENT_NAME as event_name,
+                    EVENT_SCHEMA as event_schema,
+                    DEFINER as definer,
+                    EVENT_TYPE as event_type,
+                    INTERVAL_VALUE as interval_value,
+                    INTERVAL_FIELD as interval_field,
+                    STATUS as status,
+                    EXECUTE_AT as execute_at,
+                    STARTS as starts,
+                    ENDS as ends,
+                    LAST_EXECUTED as last_executed,
+                    ON_COMPLETION as on_completion,
+                    CREATED as created,
+                    LAST_ALTERED as last_altered,
+                    EVENT_COMMENT as event_comment
+                FROM information_schema.EVENTS
+                WHERE EVENT_SCHEMA=%(db_name)s AND EVENT_NAME=%(event_name)s;"""
+        _meta = self.query(
+            db_name,
+            sql_meta,
+            parameters={"db_name": db_name, "event_name": event_name},
+        )
+        meta_data = {
+            "column_list": _meta.column_list,
+            "rows": _meta.rows[0] if _meta.rows else [],
+        }
+        _create = self.query(db_name, f"SHOW CREATE EVENT `{event_name}`;")
+        create_sql = _create.rows
+        return {"meta_data": meta_data, "create_sql": create_sql}
+
     def get_tables_metas_data(self, db_name, **kwargs):
         """获取数据库所有表格信息，用作数据字典导出接口"""
         sql_tbs = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=%(db_name)s ORDER BY TABLE_SCHEMA,TABLE_NAME;"
