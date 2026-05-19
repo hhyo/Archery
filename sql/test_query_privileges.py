@@ -893,3 +893,99 @@ def test_query_privilege_audit(
     )
     sql_query_apply.refresh_from_db()
     assert sql_query_apply.status == WorkflowStatus.PASSED
+
+
+class TestQueryPrivExpireReminder(TestCase):
+    """测试查询权限到期提醒"""
+
+    def setUp(self):
+        self.superuser = User.objects.create(
+            username="super", is_superuser=True, email="admin@test.com"
+        )
+        self.user = User.objects.create(
+            username="user", display="普通用户", email="user@test.com"
+        )
+        self.user_no_email = User.objects.create(
+            username="user_no_email", display="无邮箱用户"
+        )
+        self.slave = Instance.objects.create(
+            instance_name="test_instance",
+            type="slave",
+            db_type="mysql",
+            host=settings.DATABASES["default"]["HOST"],
+            port=settings.DATABASES["default"]["PORT"],
+            user=settings.DATABASES["default"]["USER"],
+            password=settings.DATABASES["default"]["PASSWORD"],
+        )
+        self.sys_config = SysConfig()
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.user.delete()
+        self.user_no_email.delete()
+        Instance.objects.all().delete()
+        QueryPrivileges.objects.all().delete()
+
+    @patch("sql.query_privileges.MsgSender.send_email")
+    def test_no_expire_privs(self, mock_send_email):
+        """没有即将到期的权限，不发送邮件"""
+        sql.query_privileges.query_priv_expire_reminder()
+        mock_send_email.assert_not_called()
+
+    @patch("sql.query_privileges.MsgSender.send_email")
+    def test_send_reminder(self, mock_send_email):
+        """有即将到期的权限，发送 HTML 邮件给用户并抄送管理员"""
+        expire_date = date.today() + timedelta(days=2)
+        QueryPrivileges.objects.create(
+            user_name=self.user.username,
+            user_display=self.user.display,
+            instance=self.slave,
+            db_name="test_db",
+            table_name="test_table",
+            valid_date=expire_date,
+            limit_num=100,
+            priv_type=2,
+        )
+        sql.query_privileges.query_priv_expire_reminder()
+        mock_send_email.assert_called_once()
+        args = mock_send_email.call_args
+        self.assertIn("查询权限即将到期提醒", args[0][0])
+        self.assertEqual(args[0][2], ["user@test.com"])
+        self.assertEqual(args[1]["list_cc_addr"], ["admin@test.com"])
+        self.assertEqual(args[1]["content_type"], "html")
+        self.assertIn("<table", args[0][1])
+        self.assertIn("</table>", args[0][1])
+
+    @patch("sql.query_privileges.MsgSender.send_email")
+    def test_user_no_email(self, mock_send_email):
+        """用户未配置邮箱，跳过发送"""
+        expire_date = date.today() + timedelta(days=1)
+        QueryPrivileges.objects.create(
+            user_name=self.user_no_email.username,
+            user_display=self.user_no_email.display,
+            instance=self.slave,
+            db_name="test_db",
+            table_name="test_table",
+            valid_date=expire_date,
+            limit_num=100,
+            priv_type=2,
+        )
+        sql.query_privileges.query_priv_expire_reminder()
+        mock_send_email.assert_not_called()
+
+    @patch("sql.query_privileges.MsgSender.send_email")
+    def test_user_not_exist(self, mock_send_email):
+        """用户不存在，跳过发送"""
+        expire_date = date.today() + timedelta(days=1)
+        QueryPrivileges.objects.create(
+            user_name="not_exist_user",
+            user_display="不存在用户",
+            instance=self.slave,
+            db_name="test_db",
+            table_name="test_table",
+            valid_date=expire_date,
+            limit_num=100,
+            priv_type=2,
+        )
+        sql.query_privileges.query_priv_expire_reminder()
+        mock_send_email.assert_not_called()
