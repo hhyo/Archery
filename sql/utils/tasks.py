@@ -53,6 +53,18 @@ def add_sync_ding_user_schedule():
     )
 
 
+def add_query_priv_expire_reminder_schedule():
+    """添加查询权限到期提醒定时任务（每天执行一次）"""
+    del_schedule(name="查询权限到期提醒")
+    schedule(
+        "sql.query_privileges.query_priv_expire_reminder",
+        name="查询权限到期提醒",
+        schedule_type="D",
+        repeats=-1,
+        timeout=-1,
+    )
+
+
 def del_schedule(name):
     """删除schedule"""
     try:
