@@ -208,6 +208,126 @@ def param_edit(request):
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 
+@permission_required("sql.param_view", raise_exception=True)
+def param_compare(request):
+    """对比两个实例的参数差异"""
+    instance_id1 = request.POST.get("instance_id1")
+    instance_id2 = request.POST.get("instance_id2")
+    diff_only = request.POST.get("diff_only", "true") == "true"
+
+    # 校验实例存在
+    try:
+        ins1 = Instance.objects.get(id=instance_id1)
+    except Instance.DoesNotExist:
+        result = {"status": 1, "msg": "源实例不存在", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
+    try:
+        ins2 = Instance.objects.get(id=instance_id2)
+    except Instance.DoesNotExist:
+        result = {"status": 1, "msg": "目标实例不存在", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
+
+    # 校验同类型
+    if ins1.db_type != ins2.db_type:
+        result = {
+            "status": 1,
+            "msg": "两个实例的数据库类型不一致，无法对比",
+            "data": [],
+        }
+        return HttpResponse(json.dumps(result), content_type="application/json")
+
+    # 获取参数
+    try:
+        engine1 = get_engine(instance=ins1)
+        variables1 = engine1.get_variables()
+    except Exception as e:
+        result = {"status": 1, "msg": f"获取源实例参数失败：{e}", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
+    try:
+        engine2 = get_engine(instance=ins2)
+        variables2 = engine2.get_variables()
+    except Exception as e:
+        result = {"status": 1, "msg": f"获取目标实例参数失败：{e}", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
+
+    # 构建 dict {variable_name_lower: value}
+    vars1 = {}
+    for variable in variables1.rows:
+        var_name = str(variable[0]).lower()
+        vars1[var_name] = str(variable[1]).strip()
+
+    vars2 = {}
+    for variable in variables2.rows:
+        var_name = str(variable[0]).lower()
+        vars2[var_name] = str(variable[1]).strip()
+
+    # 获取参数模板补充描述
+    cnf_params = dict()
+    for param in ParamTemplate.objects.filter(db_type=ins1.db_type).values(
+        "variable_name", "default_value", "description"
+    ):
+        cnf_params[param["variable_name"].lower()] = param
+
+    # 遍历并集，逐项对比
+    all_keys = set(vars1.keys()) | set(vars2.keys())
+    rows = []
+    same_count = 0
+    diff_count = 0
+    for key in sorted(all_keys):
+        val1 = vars1.get(key)
+        val2 = vars2.get(key)
+
+        if val1 is not None and val2 is not None:
+            # 双方都有
+            if val1 == val2:
+                diff_type = "一致"
+                same_count += 1
+            else:
+                diff_type = "值不同"
+                diff_count += 1
+        elif val1 is not None:
+            diff_type = "仅源实例存在"
+            diff_count += 1
+        else:
+            diff_type = "仅目标实例存在"
+            diff_count += 1
+
+        # diff_only 过滤
+        if diff_only and diff_type == "一致":
+            continue
+
+        row = {
+            "variable_name": key,
+            "instance1_value": val1 if val1 is not None else "-",
+            "instance2_value": val2 if val2 is not None else "-",
+            "diff_type": diff_type,
+            "description": "",
+            "default_value": "",
+        }
+        # 补充参数模板信息
+        if key in cnf_params:
+            row["description"] = cnf_params[key].get("description", "")
+            row["default_value"] = cnf_params[key].get("default_value", "")
+        rows.append(row)
+
+    result = {
+        "status": 0,
+        "msg": "ok",
+        "data": {
+            "rows": rows,
+            "total": len(all_keys),
+            "same_count": same_count,
+            "diff_count": diff_count,
+            "instance1_name": ins1.instance_name,
+            "instance2_name": ins2.instance_name,
+        },
+    }
+    return HttpResponse(
+        json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+        content_type="application/json",
+    )
+
+
 @permission_required("sql.menu_schemasync", raise_exception=True)
 def schemasync(request):
     """对比实例schema信息"""

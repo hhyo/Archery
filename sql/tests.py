@@ -2383,3 +2383,175 @@ class TestDataDictionary(TestCase):
                 "status": 0,
             },
         )
+
+
+class TestParamCompare(TestCase):
+    """
+    测试参数对比
+    """
+
+    def setUp(self):
+        self.superuser = User(username="super", is_superuser=True)
+        self.superuser.save()
+        self.ins1 = Instance(
+            instance_name="test_instance1",
+            type="master",
+            db_type="mysql",
+            host=settings.DATABASES["default"]["HOST"],
+            port=settings.DATABASES["default"]["PORT"],
+            user=settings.DATABASES["default"]["USER"],
+            password=settings.DATABASES["default"]["PASSWORD"],
+        )
+        self.ins1.save()
+        self.ins2 = Instance(
+            instance_name="test_instance2",
+            type="master",
+            db_type="mysql",
+            host=settings.DATABASES["default"]["HOST"],
+            port=settings.DATABASES["default"]["PORT"],
+            user=settings.DATABASES["default"]["USER"],
+            password=settings.DATABASES["default"]["PASSWORD"],
+        )
+        self.ins2.save()
+        self.client = Client()
+        self.client.force_login(self.superuser)
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.ins1.delete()
+        self.ins2.delete()
+        ParamTemplate.objects.all().delete()
+
+    def test_param_compare_instance1_not_exist(self):
+        """
+        测试参数对比，源实例不存在
+        """
+        data = {"instance_id1": 0, "instance_id2": self.ins2.id}
+        r = self.client.post(path="/param/compare/", data=data)
+        self.assertEqual(
+            json.loads(r.content), {"status": 1, "msg": "源实例不存在", "data": []}
+        )
+
+    def test_param_compare_instance2_not_exist(self):
+        """
+        测试参数对比，目标实例不存在
+        """
+        data = {"instance_id1": self.ins1.id, "instance_id2": 0}
+        r = self.client.post(path="/param/compare/", data=data)
+        self.assertEqual(
+            json.loads(r.content), {"status": 1, "msg": "目标实例不存在", "data": []}
+        )
+
+    def test_param_compare_db_type_not_match(self):
+        """
+        测试参数对比，数据库类型不一致
+        """
+        ins_pg = Instance(
+            instance_name="test_pg",
+            type="master",
+            db_type="pgsql",
+            host=settings.DATABASES["default"]["HOST"],
+            port=5432,
+            user=settings.DATABASES["default"]["USER"],
+            password=settings.DATABASES["default"]["PASSWORD"],
+        )
+        ins_pg.save()
+        data = {"instance_id1": self.ins1.id, "instance_id2": ins_pg.id}
+        r = self.client.post(path="/param/compare/", data=data)
+        self.assertEqual(
+            json.loads(r.content),
+            {"status": 1, "msg": "两个实例的数据库类型不一致，无法对比", "data": []},
+        )
+        ins_pg.delete()
+
+    @patch("sql.engines.mysql.MysqlEngine.get_variables")
+    @patch("sql.engines.get_engine")
+    def test_param_compare_success_with_diff(self, _get_engine, _get_variables):
+        """
+        测试参数对比，存在差异
+        """
+        _get_variables.side_effect = [
+            ResultSet(rows=(("binlog_format", "ROW"), ("max_connections", "151"))),
+            ResultSet(
+                rows=(("binlog_format", "STATEMENT"), ("max_connections", "151"))
+            ),
+        ]
+
+        data = {
+            "instance_id1": self.ins1.id,
+            "instance_id2": self.ins2.id,
+            "diff_only": "true",
+        }
+        r = self.client.post(path="/param/compare/", data=data)
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 0)
+        self.assertEqual(result["data"]["diff_count"], 1)
+        self.assertEqual(result["data"]["same_count"], 1)
+        self.assertEqual(result["data"]["total"], 2)
+        self.assertEqual(len(result["data"]["rows"]), 1)
+        self.assertEqual(result["data"]["rows"][0]["variable_name"], "binlog_format")
+        self.assertEqual(result["data"]["rows"][0]["diff_type"], "值不同")
+
+    @patch("sql.engines.mysql.MysqlEngine.get_variables")
+    @patch("sql.engines.get_engine")
+    def test_param_compare_show_all(self, _get_engine, _get_variables):
+        """
+        测试参数对比，显示全部参数（diff_only=false）
+        """
+        _get_variables.side_effect = [
+            ResultSet(rows=(("binlog_format", "ROW"), ("max_connections", "151"))),
+            ResultSet(rows=(("binlog_format", "ROW"), ("max_connections", "151"))),
+        ]
+
+        data = {
+            "instance_id1": self.ins1.id,
+            "instance_id2": self.ins2.id,
+            "diff_only": "false",
+        }
+        r = self.client.post(path="/param/compare/", data=data)
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 0)
+        self.assertEqual(result["data"]["same_count"], 2)
+        self.assertEqual(result["data"]["diff_count"], 0)
+        self.assertEqual(len(result["data"]["rows"]), 2)
+
+    @patch("sql.engines.mysql.MysqlEngine.get_variables")
+    @patch("sql.engines.get_engine")
+    def test_param_compare_only_in_one_instance(self, _get_engine, _get_variables):
+        """
+        测试参数对比，参数仅在一个实例中存在
+        """
+        _get_variables.side_effect = [
+            ResultSet(rows=(("param_a", "1"), ("param_b", "2"))),
+            ResultSet(rows=(("param_a", "1"), ("param_c", "3"))),
+        ]
+
+        data = {
+            "instance_id1": self.ins1.id,
+            "instance_id2": self.ins2.id,
+            "diff_only": "true",
+        }
+        r = self.client.post(path="/param/compare/", data=data)
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 0)
+        self.assertEqual(result["data"]["diff_count"], 2)
+        self.assertEqual(result["data"]["same_count"], 1)
+        diff_types = [row["diff_type"] for row in result["data"]["rows"]]
+        self.assertIn("仅源实例存在", diff_types)
+        self.assertIn("仅目标实例存在", diff_types)
+
+    @patch("sql.engines.get_engine")
+    def test_param_compare_get_variables_error(self, _get_engine):
+        """
+        测试参数对比，获取实例参数失败
+        """
+        _get_engine.side_effect = Exception("连接超时")
+
+        data = {
+            "instance_id1": self.ins1.id,
+            "instance_id2": self.ins2.id,
+        }
+        r = self.client.post(path="/param/compare/", data=data)
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 1)
+        self.assertIn("获取源实例参数失败", result["msg"])
