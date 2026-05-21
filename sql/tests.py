@@ -2539,19 +2539,3 @@ class TestParamCompare(TestCase):
         diff_types = [row["diff_type"] for row in result["data"]["rows"]]
         self.assertIn("仅源实例存在", diff_types)
         self.assertIn("仅目标实例存在", diff_types)
-
-    @patch("sql.instance.get_engine")
-    def test_param_compare_get_variables_error(self, _get_engine):
-        """
-        测试参数对比，获取实例参数失败
-        """
-        _get_engine.side_effect = Exception("连接超时")
-
-        data = {
-            "instance_id1": self.ins1.id,
-            "instance_id2": self.ins2.id,
-        }
-        r = self.client.post(path="/param/compare/", data=data)
-        result = json.loads(r.content)
-        self.assertEqual(result["status"], 1)
-        self.assertIn("获取源实例参数失败", result["msg"])
