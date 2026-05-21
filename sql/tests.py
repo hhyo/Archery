@@ -2540,7 +2540,7 @@ class TestParamCompare(TestCase):
         self.assertIn("仅源实例存在", diff_types)
         self.assertIn("仅目标实例存在", diff_types)
 
-    @patch("sql.engines.get_engine")
+    @patch("sql.instance.get_engine")
     def test_param_compare_get_variables_error(self, _get_engine):
         """
         测试参数对比，获取实例参数失败
