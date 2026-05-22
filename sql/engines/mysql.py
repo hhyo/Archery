@@ -129,6 +129,7 @@ class MysqlEngine(EngineBase):
         )
         return (
             slave_status.rows[0].get("Seconds_Behind_Master")
+            or slave_status.rows[0].get("Seconds_Behind_Source")
             if slave_status.rows
             else None
         )
