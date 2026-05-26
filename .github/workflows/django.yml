@@ -73,8 +73,9 @@ jobs:
         sudo apt-get update && sudo apt-get install libsasl2-dev libkrb5-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
         pip install "setuptools<82" wheel
-        pip install --no-build-isolation -r requirements.txt
-        pip install --no-build-isolation -r dev-requirements.txt
+        pip install --no-build-isolation "cx-Oracle==8.3.0"
+        pip install -r requirements.txt
+        pip install -r dev-requirements.txt
         
     - name: Init Table
       run: |
