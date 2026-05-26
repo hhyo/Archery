@@ -72,7 +72,7 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install libsasl2-dev libkrb5-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
-        pip install "setuptools<82"
+        pip install "setuptools<82" wheel
         pip install -r requirements.txt
         pip install -r dev-requirements.txt
         
