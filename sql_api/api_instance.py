@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import views, generics, status, serializers
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
@@ -21,6 +23,8 @@ from .table_instance_locator import resolve_table_instances
 from django.http import Http404
 import MySQLdb
 
+
+logger = logging.getLogger(__name__)
 
 class InstanceList(generics.ListAPIView):
     """
@@ -261,10 +265,11 @@ class TableInstanceLookup(views.APIView):
                 request=request,
             )
         except Exception as e:
+            logger.exception(f"查询表所属实例失败: {e}")
             return Response(
                 {
                     "status": 1,
-                    "msg": f"查询失败: {e}",
+                    "msg": "查询失败: 未知错误, 请联系管理员",
                     "count": 0,
                     "data": [],
                 }
