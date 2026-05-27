@@ -29,7 +29,7 @@ pyodps==0.*
 numpy==2.*
 pandas==3.*
 clickhouse-driver==0.*
-djangorestframework==3.13.1
+djangorestframework>=3.14.0
 djangorestframework-simplejwt==5.2.0
 django-filter>=22.1
 drf-spectacular==0.29.0
