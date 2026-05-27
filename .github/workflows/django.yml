@@ -22,7 +22,7 @@ jobs:
     # https://github.com/actions/example-services/tree/master/.github/workflows
     services:
       mysql:
-        image: mysql:5.7
+        image: mysql:8.0
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
         ports:
