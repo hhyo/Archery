@@ -68,3 +68,28 @@ Behavior rules:
 - Provider must not return data from unauthorized instances.
 - Provider should continue when a subset of instances fails and report failures in summary.
 - Provider output must be normalizable to fixed API schema.
+
+## 5) TableLocatorUIState (frontend component state)
+
+Represents the runtime state of the table locator input widget in `sqlquery.html`.
+
+Fields:
+- `inputValue` (string): current text in the locator input box; minimum 1 character required to fire.
+- `debounceTimer` (timer handle | null): handle for the 500ms debounce setTimeout; reset on each keystroke; cleared on empty input.
+- `pendingXHR` (jQuery XHR | null): reference to the in-flight `$.ajax` request; aborted when input clears or a new request fires before the previous completes.
+- `status` (enum: `idle` | `loading` | `success` | `error`): UI display state.
+- `results` (array of `{instance_name, db_name, table_name}`): normalized results from last successful response.
+- `errorMessage` (string | null): human-readable error shown on `status=error`.
+
+State transitions:
+- `idle` → `loading`: debounce fires with ≥1 character input → XHR sent.
+- `loading` → `success`: XHR completes with `status=0` → results rendered.
+- `loading` → `error`: XHR completes with `status!=0` or network error → errorMessage displayed.
+- `loading` → `idle`: input cleared during in-flight request → XHR aborted, results cleared.
+- `success | error` → `loading`: new keystroke after debounce → new XHR sent.
+- `success | error` → `idle`: input cleared → results and error cleared.
+
+Validation rules:
+- Input length = 0: do not send request; abort pending XHR; clear results.
+- Input length ≥ 1: start/reset debounce timer.
+- Result items: render as `$('<li>').text(instance_name + '/' + db_name + '/' + table_name)` — text node only, no innerHTML concatenation.

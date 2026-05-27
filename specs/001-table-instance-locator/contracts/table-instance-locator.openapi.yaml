@@ -1,8 +1,17 @@
 openapi: 3.0.3
 info:
   title: Table Instance Locator API
-  version: 1.0.0
-  description: Contract for locating table ownership across user-authorized instances.
+  version: 1.1.0
+  description: |
+    Contract for locating table ownership across user-authorized instances.
+
+    **Frontend integration** (US4):
+    The SQL query page (`sql/templates/sqlquery.html`) calls this endpoint via
+    jQuery `$.ajax` POST with a 500ms debounce when user input length ≥ 1.
+    Results are rendered as `instance_name/db_name/table_name` text nodes
+    in a `<ul>` list below the locator input box.
+    Input cleared → abort in-flight XHR + clear results.
+
 paths:
   /v1/instance/table-instances/:
     post:

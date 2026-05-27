@@ -1,41 +1,36 @@
-# Implementation Plan: Table Instance Locator API
+# Implementation Plan: Table Instance Locator — 前端表定位入口 (US4)
 
-**Branch**: `001-add-table-locator-api` | **Date**: 2026-04-28 | **Spec**: `specs/001-table-instance-locator/spec.md`
+**Branch**: `001-add-table-locator-api` | **Date**: 2026-05-27 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `specs/001-table-instance-locator/spec.md`
 
 ## Summary
 
-Add a fixed-contract table locator API that supports exact name and pattern search, restricted to instances the current user can query. Keep a pluggable provider entrypoint (`settings.TABLE_INSTANCE_LOCATOR`) while standardizing request/response structures, deterministic ordering, and partial-failure summaries.
+在现有 Table Instance Locator 后端 API（`POST /v1/instance/table-instances/`）基础上，在 SQL 查询页面（`sql/templates/sqlquery.html`）右侧面板实例选择器上方新增表定位输入框。用户输入 ≥1 个字符后，经 500ms 防抖自动调用表定位接口，以 `实例名/数据库名/表名` 单列格式展示匹配结果列表，支持无匹配提示与错误提示，结果供用户手动选择。
 
 ## Technical Context
 
-**Language/Version**: Python 3.x, Django 4.1.13  
-**Primary Dependencies**: Django REST Framework, drf-spectacular, existing `sql.engines` adapters, `sql.utils.resource_group.user_instances`  
-**Storage**: Runtime metadata from authorized database instances; no new persistent storage  
-**Testing**: pytest (`test_*.py`) with fixtures from `conftest.py` and module-level fixtures  
-**Target Platform**: Linux server deployment  
-**Project Type**: Django web-service API  
-**Performance Goals**: In typical 50 authorized instances, p95 <= 5s with partial-result fallback  
-**Constraints**: Strict permission isolation, fixed schema for request/response and provider I/O, deterministic stable sort  
-**Scale/Scope**: User-scoped traversal of up to dozens of instances per request; one endpoint in `sql_api`
+**Language/Version**: Python 3.x (Django 4.x) + Vanilla JavaScript (jQuery 3, Bootstrap 3)
+**Primary Dependencies**: Django REST Framework (backend, existing), jQuery, Bootstrap 3, Bootstrap Select (已引入于 sqlquery.html)
+**Storage**: N/A（前端纯展示，后端已有 ORM + 引擎适配层）
+**Testing**: pytest (backend unit tests via `sql_api/test_table_instance_locator.py`); 前端无独立测试框架，通过手动验收
+**Target Platform**: Linux server, Django template rendered HTML page
+**Project Type**: web-service — Django template frontend + DRF REST API backend
+**Performance Goals**: 95% of debounced-triggered requests return within 5s for 50 instances (SC-002)
+**Constraints**: CSRF token required for POST; results must be XSS-safe (escape output); input cleared → cancel pending request; 500ms debounce; min 1 character before firing
+**Scale/Scope**: Single HTML template change; single JS block addition; existing API endpoint reuse
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 - [x] Multi-engine compatibility impact is listed and bounded by adapter or capability layer.
+  - **Impact**: 前端调用 `POST /v1/instance/table-instances/` 是引擎无关的 REST 接口；后端已通过 `get_engine()` 适配多引擎，前端变更不引入任何引擎耦合。
 - [x] Test plan is unit-test-first with pytest; integration scope is explicitly minimized.
+  - 后端测试已在 tasks.md T004–T023 中用 pytest 覆盖；前端 JS 通过 Django 模板手动验收，无独立测试框架引入。
 - [x] Shared setup is designed via conftest.py fixtures; duplicate setup is eliminated.
+  - T001 中已规划 `conftest.py` 共享 fixtures (`db_instance`, `fake_engine`, `fake_locator_request`)。
 - [x] Any integration test includes a written justification for why unit tests are insufficient.
-
-Initial gate result: PASS.
-
-## Phase 0 Research Decisions
-
-1. Pattern matching contract: support exactly one of `table_name` or `table_pattern`; pattern uses SQL-LIKE style wildcards (`%`, `_`) with case-insensitive matching.
-2. Partial failures: response includes `summary` object with success/failure counts and per-instance failure reasons, while still returning successful matches.
-3. Stable ordering: canonical ordering is `(instance_name, db_name, table_name, instance_id)` ascending.
-4. Pluggable provider compatibility: keep settings-based provider loader, but enforce normalized provider output to fixed schema before API response.
+  - T023 包含 DRF auth wiring + permission filtering 的集成测试，含书面理由："DRF auth wiring + permission filtering integration cannot be fully proven via unit tests alone"。
 
 ## Project Structure
 
@@ -43,53 +38,36 @@ Initial gate result: PASS.
 
 ```text
 specs/001-table-instance-locator/
-├── plan.md
-├── research.md
-├── data-model.md
-├── quickstart.md
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output — updated with frontend decisions
+├── data-model.md        # Phase 1 output — updated with TableLocatorUIState
+├── quickstart.md        # Phase 1 output — updated with frontend usage
 ├── contracts/
-│   └── table-instance-locator.openapi.yaml
-└── tasks.md
+│   └── table-instance-locator.openapi.yaml  # Phase 1 output — API contract (existing)
+└── tasks.md             # Phase 2 output (/speckit.tasks command)
 ```
 
 ### Source Code (repository root)
 
 ```text
-sql_api/
-├── api_instance.py
-├── serializers.py
-├── table_instance_locator.py
-├── urls.py
-└── test_table_instance_locator.py
-
 sql/
-├── engines/
-└── models.py
+└── templates/
+    └── sqlquery.html        # US4: 新增表定位输入框 + 结果列表 HTML/JS block
 
-common/
-└── (existing auth/middleware; unchanged by default)
+sql_api/
+├── table_instance_locator.py  # US1–US3: 后端定位逻辑（已存在 v0）
+├── serializers.py             # US1–US3: 请求/响应序列化（已存在 v0）
+├── api_instance.py            # US1–US3: TableInstanceLookup view（已存在 v0）
+├── urls.py                    # 已注册 /v1/instance/table-instances/
+└── test_table_instance_locator.py  # US1–US3: pytest 单元测试
 
-conftest.py
+conftest.py                    # 根级 conftest — 共享 fixtures (T001)
 ```
 
-**Structure Decision**: Use existing Django API module structure under `sql_api` and engine abstraction in `sql.engines`; no new top-level app or service layer introduced.
-
-## Phase 1 Design Output Mapping
-
-- Data model: `specs/001-table-instance-locator/data-model.md`
-- API contract: `specs/001-table-instance-locator/contracts/table-instance-locator.openapi.yaml`
-- Consumer/developer flow: `specs/001-table-instance-locator/quickstart.md`
-- Agent context updated in `.github/copilot-instructions.md`
-
-## Post-Design Constitution Re-Check
-
-- [x] Multi-engine compatibility remains adapter-driven; no engine-specific hardcoding in contract.
-- [x] Test design remains unit-first (serializer/provider/normalization/sort/partial-failure) with minimal integration touchpoints.
-- [x] Fixture reuse is explicit in quickstart test plan (`conftest.py` + reusable fake engine fixtures).
-- [x] Integration tests are optional and require written rationale.
-
-Post-design gate result: PASS.
+**Structure Decision**: 单 Django web-service 项目，前端模板 + 后端 DRF API。
+前端变更仅限 `sql/templates/sqlquery.html` 一个文件；后端变更仅限 `sql_api/` 包内。
+不引入新应用或新模块。
 
 ## Complexity Tracking
 
-No constitution violations requiring exceptions.
+> 无 Constitution 违规，此表格保持空白。

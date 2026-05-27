@@ -80,6 +80,15 @@
                             <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
                         </div>
                         <div class="col-md-3 column">
+                            <div class="form-group" id="div-table-locator">
+                                <input id="table-locator-input" type="text" class="form-control"
+                                       placeholder="按表名定位实例（如 orders）" autocomplete="off"/>
+                                <div id="table-locator-loading" style="display:none">
+                                    <small class="text-muted">查询中...</small>
+                                </div>
+                                <ul id="table-locator-results" class="list-unstyled"
+                                    style="max-height:160px;overflow-y:auto;margin-top:4px;"></ul>
+                            </div>
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
@@ -1531,6 +1540,70 @@
                     break;
             }
         }
+    </script>
+    <!-- 表定位 -->
+    <script>
+        var _locatorXHR = null;
+        var _locatorTimer = null;
+
+        function locateTable() {
+            var tableName = $('#table-locator-input').val().trim();
+            if (!tableName) {
+                $('#table-locator-results').empty();
+                return;
+            }
+            if (_locatorXHR) {
+                _locatorXHR.abort();
+            }
+            $('#table-locator-loading').show();
+            $('#table-locator-results').empty();
+            _locatorXHR = $.ajax({
+                type: 'post',
+                url: '/v1/instance/table-instances/',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({table_name: tableName}),
+                complete: function () {
+                    $('#table-locator-loading').hide();
+                    _locatorXHR = null;
+                },
+                success: function (data) {
+                    var $ul = $('#table-locator-results');
+                    if (data.status === 0 && data.data && data.data.length > 0) {
+                        $.each(data.data, function (i, item) {
+                            var text = item.name + '/' + item.db_name + '/' + (item.table_name || '');
+                            $ul.append($('<li>').text(text));
+                        });
+                    } else if (data.status === 0) {
+                        $ul.append($('<li>').addClass('text-muted').text('无匹配结果'));
+                    } else {
+                        $ul.append($('<li>').addClass('text-danger').text(data.msg || '查询失败'));
+                    }
+                },
+                error: function (xhr, status) {
+                    if (status !== 'abort') {
+                        $('#table-locator-results').append(
+                            $('<li>').addClass('text-danger').text('请求失败：' + status)
+                        );
+                    }
+                }
+            });
+        }
+
+        $('#table-locator-input').on('input', function () {
+            var val = $(this).val();
+            clearTimeout(_locatorTimer);
+            if (!val.trim()) {
+                if (_locatorXHR) {
+                    _locatorXHR.abort();
+                    _locatorXHR = null;
+                }
+                $('#table-locator-results').empty();
+                $('#table-locator-loading').hide();
+                return;
+            }
+            _locatorTimer = setTimeout(function () { locateTable(); }, 500);
+        });
     </script>
 {% endblock %}
 

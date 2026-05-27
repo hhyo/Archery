@@ -297,11 +297,24 @@ class TableInstanceSerializer(serializers.Serializer):
     db_name = serializers.CharField()
 
 
+class LocatorFailureReasonSerializer(serializers.Serializer):
+    instance_name = serializers.CharField()
+    reason = serializers.CharField()
+
+
+class LocatorExecutionSummarySerializer(serializers.Serializer):
+    processed_instance_count = serializers.IntegerField()
+    successful_instance_count = serializers.IntegerField()
+    failed_instance_count = serializers.IntegerField()
+    failure_reasons = LocatorFailureReasonSerializer(many=True)
+
+
 class TableInstanceLookupResponseSerializer(serializers.Serializer):
     status = serializers.IntegerField()
     msg = serializers.CharField()
     count = serializers.IntegerField()
     data = TableInstanceSerializer(many=True)
+    summary = LocatorExecutionSummarySerializer(required=False, allow_null=True)
 
 
 class ExecuteCheckSerializer(serializers.Serializer):
