@@ -605,7 +605,9 @@ class QueryPrivileges(models.Model):
     class Meta:
         managed = True
         db_table = "query_privileges"
-        index_together = ["user_name", "instance", "db_name", "valid_date"]
+        indexes = [
+            models.Index(fields=["user_name", "instance", "db_name", "table_name"]),
+        ]
         verbose_name = "查询权限记录"
         verbose_name_plural = "查询权限记录"
 
@@ -1312,7 +1314,9 @@ class SlowQueryHistory(models.Model):
         managed = False
         db_table = "mysql_slow_query_review_history"
         unique_together = ("checksum", "ts_min", "ts_max")
-        index_together = ("hostname_max", "ts_min")
+        indexes = [
+            models.Index(fields=["hostname_max", "ts_min"]),
+        ]
         verbose_name = "慢日志明细"
         verbose_name_plural = "慢日志明细"
 
@@ -1366,7 +1370,9 @@ class RedisSlowQueryHistory(models.Model):
         managed = False
         db_table = "redis_slow_query_review_history"
         unique_together = ("checksum", "hostname", "ts_min", "ts_max")
-        index_together = ("hostname", "ts_min")
+        indexes = [
+            models.Index(fields=["hostname", "ts_min"]),
+        ]
         verbose_name = "Redis慢日志明细"
         verbose_name_plural = "Redis慢日志明细"
 
