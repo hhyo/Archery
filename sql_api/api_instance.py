@@ -23,8 +23,8 @@ from .table_instance_locator import resolve_table_instances
 from django.http import Http404
 import MySQLdb
 
-
 logger = logging.getLogger(__name__)
+
 
 class InstanceList(generics.ListAPIView):
     """
