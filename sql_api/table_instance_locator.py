@@ -24,14 +24,18 @@ def _normalize_table_name(row) -> str:
 def default_table_instance_locator(
     table_name: str, instances: Iterable[Instance], **kwargs
 ) -> List[Dict]:
-    print(f"默认的table instance locator被调用，table_name={table_name}，实例列表={instances}")  # 调试日志
+    print(
+        f"默认的table instance locator被调用，table_name={table_name}，实例列表={instances}"
+    )  # 调试日志
     result = []
     lower_table_name = table_name.lower()
 
     for instance in instances:
         query_engine = get_engine(instance=instance)
         databases = query_engine.get_all_databases()
-        print(f"查询实例{instance}的数据库列表，结果={databases.rows}，错误={databases.error}")  # 调试日志
+        print(
+            f"查询实例{instance}的数据库列表，结果={databases.rows}，错误={databases.error}"
+        )  # 调试日志
         if databases.error:
             continue
 

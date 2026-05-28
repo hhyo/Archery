@@ -138,7 +138,9 @@ def api_client_auth(api_user):
 _WHITELIST_RF_SETTINGS = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+    ),
     "DEFAULT_PERMISSION_CLASSES": ("sql_api.permissions.IsInUserWhitelist",),
 }
 
@@ -169,7 +171,9 @@ def test_user_not_in_whitelist_is_rejected(django_user_model):
 
 
 @pytest.mark.django_db
-def test_whitelisted_user_receives_response_structure(api_user, api_client_auth, db_instance, monkeypatch):
+def test_whitelisted_user_receives_response_structure(
+    api_user, api_client_auth, db_instance, monkeypatch
+):
     """Whitelisted user gets a well-formed {status, msg, count, data} response."""
     rg = ResourceGroup.objects.create(group_id=901, group_name="rg_test_901")
     # Users.resource_group is the M2M field from the User side
@@ -177,9 +181,13 @@ def test_whitelisted_user_receives_response_structure(api_user, api_client_auth,
     db_instance.resource_group.add(rg)
 
     fake_engine = FakeEngine(db_instance, {"shop": ["orders", "products"]})
-    monkeypatch.setattr("sql_api.table_instance_locator.get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        "sql_api.table_instance_locator.get_engine", lambda instance: fake_engine
+    )
 
-    r = api_client_auth.post(_TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json")
+    r = api_client_auth.post(
+        _TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json"
+    )
 
     rg.delete()
 
@@ -202,7 +210,9 @@ def test_instance_outside_resource_group_excluded(api_user, db_instance, monkeyp
     """
     # api_user has no resource group → user_instances() returns empty queryset
     fake_engine = FakeEngine(db_instance, {"shop": ["orders"]})
-    monkeypatch.setattr("sql_api.table_instance_locator.get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        "sql_api.table_instance_locator.get_engine", lambda instance: fake_engine
+    )
 
     client = APIClient()
     client.force_authenticate(user=api_user)
