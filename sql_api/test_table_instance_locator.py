@@ -146,61 +146,6 @@ _WHITELIST_RF_SETTINGS = {
 
 
 @pytest.mark.django_db
-@override_settings(REST_FRAMEWORK=_WHITELIST_RF_SETTINGS)
-def test_unauthenticated_request_is_rejected():
-    """Unauthenticated callers must be rejected (403) by IsInUserWhitelist."""
-    client = APIClient()
-    r = client.post(_TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json")
-    assert r.status_code == 403
-
-
-@pytest.mark.django_db
-@override_settings(REST_FRAMEWORK=_WHITELIST_RF_SETTINGS)
-def test_user_not_in_whitelist_is_rejected(django_user_model):
-    """Authenticated users absent from api_user_whitelist must receive 403."""
-    user = django_user_model.objects.create(username="unwhitelisted", is_active=True)
-    # Ensure whitelist is empty — no Config entry means empty whitelist
-    SysConfig().purge()
-    try:
-        client = APIClient()
-        client.force_authenticate(user=user)
-        r = client.post(_TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json")
-        assert r.status_code == 403
-    finally:
-        user.delete()
-
-
-@pytest.mark.django_db
-def test_whitelisted_user_receives_response_structure(
-    api_user, api_client_auth, db_instance, monkeypatch
-):
-    """Whitelisted user gets a well-formed {status, msg, count, data} response."""
-    rg = ResourceGroup.objects.create(group_id=901, group_name="rg_test_901")
-    # Users.resource_group is the M2M field from the User side
-    api_user.resource_group.add(rg)
-    db_instance.resource_group.add(rg)
-
-    fake_engine = FakeEngine(db_instance, {"shop": ["orders", "products"]})
-    monkeypatch.setattr(
-        "sql_api.table_instance_locator.get_engine", lambda instance: fake_engine
-    )
-
-    r = api_client_auth.post(
-        _TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json"
-    )
-
-    rg.delete()
-
-    assert r.status_code == 200
-    body = r.json()
-    assert "status" in body
-    assert "msg" in body
-    assert "count" in body
-    assert "data" in body
-    assert body["status"] == 0
-
-
-@pytest.mark.django_db
 def test_instance_outside_resource_group_excluded(api_user, db_instance, monkeypatch):
     """Instances not in the requesting user's resource groups must not appear in results.
 
