@@ -347,7 +347,7 @@ class CheckTest(TestCase):
             password=smtp_pass,
             ssl=False,
         )
-        send_email.called_once_with(
+        send_email.assert_called_once_with(
             "Archery 邮件发送测试", "Archery 邮件发送测试...", [self.superuser1.email]
         )
         self.assertEqual(r_json["status"], 0)

@@ -2,6 +2,8 @@
 import logging
 import traceback
 import MySQLdb
+import MySQLdb.cursors
+import MySQLdb.converters
 import pymysql
 import re
 from enum import Enum

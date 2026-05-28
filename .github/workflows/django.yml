@@ -17,12 +17,12 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.11", "3.12"]
   
     # https://github.com/actions/example-services/tree/master/.github/workflows
     services:
       mysql:
-        image: mysql:5.7
+        image: mysql:8.0
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
         ports:
@@ -55,13 +55,13 @@ jobs:
         log_bin=ON
         character-set-server = utf8mb4
         collation-server = utf8mb4_general_ci
-        lower_case_table_names=1
         default-time_zone = '+8:00'
         [client]
         default-character-set=utf8mb4
         EOF
         docker cp my.cnf mysql:/etc/mysql/conf.d/
         docker restart mysql
+        sleep 10
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -72,6 +72,8 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install libsasl2-dev libkrb5-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
+        pip install "setuptools<82" wheel
+        pip install --no-build-isolation "cx-Oracle==8.3.0"
         pip install -r requirements.txt
         pip install -r dev-requirements.txt
         
