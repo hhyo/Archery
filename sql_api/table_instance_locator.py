@@ -24,12 +24,14 @@ def _normalize_table_name(row) -> str:
 def default_table_instance_locator(
     table_name: str, instances: Iterable[Instance], **kwargs
 ) -> List[Dict]:
+    print(f"默认的table instance locator被调用，table_name={table_name}，实例列表={instances}")  # 调试日志
     result = []
     lower_table_name = table_name.lower()
 
     for instance in instances:
         query_engine = get_engine(instance=instance)
         databases = query_engine.get_all_databases()
+        print(f"查询实例{instance}的数据库列表，结果={databases.rows}，错误={databases.error}")  # 调试日志
         if databases.error:
             continue
 
@@ -49,16 +51,21 @@ def default_table_instance_locator(
             if tables.error:
                 continue
 
-            if any(
-                _normalize_table_name(tb).lower() == lower_table_name
-                for tb in tables.rows
-            ):
+            matched_table_name = None
+            for tb in tables.rows:
+                normalized_tb = _normalize_table_name(tb)
+                if normalized_tb.lower() == lower_table_name:
+                    matched_table_name = normalized_tb
+                    break
+
+            if matched_table_name is not None:
                 result.append(
                     {
                         "id": instance.id,
                         "name": instance.instance_name,
                         "db_type": instance.db_type,
                         "db_name": db_name,
+                        "table_name": matched_table_name,
                     }
                 )
                 break
@@ -94,12 +101,13 @@ def resolve_table_instances(table_name: str, instances: Iterable[Instance], **kw
             raise ValueError("table instance locator返回的元素必须是dict")
         if "name" not in item or not item["name"]:
             raise ValueError("table instance locator返回的实例字典必须包含name")
-        normalized.append(
-            {
-                "id": item.get("id", 0),
-                "name": item["name"],
-                "db_type": item.get("db_type", ""),
-                "db_name": item.get("db_name", ""),
-            }
-        )
+        item_out = {
+            "id": item.get("id", 0),
+            "name": item["name"],
+            "db_type": item.get("db_type", ""),
+            "db_name": item.get("db_name", ""),
+        }
+        if item.get("table_name"):
+            item_out["table_name"] = item["table_name"]
+        normalized.append(item_out)
     return normalized

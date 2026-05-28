@@ -141,11 +141,11 @@
                                 <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
                                 <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
                             </div>
-                        </div>
-                        <div class="text-info">
-                            <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
-                            <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
-                            <li id="mongo-hint-info" style="display:none">支持mongo原生查询语句，例如：<code>db.users.find({ age: { $eq: 25 } });</code></li>
+                            <div class="text-info">
+                                <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
+                                <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
+                                <li id="mongo-hint-info" style="display:none">支持mongo原生查询语句，例如：<code>db.users.find({ age: { $eq: 25 } });</code></li>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -1545,6 +1545,7 @@
     <script>
         var _locatorXHR = null;
         var _locatorTimer = null;
+        var _fillVersion = 0;   // 每次新的点击或搜索时自增，用于取消进行中的填充
 
         function locateTable() {
             var tableName = $('#table-locator-input').val().trim();
@@ -1559,7 +1560,7 @@
             $('#table-locator-results').empty();
             _locatorXHR = $.ajax({
                 type: 'post',
-                url: '/v1/instance/table-instances/',
+                url: '/api/v1/instance/table-instances/',
                 contentType: 'application/json',
                 dataType: 'json',
                 data: JSON.stringify({table_name: tableName}),
@@ -1572,7 +1573,16 @@
                     if (data.status === 0 && data.data && data.data.length > 0) {
                         $.each(data.data, function (i, item) {
                             var text = item.name + '/' + item.db_name + '/' + (item.table_name || '');
-                            $ul.append($('<li>').text(text));
+                            var $li = $('<li>').text(text)
+                                .css({cursor: 'pointer', padding: '2px 4px'})
+                                .data('instance', item.name)
+                                .data('db', item.db_name)
+                                .data('table', item.table_name || '');
+                            $li.hover(
+                                function() { $(this).addClass('bg-info').css('color', '#fff'); },
+                                function() { $(this).removeClass('bg-info').css('color', ''); }
+                            );
+                            $ul.append($li);
                         });
                     } else if (data.status === 0) {
                         $ul.append($('<li>').addClass('text-muted').text('无匹配结果'));
@@ -1590,9 +1600,81 @@
             });
         }
 
+        // 点击结果项：自动填充实例/数据库/表三个 selectpicker（FR-013/FR-014）
+        $('#table-locator-results').on('click', 'li', async function () {
+            var $li = $(this);
+            var instanceName = $li.data('instance');
+            var dbName = $li.data('db');
+            var tableName = $li.data('table');
+
+            if (!instanceName) { return; }
+
+            // FR-014: 实例不在当前资源组时，显示内联提示，阻止填充
+            if ($('#instance_name option[value="' + instanceName + '"]').length === 0) {
+                $li.find('.locator-warning').remove();
+                $li.append(
+                    $('<small>').addClass('text-warning locator-warning')
+                                .css('margin-left', '6px')
+                                .text('该实例不在当前资源组')
+                );
+                return;
+            }
+
+            // 关闭结果列表，保留输入框内容（FR-013）
+            $('#table-locator-results').empty();
+
+            // 记录本次填充版本，用于在用户发起新搜索时取消后续步骤
+            var myVersion = ++_fillVersion;
+
+            // 步骤 1：填充实例并触发 change（触发 get_instance()，异步加载 #db_name 选项）
+            $('#instance_name').selectpicker('val', instanceName);
+            $('#instance_name').selectpicker().trigger('change');
+
+            if (!dbName) { return; }
+
+            // 步骤 2：等待 #db_name 出现目标库后填充并触发 change（加载 #table_name 选项）
+            var dbSelect = document.getElementById('db_name');
+            await new Promise(function (resolve) {
+                var observer = new MutationObserver(function (mutations, obs) {
+                    if (myVersion !== _fillVersion) { obs.disconnect(); resolve(); return; }
+                    if (dbSelect.querySelector('option[value="' + dbName + '"]')) {
+                        obs.disconnect();
+                        resolve();
+                    }
+                });
+                observer.observe(dbSelect, { childList: true, subtree: true });
+            });
+            if (myVersion !== _fillVersion) { return; }
+
+            $('#db_name').selectpicker('val', dbName);
+            $('#db_name').selectpicker().trigger('change');
+
+            if (!tableName) { return; }
+
+            // 步骤 3：等待 #table_name 出现目标表后自动选中（FR-013）
+            var tableSelect = document.getElementById('table_name');
+            await new Promise(function (resolve) {
+                var observer = new MutationObserver(function (mutations, obs) {
+                    if (myVersion !== _fillVersion) { obs.disconnect(); resolve(); return; }
+                    if (Array.from(tableSelect.options).some(function (opt) { return opt.value === tableName; })) {
+                        obs.disconnect();
+                        resolve();
+                    }
+                });
+                observer.observe(tableSelect, { childList: true, subtree: true });
+            });
+            if (myVersion !== _fillVersion) { return; }
+
+            $('#table_name').selectpicker('val', tableName);
+            $('#table_name').selectpicker('refresh');
+            $('#table_name').selectpicker().trigger('change');
+        });
+
         $('#table-locator-input').on('input', function () {
             var val = $(this).val();
             clearTimeout(_locatorTimer);
+            // 取消任何进行中的自动填充
+            _fillVersion++;
             if (!val.trim()) {
                 if (_locatorXHR) {
                     _locatorXHR.abort();

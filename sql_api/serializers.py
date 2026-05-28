@@ -295,6 +295,7 @@ class TableInstanceSerializer(serializers.Serializer):
     name = serializers.CharField()
     db_type = serializers.CharField()
     db_name = serializers.CharField()
+    table_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
 
 class LocatorFailureReasonSerializer(serializers.Serializer):

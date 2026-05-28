@@ -19,3 +19,5 @@ src/docker-compose-dev
 .coverage
 archery_custom
 static/
+local_settings.py
+nohup.out

@@ -1,5 +1,9 @@
 import pytest
+from django.test import override_settings
+from rest_framework.test import APIClient
 
+from common.config import SysConfig
+from sql.models import Instance, ResourceGroup
 from sql_api.table_instance_locator import (
     default_table_instance_locator,
     resolve_table_instances,
@@ -99,3 +103,121 @@ def test_resolve_table_instances_custom_locator_can_return_minimal_dict(
 
 def invalid_locator(table_name, instances, **kwargs):
     return {"invalid": True}
+
+
+# ---------------------------------------------------------------------------
+# T026: Integration tests — DRF auth wiring + permission-scoped instance lookup
+#
+# Rationale: DRF auth wiring (IsInUserWhitelist permission class) and
+# permission-scoped instance filtering via user_instances(request.user) cannot
+# be fully proven via unit tests of the locator logic alone.  These tests cross
+# the HTTP → authentication → permission → view → locator boundary.
+# ---------------------------------------------------------------------------
+
+_TABLE_INSTANCES_URL = "/api/v1/instance/table-instances/"
+
+
+@pytest.fixture
+def api_user(django_user_model):
+    user = django_user_model.objects.create(username="api_test_user", is_active=True)
+    user.set_password("pw")
+    user.save()
+    SysConfig().set("api_user_whitelist", user.id)
+    yield user
+    SysConfig().purge()
+    user.delete()
+
+
+@pytest.fixture
+def api_client_auth(api_user):
+    client = APIClient()
+    client.force_authenticate(user=api_user)
+    return client
+
+
+_WHITELIST_RF_SETTINGS = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_PERMISSION_CLASSES": ("sql_api.permissions.IsInUserWhitelist",),
+}
+
+
+@pytest.mark.django_db
+@override_settings(REST_FRAMEWORK=_WHITELIST_RF_SETTINGS)
+def test_unauthenticated_request_is_rejected():
+    """Unauthenticated callers must be rejected (403) by IsInUserWhitelist."""
+    client = APIClient()
+    r = client.post(_TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json")
+    assert r.status_code == 403
+
+
+@pytest.mark.django_db
+@override_settings(REST_FRAMEWORK=_WHITELIST_RF_SETTINGS)
+def test_user_not_in_whitelist_is_rejected(django_user_model):
+    """Authenticated users absent from api_user_whitelist must receive 403."""
+    user = django_user_model.objects.create(username="unwhitelisted", is_active=True)
+    # Ensure whitelist is empty — no Config entry means empty whitelist
+    SysConfig().purge()
+    try:
+        client = APIClient()
+        client.force_authenticate(user=user)
+        r = client.post(_TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json")
+        assert r.status_code == 403
+    finally:
+        user.delete()
+
+
+@pytest.mark.django_db
+def test_whitelisted_user_receives_response_structure(api_user, api_client_auth, db_instance, monkeypatch):
+    """Whitelisted user gets a well-formed {status, msg, count, data} response."""
+    rg = ResourceGroup.objects.create(group_id=901, group_name="rg_test_901")
+    # Users.resource_group is the M2M field from the User side
+    api_user.resource_group.add(rg)
+    db_instance.resource_group.add(rg)
+
+    fake_engine = FakeEngine(db_instance, {"shop": ["orders", "products"]})
+    monkeypatch.setattr("sql_api.table_instance_locator.get_engine", lambda instance: fake_engine)
+
+    r = api_client_auth.post(_TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json")
+
+    rg.delete()
+
+    assert r.status_code == 200
+    body = r.json()
+    assert "status" in body
+    assert "msg" in body
+    assert "count" in body
+    assert "data" in body
+    assert body["status"] == 0
+
+
+@pytest.mark.django_db
+def test_instance_outside_resource_group_excluded(api_user, db_instance, monkeypatch):
+    """Instances not in the requesting user's resource groups must not appear in results.
+
+    This validates user_instances() permission scoping: the user has no resource
+    group associations, so the locator receives an empty instance queryset and
+    returns no results even when the table physically exists on db_instance.
+    """
+    # api_user has no resource group → user_instances() returns empty queryset
+    fake_engine = FakeEngine(db_instance, {"shop": ["orders"]})
+    monkeypatch.setattr("sql_api.table_instance_locator.get_engine", lambda instance: fake_engine)
+
+    client = APIClient()
+    client.force_authenticate(user=api_user)
+    r = client.post(_TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json")
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == 0
+    assert body["count"] == 0
+    assert body["data"] == []
+
+
+@pytest.mark.django_db
+def test_invalid_input_returns_status_1(api_client_auth):
+    """Missing table_name field must yield status=1 in the response body."""
+    r = api_client_auth.post(_TABLE_INSTANCES_URL, {}, format="json")
+    assert r.status_code == 200
+    assert r.json()["status"] == 1

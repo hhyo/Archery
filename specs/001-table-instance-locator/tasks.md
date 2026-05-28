@@ -56,8 +56,8 @@ pytest -q sql_api/test_table_instance_locator.py -k "us1 or serializer or patter
 
 - [X] T008 [US1] Add `_match_table(table_name: str, candidate: str, match_mode: str) -> bool` helper to `sql_api/table_instance_locator.py` implementing case-insensitive exact and LIKE-style pattern matching (`%` → `.*`, `_` → `.`, via `re` with `re.IGNORECASE`)
 - [X] T009 [US1] Update `default_table_instance_locator` in `sql_api/table_instance_locator.py` to accept `request: TableLocatorRequest` (instead of bare `table_name`), use `_match_table` for both modes, and return `list[TableLocationItem]`; keep `break`-on-first-db-match for exact mode, scan all dbs for pattern mode
-- [X] T10 [US1] Add stable sort step to `resolve_table_instances` in `sql_api/table_instance_locator.py`: sort result by `(instance_name, db_name, table_name or "", instance_id or 0)` ascending before returning
-- [X] T11 [US1] Update `TableInstanceLookup.post` in `sql_api/api_instance.py` to build `TableLocatorRequest` from validated serializer data and pass it to `resolve_table_instances`; return `status/msg/count/data` (summary added in US3)
+- [X] T010 [US1] Add stable sort step to `resolve_table_instances` in `sql_api/table_instance_locator.py`: sort result by `(instance_name, db_name, table_name or "", instance_id or 0)` ascending before returning
+- [X] T011 [US1] Update `TableInstanceLookup.post` in `sql_api/api_instance.py` to build `TableLocatorRequest` from validated serializer data and pass it to `resolve_table_instances`; return `status/msg/count/data` (summary added in US3)
 
 **Checkpoint**: US1 fully functional. `POST /v1/instance/table-instances/` accepts exact or pattern input, returns permission-scoped sorted list.
 
@@ -132,9 +132,35 @@ pytest -q sql_api/test_table_instance_locator.py -k "us3 or summary or partial o
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T024 [P] Update `TableInstanceLookupResponseSerializer` in `sql_api/serializers.py` to add `summary` field using `LocatorExecutionSummarySerializer` and verify `@extend_schema` annotations on `TableInstanceLookup` still reference correct serializers in `sql_api/api_instance.py`
-- [ ] T025 [P] Run full test suite for the module and fix any failures: `pytest -q sql_api/test_table_instance_locator.py`
-- [ ] T026 Validate quickstart.md scenarios manually or via integration test in `sql_api/test_table_instance_locator.py` (rationale: DRF auth wiring + permission filtering integration cannot be fully proven via unit tests alone); mark with `@pytest.mark.django_db` and include rationale in docstring
+- [X] T024 [P] Update `TableInstanceLookupResponseSerializer` in `sql_api/serializers.py` to add `summary` field using `LocatorExecutionSummarySerializer` and verify `@extend_schema` annotations on `TableInstanceLookup` still reference correct serializers in `sql_api/api_instance.py`
+- [X] T025 [P] Run full test suite for the module and fix any failures: `pytest -q sql_api/test_table_instance_locator.py`
+- [X] T026 Validate quickstart.md scenarios manually or via integration test in `sql_api/test_table_instance_locator.py` (rationale: DRF auth wiring + permission filtering integration cannot be fully proven via unit tests alone); mark with `@pytest.mark.django_db` and include rationale in docstring
+
+---
+
+## Phase 8: User Story 4 扩展 - 点击结果自动填充表单 (Session 2026-05-28)
+
+**Goal**: 结果项可点击，点击后自动填充实例/数据库/表三个 selectpicker；若实例不在当前资源组则内联提示不填充；后端同步返回 `table_name` 字段。
+
+> **依赖**: Phase 6 (T21–T23) 已完成；T027/T028 为后端改动，可与 T029–T031 并行。
+
+### Backend: FR-015 — 返回 table_name 字段
+
+- [X] T027 [P] [US4] Update `default_table_instance_locator` in `sql_api/table_instance_locator.py`: replace `any()` check with a loop capturing the matched `table_name`; include `table_name` key in each appended result dict
+- [X] T028 [P] [US4] Add `table_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)` to `TableInstanceSerializer` in `sql_api/serializers.py`; also pass `"table_name": item.get("table_name", "")` in the normalization dict of `resolve_table_instances`
+
+### Frontend: FR-013/FR-014 — 点击结果自动填充
+
+- [X] T029 [US4] In `sql/templates/sqlquery.html` `locateTable()`: add `data-instance`, `data-db`, `data-table` attributes on each `<li>` via `.data()`; add hover highlight via `.hover()`; add `cursor: pointer` style to clickable items
+
+- [X] T030 [US4] In `sql/templates/sqlquery.html` `<!-- 表定位 -->` script block, add delegated click handler `$('#table-locator-results').on('click', 'li', ...)`:
+  - (FR-014) If `$('#instance_name option[value="instanceName"]').length === 0`: append `<small class="text-warning locator-warning">该实例不在当前资源组</small>` to the `<li>`; return
+  - Empty `#table-locator-results`; cancel pending fill: `clearInterval(_fillPollTimer); _pendingTableName = null`
+  - Set `#instance_name` selectpicker to `instanceName`; trigger `change`
+  - Poll `#db_name option[value="dbName"]` every 200ms (max 30 iterations); on found: set `#db_name` value, trigger `change`
+  - Poll `#table_name option[value="tableName"]` every 200ms (max 30 iterations); cancel if `_pendingTableName === null`; on found: set `#table_name` value + `selectpicker('refresh')`
+
+- [X] T031 [US4] In `$('#table-locator-input').on('input', ...)` handler: on each keystroke add `clearInterval(_fillPollTimer); _pendingTableName = null` to cancel any in-progress autofill when user starts a new search
 
 ---
 
@@ -150,6 +176,7 @@ Phase 1 (Setup / conftest)
                             └─► Phase 5 US3 (Summary/partial)     │ of US4
                     └─► Phase 6 US4 (Frontend widget) ────────────┘
                             └─► Phase 7 (Polish)
+                            └─► Phase 8 (US4 autofill — T027–T031)
 ```
 
 ### User Story Dependencies
@@ -173,6 +200,7 @@ Phase 1 (Setup / conftest)
 - Within US2: T012 ‖ T013 — independent test cases
 - Within US3: T016 ‖ T017 — independent test cases
 - Phase 3 US1 (T004–T011) ‖ Phase 6 US4 (T021–T023) — completely different files
+- T027 ‖ T028 (backend FR-015) ‖ T029–T031 (frontend FR-013/014) — different files
 - T024 ‖ T025 in Polish phase
 
 ---
@@ -190,9 +218,9 @@ Phase 1 (Setup / conftest)
 - Add US3 (T016–T020): observability and partial-failure UX
 - Polish (T024–T026): schema docs and integration validation
 
-**Total tasks**: 26
-**Tasks per story**: US1 = 8, US2 = 4, US3 = 5, US4 = 3, Foundational = 3, Polish = 3
-**Parallel opportunities**: 11 tasks marked [P]
+**Total tasks**: 31
+**Tasks per story**: US1 = 8, US2 = 4, US3 = 5, US4 = 8 (T021–T023 + T027–T031), Foundational = 3, Polish = 3
+**Parallel opportunities**: 13 tasks marked [P]
 **Independent test criteria**:
 - US1: `pytest -q sql_api/test_table_instance_locator.py -k "us1 or serializer or pattern or sort or permission"`
 - US2: `pytest -q sql_api/test_table_instance_locator.py -k "us2 or custom or provider or normalize"`
