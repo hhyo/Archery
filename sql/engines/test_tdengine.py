@@ -359,6 +359,43 @@ class TestTDengine(unittest.TestCase):
         self.assertEqual(ret, {"exists": True, "type": "ctable"})
         self.assertEqual(mock_query.call_count, 3)
 
+    @patch.object(TDengineEngine, "query")
+    def test_obj_check_returns_false_for_unsupported_type_empty_name_or_db(
+        self, mock_query
+    ):
+        engine = TDengineEngine(instance=self.instance)
+
+        self.assertEqual(
+            engine.obj_check(obj_name="meters", obj_type="view"),
+            {"exists": False, "type": None},
+        )
+        self.assertEqual(
+            engine.obj_check(db_name="metrics", obj_name="", obj_type="table"),
+            {"exists": False, "type": None},
+        )
+        self.assertEqual(
+            engine.obj_check(db_name="", obj_name="meters", obj_type="table"),
+            {"exists": False, "type": None},
+        )
+        mock_query.assert_not_called()
+
+    @patch.object(TDengineEngine, "query")
+    def test_obj_check_table_detects_normal_table(self, mock_query):
+        mock_query.side_effect = [
+            ResultSet(rows=[]),
+            ResultSet(rows=[]),
+            ResultSet(rows=[("readings",)]),
+        ]
+
+        engine = TDengineEngine(instance=self.instance)
+        with patch.object(engine, "escape_string", side_effect=lambda x: x):
+            ret = engine.obj_check(
+                db_name="metrics", obj_name="readings", obj_type="table"
+            )
+
+        self.assertEqual(ret, {"exists": True, "type": "table"})
+        self.assertEqual(mock_query.call_count, 3)
+
     def test_execute_check_rejects_query_sql(self):
         engine = TDengineEngine(instance=self.instance)
         engine.config = Mock()
@@ -390,6 +427,37 @@ class TestTDengine(unittest.TestCase):
             "\u6570\u636e\u5e93 metrics \u5df2\u5b58\u5728\uff0c\u4e0d\u5141\u8bb8\u91cd\u590d\u521b\u5efa\uff01",
         )
         mock_obj_check.assert_called_once_with(obj_name="metrics", obj_type="database")
+
+    @patch.object(TDengineEngine, "obj_check")
+    def test_execute_check_accepts_create_database_without_options(
+        self, mock_obj_check
+    ):
+        mock_obj_check.return_value = {"exists": False, "type": None}
+        engine = TDengineEngine(instance=self.instance)
+        engine.config = Mock()
+        engine.config.get.return_value = ""
+
+        ret = engine.execute_check(sql="create database metrics;")
+
+        self.assertEqual(ret.error_count, 0)
+        self.assertEqual(ret.rows[0].errlevel, 0)
+        self.assertEqual(ret.rows[0].stagestatus, "Audit completed")
+
+    @patch.object(TDengineEngine, "obj_check")
+    def test_execute_check_rejects_create_database_invalid_option(self, mock_obj_check):
+        mock_obj_check.return_value = {"exists": False, "type": None}
+        engine = TDengineEngine(instance=self.instance)
+        engine.config = Mock()
+        engine.config.get.return_value = ""
+
+        ret = engine.execute_check(sql="create database metrics unknown_option 1;")
+
+        self.assertEqual(ret.error_count, 1)
+        self.assertEqual(ret.rows[0].errlevel, 2)
+        self.assertEqual(
+            ret.rows[0].errormessage,
+            "CREATE DATABASE \u8bed\u6cd5\u4e0d\u6b63\u786e\uff01",
+        )
 
     @patch.object(TDengineEngine, "obj_check")
     def test_execute_check_accepts_create_stable_table_and_subtable(
@@ -439,6 +507,70 @@ class TestTDengine(unittest.TestCase):
         self.assertEqual(
             ret.rows[0].errormessage,
             "USING \u5bf9\u8c61 readings \u4e0d\u662f\u8d85\u7ea7\u8868\uff01",
+        )
+
+    @patch.object(TDengineEngine, "obj_check")
+    def test_execute_check_rejects_existing_or_invalid_create_stable(
+        self, mock_obj_check
+    ):
+        mock_obj_check.side_effect = [
+            {"exists": True, "type": "stable"},
+            {"exists": False, "type": None},
+        ]
+        engine = TDengineEngine(instance=self.instance)
+        engine.config = Mock()
+        engine.config.get.return_value = ""
+
+        ret = engine.execute_check(
+            db_name="metrics",
+            sql="""
+                create stable meters (ts timestamp, v int) tags (location binary(20));
+                create stable bad_stable (ts timestamp, v int) tags (location binary(20)) invalid_option 1;
+            """,
+        )
+
+        self.assertEqual([row.errlevel for row in ret.rows], [2, 2])
+        self.assertEqual(ret.error_count, 2)
+        self.assertEqual(
+            ret.rows[0].errormessage,
+            "\u5bf9\u8c61 meters \u5df2\u5b58\u5728\uff0c\u4e0d\u5141\u8bb8\u91cd\u590d\u521b\u5efa\uff01",
+        )
+        self.assertEqual(
+            ret.rows[1].errormessage,
+            "CREATE STABLE \u8bed\u6cd5\u4e0d\u6b63\u786e\uff01",
+        )
+
+    @patch.object(TDengineEngine, "obj_check")
+    def test_execute_check_rejects_existing_or_missing_using_create_subtable(
+        self, mock_obj_check
+    ):
+        mock_obj_check.side_effect = [
+            {"exists": True, "type": "ctable"},
+            {"exists": True, "type": "stable"},
+            {"exists": False, "type": None},
+            {"exists": False, "type": None},
+        ]
+        engine = TDengineEngine(instance=self.instance)
+        engine.config = Mock()
+        engine.config.get.return_value = ""
+
+        ret = engine.execute_check(
+            db_name="metrics",
+            sql="""
+                create table d1001 using meters tags ('beijing');
+                create table d1002 using missing_stable tags ('shanghai');
+            """,
+        )
+
+        self.assertEqual([row.errlevel for row in ret.rows], [2, 2])
+        self.assertEqual(ret.error_count, 2)
+        self.assertEqual(
+            ret.rows[0].errormessage,
+            "\u5bf9\u8c61 d1001 \u5df2\u5b58\u5728\uff0c\u4e0d\u5141\u8bb8\u91cd\u590d\u521b\u5efa\uff01",
+        )
+        self.assertEqual(
+            ret.rows[1].errormessage,
+            "\u8d85\u7ea7\u8868 missing_stable \u4e0d\u5b58\u5728\uff01",
         )
 
     @patch.object(TDengineEngine, "obj_check")
@@ -506,6 +638,86 @@ class TestTDengine(unittest.TestCase):
         self.assertEqual(
             ret.rows[5].errormessage,
             "\u5bf9\u8c61 meters \u4e3a\u8d85\u7ea7\u8868\uff0c\u8bf7\u4f7f\u7528 DROP STABLE\uff01",
+        )
+
+    @patch.object(TDengineEngine, "obj_check")
+    def test_execute_check_validates_insert_subquery_and_block_errors(
+        self, mock_obj_check
+    ):
+        def check_obj(db_name=None, obj_name=None, obj_type="table"):
+            return {
+                "missing_stable": {"exists": False, "type": None},
+                "readings": {"exists": True, "type": "table"},
+                "d1002": {"exists": False, "type": None},
+                "d1003": {"exists": False, "type": None},
+                "meters": {"exists": True, "type": "stable"},
+                "missing_table": {"exists": False, "type": None},
+            }.get(obj_name, {"exists": False, "type": None})
+
+        mock_obj_check.side_effect = check_obj
+        engine = TDengineEngine(instance=self.instance)
+        engine.config = Mock()
+        engine.config.get.return_value = ""
+
+        ret = engine.execute_check(
+            db_name="metrics",
+            sql="""
+                insert into missing_stable (tbname, ts, v) select tbname, ts, v from source;
+                insert into readings (tbname, ts, v) select tbname, ts, v from source;
+                insert into d1002 using missing_stable tags ('new') values(now, 1);
+                insert into d1003 using readings tags ('new') values(now, 1);
+                insert into meters using meters tags ('new') values(now, 1);
+                insert into missing_table values(now, 1);
+                insert into;
+            """,
+        )
+
+        self.assertEqual([row.errlevel for row in ret.rows], [2, 2, 2, 2, 2, 2, 2])
+        self.assertEqual(ret.error_count, 7)
+        self.assertEqual(
+            ret.rows[0].errormessage,
+            "\u8d85\u7ea7\u8868 missing_stable \u4e0d\u5b58\u5728\uff01",
+        )
+        self.assertEqual(
+            ret.rows[1].errormessage,
+            "readings \u4e0d\u662f\u8d85\u7ea7\u8868\uff0c\u4e0d\u80fd\u4f7f\u7528 tbname \u5b50\u67e5\u8be2\u8bed\u6cd5\uff01",
+        )
+        self.assertEqual(
+            ret.rows[2].errormessage,
+            "\u8d85\u7ea7\u8868 missing_stable \u4e0d\u5b58\u5728\uff01",
+        )
+        self.assertEqual(
+            ret.rows[3].errormessage,
+            "USING \u5bf9\u8c61 readings \u4e0d\u662f\u8d85\u7ea7\u8868\uff01",
+        )
+        self.assertEqual(
+            ret.rows[4].errormessage,
+            "meters \u4e3a\u8d85\u7ea7\u8868\uff0c\u4e0d\u80fd\u4f7f\u7528 USING \u8bed\u6cd5\u5199\u5165\uff01",
+        )
+        self.assertEqual(
+            ret.rows[5].errormessage,
+            "\u8868 missing_table \u4e0d\u5b58\u5728\uff01",
+        )
+        self.assertEqual(
+            ret.rows[6].errormessage, "INSERT\u8bed\u6cd5\u4e0d\u6b63\u786e\uff01"
+        )
+
+    @patch.object(TDengineEngine, "obj_check")
+    def test_execute_check_rejects_drop_database_missing_without_if_exists(
+        self, mock_obj_check
+    ):
+        mock_obj_check.return_value = {"exists": False, "type": None}
+        engine = TDengineEngine(instance=self.instance)
+        engine.config = Mock()
+        engine.config.get.return_value = ""
+
+        ret = engine.execute_check(db_name="metrics", sql="drop database missing_db;")
+
+        self.assertEqual(ret.error_count, 1)
+        self.assertEqual(ret.rows[0].errlevel, 2)
+        self.assertEqual(
+            ret.rows[0].errormessage,
+            "\u6570\u636e\u5e93 missing_db \u4e0d\u5b58\u5728\uff01",
         )
 
     @patch.object(TDengineEngine, "obj_check")
