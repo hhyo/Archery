@@ -1,3 +1,27 @@
+function truncateText(value, maxLength) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    value = String(value);
+    if (value.length > maxLength) {
+        return value.substr(0, maxLength) + '...';
+    }
+    return value;
+}
+
+function formatSqlText(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    var sql = window.sqlFormatter.format(String(value));
+    //替换所有的换行符
+    sql = sql.replace(/\r\n/g, "<br>");
+    sql = sql.replace(/\n/g, "<br>");
+    //替换所有的空格
+    sql = sql.replace(/\s/g, "&nbsp;");
+    return sql;
+}
+
 const pgsqlDiagnosticInfo = {
     fieldsProcesslist: [
         'pgsql',
@@ -72,12 +96,7 @@ const mysqlDiagnosticInfo = {
             field: 'info',
             sortable: true,
             formatter: function (value, row, index) {
-                if (value.length > 20) {
-                    var sql = value.substr(0, 20) + '...';
-                    return sql;
-                } else {
-                    return value
-                }
+                return truncateText(value, 20);
             }
         }, {
             title: '完整INFO',
@@ -89,13 +108,7 @@ const mysqlDiagnosticInfo = {
             var html = [];
             $.each(row, function (key, value) {
                 if (key === 'info') {
-                    var sql = window.sqlFormatter.format(value);
-                    //替换所有的换行符
-                    sql = sql.replace(/\r\n/g, "<br>");
-                    sql = sql.replace(/\n/g, "<br>");
-                    //替换所有的空格
-                    sql = sql.replace(/\s/g, "&nbsp;");
-                    html.push('<span>' + sql + '</span>');
+                    html.push('<span>' + formatSqlText(value) + '</span>');
                 }
             });
             return html.join('');
@@ -148,12 +161,7 @@ const dorisDiagnosticInfo = {
             field: 'info',
             sortable: true,
             formatter: function (value, row, index) {
-                if (value.length > 20) {
-                    var sql = value.substr(0, 20) + '...';
-                    return sql;
-                } else {
-                    return value
-                }
+                return truncateText(value, 20);
             }
         }, {
             title: 'QUERYID',
@@ -175,13 +183,7 @@ const dorisDiagnosticInfo = {
             var html = [];
             $.each(row, function (key, value) {
                 if (key === 'info') {
-                    var sql = window.sqlFormatter.format(value);
-                    //替换所有的换行符
-                    sql = sql.replace(/\r\n/g, "<br>");
-                    sql = sql.replace(/\n/g, "<br>");
-                    //替换所有的空格
-                    sql = sql.replace(/\s/g, "&nbsp;");
-                    html.push('<span>' + sql + '</span>');
+                    html.push('<span>' + formatSqlText(value) + '</span>');
                 }
             });
             return html.join('');
@@ -438,12 +440,7 @@ const oracleDiagnosticInfo = {
             field: 'SQL_TEXT',
             sortable: true,
             formatter: function (value, row, index) {
-                if (row.SQL_TEXT.length > 60) {
-                    let sql = row.SQL_TEXT.substr(0, 60) + '...';
-                    return sql;
-                } else {
-                    return value
-                }
+                return truncateText(value, 60);
             }
         }, {
             title: 'FULL SQL',
@@ -459,13 +456,7 @@ const oracleDiagnosticInfo = {
             var html = [];
             $.each(row, function (key, value) {
                 if (key === 'SQL_FULLTEXT') {
-                    var sql = window.sqlFormatter.format(value);
-                    //替换所有的换行符
-                    sql = sql.replace(/\r\n/g, "<br>");
-                    sql = sql.replace(/\n/g, "<br>");
-                    //替换所有的空格
-                    sql = sql.replace(/\s/g, "&nbsp;");
-                    html.push('<span>' + sql + '</span>');
+                    html.push('<span>' + formatSqlText(value) + '</span>');
                 }
             });
             return html.join('');
@@ -495,12 +486,7 @@ const tdengineDiagnosticInfo = {
             field: 'sub_status',
             sortable: true,
             formatter: function (value, row, index) {
-                if (row.sub_status.length > 50) {
-                    let sub_status = row.sub_status.substr(0, 50) + '...';
-                    return sub_status;
-                } else {
-                    return value
-                }
+                return truncateText(value, 50);
             }
         }, {
             title: 'App',
@@ -542,12 +528,7 @@ const tdengineDiagnosticInfo = {
             field: 'sql',
             sortable: true,
             formatter: function (value, row, index) {
-                if (row.sql.length > 60) {
-                    let sql = row.sql.substr(0, 60) + '...';
-                    return sql;
-                } else {
-                    return value
-                }
+                return truncateText(value, 60);
             }
         }, {
             title: 'FULL SQL',
@@ -571,13 +552,7 @@ const tdengineDiagnosticInfo = {
             var html = [];
             $.each(row, function (key, value) {
                 if (key === 'sql') {
-                    var sql = window.sqlFormatter.format(value);
-                    //替换所有的换行符
-                    sql = sql.replace(/\r\n/g, "<br>");
-                    sql = sql.replace(/\n/g, "<br>");
-                    //替换所有的空格
-                    sql = sql.replace(/\s/g, "&nbsp;");
-                    html.push('<span>' + sql + '</span>');
+                    html.push('<span>' + formatSqlText(value) + '</span>');
                 }
             });
             return html.join('');
