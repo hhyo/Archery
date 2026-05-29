@@ -427,6 +427,19 @@ class TDengineEngine(EngineBase):
         ident_with_db = rf"{ident}(?:\s*\.\s*{ident})?"
         table_option = r"(?:ttl\s+\d+|comment\s+'[^']*')"
         stable_option = r"(?:comment\s+'[^']*'|keep\s+\d+)"
+        created_databases = set()
+        created_tables = {}
+
+        def _success_result(statement, line):
+            return ReviewResult(
+                id=line,
+                errlevel=0,
+                stagestatus="Audit completed",
+                errormessage="None",
+                sql=statement,
+                affected_rows=0,
+                execute_time=0,
+            )
 
         def _build_option_patterns(patterns):
             return [re.compile(rf"\s*(?:{p})", re.I | re.S) for p in patterns]
@@ -451,7 +464,193 @@ class TDengineEngine(EngineBase):
                     pos += 1
             return True
 
-        value_expr = r"(?:'[^']*'|`[^`]+`|[+-]?\d+|[a-zA-Z_][0-9a-zA-Z_]*)"
+        def _normalize_sql_name(name):
+            return re.sub(r"\s*\.\s*", ".", name.strip())
+
+        def _strip_ident_quotes(name):
+            return name.strip().strip("`")
+
+        def _object_key(raw_name, default_db=None):
+            normalized = _normalize_sql_name(raw_name)
+            parts = normalized.split(".", 1)
+            if len(parts) == 2:
+                return (_strip_ident_quotes(parts[0]), _strip_ident_quotes(parts[1]))
+            return (
+                _strip_ident_quotes(default_db or ""),
+                _strip_ident_quotes(parts[0]),
+            )
+
+        def _workflow_obj_check(db_name=None, obj_name=None, obj_type="table"):
+            result = self.obj_check(
+                db_name=db_name, obj_name=obj_name, obj_type=obj_type
+            )
+            if result["exists"]:
+                return result
+            if obj_type == "database":
+                db_key = _strip_ident_quotes(obj_name or "")
+                if db_key in created_databases:
+                    return {"exists": True, "type": "database"}
+                return result
+            if obj_type == "table":
+                table_type = created_tables.get(_object_key(obj_name or "", db_name))
+                if table_type:
+                    return {"exists": True, "type": table_type}
+            return result
+
+        def _mark_database_created(name):
+            created_databases.add(_strip_ident_quotes(name))
+
+        def _mark_table_created(name, table_type, default_db=None):
+            created_tables[_object_key(name, default_db)] = table_type
+
+        def _consume_parenthesized(text, start):
+            if start >= len(text) or text[start] != "(":
+                return None
+            depth = 0
+            quote = None
+            index = start
+            while index < len(text):
+                ch = text[index]
+                if quote:
+                    if ch == quote:
+                        if (
+                            quote == "'"
+                            and index + 1 < len(text)
+                            and text[index + 1] == "'"
+                        ):
+                            index += 2
+                            continue
+                        quote = None
+                    index += 1
+                    continue
+                if ch in ("'", "`"):
+                    quote = ch
+                elif ch == "(":
+                    depth += 1
+                elif ch == ")":
+                    depth -= 1
+                    if depth == 0:
+                        return text[start + 1 : index], index + 1
+                index += 1
+            return None
+
+        def _match_ident_at(text, pos):
+            return re.match(rf"\s*({ident_with_db})", text[pos:], re.I | re.S)
+
+        def _parse_ident_list(list_str):
+            return [
+                _strip_ident_quotes(i.strip()).lower()
+                for i in list_str.split(",")
+                if i.strip()
+            ]
+
+        def _parse_file_clause(text, pos):
+            return re.match(r"\s*file\s+'[^']+'\s*", text[pos:], re.I | re.S)
+
+        def _parse_insert_blocks(insert_body):
+            rest = insert_body
+            pos = 0
+            blocks = []
+            while pos < len(rest):
+                ident_match = _match_ident_at(rest, pos)
+                if not ident_match:
+                    return []
+                tb_name = _normalize_sql_name(ident_match.group(1).strip())
+                pos += ident_match.end()
+
+                using_name = None
+                using_match = re.match(
+                    rf"\s+using\s+({ident_with_db})", rest[pos:], re.I | re.S
+                )
+                if using_match:
+                    using_name = _normalize_sql_name(using_match.group(1).strip())
+                    pos += using_match.end()
+                    if pos < len(rest) and rest[pos:].lstrip().startswith("("):
+                        pos += len(rest[pos:]) - len(rest[pos:].lstrip())
+                        parsed_cols = _consume_parenthesized(rest, pos)
+                        if not parsed_cols:
+                            return []
+                        pos = parsed_cols[1]
+                    tags_match = re.match(r"\s+tags\s*", rest[pos:], re.I | re.S)
+                    if not tags_match:
+                        return []
+                    pos += tags_match.end()
+                    pos += len(rest[pos:]) - len(rest[pos:].lstrip())
+                    parsed_tags = _consume_parenthesized(rest, pos)
+                    if not parsed_tags:
+                        return []
+                    pos = parsed_tags[1]
+
+                columns = []
+                pos += len(rest[pos:]) - len(rest[pos:].lstrip())
+                if pos < len(rest) and rest[pos] == "(":
+                    parsed_columns = _consume_parenthesized(rest, pos)
+                    if not parsed_columns:
+                        return []
+                    columns = _parse_ident_list(parsed_columns[0])
+                    pos = parsed_columns[1]
+
+                values_match = re.match(r"\s*values\s*", rest[pos:], re.I | re.S)
+                file_match = _parse_file_clause(rest, pos)
+                if values_match:
+                    pos += values_match.end()
+                    parsed_values = False
+                    while True:
+                        pos += len(rest[pos:]) - len(rest[pos:].lstrip())
+                        if pos >= len(rest) or rest[pos] != "(":
+                            break
+                        parsed_tuple = _consume_parenthesized(rest, pos)
+                        if not parsed_tuple:
+                            return []
+                        parsed_values = True
+                        pos = parsed_tuple[1]
+                    if not parsed_values:
+                        return []
+                elif file_match:
+                    pos += file_match.end()
+                else:
+                    return []
+
+                blocks.append((tb_name, using_name, "tbname" in columns))
+                pos += len(rest[pos:]) - len(rest[pos:].lstrip())
+            return blocks
+
+        def _parse_subtable_blocks(body):
+            pos = 0
+            blocks = []
+            while pos < len(body):
+                ident_match = _match_ident_at(body, pos)
+                if not ident_match:
+                    return []
+                subtable_name = _normalize_sql_name(ident_match.group(1).strip())
+                pos += ident_match.end()
+                using_match = re.match(
+                    rf"\s+using\s+({ident_with_db})", body[pos:], re.I | re.S
+                )
+                if not using_match:
+                    return []
+                using_name = _normalize_sql_name(using_match.group(1).strip())
+                pos += using_match.end()
+                if pos < len(body) and body[pos:].lstrip().startswith("("):
+                    pos += len(body[pos:]) - len(body[pos:].lstrip())
+                    parsed_cols = _consume_parenthesized(body, pos)
+                    if not parsed_cols:
+                        return []
+                    pos = parsed_cols[1]
+                tags_match = re.match(r"\s+tags\s*", body[pos:], re.I | re.S)
+                if not tags_match:
+                    return []
+                pos += tags_match.end()
+                pos += len(body[pos:]) - len(body[pos:].lstrip())
+                parsed_tags = _consume_parenthesized(body, pos)
+                if not parsed_tags or not parsed_tags[0].strip():
+                    return []
+                pos = parsed_tags[1]
+                blocks.append((subtable_name, using_name))
+                pos += len(body[pos:]) - len(body[pos:].lstrip())
+            return blocks
+
+        value_expr = r"(?:'[^']*'|`[^`]+`|[+-]?\d+[a-zA-Z]*|[a-zA-Z_][0-9a-zA-Z_]*)"
         create_db_option_patterns = _build_option_patterns(
             [
                 rf"vgroups\s+{value_expr}",
@@ -533,7 +732,7 @@ class TDengineEngine(EngineBase):
         ctable_clause_regex = [
             re.compile(rf"^{table_option}(?:\s+{table_option})*$", re.I),
             re.compile(
-                rf"^set\s+tag\s+{ident}\s*=\s*[^,]+(?:\s*,\s*{ident}\s*=\s*[^,]+)*$",
+                rf"^set\s+tag\s+{ident}\s*=\s*(?:'(?:''|[^'])*'|[^,]+)(?:\s*,\s*{ident}\s*=\s*(?:'(?:''|[^'])*'|[^,]+))*$",
                 re.I,
             ),
         ]
@@ -578,33 +777,39 @@ class TDengineEngine(EngineBase):
             # create语句
             elif re.match(r"^create", statement, re.M | re.IGNORECASE):
                 create_db_match = re.match(
-                    rf"^create\s+database\s+(?:if\s+not\s+exists\s+)?({ident})\s*(.*)$",
+                    rf"^create\s+database\s+(if\s+not\s+exists\s+)?({ident})\s*(.*)$",
                     statement,
                     re.M | re.IGNORECASE | re.S,
                 )
                 create_stable_match = re.match(
-                    rf"^create\s+stable\s+(?:if\s+not\s+exists\s+)?({ident_with_db})\s*\((.+)\)\s+tags\s*\((.+)\)\s*(.*)$",
+                    rf"^create\s+(?:stable|table)\s+(if\s+not\s+exists\s+)?({ident_with_db})\s*\((.+)\)\s+tags\s*\((.+)\)\s*(.*)$",
                     statement,
                     re.M | re.IGNORECASE | re.S,
                 )
                 create_table_match = re.match(
-                    rf"^create\s+table\s+(?:if\s+not\s+exists\s+)?({ident_with_db})\s*\((.+)\)\s*(?:tags\s*\((.+)\)\s*)?(.*)$",
+                    rf"^create\s+table\s+(if\s+not\s+exists\s+)?({ident_with_db})\s*\((.+)\)\s*(.*)$",
                     statement,
                     re.M | re.IGNORECASE | re.S,
                 )
                 subtable_match = re.match(
-                    rf"^create\s+table\s+(?:if\s+not\s+exists\s+)?({ident_with_db})\s+using\s+({ident_with_db})(?:\s*\(\s*{ident}(?:\s*,\s*{ident})*\s*\))?\s+tags\s*\((.+)\)\s*$",
+                    rf"^create\s+table\s+(if\s+not\s+exists\s+)?(?=\s*{ident_with_db}\s+using)(.+)$",
+                    statement,
+                    re.M | re.IGNORECASE | re.S,
+                )
+                csv_subtable_match = re.match(
+                    rf"^create\s+table\s+(if\s+not\s+exists\s+)?using\s+({ident_with_db})(?:\s*\((.*?)\))?\s+file\s+'[^']+'\s*$",
                     statement,
                     re.M | re.IGNORECASE | re.S,
                 )
 
                 if create_db_match:
-                    db_name_to_create = create_db_match.group(1).strip().strip("`")
-                    db_options = create_db_match.group(2).strip()
-                    db_check = self.obj_check(
+                    with_if_not_exists = bool(create_db_match.group(1))
+                    db_name_to_create = create_db_match.group(2).strip().strip("`")
+                    db_options = create_db_match.group(3).strip()
+                    db_check = _workflow_obj_check(
                         obj_name=db_name_to_create, obj_type="database"
                     )
-                    if db_check["exists"]:
+                    if db_check["exists"] and not with_if_not_exists:
                         result = ReviewResult(
                             id=line,
                             errlevel=2,
@@ -615,15 +820,8 @@ class TDengineEngine(EngineBase):
                     elif _is_valid_option_sequence(
                         db_options, create_db_option_patterns
                     ):
-                        result = ReviewResult(
-                            id=line,
-                            errlevel=0,
-                            stagestatus="Audit completed",
-                            errormessage="None",
-                            sql=statement,
-                            affected_rows=0,
-                            execute_time=0,
-                        )
+                        result = _success_result(statement, line)
+                        _mark_database_created(db_name_to_create)
                     else:
                         result = ReviewResult(
                             id=line,
@@ -633,16 +831,17 @@ class TDengineEngine(EngineBase):
                             sql=statement,
                         )
                 elif create_stable_match:
+                    with_if_not_exists = bool(create_stable_match.group(1))
                     stable_name = re.sub(
-                        r"\s*\.\s*", ".", create_stable_match.group(1).strip()
+                        r"\s*\.\s*", ".", create_stable_match.group(2).strip()
                     )
-                    col_defs = create_stable_match.group(2).strip()
-                    tag_defs = create_stable_match.group(3).strip()
-                    stable_options = create_stable_match.group(4).strip()
-                    stable_check = self.obj_check(
+                    col_defs = create_stable_match.group(3).strip()
+                    tag_defs = create_stable_match.group(4).strip()
+                    stable_options = create_stable_match.group(5).strip()
+                    stable_check = _workflow_obj_check(
                         db_name=db_name, obj_name=stable_name, obj_type="table"
                     )
-                    if stable_check["exists"]:
+                    if stable_check["exists"] and not with_if_not_exists:
                         result = ReviewResult(
                             id=line,
                             errlevel=2,
@@ -657,15 +856,8 @@ class TDengineEngine(EngineBase):
                             stable_options, create_stable_option_patterns
                         )
                     ):
-                        result = ReviewResult(
-                            id=line,
-                            errlevel=0,
-                            stagestatus="Audit completed",
-                            errormessage="None",
-                            sql=statement,
-                            affected_rows=0,
-                            execute_time=0,
-                        )
+                        result = _success_result(statement, line)
+                        _mark_table_created(stable_name, "stable", db_name)
                     else:
                         result = ReviewResult(
                             id=line,
@@ -674,29 +866,14 @@ class TDengineEngine(EngineBase):
                             errormessage="CREATE STABLE 语法不正确！",
                             sql=statement,
                         )
-                elif subtable_match:
-                    subtable_name = re.sub(
-                        r"\s*\.\s*", ".", subtable_match.group(1).strip()
+                elif csv_subtable_match:
+                    using_stable_name = _normalize_sql_name(
+                        csv_subtable_match.group(2).strip()
                     )
-                    using_stable_name = re.sub(
-                        r"\s*\.\s*", ".", subtable_match.group(2).strip()
-                    )
-                    tag_values = subtable_match.group(3).strip()
-                    subtable_check = self.obj_check(
-                        db_name=db_name, obj_name=subtable_name, obj_type="table"
-                    )
-                    using_stable_check = self.obj_check(
+                    using_stable_check = _workflow_obj_check(
                         db_name=db_name, obj_name=using_stable_name, obj_type="table"
                     )
-                    if subtable_check["exists"]:
-                        result = ReviewResult(
-                            id=line,
-                            errlevel=2,
-                            stagestatus="对象已存在",
-                            errormessage=f"对象 {subtable_name} 已存在，不允许重复创建！",
-                            sql=statement,
-                        )
-                    elif not using_stable_check["exists"]:
+                    if not using_stable_check["exists"]:
                         result = ReviewResult(
                             id=line,
                             errlevel=2,
@@ -712,34 +889,67 @@ class TDengineEngine(EngineBase):
                             errormessage=f"USING 对象 {using_stable_name} 不是超级表！",
                             sql=statement,
                         )
-                    elif tag_values:
-                        result = ReviewResult(
-                            id=line,
-                            errlevel=0,
-                            stagestatus="Audit completed",
-                            errormessage="None",
-                            sql=statement,
-                            affected_rows=0,
-                            execute_time=0,
-                        )
                     else:
+                        result = _success_result(statement, line)
+                elif subtable_match:
+                    with_if_not_exists = bool(subtable_match.group(1))
+                    subtable_blocks = _parse_subtable_blocks(
+                        subtable_match.group(2).strip()
+                    )
+                    subtable_error = ""
+                    if not subtable_blocks:
+                        subtable_error = "CREATE TABLE 子表语法不正确！"
+                    else:
+                        for subtable_name, using_stable_name in subtable_blocks:
+                            subtable_check = _workflow_obj_check(
+                                db_name=db_name,
+                                obj_name=subtable_name,
+                                obj_type="table",
+                            )
+                            using_stable_check = _workflow_obj_check(
+                                db_name=db_name,
+                                obj_name=using_stable_name,
+                                obj_type="table",
+                            )
+                            if subtable_check["exists"] and not with_if_not_exists:
+                                subtable_error = (
+                                    f"对象 {subtable_name} 已存在，不允许重复创建！"
+                                )
+                                break
+                            if not subtable_check["exists"]:
+                                if not using_stable_check["exists"]:
+                                    subtable_error = (
+                                        f"超级表 {using_stable_name} 不存在！"
+                                    )
+                                    break
+                                if using_stable_check["type"] != "stable":
+                                    subtable_error = (
+                                        f"USING 对象 {using_stable_name} 不是超级表！"
+                                    )
+                                    break
+                    if subtable_error:
                         result = ReviewResult(
                             id=line,
                             errlevel=2,
                             stagestatus="驳回不支持SQL",
-                            errormessage="CREATE TABLE 子表语法不正确！",
+                            errormessage=subtable_error,
                             sql=statement,
                         )
+                    else:
+                        result = _success_result(statement, line)
+                        for subtable_name, _using_stable_name in subtable_blocks:
+                            _mark_table_created(subtable_name, "ctable", db_name)
                 elif create_table_match:
+                    with_if_not_exists = bool(create_table_match.group(1))
                     table_name = re.sub(
-                        r"\s*\.\s*", ".", create_table_match.group(1).strip()
+                        r"\s*\.\s*", ".", create_table_match.group(2).strip()
                     )
-                    col_defs = create_table_match.group(2).strip()
+                    col_defs = create_table_match.group(3).strip()
                     table_options = create_table_match.group(4).strip()
-                    table_check = self.obj_check(
+                    table_check = _workflow_obj_check(
                         db_name=db_name, obj_name=table_name, obj_type="table"
                     )
-                    if table_check["exists"]:
+                    if table_check["exists"] and not with_if_not_exists:
                         result = ReviewResult(
                             id=line,
                             errlevel=2,
@@ -750,15 +960,8 @@ class TDengineEngine(EngineBase):
                     elif col_defs and _is_valid_option_sequence(
                         table_options, create_table_option_patterns
                     ):
-                        result = ReviewResult(
-                            id=line,
-                            errlevel=0,
-                            stagestatus="Audit completed",
-                            errormessage="None",
-                            sql=statement,
-                            affected_rows=0,
-                            execute_time=0,
-                        )
+                        result = _success_result(statement, line)
+                        _mark_table_created(table_name, "table", db_name)
                     else:
                         result = ReviewResult(
                             id=line,
@@ -828,7 +1031,7 @@ class TDengineEngine(EngineBase):
                     alter_match = stable_match if is_alter_stable else table_match
                     table_name = alter_match.group(1)
                     alter_clause = alter_match.group(2).strip()
-                    table_check = self.obj_check(
+                    table_check = _workflow_obj_check(
                         db_name=db_name, obj_name=table_name, obj_type="table"
                     )
 
@@ -908,7 +1111,7 @@ class TDengineEngine(EngineBase):
                         re.I | re.S,
                     )
                     normal_subquery_match = re.match(
-                        rf"^({ident_with_db})(?:\s*\(\s*[^)]*\s*\))?\s+select\s+[\w\W]+$",
+                        rf"^({ident_with_db})(?:\s*\(\s*([^)]*)\s*\))?\s+select\s+[\w\W]+$",
                         insert_body,
                         re.I | re.S,
                     )
@@ -917,7 +1120,7 @@ class TDengineEngine(EngineBase):
                         stb_name = re.sub(
                             r"\s*\.\s*", ".", super_subquery_match.group(1).strip()
                         )
-                        stb_check = self.obj_check(
+                        stb_check = _workflow_obj_check(
                             db_name=db_name, obj_name=stb_name, obj_type="table"
                         )
                         if not stb_check["exists"]:
@@ -932,41 +1135,31 @@ class TDengineEngine(EngineBase):
                         tb_name = re.sub(
                             r"\s*\.\s*", ".", normal_subquery_match.group(1).strip()
                         )
-                        tb_check = self.obj_check(
+                        insert_columns = _parse_ident_list(
+                            normal_subquery_match.group(2) or ""
+                        )
+                        tb_check = _workflow_obj_check(
                             db_name=db_name, obj_name=tb_name, obj_type="table"
                         )
                         if not tb_check["exists"]:
                             insert_error = f"表 {tb_name} 不存在！"
+                        elif (
+                            tb_check["type"] == "stable"
+                            and "tbname" not in insert_columns
+                        ):
+                            insert_error = f"{tb_name} 为超级表，不能直接写入，请指定 tbname 字段！"
                         else:
                             insert_ok = True
                     else:
-                        block_pattern = re.compile(
-                            rf"\s*({ident_with_db})(?:\s+using\s+({ident_with_db})(?:\s*\(\s*{ident}(?:\s*,\s*{ident})*\s*\))?\s+tags\s*\(([^)]*)\))?(?:\s*\(\s*[^)]*\s*\))?\s+values\s*\([^)]*\)(?:\s*\([^)]*\))*",
-                            re.I | re.S,
-                        )
-                        rest = insert_body
-                        blocks = []
-                        while rest.strip():
-                            m = block_pattern.match(rest)
-                            if not m:
-                                blocks = []
-                                break
-                            tb_name = re.sub(r"\s*\.\s*", ".", m.group(1).strip())
-                            using_name = (
-                                re.sub(r"\s*\.\s*", ".", m.group(2).strip())
-                                if m.group(2)
-                                else None
-                            )
-                            blocks.append((tb_name, using_name))
-                            rest = rest[m.end() :]
+                        blocks = _parse_insert_blocks(insert_body)
                         if blocks:
                             insert_ok = True
-                            for tb_name, using_name in blocks:
-                                tb_check = self.obj_check(
+                            for tb_name, using_name, has_tbname_col in blocks:
+                                tb_check = _workflow_obj_check(
                                     db_name=db_name, obj_name=tb_name, obj_type="table"
                                 )
                                 if using_name:
-                                    using_check = self.obj_check(
+                                    using_check = _workflow_obj_check(
                                         db_name=db_name,
                                         obj_name=using_name,
                                         obj_type="table",
@@ -992,6 +1185,13 @@ class TDengineEngine(EngineBase):
                                     if not tb_check["exists"]:
                                         insert_ok = False
                                         insert_error = f"表 {tb_name} 不存在！"
+                                        break
+                                    if (
+                                        tb_check["type"] == "stable"
+                                        and not has_tbname_col
+                                    ):
+                                        insert_ok = False
+                                        insert_error = f"{tb_name} 为超级表，不能直接写入，请指定 tbname 字段！"
                                         break
                         else:
                             insert_error = "INSERT语法不正确！"
@@ -1031,7 +1231,7 @@ class TDengineEngine(EngineBase):
                     )
                 else:
                     tb_name = re.sub(r"\s*\.\s*", ".", delete_match.group(1).strip())
-                    tb_check = self.obj_check(
+                    tb_check = _workflow_obj_check(
                         db_name=db_name, obj_name=tb_name, obj_type="table"
                     )
                     if not tb_check["exists"]:
@@ -1073,7 +1273,9 @@ class TDengineEngine(EngineBase):
                 if drop_db_match:
                     with_if_exists = bool(drop_db_match.group(1))
                     db_to_drop = drop_db_match.group(2).strip().strip("`")
-                    db_check = self.obj_check(obj_name=db_to_drop, obj_type="database")
+                    db_check = _workflow_obj_check(
+                        obj_name=db_to_drop, obj_type="database"
+                    )
                     if not db_check["exists"] and not with_if_exists:
                         result = ReviewResult(
                             id=line,
@@ -1097,7 +1299,7 @@ class TDengineEngine(EngineBase):
                     stable_name = re.sub(
                         r"\s*\.\s*", ".", drop_stable_match.group(2).strip()
                     )
-                    stable_check = self.obj_check(
+                    stable_check = _workflow_obj_check(
                         db_name=db_name, obj_name=stable_name, obj_type="table"
                     )
                     if not stable_check["exists"] and not with_if_exists:
@@ -1142,7 +1344,7 @@ class TDengineEngine(EngineBase):
                         table_name = re.sub(
                             r"\s*\.\s*", ".", item_match.group(2).strip()
                         )
-                        table_check = self.obj_check(
+                        table_check = _workflow_obj_check(
                             db_name=db_name, obj_name=table_name, obj_type="table"
                         )
                         if not table_check["exists"] and not with_if_exists:
