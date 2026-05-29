@@ -980,8 +980,12 @@ class TestTDengine(unittest.TestCase):
             ret.rows[1].errormessage,
             "CREATE TABLE \u5b50\u8868\u8bed\u6cd5\u4e0d\u6b63\u786e\uff01",
         )
-        self.assertEqual(ret.rows[2].errormessage, "INSERT\u8bed\u6cd5\u4e0d\u6b63\u786e\uff01")
-        self.assertEqual(ret.rows[3].errormessage, "INSERT\u8bed\u6cd5\u4e0d\u6b63\u786e\uff01")
+        self.assertEqual(
+            ret.rows[2].errormessage, "INSERT\u8bed\u6cd5\u4e0d\u6b63\u786e\uff01"
+        )
+        self.assertEqual(
+            ret.rows[3].errormessage, "INSERT\u8bed\u6cd5\u4e0d\u6b63\u786e\uff01"
+        )
 
     @patch.object(TDengineEngine, "obj_check")
     def test_execute_check_rejects_supertable_select_insert_without_tbname(
@@ -1081,9 +1085,7 @@ class TestTDengine(unittest.TestCase):
         )
 
     @patch.object(TDengineEngine, "obj_check")
-    def test_execute_check_rejects_malformed_parser_guard_paths(
-        self, mock_obj_check
-    ):
+    def test_execute_check_rejects_malformed_parser_guard_paths(self, mock_obj_check):
         def check_obj(db_name=None, obj_name=None, obj_type="table"):
             if obj_name == "meters":
                 return {"exists": True, "type": "stable"}
@@ -1166,7 +1168,9 @@ class TestTDengine(unittest.TestCase):
             """,
         )
 
-        self.assertEqual([row.errlevel for row in ret.rows], [0, 2, 2, 2, 2, 2, 2, 2, 2])
+        self.assertEqual(
+            [row.errlevel for row in ret.rows], [0, 2, 2, 2, 2, 2, 2, 2, 2]
+        )
         self.assertEqual(ret.error_count, 8)
         self.assertEqual(
             ret.rows[1].errormessage,
