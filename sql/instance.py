@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-import MySQLdb
+import logging
 import os
 import time
 
@@ -16,6 +16,8 @@ from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
 from sql.utils.sql_utils import filter_db_list
 from .models import Instance, ParamTemplate, ParamHistory
+
+logger = logging.getLogger("default")
 
 
 @permission_required("sql.menu_instance_list", raise_exception=True)
@@ -84,7 +86,7 @@ def param_list(request):
     search = request.POST.get("search", "")
     try:
         ins = Instance.objects.get(id=instance_id)
-    except Instance.DoesNotExist:
+    except (Instance.DoesNotExist, ValueError):
         result = {"status": 1, "msg": "实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 获取已配置参数列表
@@ -166,7 +168,7 @@ def param_edit(request):
     variable_value = request.POST.get("runtime_value")
     try:
         ins = Instance.objects.get(id=instance_id)
-    except Instance.DoesNotExist:
+    except (Instance.DoesNotExist, ValueError):
         result = {"status": 1, "msg": "实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -218,12 +220,12 @@ def param_compare(request):
     # 校验实例存在
     try:
         ins1 = Instance.objects.get(id=instance_id1)
-    except Instance.DoesNotExist:
+    except (Instance.DoesNotExist, ValueError):
         result = {"status": 1, "msg": "源实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins2 = Instance.objects.get(id=instance_id2)
-    except Instance.DoesNotExist:
+    except (Instance.DoesNotExist, ValueError):
         result = {"status": 1, "msg": "目标实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -241,25 +243,27 @@ def param_compare(request):
         engine1 = get_engine(instance=ins1)
         variables1 = engine1.get_variables()
     except Exception as e:
-        result = {"status": 1, "msg": f"获取源实例参数失败：{e}", "data": []}
+        logger.error(f"获取源实例参数失败：{e}")
+        result = {"status": 1, "msg": "获取源实例参数失败，请联系管理员", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         engine2 = get_engine(instance=ins2)
         variables2 = engine2.get_variables()
     except Exception as e:
-        result = {"status": 1, "msg": f"获取目标实例参数失败：{e}", "data": []}
+        logger.error(f"获取目标实例参数失败：{e}")
+        result = {"status": 1, "msg": "获取目标实例参数失败，请联系管理员", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
-    # 构建 dict {variable_name_lower: value}
+    # 构建 dict {variable_name_lower: value}（保留原始值，不 strip，以便检测空白差异）
     vars1 = {}
     for variable in variables1.rows:
         var_name = str(variable[0]).lower()
-        vars1[var_name] = str(variable[1]).strip()
+        vars1[var_name] = str(variable[1])
 
     vars2 = {}
     for variable in variables2.rows:
         var_name = str(variable[0]).lower()
-        vars2[var_name] = str(variable[1]).strip()
+        vars2[var_name] = str(variable[1])
 
     # 获取参数模板补充描述
     cnf_params = dict()
@@ -384,7 +388,8 @@ def schemasync(request):
         stdout, stderr = schema_sync.execute_cmd(cmd_args).communicate()
         diff_stdout = f"{stdout}{stderr}"
     except RuntimeError as e:
-        diff_stdout = str(e)
+        logger.error(f"schemasync执行命令失败：{e}")
+        diff_stdout = "执行对比命令失败，请联系管理员"
 
     # 非全部数据库对比可以读取对比结果并在前端展示
     if db_name != "*":
@@ -405,12 +410,14 @@ def schemasync(request):
             with open(patch_sql_file, "r") as f:
                 patch_sql = f.read()
         except FileNotFoundError as e:
-            patch_sql = str(e)
+            logger.error(f"schemasync读取patch文件失败：{e}")
+            patch_sql = "读取对比结果文件失败，请联系管理员"
         try:
             with open(revert_sql_file, "r") as f:
                 revert_sql = f.read()
         except FileNotFoundError as e:
-            revert_sql = str(e)
+            logger.error(f"schemasync读取revert文件失败：{e}")
+            revert_sql = "读取对比结果文件失败，请联系管理员"
         result["data"] = {
             "diff_stdout": diff_stdout,
             "patch_stdout": patch_sql,
@@ -441,7 +448,11 @@ def instance_resource(request):
 
     resource_type = request.GET.get("resource_type")
     if instance_id:
-        instance = Instance.objects.get(id=instance_id)
+        try:
+            instance = Instance.objects.get(id=instance_id)
+        except (Instance.DoesNotExist, ValueError):
+            result = {"status": 1, "msg": "实例不存在", "data": []}
+            return HttpResponse(json.dumps(result), content_type="application/json")
     else:
         try:
             instance = Instance.objects.get(instance_name=instance_name)
@@ -480,8 +491,9 @@ def instance_resource(request):
         else:
             raise TypeError("不支持的资源类型或者参数不完整！")
     except Exception as msg:
+        logger.error(f"获取实例资源失败：{msg}")
         result["status"] = 1
-        result["msg"] = str(msg)
+        result["msg"] = "获取实例资源失败，请联系管理员"
     else:
         if resource.error:
             result["status"] = 1
@@ -515,8 +527,9 @@ def describe(request):
         )
         result["data"] = query_result.__dict__
     except Exception as msg:
+        logger.error(f"获取表结构失败：{msg}")
         result["status"] = 1
-        result["msg"] = str(msg)
+        result["msg"] = "获取表结构失败，请联系管理员"
     if result["data"].get("error"):
         result["status"] = 1
         result["msg"] = result["data"]["error"]
