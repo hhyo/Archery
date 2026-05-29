@@ -281,7 +281,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ),
     # 权限
-    "DEFAULT_PERMISSION_CLASSES": ("sql_api.permissions.IsInUserWhitelist",),
+    "DEFAULT_PERMISSION_CLASSES": ("sql_api.permissions.IsApiSystemAdmin",),
     # 限速（anon：未认证用户  user：认证用户）
     "DEFAULT_THROTTLE_CLASSES": (
         "rest_framework.throttling.AnonRateThrottle",

@@ -11,7 +11,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from . import api_user, api_instance, api_workflow
+from . import api_user, api_instance, api_workflow, api_sqlquery
 
 router = routers.DefaultRouter()
 
@@ -44,6 +44,14 @@ urlpatterns = [
     path("v1/instance/<int:pk>/", api_instance.InstanceDetail.as_view()),
     path("v1/instance/resource/", api_instance.InstanceResource.as_view()),
     path("v1/instance/table-instances/", api_instance.TableInstanceLookup.as_view()),
+    path("v1/sqlquery/instances/", api_sqlquery.SQLQueryInstancesView.as_view()),
+    path("v1/sqlquery/resources/", api_sqlquery.SQLQueryResourcesView.as_view()),
+    path(
+        "v1/sqlquery/describetable/", api_sqlquery.SQLQueryDescribeTableView.as_view()
+    ),
+    path("v1/sqlquery/execute/", api_sqlquery.SQLQueryExecuteView.as_view()),
+    path("v1/sqlquery/logs/", api_sqlquery.SQLQueryLogsView.as_view()),
+    path("v1/sqlquery/favorites/", api_sqlquery.SQLQueryFavoritesView.as_view()),
     path("v1/instance/tunnel/", api_instance.TunnelList.as_view()),
     path("v1/instance/rds/", api_instance.AliyunRdsList.as_view()),
     path("v1/workflow/", api_workflow.WorkflowList.as_view()),

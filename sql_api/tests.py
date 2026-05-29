@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
@@ -52,7 +52,9 @@ class TestUser(APITestCase):
     """测试用户相关接口"""
 
     def setUp(self):
-        self.user = User(username="test_user", display="测试用户", is_active=True)
+        self.user = User(
+            username="test_user", display="测试用户", is_active=True, is_superuser=True
+        )
         self.user.set_password("test_password")
         self.user.save()
         self.group = Group.objects.create(id=1, name="DBA")
@@ -73,11 +75,11 @@ class TestUser(APITestCase):
         SysConfig().purge()
 
     def test_user_not_in_whitelist(self):
-        """测试api用户白名单参数"""
+        """测试管理员不受api用户白名单参数影响"""
         SysConfig().set("api_user_whitelist", "")
         r = self.client.get("/api/v1/user/", format="json")
-        self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertDictEqual(r.json(), {"detail": "您没有执行该操作的权限。"})
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.json()["count"], 1)
 
     def test_get_user_list(self):
         """测试获取用户清单"""
@@ -223,7 +225,9 @@ class TestInstance(APITestCase):
     """测试实例相关接口"""
 
     def setUp(self):
-        self.user = User(username="test_user", display="测试用户", is_active=True)
+        self.user = User(
+            username="test_user", display="测试用户", is_active=True, is_superuser=True
+        )
         self.user.set_password("test_password")
         self.user.save()
         self.ins = Instance.objects.create(
@@ -405,7 +409,10 @@ class TestWorkflow(APITestCase):
             codename="sql_execute_for_resource_group"
         )
         can_review_permission = Permission.objects.get(codename="sql_review")
-        self.user = User(username="test_user", display="测试用户", is_active=True)
+        can_query_all_instances = Permission.objects.get(codename="query_all_instances")
+        self.user = User(
+            username="test_user", display="测试用户", is_active=True, is_superuser=True
+        )
         self.user.set_password("test_password")
         self.user.save()
         self.user.user_permissions.add(
@@ -413,19 +420,20 @@ class TestWorkflow(APITestCase):
             can_execute_permission,
             can_execute_resource_permission,
             can_review_permission,
+            can_query_all_instances,
         )
-        self.user.groups.add(self.group.id)
-        self.user.resource_group.add(self.res_group.group_id)
+        self.user.groups.add(self.group)
+        self.user.resource_group.add(self.res_group)
         self.ins = Instance.objects.create(
             instance_name="some_ins",
-            type="slave",
-            db_type="redis",
+            type="master",
+            db_type="mysql",
             host="some_host",
-            port=6379,
+            port=3306,
             user="ins_user",
             password="some_str",
         )
-        self.ins.resource_group.add(self.res_group.group_id)
+        self.ins.resource_group.add(self.res_group)
         self.ins.instance_tag.add(self.ins_tag.id)
         self.wf1 = SqlWorkflow.objects.create(
             workflow_name="some_name",
@@ -471,6 +479,34 @@ class TestWorkflow(APITestCase):
         self.token = r.data["access"]
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + self.token)
         SysConfig().set("api_user_whitelist", self.user.id)
+        self.get_engine_patcher = patch("sql_api.serializers.get_engine")
+        mock_get_engine = self.get_engine_patcher.start()
+        mock_engine = MagicMock()
+        mock_engine.auto_backup = False
+        mock_engine.execute_check.return_value = ReviewSet(
+            warning_count=0,
+            error_count=0,
+            column_list=["id", "stage"],
+            rows=[
+                ReviewResult(
+                    id=1,
+                    stage="CHECKED",
+                    errlevel=0,
+                    stagestatus="Audit Completed",
+                    errormessage="",
+                    sql="alter table abc add column note varchar(64);",
+                    affected_rows=0,
+                    actual_affected_rows=0,
+                    sequence="0_0_00000000",
+                    backup_dbname="",
+                    execute_time="0",
+                    sqlsha1="",
+                )
+            ],
+        )
+        mock_get_engine.return_value = mock_engine
+        self.async_task_patcher = patch("sql_api.api_workflow.async_task")
+        self.async_task_patcher.start()
         self.notify_patcher = patch("sql.notify.auto_notify")
         self.notify_patcher.start()
 
@@ -482,6 +518,8 @@ class TestWorkflow(APITestCase):
         SqlWorkflow.objects.all().delete()
         WorkflowAudit.objects.all().delete()
         WorkflowLog.objects.all().delete()
+        self.get_engine_patcher.stop()
+        self.async_task_patcher.stop()
         self.notify_patcher.stop()
 
     def test_get_sql_workflow_list(self):
@@ -618,8 +656,8 @@ class TestWorkflow(APITestCase):
         user2 = User.objects.create(
             username="test_user2", display="测试用户2", is_active=True
         )
-        user2.groups.add(self.group.id)
-        user2.resource_group.add(self.res_group.group_id)
+        user2.groups.add(self.group)
+        user2.resource_group.add(self.res_group)
         json_data = {
             "workflow": {
                 "workflow_name": "上线工单1",

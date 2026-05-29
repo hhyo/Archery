@@ -318,7 +318,7 @@
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
@@ -369,7 +369,7 @@
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
