@@ -368,7 +368,9 @@ class TestTDengine(unittest.TestCase):
 
         self.assertEqual(ret.error_count, 1)
         self.assertEqual(ret.rows[0].errlevel, 2)
-        self.assertEqual(ret.rows[0].stagestatus, "\u9a73\u56de\u4e0d\u652f\u6301\u8bed\u53e5")
+        self.assertEqual(
+            ret.rows[0].stagestatus, "\u9a73\u56de\u4e0d\u652f\u6301\u8bed\u53e5"
+        )
 
     @patch.object(TDengineEngine, "obj_check")
     def test_execute_check_create_database_rejects_existing_db(self, mock_obj_check):
@@ -527,13 +529,11 @@ class TestTDengine(unittest.TestCase):
         mock_execute.side_effect = [ok, failed]
         workflow = SimpleNamespace(
             db_name="metrics",
-            sqlworkflowcontent=SimpleNamespace(
-                sql_content="""
+            sqlworkflowcontent=SimpleNamespace(sql_content="""
                     insert into readings values(now, 1);
                     insert into missing values(now, 1);
                     insert into readings values(now, 2);
-                """
-            ),
+                """),
         )
         engine = TDengineEngine(instance=self.instance)
 
