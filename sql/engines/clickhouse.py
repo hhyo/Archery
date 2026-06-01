@@ -640,6 +640,7 @@ class ClickHouseEngine(EngineBase):
         return table_metas
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     def processlist(self, command_type, **kwargs):
         """获取连接信息"""
         sql = """select
@@ -681,10 +682,13 @@ class ClickHouseEngine(EngineBase):
 =======
     def tablespace(self, offset=0, row_count=14, search=""):
 >>>>>>> 7fb2775 (fix(search):修复Top表空间的后端搜索功能)
+=======
+    def tablespace(self, offset=0, row_count=14, schema_search=""):
+>>>>>>> 707b37f (代码优化)
         """获取表空间信息"""
         search_condition = ""
-        if search:
-            search_escaped = self.escape_string(search)
+        if schema_search:
+            search_escaped = self.escape_string(schema_search)
             search_condition = (
                 " AND (database LIKE '%{keyword}%' OR table LIKE '%{keyword}%')".format(
                     keyword=search_escaped
@@ -708,11 +712,11 @@ class ClickHouseEngine(EngineBase):
         LIMIT {},{};""".format(offset, row_count, search_condition=search_condition)
         return self.query(sql=sql)
 
-    def tablespace_count(self, search=""):
+    def tablespace_count(self, schema_search=""):
         """获取表空间数量"""
         search_condition = ""
-        if search:
-            search_escaped = self.escape_string(search)
+        if schema_search:
+            search_escaped = self.escape_string(schema_search)
             search_condition = (
                 " AND (database LIKE '%{keyword}%' OR table LIKE '%{keyword}%')".format(
                     keyword=search_escaped

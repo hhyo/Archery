@@ -125,7 +125,7 @@ def tablespace(request):
     instance_name = request.POST.get("instance_name")
     offset = int(request.POST.get("offset", 0))
     limit = int(request.POST.get("limit", 14))
-    search = request.POST.get("search", "")
+    schema_search = request.POST.get("schema_search", "")
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
@@ -133,9 +133,8 @@ def tablespace(request):
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     query_engine = get_engine(instance=instance)
-    try:
-        query_result = query_engine.tablespace(offset, limit, search=search)
-    except AttributeError:
+    query_result = query_engine.tablespace(offset, limit, schema_search=schema_search)
+    if not query_result.rows and not query_result.error:
         result = {
             "status": 1,
             "msg": "暂时不支持{}类型数据库的表空间信息查询".format(instance.db_type),
@@ -143,14 +142,13 @@ def tablespace(request):
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
 
-    if query_result:
-        if not query_result.error:
-            table_space = query_result.to_dict()
-            r = query_engine.tablespace_count(search=search)
-            total = r.rows[0][0]
-            result = {"status": 0, "msg": "ok", "rows": table_space, "total": total}
-        else:
-            result = {"status": 1, "msg": query_result.error}
+    if query_result.error:
+        result = {"status": 1, "msg": query_result.error}
+    else:
+        table_space = query_result.to_dict()
+        r = query_engine.tablespace_count(schema_search=schema_search)
+        total = r.rows[0][0]
+        result = {"status": 0, "msg": "ok", "rows": table_space, "total": total}
     # 返回查询结果
     return HttpResponse(
         json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),

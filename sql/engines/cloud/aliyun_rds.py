@@ -79,7 +79,7 @@ class AliyunRDS(MysqlEngine):
             result.error = str(e)
         return result
 
-    def tablespace(self, offset, limit, search=""):
+    def tablespace(self, offset, limit, schema_search=""):
         # 通过实例名称获取关联的rds实例id
         instance_info = AliyunRdsConfig.objects.get(
             instance__instance_name=self.instance_name
@@ -97,8 +97,8 @@ class AliyunRDS(MysqlEngine):
             space_list = []
 
         # 搜索过滤
-        if search and space_list:
-            search_lower = search.lower()
+        if schema_search and space_list:
+            search_lower = schema_search.lower()
             space_list = [
                 item
                 for item in space_list

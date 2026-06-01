@@ -1060,11 +1060,11 @@ class MysqlEngine(EngineBase):
             kill_sql = kill_sql + row[0]
         return self.execute("information_schema", kill_sql)
 
-    def tablespace(self, offset=0, row_count=14, search=""):
+    def tablespace(self, offset=0, row_count=14, schema_search=""):
         """获取表空间信息"""
         search_condition = ""
-        if search:
-            search_escaped = self.escape_string(search)
+        if schema_search:
+            search_escaped = self.escape_string(schema_search)
             search_condition = " AND (table_schema LIKE '%{keyword}%' OR table_name LIKE '%{keyword}%')".format(
                 keyword=search_escaped
             )
@@ -1085,11 +1085,11 @@ class MysqlEngine(EngineBase):
         LIMIT {},{};""".format(offset, row_count, search_condition=search_condition)
         return self.query("information_schema", sql)
 
-    def tablespace_count(self, search=""):
+    def tablespace_count(self, schema_search=""):
         """获取表空间数量"""
         search_condition = ""
-        if search:
-            search_escaped = self.escape_string(search)
+        if schema_search:
+            search_escaped = self.escape_string(schema_search)
             search_condition = " AND (table_schema LIKE '%{keyword}%' OR table_name LIKE '%{keyword}%')".format(
                 keyword=search_escaped
             )

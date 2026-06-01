@@ -1748,7 +1748,7 @@ class MongoEngine(EngineBase):
         "local",
     ]
 
-    def tablespace(self, offset=0, row_count=14, search=""):
+    def tablespace(self, offset=0, row_count=14, schema_search=""):
         """获取表空间信息"""
         result_set = ResultSet(
             full_sql="db.collection.aggregate([ { $collStats: { storageStats: { } } } ])"
@@ -1801,8 +1801,8 @@ class MongoEngine(EngineBase):
                         continue
 
             # 搜索过滤
-            if search:
-                search_lower = search.lower()
+            if schema_search:
+                search_lower = schema_search.lower()
                 rows = [
                     row for row in rows if search_lower in row.get("ns", "").lower()
                 ]
@@ -1831,7 +1831,7 @@ class MongoEngine(EngineBase):
             result_set.error = str(e)
         return result_set
 
-    def tablespace_count(self, search=""):
+    def tablespace_count(self, schema_search=""):
         """获取表空间数量"""
         result_set = ResultSet()
         try:
@@ -1847,8 +1847,8 @@ class MongoEngine(EngineBase):
                     continue
                 db = conn[db_name]
                 collection_names = db.list_collection_names()
-                if search:
-                    search_lower = search.lower()
+                if schema_search:
+                    search_lower = schema_search.lower()
                     collection_names = [
                         c
                         for c in collection_names
