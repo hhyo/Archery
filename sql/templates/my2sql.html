@@ -139,6 +139,7 @@
                     </div>
                     <div class="form-group">
                         <button id="my2sql" class="btn btn-danger">获取SQL</button>
+                        <button id="btn-submit-my2sql-workflow" class="btn btn-success disabled" disabled>提交工单</button>
                     </div>
                 </div>
             </div>
@@ -172,6 +173,39 @@
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
         $(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii:ss', language: 'zh-CN', autoclose: true});
+        var hasGeneratedMy2sqlRows = false;
+
+        function getMy2sqlTableData() {
+            try {
+                return $('#tb-my2sql').bootstrapTable('getData') || [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function refreshSubmitWorkflowButton() {
+            var hasInstance = !!$("#instance_name").val();
+            var hasSchema = !!$("#only_schemas").val();
+            var hasSqlRows = getMy2sqlTableData().length > 0;
+            var enabled = hasInstance && hasSchema && hasGeneratedMy2sqlRows && hasSqlRows;
+            $("#btn-submit-my2sql-workflow").toggleClass('disabled', !enabled).prop('disabled', !enabled);
+        }
+
+        function clearMy2sqlTable() {
+            hasGeneratedMy2sqlRows = false;
+            try {
+                $('#tb-my2sql').bootstrapTable('destroy');
+            } catch (e) {
+            }
+            refreshSubmitWorkflowButton();
+        }
+
+        function buildMy2sqlWorkflowName() {
+            var workflowName = "My2SQL回滚-" + $("#instance_name").val() + "-" + $("#only_schemas").val();
+            return workflowName.length >= 50 ? workflowName.substr(0, 49) : workflowName;
+        }
+
+        refreshSubmitWorkflowButton();
 
         //获取用户实例列表
         $(function () {
@@ -206,6 +240,9 @@
 
         //实例变更获取数据库BINLOG
         $("#instance_name").change(function () {
+            clearMy2sqlTable();
+            $("#only_schemas").empty().selectpicker('render').selectpicker('refresh');
+            $("#only_tables").empty().selectpicker('render').selectpicker('refresh');
             //获取db_name
             $.ajax({
                 type: "get",
@@ -266,15 +303,18 @@
         //start-file变更重置start-pos
         $("#start_file").change(function () {
             $("#start_pos").val('');
+            clearMy2sqlTable();
         });
 
         //end-file变更重置end-pos
         $("#end_file").change(function () {
             $("#end_pos").val('');
+            clearMy2sqlTable();
         });
 
         //数据库变更获取表名称
         $("#only_schemas").change(function () {
+            clearMy2sqlTable();
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "get",
@@ -305,6 +345,30 @@
             });
         });
 
+        $("#only_tables, #sql_type, #start_pos, #end_pos, #start_time, #stop_time, #num").change(function () {
+            clearMy2sqlTable();
+        });
+
+        $("#start_pos, #end_pos, #start_time, #stop_time, #num").keyup(function () {
+            clearMy2sqlTable();
+        });
+
+        $("#btn-submit-my2sql-workflow").click(function () {
+            var rows = getMy2sqlTableData();
+            if ($(this).prop('disabled') || rows.length === 0) {
+                return;
+            }
+            var sqlContent = $.map(rows, function (row) {
+                return row.sql;
+            }).join("\n");
+            sessionStorage.setItem('my2sqlSubmitPending', 'true');
+            sessionStorage.setItem('my2sqlSubmitSqlContent', sqlContent);
+            sessionStorage.setItem('my2sqlSubmitInstanceName', $("#instance_name").val());
+            sessionStorage.setItem('my2sqlSubmitDbName', $("#only_schemas").val());
+            sessionStorage.setItem('my2sqlSubmitWorkflowName', buildMy2sqlWorkflowName());
+            window.location.href = "/submitsql/";
+        });
+
         //获取语句
         $("#my2sql").click(function () {
             if ($("#instance_name").val() && $("#start_file").val()) {
@@ -318,6 +382,7 @@
                 }
                 $(this).addClass('disabled');
                 $(this).prop('disabled', true);
+                clearMy2sqlTable();
                 $.ajax({
                     type: "post",
                     url: "/binlog/my2sql/",
@@ -348,9 +413,11 @@
                     complete: function () {
                         $("#my2sql").removeClass('disabled');
                         $("#my2sql").prop('disabled', false);
+                        refreshSubmitWorkflowButton();
                     },
                     success: function (data) {
                         if (data.status === 0) {
+                            hasGeneratedMy2sqlRows = data.data && data.data.length > 0;
                             $('#tb-my2sql').bootstrapTable('destroy').bootstrapTable({
                                 escape: true,
                                 striped: true,                      //是否显示行间隔色
@@ -411,12 +478,17 @@
                                     visible: false // 默认不显示
                                 }],
                                 onLoadSuccess: function () {
-                                    
+                                    refreshSubmitWorkflowButton();
                                 },
-                                onLoadError: onLoadErrorCallback,
+                                onLoadError: function () {
+                                    onLoadErrorCallback();
+                                    refreshSubmitWorkflowButton();
+                                },
                             });
+                            refreshSubmitWorkflowButton();
                         } else {
                             alert(data.msg);
+                            refreshSubmitWorkflowButton();
                         }
                     }
                 });
