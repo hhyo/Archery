@@ -17,7 +17,6 @@ from sql.binlog import binlog_list, del_binlog, my2sql, my2sql_file
 from sql.engines.models import ResultSet
 from sql.models import Instance
 
-
 # ====================== Fixtures ======================
 
 
@@ -36,9 +35,7 @@ def normal_user(django_user_model, db):
         username="normal_user", display="普通用户", is_active=True
     )
     # 添加 binlog 相关权限
-    perms = Permission.objects.filter(
-        codename__in=["menu_my2sql", "binlog_del"]
-    )
+    perms = Permission.objects.filter(codename__in=["menu_my2sql", "binlog_del"])
     user.user_permissions.set(perms)
     yield user
     user.delete()
@@ -97,7 +94,9 @@ class TestBinlogList:
         assert result["msg"] == "实例不存在"
 
     @patch("sql.binlog.get_engine")
-    def test_binlog_list_success(self, mock_get_engine, client_with_super_user, db_instance):
+    def test_binlog_list_success(
+        self, mock_get_engine, client_with_super_user, db_instance
+    ):
         """获取binlog列表成功"""
         mock_engine = MagicMock()
         mock_engine.query.return_value = _make_query_result(
@@ -121,7 +120,9 @@ class TestBinlogList:
         assert result["data"][1]["Log_name"] == "mysql-bin.000002"
 
     @patch("sql.binlog.get_engine")
-    def test_binlog_list_query_error(self, mock_get_engine, client_with_super_user, db_instance):
+    def test_binlog_list_query_error(
+        self, mock_get_engine, client_with_super_user, db_instance
+    ):
         """获取binlog列表查询失败"""
         mock_engine = MagicMock()
         mock_engine.query.return_value = _make_query_result(
@@ -136,7 +137,9 @@ class TestBinlogList:
         assert result["msg"] == "查询出错"
 
     @patch("sql.binlog.get_engine")
-    def test_binlog_list_empty(self, mock_get_engine, client_with_super_user, db_instance):
+    def test_binlog_list_empty(
+        self, mock_get_engine, client_with_super_user, db_instance
+    ):
         """获取binlog列表为空"""
         mock_engine = MagicMock()
         mock_engine.query.return_value = _make_query_result(
@@ -188,7 +191,9 @@ class TestDelBinlog:
         assert "未选择binlog" in result["msg"]
 
     @patch("sql.binlog.get_engine")
-    def test_del_binlog_success(self, mock_get_engine, client_with_super_user, db_instance):
+    def test_del_binlog_success(
+        self, mock_get_engine, client_with_super_user, db_instance
+    ):
         """清理binlog成功"""
         mock_engine = MagicMock()
         mock_engine.escape_string.return_value = "mysql-bin.000001"
@@ -208,7 +213,9 @@ class TestDelBinlog:
         mock_engine.query.assert_called_once()
 
     @patch("sql.binlog.get_engine")
-    def test_del_binlog_fail(self, mock_get_engine, client_with_super_user, db_instance):
+    def test_del_binlog_fail(
+        self, mock_get_engine, client_with_super_user, db_instance
+    ):
         """清理binlog失败"""
         mock_engine = MagicMock()
         mock_engine.escape_string.return_value = "mysql-bin.000001"
@@ -246,7 +253,9 @@ class TestMy2sql:
 
     @patch("sql.binlog.get_engine")
     @patch("sql.binlog.My2SQL")
-    def test_my2sql_args_check_fail(self, mock_my2sql_cls, mock_get_engine, client_with_super_user, db_instance):
+    def test_my2sql_args_check_fail(
+        self, mock_my2sql_cls, mock_get_engine, client_with_super_user, db_instance
+    ):
         """参数校验失败时返回错误"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {
@@ -300,7 +309,9 @@ class TestMy2sql:
 
     @patch("sql.binlog.async_task")
     @patch("sql.binlog.My2SQL")
-    def test_my2sql_success_with_rows(self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance):
+    def test_my2sql_success_with_rows(
+        self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance
+    ):
         """my2sql解析成功，返回SQL行"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
@@ -350,7 +361,9 @@ class TestMy2sql:
 
     @patch("sql.binlog.async_task")
     @patch("sql.binlog.My2SQL")
-    def test_my2sql_no_rows_with_stderr(self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance):
+    def test_my2sql_no_rows_with_stderr(
+        self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance
+    ):
         """my2sql解析无SQL行但有错误输出"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
@@ -387,7 +400,9 @@ class TestMy2sql:
 
     @patch("sql.binlog.async_task")
     @patch("sql.binlog.My2SQL")
-    def test_my2sql_no_rows_no_stderr(self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance):
+    def test_my2sql_no_rows_no_stderr(
+        self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance
+    ):
         """my2sql解析无SQL行且无错误输出"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
@@ -423,7 +438,9 @@ class TestMy2sql:
         assert result["data"] == []
 
     @patch("sql.binlog.My2SQL")
-    def test_my2sql_exception_during_execution(self, mock_my2sql_cls, client_with_super_user, db_instance):
+    def test_my2sql_exception_during_execution(
+        self, mock_my2sql_cls, client_with_super_user, db_instance
+    ):
         """my2sql执行过程中抛出异常"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
@@ -456,7 +473,9 @@ class TestMy2sql:
 
     @patch("sql.binlog.async_task")
     @patch("sql.binlog.My2SQL")
-    def test_my2sql_save_sql_triggered(self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance):
+    def test_my2sql_save_sql_triggered(
+        self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance
+    ):
         """save_sql为true时触发异步保存"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
@@ -499,11 +518,17 @@ class TestMy2sql:
 
     @patch("sql.binlog.async_task")
     @patch("sql.binlog.My2SQL")
-    def test_my2sql_rollback_mode(self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance):
+    def test_my2sql_rollback_mode(
+        self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance
+    ):
         """rollback模式解析"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
-        mock_my2sql.generate_args2cmd.return_value = ["my2sql", "-work-type", "rollback"]
+        mock_my2sql.generate_args2cmd.return_value = [
+            "my2sql",
+            "-work-type",
+            "rollback",
+        ]
 
         mock_process = MagicMock()
         mock_process.stdout.readline.side_effect = [
@@ -541,7 +566,9 @@ class TestMy2sql:
 
     @patch("sql.binlog.async_task")
     @patch("sql.binlog.My2SQL")
-    def test_my2sql_num_limit(self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance):
+    def test_my2sql_num_limit(
+        self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance
+    ):
         """测试num参数限制返回行数"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
@@ -586,7 +613,9 @@ class TestMy2sql:
 
     @patch("sql.binlog.async_task")
     @patch("sql.binlog.My2SQL")
-    def test_my2sql_extra_options(self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance):
+    def test_my2sql_extra_options(
+        self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance
+    ):
         """测试 extra_info、ignore_primary_key、full_columns 等选项"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
@@ -652,7 +681,9 @@ class TestMy2sqlFile:
 
     @patch("sql.binlog.My2SQL")
     @patch("sql.binlog.os.makedirs")
-    def test_my2sql_file_success(self, mock_makedirs, mock_my2sql_cls, db_instance, settings):
+    def test_my2sql_file_success(
+        self, mock_makedirs, mock_my2sql_cls, db_instance, settings
+    ):
         """my2sql_file 正常执行"""
         settings.BASE_DIR = "/tmp/archery_test"
 
@@ -679,7 +710,9 @@ class TestMy2sqlFile:
 
     @patch("sql.binlog.My2SQL")
     @patch("sql.binlog.os.makedirs")
-    def test_my2sql_file_args_updated(self, mock_makedirs, mock_my2sql_cls, db_instance, settings):
+    def test_my2sql_file_args_updated(
+        self, mock_makedirs, mock_my2sql_cls, db_instance, settings
+    ):
         """my2sql_file 参数正确更新"""
         settings.BASE_DIR = "/tmp/archery_test"
 
@@ -703,7 +736,9 @@ class TestMy2sqlFile:
 
     @patch("sql.binlog.My2SQL")
     @patch("sql.binlog.os.makedirs")
-    def test_my2sql_file_execute_cmd_called(self, mock_makedirs, mock_my2sql_cls, db_instance, settings):
+    def test_my2sql_file_execute_cmd_called(
+        self, mock_makedirs, mock_my2sql_cls, db_instance, settings
+    ):
         """my2sql_file 正确调用 execute_cmd"""
         settings.BASE_DIR = "/tmp/archery_test"
 
@@ -719,4 +754,6 @@ class TestMy2sqlFile:
         }
 
         my2sql_file(args, user)
-        mock_my2sql.execute_cmd.assert_called_once_with(["my2sql", "-output-dir", "/tmp"])
+        mock_my2sql.execute_cmd.assert_called_once_with(
+            ["my2sql", "-output-dir", "/tmp"]
+        )
