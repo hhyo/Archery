@@ -744,7 +744,7 @@ def test_processlist(mock_query, mock_instance):
     # 校验关键字段都出现在 SQL 中
     assert "system.processes" in call_sql
     assert "query_id" in call_sql
-    assert "IPv6NumToString" in call_sql
+    assert "replaceRegexpOne" in call_sql
     assert isinstance(rs, ResultSet)
     assert rs.rows[0][0] == "qid-1"
     assert rs.rows[0][2] == "127.0.0.1"

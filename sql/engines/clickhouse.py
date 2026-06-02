@@ -644,7 +644,7 @@ class ClickHouseEngine(EngineBase):
         sql = """select
           query_id,
           user,
-          replaceRegexpOne(IPv6NumToString(address), '^::ffff:', '') as ip,
+          replaceRegexpOne(toString(address), '^::ffff:', '') as ip,
           port,
           current_database,
           elapsed as time,
@@ -664,6 +664,8 @@ class ClickHouseEngine(EngineBase):
         for query_id in thread_ids:
             # 转义
             safe_query_id = self.escape_string(str(query_id))
+            if not safe_query_id:
+                continue
             kill_sql += "KILL QUERY WHERE query_id = '{}';".format(safe_query_id)
         return kill_sql
 
