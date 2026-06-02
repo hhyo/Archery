@@ -663,7 +663,7 @@ class ClickHouseEngine(EngineBase):
         kill_sql = ""
         for query_id in thread_ids:
             # 转义
-            safe_query_id = self.escape_string(str(query_id))
+            safe_query_id = self.escape_string(str(query_id).strip())
             if not safe_query_id:
                 continue
             kill_sql += "KILL QUERY WHERE query_id = '{}';".format(safe_query_id)
