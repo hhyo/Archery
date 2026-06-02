@@ -2,6 +2,8 @@
 import logging
 import traceback
 import MySQLdb
+import MySQLdb.cursors
+import MySQLdb.converters
 import pymysql
 import re
 from enum import Enum
@@ -129,6 +131,7 @@ class MysqlEngine(EngineBase):
         )
         return (
             slave_status.rows[0].get("Seconds_Behind_Master")
+            or slave_status.rows[0].get("Seconds_Behind_Source")
             if slave_status.rows
             else None
         )

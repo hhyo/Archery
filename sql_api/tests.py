@@ -339,6 +339,52 @@ class TestInstance(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         self.assertEqual(r.json()["tunnel_name"], "tunnel_test")
 
+    @patch("sql_api.api_instance.resolve_table_instances")
+    def test_lookup_table_instances(self, mock_resolve):
+        """测试按表名查询所属实例"""
+        mock_resolve.return_value = [
+            {
+                "id": self.ins.id,
+                "name": self.ins.instance_name,
+                "db_type": self.ins.db_type,
+                "db_name": "archery",
+            }
+        ]
+        r = self.client.post(
+            "/api/v1/instance/table-instances/",
+            {"table_name": "orders"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.json()["status"], 0)
+        self.assertEqual(r.json()["msg"], "查询成功")
+        self.assertEqual(r.json()["count"], 1)
+        self.assertEqual(r.json()["data"][0]["name"], "some_ins")
+
+    def test_lookup_table_instances_bad_request(self):
+        """测试按表名查询参数错误时固定返回格式"""
+        r = self.client.post("/api/v1/instance/table-instances/", {}, format="json")
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.json()["status"], 1)
+        self.assertIn("table_name", r.json()["msg"])
+        self.assertEqual(r.json()["count"], 0)
+        self.assertListEqual(r.json()["data"], [])
+
+    @patch("sql_api.api_instance.resolve_table_instances")
+    def test_lookup_table_instances_error(self, mock_resolve):
+        """测试按表名查询异常时固定返回格式"""
+        mock_resolve.side_effect = RuntimeError("boom")
+        r = self.client.post(
+            "/api/v1/instance/table-instances/",
+            {"table_name": "orders"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.json()["status"], 1)
+        self.assertIn("查询失败", r.json()["msg"])
+        self.assertEqual(r.json()["count"], 0)
+        self.assertListEqual(r.json()["data"], [])
+
 
 class TestWorkflow(APITestCase):
     """测试工单相关接口"""

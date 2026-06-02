@@ -43,6 +43,7 @@ urlpatterns = [
     path("v1/instance/", api_instance.InstanceList.as_view()),
     path("v1/instance/<int:pk>/", api_instance.InstanceDetail.as_view()),
     path("v1/instance/resource/", api_instance.InstanceResource.as_view()),
+    path("v1/instance/table-instances/", api_instance.TableInstanceLookup.as_view()),
     path("v1/instance/tunnel/", api_instance.TunnelList.as_view()),
     path("v1/instance/rds/", api_instance.AliyunRdsList.as_view()),
     path("v1/workflow/", api_workflow.WorkflowList.as_view()),

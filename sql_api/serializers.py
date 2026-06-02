@@ -286,6 +286,40 @@ class InstanceResourceListSerializer(serializers.Serializer):
     result = serializers.ListField()
 
 
+class TableInstanceLookupSerializer(serializers.Serializer):
+    table_name = serializers.CharField(label="表名", max_length=256)
+
+
+class TableInstanceSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    db_type = serializers.CharField()
+    db_name = serializers.CharField()
+    table_name = serializers.CharField(
+        required=False, allow_null=True, allow_blank=True
+    )
+
+
+class LocatorFailureReasonSerializer(serializers.Serializer):
+    instance_name = serializers.CharField()
+    reason = serializers.CharField()
+
+
+class LocatorExecutionSummarySerializer(serializers.Serializer):
+    processed_instance_count = serializers.IntegerField()
+    successful_instance_count = serializers.IntegerField()
+    failed_instance_count = serializers.IntegerField()
+    failure_reasons = LocatorFailureReasonSerializer(many=True)
+
+
+class TableInstanceLookupResponseSerializer(serializers.Serializer):
+    status = serializers.IntegerField()
+    msg = serializers.CharField()
+    count = serializers.IntegerField()
+    data = TableInstanceSerializer(many=True)
+    summary = LocatorExecutionSummarySerializer(required=False, allow_null=True)
+
+
 class ExecuteCheckSerializer(serializers.Serializer):
     instance_id = serializers.IntegerField(label="实例id")
     db_name = serializers.CharField(label="数据库名")

@@ -8,6 +8,8 @@ class IsInUserWhitelist(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
         config = SysConfig().get("api_user_whitelist")
         user_list = config.split(",") if config else []
         api_user_whitelist = [int(uid) for uid in user_list]
