@@ -17,3 +17,8 @@ class Convert(Func):
         self.function = "CONVERT"
         self.template = "%(function)s(%(expression)s USING  %(transcoding_name)s)"
         return super(Convert, self).as_sql(compiler, connection)
+
+    def as_sqlite(self, compiler, connection):
+        self.function = ""
+        self.template = "%(expression)s"
+        return super(Convert, self).as_sql(compiler, connection)

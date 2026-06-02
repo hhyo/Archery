@@ -1,0 +1,138 @@
+openapi: 3.0.3
+info:
+  title: Table Instance Locator API
+  version: 1.1.0
+  description: |
+    Contract for locating table ownership across user-authorized instances.
+
+    **Frontend integration** (US4):
+    The SQL query page (`sql/templates/sqlquery.html`) calls this endpoint via
+    jQuery `$.ajax` POST with a 500ms debounce when user input length ≥ 1.
+    Results are rendered as `instance_name/db_name/table_name` text nodes
+    in a `<ul>` list below the locator input box.
+    Input cleared → abort in-flight XHR + clear results.
+
+paths:
+  /v1/instance/table-instances/:
+    post:
+      summary: Locate table instances by exact name or pattern
+      operationId: locateTableInstances
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableLocatorRequest'
+      responses:
+        '200':
+          description: Success or partial success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableLocatorResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableLocatorResponse'
+components:
+  schemas:
+    TableLocatorRequest:
+      type: object
+      properties:
+        table_name:
+          type: string
+          maxLength: 256
+          description: Exact table name.
+        table_pattern:
+          type: string
+          maxLength: 256
+          description: LIKE-style pattern using % and _.
+      additionalProperties: false
+      oneOf:
+        - required: [table_name]
+        - required: [table_pattern]
+      not:
+        required: [table_name, table_pattern]
+
+    TableLocationItem:
+      type: object
+      required:
+        - instance_name
+        - db_type
+        - db_name
+      properties:
+        instance_name:
+          type: string
+          description: Display name of the instance.
+        db_type:
+          type: string
+          description: Database engine type (e.g. mysql, postgresql).
+        db_name:
+          type: string
+          description: Name of the database inside the instance.
+        instance_id:
+          type: integer
+          minimum: 1
+          description: Numeric primary key of the instance (optional).
+        table_name:
+          type: string
+          description: Matched table name (optional, populated when available from provider).
+        match_type:
+          type: string
+          enum: [exact, pattern]
+          description: How the table was matched (optional).
+
+    LocatorFailureReason:
+      type: object
+      required: [reason]
+      properties:
+        instance_id:
+          type: integer
+          minimum: 1
+        instance_name:
+          type: string
+        reason:
+          type: string
+
+    LocatorExecutionSummary:
+      type: object
+      required:
+        - processed_instance_count
+        - success_instance_count
+        - failed_instance_count
+        - failure_reasons
+      properties:
+        processed_instance_count:
+          type: integer
+          minimum: 0
+        success_instance_count:
+          type: integer
+          minimum: 0
+        failed_instance_count:
+          type: integer
+          minimum: 0
+        failure_reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocatorFailureReason'
+
+    TableLocatorResponse:
+      type: object
+      required: [status, msg, count, data, summary]
+      properties:
+        status:
+          type: integer
+          description: 0 for success or partial success, non-zero for validation/runtime failure.
+        msg:
+          type: string
+        count:
+          type: integer
+          minimum: 0
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableLocationItem'
+        summary:
+          $ref: '#/components/schemas/LocatorExecutionSummary'
