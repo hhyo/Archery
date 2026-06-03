@@ -425,13 +425,7 @@
                         var html = [];
                         $.each(row, function (key, value) {
                             if (key === 'info') {
-                                var sql = window.sqlFormatter.format(value);
-                                //替换所有的换行符
-                                sql = sql.replace(/\r\n/g, "<br>");
-                                sql = sql.replace(/\n/g, "<br>");
-                                //替换所有的空格
-                                sql = sql.replace(/\s/g, "&nbsp;");
-                                html.push('<span>' + sql + '</span>');
+                                html.push('<span>' + formatSqlText(value) + '</span>');
                             }
                         });
                         return html.join('');
@@ -495,12 +489,7 @@
                         title: 'info',
                         field: 'info',
                         formatter: function (value, row, index) {
-                            if (value.length > 20) {
-                                var sql = value.substr(0, 20) + '...';
-                                return sql;
-                            } else {
-                                return value
-                            }
+                            return truncateText(value, 20);
                         }
                     }, {
                         title: '完整INFO',
@@ -580,13 +569,7 @@
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === '等待事务的sql') {
-                            var sql = window.sqlFormatter.format(value);
-                            //替换所有的换行符
-                            sql = sql.replace(/\r\n/g, "<br>");
-                            sql = sql.replace(/\n/g, "<br>");
-                            //替换所有的空格
-                            sql = sql.replace(/\s/g, "&nbsp;");
-                            html.push('<span>' + sql + '</span>');
+                            html.push('<span>' + formatSqlText(value) + '</span>');
                         }
                     });
                     return html.join('');
@@ -633,13 +616,7 @@
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === 'RELATED_SQL_FULL') {
-                            var sql = window.sqlFormatter.format(value);
-                            //替换所有的换行符
-                            sql = sql.replace(/\r\n/g, "<br>");
-                            sql = sql.replace(/\n/g, "<br>");
-                            //替换所有的空格
-                            sql = sql.replace(/\s/g, "&nbsp;");
-                            html.push('<span>' + sql + '</span>');
+                            html.push('<span>' + formatSqlText(value) + '</span>');
                         }
                     });
                     return html.join('');
@@ -938,4 +915,3 @@
         });
     </script>
 {% endblock %}
-
