@@ -765,6 +765,8 @@
             sessionStorage.removeItem('editWorkflowDetailId');
             var pathname = window.location.pathname;
             if (pathname == "/editsql/") {
+                // 清理可能残留的my2sql提交数据
+                clearMy2sqlSubmitStorage();
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
@@ -773,6 +775,8 @@
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             } else if (pathname === "/submitotherinstance/") {
+                // 清理可能残留的my2sql提交数据
+                clearMy2sqlSubmitStorage();
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
@@ -792,6 +796,8 @@
                     $(".selectpicker").selectpicker('val', '');
                     $(".selectpicker").selectpicker('render');
                     $(".selectpicker").selectpicker('refresh');
+                    // 清理可能残留的my2sql提交数据
+                    clearMy2sqlSubmitStorage();
                 }
             }
             if ($("#group_name").val()) {

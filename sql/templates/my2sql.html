@@ -358,6 +358,10 @@
             if ($(this).prop('disabled') || rows.length === 0) {
                 return;
             }
+            if (rows.length > 2000) {
+                alert('SQL语句超过2000行，不支持提交工单，请使用异步导出文件的方式！');
+                return;
+            }
             var sqlContent = $.map(rows, function (row) {
                 return row.sql;
             }).join("\n");
