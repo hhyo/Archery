@@ -180,10 +180,7 @@ def my2sql(request):
                 if line[0:6].upper() in ("INSERT", "DELETE", "UPDATE"):
                     n = n + 1
                     row_info = {}
-                    try:
-                        row_info["sql"] = line + ";"
-                    except IndexError:
-                        row_info["sql"] = line + ";"
+                    row_info["sql"] = line.rstrip("\r\n") + ";"
                     rows.append(row_info)
             else:
                 break

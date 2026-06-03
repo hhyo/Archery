@@ -172,6 +172,53 @@
     <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
+    <script>
+        var my2sqlSubmitState = {
+            pending: sessionStorage.getItem('my2sqlSubmitPending') === 'true',
+            sqlContent: sessionStorage.getItem('my2sqlSubmitSqlContent') || '',
+            instanceName: sessionStorage.getItem('my2sqlSubmitInstanceName') || '',
+            dbName: sessionStorage.getItem('my2sqlSubmitDbName') || '',
+            workflowName: sessionStorage.getItem('my2sqlSubmitWorkflowName') || ''
+        };
+
+        function clearMy2sqlSubmitStorage() {
+            sessionStorage.removeItem('my2sqlSubmitPending');
+            sessionStorage.removeItem('my2sqlSubmitSqlContent');
+            sessionStorage.removeItem('my2sqlSubmitInstanceName');
+            sessionStorage.removeItem('my2sqlSubmitDbName');
+            sessionStorage.removeItem('my2sqlSubmitWorkflowName');
+        }
+
+        function selectMy2sqlSubmitInstance() {
+            if (!my2sqlSubmitState.pending || !my2sqlSubmitState.instanceName) {
+                return;
+            }
+            var matchedOption = $("#instance_name option").filter(function () {
+                return $(this).val() === my2sqlSubmitState.instanceName;
+            });
+            if (matchedOption.length > 0) {
+                $('#instance_name').selectpicker('val', my2sqlSubmitState.instanceName);
+                if ($("#instance_name").val()) {
+                    $("#instance_name").selectpicker().trigger("change");
+                }
+            }
+        }
+
+        function selectMy2sqlSubmitDbName() {
+            if (!my2sqlSubmitState.pending || !my2sqlSubmitState.dbName) {
+                return;
+            }
+            var matchedOption = $("#db_name option").filter(function () {
+                return $(this).val() === my2sqlSubmitState.dbName;
+            });
+            if (matchedOption.length > 0) {
+                $('#db_name').selectpicker('val', my2sqlSubmitState.dbName);
+                if ($("#db_name").val()) {
+                    $("#db_name").selectpicker().trigger("change");
+                }
+            }
+        }
+    </script>
 
     <!--初始化时间控件 -->
     <script>
@@ -299,6 +346,7 @@
                         $('#db_name').selectpicker('refresh');
                         //自动补全提示
                         setDbsCompleteData(result)
+                        selectMy2sqlSubmitDbName();
                     } else {
                         alert(data.msg);
                     }
@@ -673,6 +721,7 @@
                         }
                         $('#instance_name').selectpicker('render').selectpicker('refresh');
                         $("#db_name").empty().selectpicker('render').selectpicker('refresh');
+                        selectMy2sqlSubmitInstance();
                     } else {
                         alert(data.msg);
                     }
@@ -716,6 +765,8 @@
             sessionStorage.removeItem('editWorkflowDetailId');
             var pathname = window.location.pathname;
             if (pathname == "/editsql/") {
+                // 清理可能残留的my2sql提交数据
+                clearMy2sqlSubmitStorage();
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
@@ -724,6 +775,8 @@
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             } else if (pathname === "/submitotherinstance/") {
+                // 清理可能残留的my2sql提交数据
+                clearMy2sqlSubmitStorage();
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
@@ -731,11 +784,21 @@
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             } else if (pathname === "/submitsql/") {
-                //重置页面内容
-                editor.setValue("");
-                $(".selectpicker").selectpicker('val', '');
-                $(".selectpicker").selectpicker('render');
-                $(".selectpicker").selectpicker('refresh');
+                if (my2sqlSubmitState.pending) {
+                    $("#workflow_name").val(my2sqlSubmitState.workflowName);
+                    editor.setValue(my2sqlSubmitState.sqlContent);
+                    editor.clearSelection();
+                    $('#btn-submitsql').addClass('disabled').prop("disabled", true);
+                    clearMy2sqlSubmitStorage();
+                } else {
+                    //重置页面内容
+                    editor.setValue("");
+                    $(".selectpicker").selectpicker('val', '');
+                    $(".selectpicker").selectpicker('render');
+                    $(".selectpicker").selectpicker('refresh');
+                    // 清理可能残留的my2sql提交数据
+                    clearMy2sqlSubmitStorage();
+                }
             }
             if ($("#group_name").val()) {
                 $("#group_name").trigger("change");
