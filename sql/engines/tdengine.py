@@ -480,6 +480,13 @@ class TDengineEngine(EngineBase):
                 _strip_ident_quotes(parts[0]),
             )
 
+        def _qualified_db_name(raw_name):
+            normalized = _normalize_sql_name(raw_name)
+            parts = normalized.split(".", 1)
+            if len(parts) == 2:
+                return _strip_ident_quotes(parts[0])
+            return None
+
         def _workflow_obj_check(db_name=None, obj_name=None, obj_type="table"):
             result = self.obj_check(
                 db_name=db_name, obj_name=obj_name, obj_type=obj_type
@@ -949,7 +956,21 @@ class TDengineEngine(EngineBase):
                     table_check = _workflow_obj_check(
                         db_name=db_name, obj_name=table_name, obj_type="table"
                     )
-                    if table_check["exists"] and not with_if_not_exists:
+                    qualified_db = _qualified_db_name(table_name)
+                    qualified_db_check = (
+                        _workflow_obj_check(obj_name=qualified_db, obj_type="database")
+                        if qualified_db
+                        else {"exists": True}
+                    )
+                    if not qualified_db_check["exists"]:
+                        result = ReviewResult(
+                            id=line,
+                            errlevel=2,
+                            stagestatus="对象不存在",
+                            errormessage=f"数据库 {qualified_db} 不存在！",
+                            sql=statement,
+                        )
+                    elif table_check["exists"] and not with_if_not_exists:
                         result = ReviewResult(
                             id=line,
                             errlevel=2,
@@ -997,8 +1018,20 @@ class TDengineEngine(EngineBase):
                 )
 
                 if alter_db_match:
+                    db_to_alter = alter_db_match.group(1).strip().strip("`")
                     alter_db_options = alter_db_match.group(2).strip()
-                    if _is_valid_option_sequence(
+                    db_check = _workflow_obj_check(
+                        obj_name=db_to_alter, obj_type="database"
+                    )
+                    if not db_check["exists"]:
+                        result = ReviewResult(
+                            id=line,
+                            errlevel=2,
+                            stagestatus="对象不存在",
+                            errormessage=f"数据库 {db_to_alter} 不存在！",
+                            sql=statement,
+                        )
+                    elif _is_valid_option_sequence(
                         alter_db_options, alter_db_option_patterns
                     ):
                         result = ReviewResult(
@@ -1180,6 +1213,13 @@ class TDengineEngine(EngineBase):
                                     ):
                                         insert_ok = False
                                         insert_error = f"{tb_name} 为超级表，不能使用 USING 语法写入！"
+                                        break
+                                    if (
+                                        tb_check["exists"]
+                                        and tb_check["type"] == "table"
+                                    ):
+                                        insert_ok = False
+                                        insert_error = f"表 {tb_name} 已存在，不能使用 USING 语法写入！"
                                         break
                                 else:
                                     if not tb_check["exists"]:

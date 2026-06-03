@@ -1047,6 +1047,34 @@ class TestTDengine(unittest.TestCase):
         self.assertEqual(ret.rows[0].errlevel, 0)
 
     @patch.object(TDengineEngine, "obj_check")
+    def test_execute_check_rejects_insert_using_existing_normal_table_target(
+        self, mock_obj_check
+    ):
+        def check_obj(db_name=None, obj_name=None, obj_type="table"):
+            if obj_name == "readings":
+                return {"exists": True, "type": "table"}
+            if obj_name == "meters":
+                return {"exists": True, "type": "stable"}
+            return {"exists": False, "type": None}
+
+        mock_obj_check.side_effect = check_obj
+        engine = TDengineEngine(instance=self.instance)
+        engine.config = Mock()
+        engine.config.get.return_value = ""
+
+        ret = engine.execute_check(
+            db_name="metrics",
+            sql="insert into readings using meters tags ('beijing') values(now(), 1);",
+        )
+
+        self.assertEqual(ret.error_count, 1)
+        self.assertEqual(ret.rows[0].errlevel, 2)
+        self.assertEqual(
+            ret.rows[0].errormessage,
+            "表 readings 已存在，不能使用 USING 语法写入！",
+        )
+
+    @patch.object(TDengineEngine, "obj_check")
     def test_execute_check_rejects_create_table_existing_invalid_and_unknown_create(
         self, mock_obj_check
     ):
@@ -1083,6 +1111,25 @@ class TestTDengine(unittest.TestCase):
             ret.rows[2].errormessage,
             "CREATE\u8bed\u6cd5\u4e0d\u6b63\u786e\uff01",
         )
+
+    @patch.object(TDengineEngine, "obj_check")
+    def test_execute_check_rejects_create_table_with_missing_qualified_database(
+        self, mock_obj_check
+    ):
+        mock_obj_check.return_value = {"exists": False, "type": None}
+        engine = TDengineEngine(instance=self.instance)
+        engine.config = Mock()
+        engine.config.get.return_value = ""
+
+        ret = engine.execute_check(
+            db_name="metrics",
+            sql="create table missing_db.readings (ts timestamp, v int);",
+        )
+
+        self.assertEqual(ret.error_count, 1)
+        self.assertEqual(ret.rows[0].errlevel, 2)
+        self.assertEqual(ret.rows[0].stagestatus, "对象不存在")
+        self.assertEqual(ret.rows[0].errormessage, "数据库 missing_db 不存在！")
 
     @patch.object(TDengineEngine, "obj_check")
     def test_execute_check_rejects_malformed_parser_guard_paths(self, mock_obj_check):
@@ -1141,6 +1188,8 @@ class TestTDengine(unittest.TestCase):
         self, mock_obj_check
     ):
         def check_obj(db_name=None, obj_name=None, obj_type="table"):
+            if obj_type == "database" and obj_name == "metrics":
+                return {"exists": True, "type": "database"}
             return {
                 "missing": {"exists": False, "type": None},
                 "meters": {"exists": True, "type": "stable"},
@@ -1204,6 +1253,24 @@ class TestTDengine(unittest.TestCase):
             ret.rows[8].errormessage,
             "\u5b50\u8868 ALTER TABLE \u8bed\u6cd5\u4e0d\u6b63\u786e\uff01",
         )
+
+    @patch.object(TDengineEngine, "obj_check")
+    def test_execute_check_rejects_alter_database_when_database_missing(
+        self, mock_obj_check
+    ):
+        mock_obj_check.return_value = {"exists": False, "type": None}
+        engine = TDengineEngine(instance=self.instance)
+        engine.config = Mock()
+        engine.config.get.return_value = ""
+
+        ret = engine.execute_check(
+            db_name="metrics", sql="alter database missing keep 365;"
+        )
+
+        self.assertEqual(ret.error_count, 1)
+        self.assertEqual(ret.rows[0].errlevel, 2)
+        self.assertEqual(ret.rows[0].stagestatus, "对象不存在")
+        self.assertEqual(ret.rows[0].errormessage, "数据库 missing 不存在！")
 
     @patch.object(TDengineEngine, "obj_check")
     def test_execute_check_rejects_delete_and_drop_error_paths(self, mock_obj_check):

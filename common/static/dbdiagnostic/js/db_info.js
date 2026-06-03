@@ -96,12 +96,7 @@ const mysqlDiagnosticInfo = {
             field: 'info',
             sortable: true,
             formatter: function (value, row, index) {
-                if (value.length > 30) {
-                    var sql = value.substr(0, 30) + '...';
-                    return sql;
-                } else {
-                    return value
-                }
+                return truncateText(value, 30);
             }
         }, {
             title: '完整INFO',
@@ -274,11 +269,7 @@ const mongoDiagnosticInfo = {
             formatter: function (value, row, index) {
                 if (value) {
                     let c = JSON.stringify(value);
-                    if (c.length > 20) {
-                        return c.substr(0, 80) + '...}';
-                    } else {
-                        return c;
-                    }
+                    return truncateText(c, 80);
                 }
             }
         }, {
@@ -615,12 +606,7 @@ const clickhouseDiagnosticInfo = {
             field: 'query',
             sortable: true,
             formatter: function (value, row, index) {
-                if (value && value.length > 30) {
-                    var sql = value.substr(0, 30) + '...';
-                    return sql;
-                } else {
-                    return value
-                }
+                return truncateText(value, 30);
             }
         }, {
             title: '完整语句',
@@ -632,13 +618,7 @@ const clickhouseDiagnosticInfo = {
             var html = [];
             $.each(row, function (key, value) {
                 if (key === 'query') {
-                    var sql = window.sqlFormatter.format(value);
-                    //替换所有的换行符
-                    sql = sql.replace(/\r\n/g, "<br>");
-                    sql = sql.replace(/\n/g, "<br>");
-                    //替换所有的空格
-                    sql = sql.replace(/\s/g, "&nbsp;");
-                    html.push('<span>' + sql + '</span>');
+                    html.push('<span>' + formatSqlText(value) + '</span>');
                 }
             });
             return html.join('');
