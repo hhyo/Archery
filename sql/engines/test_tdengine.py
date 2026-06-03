@@ -594,15 +594,19 @@ class TestTDengine(unittest.TestCase):
             sql="""
                 alter stable meters add tag location binary(20);
                 alter table readings add column v2 int;
+                alter table readings add column
+                    v3 int;
+                alter stable meters add tag
+                    unit binary(20);
                 alter table d1001 set tag location='shanghai';
                 alter table meters add column invalid int;
             """,
         )
 
-        self.assertEqual([row.errlevel for row in ret.rows], [0, 0, 0, 2])
+        self.assertEqual([row.errlevel for row in ret.rows], [0, 0, 0, 0, 0, 2])
         self.assertEqual(ret.error_count, 1)
         self.assertEqual(
-            ret.rows[3].errormessage,
+            ret.rows[5].errormessage,
             "\u8d85\u7ea7\u8868\u4ec5\u652f\u6301 ALTER STABLE \u8bed\u6cd5\uff01",
         )
 

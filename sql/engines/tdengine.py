@@ -1009,12 +1009,12 @@ class TDengineEngine(EngineBase):
                 table_match = re.match(
                     rf"^alter\s+table\s+({ident_with_db})\s+(.+)$",
                     statement,
-                    re.M | re.IGNORECASE,
+                    re.M | re.IGNORECASE | re.S,
                 )
                 stable_match = re.match(
                     rf"^alter\s+stable\s+({ident_with_db})\s+(.+)$",
                     statement,
-                    re.M | re.IGNORECASE,
+                    re.M | re.IGNORECASE | re.S,
                 )
 
                 if alter_db_match:
