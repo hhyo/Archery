@@ -96,7 +96,12 @@ const mysqlDiagnosticInfo = {
             field: 'info',
             sortable: true,
             formatter: function (value, row, index) {
-                return truncateText(value, 20);
+                if (value.length > 30) {
+                    var sql = value.substr(0, 30) + '...';
+                    return sql;
+                } else {
+                    return value
+                }
             }
         }, {
             title: '完整INFO',
@@ -407,6 +412,7 @@ const redisDiagnosticInfo = {
         }
     ],
 }
+
 const oracleDiagnosticInfo = {
     fieldsProcesslist: [
         'oracle',
@@ -553,6 +559,86 @@ const tdengineDiagnosticInfo = {
             $.each(row, function (key, value) {
                 if (key === 'sql') {
                     html.push('<span>' + formatSqlText(value) + '</span>');
+                }
+            });
+            return html.join('');
+        }
+    ],
+}
+
+const clickhouseDiagnosticInfo = {
+    fieldsProcesslist: [
+        'clickhouse',
+        ["All"],
+        [{
+            title: '',
+            field: 'checkbox',
+            checkbox: true
+        }, {
+            title: '查询ID',
+            field: 'query_id',
+            sortable: false
+        }, {
+            title: '用户',
+            field: 'user',
+            sortable: true
+        }, {
+            title: 'IP',
+            field: 'ip',
+            sortable: true
+        }, {
+            title: '端口',
+            field: 'port',
+            sortable: false
+        }, {
+            title: '库名',
+            field: 'current_database',
+            sortable: true
+        }, {
+            title: '耗时(秒)',
+            field: 'time',
+            sortable: true
+        }, {
+            title: '总行数(预估)',
+            field: 'total_rows_approx',
+            sortable: true
+        }, {
+            title: '分配内存',
+            field: 'memory',
+            sortable: true
+        }, {
+            title: '类型',
+            field: 'query_kind',
+            sortable: true
+        }, {
+            title: '语句',
+            field: 'query',
+            sortable: true,
+            formatter: function (value, row, index) {
+                if (value && value.length > 30) {
+                    var sql = value.substr(0, 30) + '...';
+                    return sql;
+                } else {
+                    return value
+                }
+            }
+        }, {
+            title: '完整语句',
+            field: 'query',
+            sortable: false,
+            visible: false // 默认不显示
+        }],
+        function (index, row) {
+            var html = [];
+            $.each(row, function (key, value) {
+                if (key === 'query') {
+                    var sql = window.sqlFormatter.format(value);
+                    //替换所有的换行符
+                    sql = sql.replace(/\r\n/g, "<br>");
+                    sql = sql.replace(/\n/g, "<br>");
+                    //替换所有的空格
+                    sql = sql.replace(/\s/g, "&nbsp;");
+                    html.push('<span>' + sql + '</span>');
                 }
             });
             return html.join('');

@@ -639,6 +639,43 @@ class ClickHouseEngine(EngineBase):
             table_metas.append(_meta)
         return table_metas
 
+    def processlist(self, command_type, **kwargs):
+        """获取连接信息"""
+        sql = """select
+          query_id,
+          user,
+          replaceRegexpOne(toString(address), '^::ffff:', '') as ip,
+          port,
+          current_database,
+          elapsed as time,
+          total_rows_approx,
+          formatReadableSize(memory_usage) AS memory,
+          query_kind,
+          query
+        from
+          system.processes;"""
+        return self.query(sql=sql)
+
+    def get_kill_command(self, thread_ids):
+        """由传入的query_id列表生成kill命令"""
+        if not thread_ids:
+            return ""
+        kill_sql = ""
+        for query_id in thread_ids:
+            # 转义
+            safe_query_id = self.escape_string(str(query_id).strip())
+            if not safe_query_id:
+                continue
+            kill_sql += "KILL QUERY WHERE query_id = '{}';".format(safe_query_id)
+        return kill_sql
+
+    def kill(self, thread_ids):
+        """根据query_id列表终止会话"""
+        kill_sql = self.get_kill_command(thread_ids)
+        if not kill_sql:
+            return ResultSet(full_sql="")
+        return self.execute(sql=kill_sql)
+
     def tablespace(self, offset=0, row_count=14):
         """获取表空间信息"""
         sql = """SELECT
