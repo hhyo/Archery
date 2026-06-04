@@ -84,9 +84,15 @@ def param_list(request):
     instance_id = request.POST.get("instance_id")
     editable = True if request.POST.get("editable") else False
     search = request.POST.get("search", "")
+    # 校验实例ID格式
+    try:
+        int(instance_id)
+    except (TypeError, ValueError):
+        result = {"status": 1, "msg": "实例ID不合法", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins = Instance.objects.get(id=instance_id)
-    except (Instance.DoesNotExist, ValueError):
+    except Instance.DoesNotExist:
         result = {"status": 1, "msg": "实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 获取已配置参数列表
@@ -166,9 +172,15 @@ def param_edit(request):
     instance_id = request.POST.get("instance_id")
     variable_name = request.POST.get("variable_name")
     variable_value = request.POST.get("runtime_value")
+    # 校验实例ID格式
+    try:
+        int(instance_id)
+    except (TypeError, ValueError):
+        result = {"status": 1, "msg": "实例ID不合法", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins = Instance.objects.get(id=instance_id)
-    except (Instance.DoesNotExist, ValueError):
+    except Instance.DoesNotExist:
         result = {"status": 1, "msg": "实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -217,15 +229,23 @@ def param_compare(request):
     instance_id2 = request.POST.get("instance_id2")
     diff_only = request.POST.get("diff_only", "true") == "true"
 
+    # 校验实例ID格式
+    for iid, label in [(instance_id1, "源实例ID"), (instance_id2, "目标实例ID")]:
+        try:
+            int(iid)
+        except (TypeError, ValueError):
+            result = {"status": 1, "msg": f"{label}不合法", "data": []}
+            return HttpResponse(json.dumps(result), content_type="application/json")
+
     # 校验实例存在
     try:
         ins1 = Instance.objects.get(id=instance_id1)
-    except (Instance.DoesNotExist, ValueError):
+    except Instance.DoesNotExist:
         result = {"status": 1, "msg": "源实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins2 = Instance.objects.get(id=instance_id2)
-    except (Instance.DoesNotExist, ValueError):
+    except Instance.DoesNotExist:
         result = {"status": 1, "msg": "目标实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -238,6 +258,16 @@ def param_compare(request):
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
 
+    # 校验引擎支持参数对比（仅 mysql / goinception 实现了 get_variables）
+    _variable_supported_db_types = {"mysql", "goinception"}
+    if ins1.db_type not in _variable_supported_db_types:
+        result = {
+            "status": 1,
+            "msg": f"{ins1.db_type} 引擎不支持参数对比功能",
+            "data": [],
+        }
+        return HttpResponse(json.dumps(result), content_type="application/json")
+
     # 获取参数
     try:
         engine1 = get_engine(instance=ins1)
@@ -246,11 +276,19 @@ def param_compare(request):
         logger.error(f"获取源实例参数失败：{e}")
         result = {"status": 1, "msg": "获取源实例参数失败，请联系管理员", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
+    if variables1.error:
+        logger.error(f"获取源实例参数失败：{variables1.error}")
+        result = {"status": 1, "msg": "获取源实例参数失败，请联系管理员", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         engine2 = get_engine(instance=ins2)
         variables2 = engine2.get_variables()
     except Exception as e:
         logger.error(f"获取目标实例参数失败：{e}")
+        result = {"status": 1, "msg": "获取目标实例参数失败，请联系管理员", "data": []}
+        return HttpResponse(json.dumps(result), content_type="application/json")
+    if variables2.error:
+        logger.error(f"获取目标实例参数失败：{variables2.error}")
         result = {"status": 1, "msg": "获取目标实例参数失败，请联系管理员", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -448,9 +486,15 @@ def instance_resource(request):
 
     resource_type = request.GET.get("resource_type")
     if instance_id:
+        # 校验实例ID格式
+        try:
+            int(instance_id)
+        except (TypeError, ValueError):
+            result = {"status": 1, "msg": "实例ID不合法", "data": []}
+            return HttpResponse(json.dumps(result), content_type="application/json")
         try:
             instance = Instance.objects.get(id=instance_id)
-        except (Instance.DoesNotExist, ValueError):
+        except Instance.DoesNotExist:
             result = {"status": 1, "msg": "实例不存在", "data": []}
             return HttpResponse(json.dumps(result), content_type="application/json")
     else:

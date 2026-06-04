@@ -216,7 +216,7 @@
                             detailView: true,
                             detailFormatter: function (index, row) {
                                 if (row.description) {
-                                    return row.description;
+                                    return escapeHtml(row.description);
                                 }
                                 return '暂无描述';
                             },
