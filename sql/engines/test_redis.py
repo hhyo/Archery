@@ -225,22 +225,78 @@ def test_get_cluster_master_nodes_ipv6(mock_get_conn, redis_cluster_engine):
 
     nodes = redis_cluster_engine.get_cluster_master_nodes()
     assert len(nodes) == 1
-    assert nodes[0] == "2001:db8::10:6379"
+    assert nodes[0] == "[2001:db8::10]:6379"
+
+
+@patch.object(RedisEngine, "get_connection")
+def test_get_cluster_master_nodes_ipv6_no_brackets(mock_get_conn, redis_cluster_engine):
+    """测试集群模式中 IPv6 地址无方括号时自动补齐"""
+    cluster_nodes_output = "nodeid1 2001:db8::10:6379@16379 myself,master - 0 1600000000 1 connected 0-5460\n"
+    mock_conn = Mock()
+    mock_conn.execute_command.return_value = cluster_nodes_output
+    mock_get_conn.return_value = mock_conn
+
+    nodes = redis_cluster_engine.get_cluster_master_nodes()
+    assert len(nodes) == 1
+    assert nodes[0] == "[2001:db8::10]:6379"
+
+
+@patch.object(RedisEngine, "get_connection")
+def test_get_cluster_master_nodes_mixed_ipv4_ipv6(mock_get_conn, redis_cluster_engine):
+    """测试集群模式中 IPv4 和 IPv6 混合节点"""
+    cluster_nodes_output = (
+        "nodeid1 127.0.0.1:7001@17001 myself,master - 0 1600000000 1 connected 0-5460\n"
+        "nodeid2 [2001:db8::10]:6379@16379 master - 0 1600000000 2 connected 5461-10922\n"
+    )
+    mock_conn = Mock()
+    mock_conn.execute_command.return_value = cluster_nodes_output
+    mock_get_conn.return_value = mock_conn
+
+    nodes = redis_cluster_engine.get_cluster_master_nodes()
+    assert len(nodes) == 2
+    assert "127.0.0.1:7001" in nodes
+    assert "[2001:db8::10]:6379" in nodes
+
+
+# ====================== _format_host_port ======================
+
+
+def test_format_host_port_ipv4():
+    """测试 IPv4 地址格式化"""
+    assert RedisEngine._format_host_port("127.0.0.1", 6379) == "127.0.0.1:6379"
+
+
+def test_format_host_port_ipv6():
+    """测试 IPv6 地址自动加方括号"""
+    assert RedisEngine._format_host_port("2001:db8::10", 6379) == "[2001:db8::10]:6379"
+
+
+def test_format_host_port_ipv6_already_bracketed():
+    """测试已带方括号的 IPv6 地址不再重复添加"""
+    assert (
+        RedisEngine._format_host_port("[2001:db8::10]", 6379) == "[2001:db8::10]:6379"
+    )
+
+
+def test_format_host_port_ipv6_loopback():
+    """测试 IPv6 回环地址格式化"""
+    assert RedisEngine._format_host_port("::1", 6379) == "[::1]:6379"
 
 
 # ====================== test_connection ======================
 
 
-@patch.object(RedisEngine, "get_all_databases")
-def test_test_connection(mock_get_all_dbs, redis_engine):
-    """测试连接测试，应委托给 get_all_databases"""
-    expected = ResultSet(full_sql="CONFIG GET databases")
-    expected.rows = ["0", "1"]
-    mock_get_all_dbs.return_value = expected
+@patch.object(RedisEngine, "get_connection")
+def test_test_connection(mock_get_conn, redis_engine):
+    """测试连接测试，使用 PING 命令"""
+    mock_conn = Mock()
+    mock_conn.ping.return_value = True
+    mock_get_conn.return_value = mock_conn
 
     result = redis_engine.test_connection()
-    assert result is expected
-    mock_get_all_dbs.assert_called_once()
+    assert isinstance(result, ResultSet)
+    assert result.full_sql == "PING"
+    assert result.affected_rows == 1
 
 
 # ====================== get_all_databases ======================
@@ -248,44 +304,143 @@ def test_test_connection(mock_get_all_dbs, redis_engine):
 
 @patch.object(RedisEngine, "get_connection")
 def test_get_all_databases_normal(mock_get_conn, redis_engine):
-    """测试正常获取数据库列表"""
+    """测试单节点模式获取数据库列表，使用 INFO Keyspace"""
     mock_conn = Mock()
-    mock_conn.config_get.return_value = {"databases": 16}
+    mock_conn.info.return_value = {
+        "db0": {"keys": 100, "expires": 5, "avg_ttl": 0},
+        "db3": {"keys": 200, "expires": 0, "avg_ttl": 0},
+    }
     mock_get_conn.return_value = mock_conn
 
     result = redis_engine.get_all_databases()
     assert isinstance(result, ResultSet)
-    assert result.rows == [str(x) for x in range(16)]
-    assert result.full_sql == "CONFIG GET databases"
+    assert result.full_sql == "INFO Keyspace"
+    # 单节点应返回 db0~db15，补充缺失的库
+    assert len(result.rows) == 16
+    # 验证有 keys 的库显示格式
+    assert result.rows[0] == {"value": "0", "text": "db0[100]"}
+    assert result.rows[3] == {"value": "3", "text": "db3[200]"}
+    # 验证无 keys 的库显示格式
+    assert result.rows[1] == {"value": "1", "text": "db1"}
+    assert result.rows[2] == {"value": "2", "text": "db2"}
+    # 验证 value 值
+    assert result.rows[15]["value"] == "15"
 
 
 @patch.object(RedisEngine, "get_connection")
 def test_get_all_databases_fallback_via_info(mock_get_conn, redis_engine):
-    """测试 CONFIG GET 失败时通过 info(Keyspace) 回退"""
+    """测试 INFO Keyspace 返回部分数据库时补充 0~15 号库"""
     mock_conn = Mock()
-    mock_conn.config_get.side_effect = Exception("NOPERM this user has no permissions")
-    mock_conn.info.return_value = {"db0": {}, "db3": {}, "db5": {}}
+    mock_conn.info.return_value = {
+        "db0": {"keys": 10, "expires": 0},
+        "db3": {"keys": 5, "expires": 0},
+        "db5": {"keys": 0, "expires": 0},
+    }
     mock_get_conn.return_value = mock_conn
 
     result = redis_engine.get_all_databases()
     assert isinstance(result, ResultSet)
-    # max([0,3,5] + [15]) + 1 = 16, 所以 0~15
-    assert result.rows == [str(x) for x in range(16)]
+    # 单节点至少返回 0~15，共 16 个库
+    assert len(result.rows) == 16
+    # db0 有 keys
+    assert result.rows[0] == {"value": "0", "text": "db0[10]"}
+    # db1 无 keys
+    assert result.rows[1] == {"value": "1", "text": "db1"}
+    # db5 的 keys 为 0，不显示 keys 数量
+    assert result.rows[5] == {"value": "5", "text": "db5"}
 
 
 @patch.object(RedisEngine, "get_connection")
 def test_get_all_databases_fallback_with_high_db(mock_get_conn, redis_engine):
-    """测试 info(Keyspace) 返回高编号数据库时的回退逻辑"""
+    """测试 INFO Keyspace 返回高编号数据库时扩展库列表"""
     mock_conn = Mock()
-    mock_conn.config_get.side_effect = Exception("NOPERM")
-    mock_conn.info.return_value = {"db20": {}, "db5": {}}
+    mock_conn.info.return_value = {
+        "db5": {"keys": 30, "expires": 0},
+        "db20": {"keys": 50, "expires": 0},
+    }
     mock_get_conn.return_value = mock_conn
 
     result = redis_engine.get_all_databases()
-    # max([20,5] + [15]) + 1 = 21, 所以 0~20
+    # max([5,20] + [15]) + 1 = 21, 所以 0~20
     assert len(result.rows) == 21
-    assert result.rows[0] == "0"
-    assert result.rows[20] == "20"
+    assert result.rows[0] == {"value": "0", "text": "db0"}
+    assert result.rows[5] == {"value": "5", "text": "db5[30]"}
+    assert result.rows[20] == {"value": "20", "text": "db20[50]"}
+
+
+@patch.object(RedisEngine, "get_cluster_master_nodes")
+@patch("sql.engines.redis.redis.Redis")
+def test_get_all_databases_cluster(
+    mock_redis_cls, mock_get_masters, redis_cluster_engine
+):
+    """测试集群模式获取数据库列表，只有 db0，汇总各主节点 keys"""
+    mock_get_masters.return_value = ["127.0.0.1:7001", "127.0.0.1:7002"]
+
+    # 模拟两个主节点的连接和 INFO Keyspace 返回
+    mock_conn1 = Mock()
+    mock_conn1.info.return_value = {"db0": {"keys": 100, "expires": 0}}
+    mock_conn2 = Mock()
+    mock_conn2.info.return_value = {"db0": {"keys": 200, "expires": 0}}
+    mock_redis_cls.side_effect = [mock_conn1, mock_conn2]
+
+    result = redis_cluster_engine.get_all_databases()
+    assert isinstance(result, ResultSet)
+    # 集群模式只返回 db0
+    assert len(result.rows) == 1
+    assert result.rows[0] == {"value": "0", "text": "db0[300]"}
+
+
+@patch.object(RedisEngine, "get_cluster_master_nodes")
+@patch("sql.engines.redis.redis.Redis")
+def test_get_all_databases_cluster_no_keys(
+    mock_redis_cls, mock_get_masters, redis_cluster_engine
+):
+    """测试集群模式 db0 无 keys 时显示 db0"""
+    mock_get_masters.return_value = ["127.0.0.1:7001"]
+
+    mock_conn1 = Mock()
+    mock_conn1.info.return_value = {}
+    mock_redis_cls.side_effect = [mock_conn1]
+
+    result = redis_cluster_engine.get_all_databases()
+    assert result.rows[0] == {"value": "0", "text": "db0"}
+
+
+@patch.object(RedisEngine, "get_connection")
+def test_get_all_databases_exception_fallback(mock_get_conn, redis_engine):
+    """测试 INFO Keyspace 执行报错时错误被传播，不应伪造数据"""
+    mock_conn = Mock()
+    mock_conn.info.side_effect = Exception("connection error")
+    mock_get_conn.return_value = mock_conn
+
+    result = redis_engine.get_all_databases()
+    assert isinstance(result, ResultSet)
+    # 异常应设置 error，不应返回伪造的 db 列表
+    assert result.error is not None
+    assert "connection error" in result.error
+    assert result.rows == []
+
+
+@patch.object(RedisEngine, "get_cluster_master_nodes")
+@patch("sql.engines.redis.redis.Redis")
+def test_get_all_databases_cluster_ipv6(
+    mock_redis_cls, mock_get_masters, redis_cluster_engine
+):
+    """测试集群模式 IPv6 节点获取数据库列表，正确解析 [ipv6]:port 格式"""
+    mock_get_masters.return_value = ["[2001:db8::10]:6379"]
+
+    mock_conn1 = Mock()
+    mock_conn1.info.return_value = {"db0": {"keys": 50, "expires": 0}}
+    mock_redis_cls.side_effect = [mock_conn1]
+
+    result = redis_cluster_engine.get_all_databases()
+    assert isinstance(result, ResultSet)
+    assert len(result.rows) == 1
+    assert result.rows[0] == {"value": "0", "text": "db0[50]"}
+    # 验证 redis.Redis 被调用时 host 参数正确去除了方括号
+    call_kwargs = mock_redis_cls.call_args.kwargs
+    assert call_kwargs["host"] == "2001:db8::10"
+    assert call_kwargs["port"] == 6379
 
 
 # ====================== get_all_tables ======================
@@ -351,12 +506,6 @@ def test_query_check_safe_cmd_hgetall(redis_engine):
     assert result["bad_query"] is False
 
 
-def test_query_check_safe_cmd_info(redis_engine):
-    """测试安全命令 info 通过检查"""
-    result = redis_engine.query_check(sql="info")
-    assert result["bad_query"] is False
-
-
 def test_query_check_safe_cmd_scan(redis_engine):
     """测试安全命令 scan 通过检查"""
     result = redis_engine.query_check(sql="scan 0 count 10")
@@ -388,7 +537,7 @@ def test_query_check_case_insensitive(redis_engine):
     assert result["bad_query"] is False
 
     result2 = redis_engine.query_check(sql="INFO memory")
-    assert result2["bad_query"] is False
+    assert result2["bad_query"] is True
 
 
 def test_query_check_filtered_sql_preserved(redis_engine):
@@ -834,7 +983,6 @@ def test_query_check_all_safe_commands(redis_engine):
         "zcard zset",
         "zcount zset 0 100",
         "zrank zset member",
-        "info",
     ]
     for cmd in safe_commands:
         result = redis_engine.query_check(sql=cmd)

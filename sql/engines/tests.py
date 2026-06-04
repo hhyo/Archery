@@ -160,81 +160,80 @@ class TestRedis(TestCase):
         self.assertEqual(query_result.rows, tuple(expected_rows))
         self.assertEqual(query_result.affected_rows, len(expected_rows))
 
-    @patch("redis.Redis.config_get", return_value={"databases": 4})
-    def test_get_all_databases(self, _config_get):
+    @patch("redis.Redis.info")
+    def test_get_all_databases(self, mock_info):
+        mock_info.return_value = {
+            "db0": {"keys": 10, "expires": 0},
+            "db1": {"keys": 5, "expires": 0},
+            "db2": {"keys": 0, "expires": 0},
+            "db3": {"keys": 0, "expires": 0},
+        }
         new_engine = RedisEngine(instance=self.ins)
         dbs = new_engine.get_all_databases()
-        self.assertListEqual(dbs.rows, ["0", "1", "2", "3"])
+        # 应返回 db0~db15，补充缺失库
+        self.assertEqual(len(dbs.rows), 16)
+        self.assertEqual(dbs.rows[0], {"value": "0", "text": "db0[10]"})
+        self.assertEqual(dbs.rows[1], {"value": "1", "text": "db1[5]"})
+        self.assertEqual(dbs.rows[4], {"value": "4", "text": "db4"})
 
     @patch("redis.Redis.info")
-    @patch("redis.Redis.config_get")
-    def test_get_all_databases_exception_handling(self, mock_config_get, mock_info):
-        # 模拟config_get方法抛出异常
-        mock_config_get.side_effect = Exception("模拟config_get异常")
+    def test_get_all_databases_exception_handling(self, mock_info):
         # 模拟info方法返回特定的Keyspace信息
         mock_info.return_value = {
-            "db0": "some_info",
-            "db1": "some_info",
-            "db18": "some_info",
+            "db0": {"keys": 10, "expires": 0},
+            "db1": {"keys": 5, "expires": 0},
+            "db18": {"keys": 20, "expires": 0},
         }
         # 实例化RedisEngine并调用get_all_databases方法
         new_engine = RedisEngine(instance=self.ins)
         result = new_engine.get_all_databases()
-        # 验证返回的数据库列表是否符合预期.
-        expected_dbs = [str(x) for x in range(int(19))]
-        self.assertListEqual(result.rows, expected_dbs)
-        # 验证config_get方法被调用
-        mock_config_get.assert_called_once_with("databases")
+        # 验证返回的数据库列表是否符合预期，0~18，共19个
+        self.assertEqual(len(result.rows), 19)
+        self.assertEqual(result.rows[0], {"value": "0", "text": "db0[10]"})
+        self.assertEqual(result.rows[18], {"value": "18", "text": "db18[20]"})
         # 验证info方法被调用
         mock_info.assert_called_once_with("Keyspace")
 
     @patch("redis.Redis.info")
-    @patch("redis.Redis.config_get")
-    def test_get_all_databases_with_empty_return_value(
-        self, mock_config_get, mock_info
-    ):
+    def test_get_all_databases_with_empty_return_value(self, mock_info):
         """
-        测试当Redis CONFIG GET命令因异常而失败，并且info命令返回空Keyspace信息时，
+        测试当info命令返回空Keyspace信息时，
         get_all_databases方法应正确处理并返回包含从0到15的数据库索引列表。
         """
-        # 模拟config_get方法抛出异常
-        mock_config_get.side_effect = Exception("模拟config_get异常")
         # 模拟info方法返回空的Keyspace信息
         mock_info.return_value = {}
         # 实例化RedisEngine并调用get_all_databases方法
         new_engine = RedisEngine(instance=self.ins)
         result = new_engine.get_all_databases()
         # 验证返回的数据库列表，应该包括0到15，总共16个数据库
-        expected_dbs = [str(x) for x in range(16)]
-        self.assertListEqual(result.rows, expected_dbs)
-        # 验证config_get和info方法的调用
-        mock_config_get.assert_called_once_with("databases")
+        self.assertEqual(len(result.rows), 16)
+        self.assertEqual(result.rows[0], {"value": "0", "text": "db0"})
+        self.assertEqual(result.rows[15], {"value": "15", "text": "db15"})
+        # 验证info方法的调用
         mock_info.assert_called_once_with("Keyspace")
 
     @patch("redis.Redis.info")
-    @patch("redis.Redis.config_get")
-    def test_get_all_databases_with_less_than_15_dbs(self, mock_config_get, mock_info):
+    def test_get_all_databases_with_less_than_15_dbs(self, mock_info):
         """
-        测试当Redis CONFIG GET命令因异常而失败，并且info命令返回的Keyspace信息
+        测试当info命令返回的Keyspace信息
         db num数据库值小于15时，get_all_databases方法应正确处理并返回包含从0到15的数据库索引列表。
         """
-        # 模拟config_get方法抛出异常
-        mock_config_get.side_effect = Exception("模拟config_get异常")
         # 模拟info方法返回小于15个数据库的Keyspace信息
         mock_info.return_value = {
-            "db0": "some_info",
-            "db1": "some_info",
-            "db5": "some_info",
+            "db0": {"keys": 10, "expires": 0},
+            "db1": {"keys": 5, "expires": 0},
+            "db5": {"keys": 0, "expires": 0},
             # 假设只有3个数据库
         }
         # 实例化RedisEngine并调用get_all_databases方法
         new_engine = RedisEngine(instance=self.ins)
         result = new_engine.get_all_databases()
         # 验证返回的数据库列表，应该包括0到15，总共16个数据库
-        expected_dbs = [str(x) for x in range(16)]
-        self.assertListEqual(result.rows, expected_dbs)
-        # 验证config_get和info方法的调用
-        mock_config_get.assert_called_once_with("databases")
+        self.assertEqual(len(result.rows), 16)
+        self.assertEqual(result.rows[0], {"value": "0", "text": "db0[10]"})
+        self.assertEqual(result.rows[1], {"value": "1", "text": "db1[5]"})
+        self.assertEqual(result.rows[5], {"value": "5", "text": "db5"})
+        # 验证info方法的调用
         mock_info.assert_called_once_with("Keyspace")
 
     @patch(
