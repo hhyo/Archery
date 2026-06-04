@@ -678,6 +678,7 @@ class ClickHouseEngine(EngineBase):
             return ResultSet(full_sql="")
         return self.execute(sql=kill_sql)
 
+<<<<<<< HEAD
     def tablespace(self, offset=0, row_count=14):
 =======
     def tablespace(self, offset=0, row_count=14, search=""):
@@ -685,6 +686,9 @@ class ClickHouseEngine(EngineBase):
 =======
     def tablespace(self, offset=0, row_count=14, schema_search=""):
 >>>>>>> 707b37f (代码优化)
+=======
+    def tablespace(self, offset=0, row_count=14, schema_search=""):
+>>>>>>> 24ccc01 (修复bug)
         """获取表空间信息"""
         search_condition = ""
         if schema_search:
@@ -694,6 +698,7 @@ class ClickHouseEngine(EngineBase):
                     keyword=search_escaped
                 )
             )
+        limit_clause = "{},{}".format(offset, row_count)
         sql = """SELECT
             database,
             table,
@@ -709,7 +714,10 @@ class ClickHouseEngine(EngineBase):
             AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema'){search_condition}
         GROUP BY database, table, engine
         ORDER BY table_rows DESC
-        LIMIT {},{};""".format(offset, row_count, search_condition=search_condition)
+        LIMIT {limit_clause};""".format(
+            search_condition=search_condition,
+            limit_clause=limit_clause,
+        )
         return self.query(sql=sql)
 
     def tablespace_count(self, schema_search=""):
