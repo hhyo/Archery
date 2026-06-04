@@ -88,11 +88,13 @@ def param_list(request):
     try:
         int(instance_id)
     except (TypeError, ValueError):
+        logger.error(f"实例ID不合法：{instance_id}")
         result = {"status": 1, "msg": "实例ID不合法", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins = Instance.objects.get(id=instance_id)
     except Instance.DoesNotExist:
+        logger.error(f"实例不存在：{instance_id}")
         result = {"status": 1, "msg": "实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 获取已配置参数列表
@@ -176,11 +178,13 @@ def param_edit(request):
     try:
         int(instance_id)
     except (TypeError, ValueError):
+        logger.error(f"实例ID不合法：{instance_id}")
         result = {"status": 1, "msg": "实例ID不合法", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins = Instance.objects.get(id=instance_id)
     except Instance.DoesNotExist:
+        logger.error(f"实例不存在：{instance_id}")
         result = {"status": 1, "msg": "实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -234,6 +238,7 @@ def param_compare(request):
         try:
             int(iid)
         except (TypeError, ValueError):
+            logger.error(f"{label}不合法：{iid}")
             result = {"status": 1, "msg": f"{label}不合法", "data": []}
             return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -241,11 +246,13 @@ def param_compare(request):
     try:
         ins1 = Instance.objects.get(id=instance_id1)
     except Instance.DoesNotExist:
+        logger.error(f"源实例不存在：{instance_id1}")
         result = {"status": 1, "msg": "源实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins2 = Instance.objects.get(id=instance_id2)
     except Instance.DoesNotExist:
+        logger.error(f"目标实例不存在：{instance_id2}")
         result = {"status": 1, "msg": "目标实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -490,17 +497,20 @@ def instance_resource(request):
         try:
             int(instance_id)
         except (TypeError, ValueError):
+            logger.error(f"实例ID不合法：{instance_id}")
             result = {"status": 1, "msg": "实例ID不合法", "data": []}
             return HttpResponse(json.dumps(result), content_type="application/json")
         try:
             instance = Instance.objects.get(id=instance_id)
         except Instance.DoesNotExist:
+            logger.error(f"实例不存在：{instance_id}")
             result = {"status": 1, "msg": "实例不存在", "data": []}
             return HttpResponse(json.dumps(result), content_type="application/json")
     else:
         try:
             instance = Instance.objects.get(instance_name=instance_name)
         except Instance.DoesNotExist:
+            logger.error(f"实例不存在：{instance_name}")
             result = {"status": 1, "msg": "实例不存在", "data": []}
             return HttpResponse(json.dumps(result), content_type="application/json")
     result = {"status": 0, "msg": "ok", "data": []}
@@ -553,6 +563,7 @@ def describe(request):
     try:
         instance = Instance.objects.get(instance_name=instance_name)
     except Instance.DoesNotExist:
+        logger.error(f"实例不存在：{instance_name}")
         result = {"status": 1, "msg": "实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     db_name = request.POST.get("db_name")
