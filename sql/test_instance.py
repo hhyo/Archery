@@ -178,7 +178,9 @@ class TestInstanceList:
 @pytest.mark.django_db
 class TestParamList:
     def test_param_list_rejects_invalid_instance_id(self, client_with_super_user):
-        response = client_with_super_user.post("/param/list/", data={"instance_id": "x"})
+        response = client_with_super_user.post(
+            "/param/list/", data={"instance_id": "x"}
+        )
 
         assert response_json(response) == {
             "status": 1,
@@ -548,7 +550,10 @@ class TestParamCompare:
 
         response = client_with_super_user.post(
             "/param/compare/",
-            data={"instance_id1": master_instance.id, "instance_id2": second_instance.id},
+            data={
+                "instance_id1": master_instance.id,
+                "instance_id2": second_instance.id,
+            },
         )
 
         assert response_json(response) == {
@@ -569,7 +574,10 @@ class TestParamCompare:
 
         response = client_with_super_user.post(
             "/param/compare/",
-            data={"instance_id1": master_instance.id, "instance_id2": second_instance.id},
+            data={
+                "instance_id1": master_instance.id,
+                "instance_id2": second_instance.id,
+            },
         )
 
         assert response_json(response) == {
@@ -595,7 +603,11 @@ class TestParamCompare:
         )
         target_engine = make_engine()
         target_engine.get_variables.return_value = ResultSet(
-            rows=(("binlog_format", "STATEMENT"), ("max_connections", "151"), ("b", "2"))
+            rows=(
+                ("binlog_format", "STATEMENT"),
+                ("max_connections", "151"),
+                ("b", "2"),
+            )
         )
         mock_get_engine.side_effect = [source_engine, target_engine]
 
@@ -736,7 +748,9 @@ class TestSchemaSync:
 
 @pytest.mark.django_db
 class TestInstanceResource:
-    def test_instance_resource_rejects_invalid_instance_id(self, client_with_super_user):
+    def test_instance_resource_rejects_invalid_instance_id(
+        self, client_with_super_user
+    ):
         response = client_with_super_user.get(
             "/instance/instance_resource/",
             data={"instance_id": "x", "resource_type": "database"},
@@ -924,9 +938,7 @@ class TestDescribe:
         assert result["msg"] == "ok"
         assert result["data"]["rows"] == [["id", "int"]]
         assert result["data"]["column_list"] == ["Field", "Type"]
-        engine.describe_table.assert_called_once_with(
-            "app", "t1", schema_name="public"
-        )
+        engine.describe_table.assert_called_once_with("app", "t1", schema_name="public")
 
     @patch("sql.instance.get_engine")
     def test_describe_engine_exception_keeps_current_attribute_error(
