@@ -54,13 +54,21 @@ class RedisEngine(EngineBase):
 
     info = "Redis engine"
 
+    @staticmethod
+    def _format_host_port(host, port):
+        """格式化 host:port 字符串，IPv6 地址使用 [ip]:port 格式以避免歧义"""
+        if ":" in host and not host.startswith("["):
+            return f"[{host}]:{port}"
+        return f"{host}:{port}"
+
     def get_cluster_master_nodes(self):
         """
         获取Redis集群所有主节点的host:port列表
         单机模式返回当前实例的host:port
+        IPv6 地址使用 [ip]:port 格式
         """
         if self.mode != "cluster":
-            return [f"{self.host}:{self.port}"]
+            return [self._format_host_port(self.host, self.port)]
         try:
             conn = self.get_connection()
             nodes_info = conn.execute_command("CLUSTER", "NODES")
@@ -73,18 +81,21 @@ class RedisEngine(EngineBase):
                     # 处理格式: 127.0.0.1:7001@17001、[2001:db8::10]:6379@16379、2001:db8::10:6379@16379
                     # 截取@之前的字符串，去掉[]即为 host:port
                     # 兼容redis7.2,hostname有可能在@之前，例如：ip:port,hostname@cport
-                    host_port = (
-                        parts[1]
-                        .split("@")[0]
-                        .split(",")[0]
-                        .replace("[", "")
-                        .replace("]", "")
-                    )
+                    host_port = parts[1].split("@")[0].split(",")[0]
+                    # 如果 CLUSTER NODES 输出中没有方括号（某些 Redis 版本），
+                    # 则需要手动添加以保持 IPv6 地址的格式一致性
+                    if host_port.count(":") > 1 and not host_port.startswith("["):
+                        # IPv6 地址不含方括号，使用 rsplit 分离端口后重新格式化
+                        hp = host_port.rsplit(":", 1)
+                        if len(hp) == 2:
+                            host_port = f"[{hp[0]}]:{hp[1]}"
                     masters.append(host_port)
-            return masters if masters else [f"{self.host}:{self.port}"]
+            return (
+                masters if masters else [self._format_host_port(self.host, self.port)]
+            )
         except Exception as e:
             logger.warning(f"获取Redis集群节点失败: {e}")
-            return [f"{self.host}:{self.port}"]
+            return [self._format_host_port(self.host, self.port)]
 
     def test_connection(self):
         """
@@ -127,8 +138,10 @@ class RedisEngine(EngineBase):
                 master_nodes = self.get_cluster_master_nodes()
                 for node in master_nodes:
                     try:
-                        host_port = node.split(":")
-                        host = host_port[0]
+                        # IPv6 安全解析：使用 rsplit 从右侧分割，避免 IPv6 地址中的冒号干扰
+                        # 例如：[2001:db8::10]:6379 → host=2001:db8::10, port=6379
+                        host_port = node.rsplit(":", 1)
+                        host = host_port[0].strip("[]")
                         port = int(host_port[1]) if len(host_port) > 1 else self.port
                         node_conn = redis.Redis(
                             host=host,
@@ -161,6 +174,7 @@ class RedisEngine(EngineBase):
                     if len(parts) == 2 and parts[1].isdigit():
                         db_num = int(parts[1])
                         db_keys[db_num] = val.get("keys", 0)
+                # 默认配置databases 16，只有16个库，这里取默认配置，不考虑新增到16以上的情况
                 # 确定最大库号，至少到 15
                 max_db = max(list(db_keys.keys()) + [15])
                 # 构建结果列表，补充缺失的库
@@ -172,11 +186,7 @@ class RedisEngine(EngineBase):
                 result.rows = db_list
         except Exception as e:
             logger.warning(f"Redis INFO Keyspace 执行报错，异常信息：{e}")
-            # 回退：返回默认的 0~15 号库
-            db_list = []
-            for i in range(16):
-                db_list.append({"value": str(i), "text": f"db{i}"})
-            result.rows = db_list
+            result.error = str(e)
         return result
 
     def get_all_tables(self, db_name, **kwargs):
@@ -253,8 +263,8 @@ class RedisEngine(EngineBase):
             "geopos",
             "geodist",
             "geohash",
-            "georadius",
-            "georadiusbymember",
+            # "georadius",
+            # "georadiusbymember",
             "geosearch",
             # 通用
             "exists",
@@ -270,7 +280,7 @@ class RedisEngine(EngineBase):
             "xlen",
             "xrange",
             "xrevrange",
-            "xread",
+            # "xread",
             "xpending",
             # 服务器
             # "info",  # 禁用 info 命令，防止获取敏感信息
@@ -281,19 +291,19 @@ class RedisEngine(EngineBase):
 
         # 多单词查询命令
         safe_multi_cmds = [
-            "object encoding",
-            "object idletime",
-            "object refcount",
+            # "object encoding",
+            # "object idletime",
+            # "object refcount",
             "memory usage",
             "memory stats",
             "memory doctor",
-            "client list",
+            # "client list",
             "client info",
             "client getname",
             "client getredir",
             "client trackinginfo",
             # "config get",  # 禁用 config 命令，防止获取密码等敏感信息
-            "slowlog get",
+            # "slowlog get",
             "slowlog len",
             # "pubsub channels",  # 禁用 pubsub 命令，防止获取敏感信息
             # "pubsub numsub",
@@ -325,7 +335,7 @@ class RedisEngine(EngineBase):
             # "xinfo consumers",
         ]
 
-        sql_stripped = sql.strip()
+        sql_stripped = re.sub(r"\s+", " ", sql.strip())
         lower_sql = sql_stripped.lower()
 
         # 先匹配多单词命令（更具体的优先）
@@ -456,9 +466,9 @@ class RedisEngine(EngineBase):
             # List
             "blmove",
             "blmpop",
-            "blpop",
-            "brpop",
-            "brpoplpush",
+            # "blpop",
+            # "brpop",
+            # "brpoplpush",
             "linsert",
             "lmove",
             "lmpop",
@@ -580,7 +590,7 @@ class RedisEngine(EngineBase):
         ]
 
         for cmd in split_sql:
-            sql_stripped = cmd.strip()
+            sql_stripped = re.sub(r"\s+", " ", cmd.strip())
             lower_sql = sql_stripped.lower()
 
             # 先检测是否为查询命令，执行工单中禁止使用查询命令

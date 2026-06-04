@@ -348,7 +348,7 @@
                                 var name = "<option value=\"" + item + "\">" + item + "</option>";
                             }
                             $("#db_name").append(name);
-                            dbs.push(item);
+                            dbs.push(typeof item === 'object' && item !== null ? item.value : item);
                         }
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');

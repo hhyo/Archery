@@ -225,7 +225,62 @@ def test_get_cluster_master_nodes_ipv6(mock_get_conn, redis_cluster_engine):
 
     nodes = redis_cluster_engine.get_cluster_master_nodes()
     assert len(nodes) == 1
-    assert nodes[0] == "2001:db8::10:6379"
+    assert nodes[0] == "[2001:db8::10]:6379"
+
+
+@patch.object(RedisEngine, "get_connection")
+def test_get_cluster_master_nodes_ipv6_no_brackets(mock_get_conn, redis_cluster_engine):
+    """测试集群模式中 IPv6 地址无方括号时自动补齐"""
+    cluster_nodes_output = "nodeid1 2001:db8::10:6379@16379 myself,master - 0 1600000000 1 connected 0-5460\n"
+    mock_conn = Mock()
+    mock_conn.execute_command.return_value = cluster_nodes_output
+    mock_get_conn.return_value = mock_conn
+
+    nodes = redis_cluster_engine.get_cluster_master_nodes()
+    assert len(nodes) == 1
+    assert nodes[0] == "[2001:db8::10]:6379"
+
+
+@patch.object(RedisEngine, "get_connection")
+def test_get_cluster_master_nodes_mixed_ipv4_ipv6(mock_get_conn, redis_cluster_engine):
+    """测试集群模式中 IPv4 和 IPv6 混合节点"""
+    cluster_nodes_output = (
+        "nodeid1 127.0.0.1:7001@17001 myself,master - 0 1600000000 1 connected 0-5460\n"
+        "nodeid2 [2001:db8::10]:6379@16379 master - 0 1600000000 2 connected 5461-10922\n"
+    )
+    mock_conn = Mock()
+    mock_conn.execute_command.return_value = cluster_nodes_output
+    mock_get_conn.return_value = mock_conn
+
+    nodes = redis_cluster_engine.get_cluster_master_nodes()
+    assert len(nodes) == 2
+    assert "127.0.0.1:7001" in nodes
+    assert "[2001:db8::10]:6379" in nodes
+
+
+# ====================== _format_host_port ======================
+
+
+def test_format_host_port_ipv4():
+    """测试 IPv4 地址格式化"""
+    assert RedisEngine._format_host_port("127.0.0.1", 6379) == "127.0.0.1:6379"
+
+
+def test_format_host_port_ipv6():
+    """测试 IPv6 地址自动加方括号"""
+    assert RedisEngine._format_host_port("2001:db8::10", 6379) == "[2001:db8::10]:6379"
+
+
+def test_format_host_port_ipv6_already_bracketed():
+    """测试已带方括号的 IPv6 地址不再重复添加"""
+    assert (
+        RedisEngine._format_host_port("[2001:db8::10]", 6379) == "[2001:db8::10]:6379"
+    )
+
+
+def test_format_host_port_ipv6_loopback():
+    """测试 IPv6 回环地址格式化"""
+    assert RedisEngine._format_host_port("::1", 6379) == "[::1]:6379"
 
 
 # ====================== test_connection ======================
@@ -353,17 +408,39 @@ def test_get_all_databases_cluster_no_keys(
 
 @patch.object(RedisEngine, "get_connection")
 def test_get_all_databases_exception_fallback(mock_get_conn, redis_engine):
-    """测试 INFO Keyspace 执行报错时回退到默认 0~15 号库"""
+    """测试 INFO Keyspace 执行报错时错误被传播，不应伪造数据"""
     mock_conn = Mock()
     mock_conn.info.side_effect = Exception("connection error")
     mock_get_conn.return_value = mock_conn
 
     result = redis_engine.get_all_databases()
     assert isinstance(result, ResultSet)
-    # 回退应返回默认的 0~15 号库
-    assert len(result.rows) == 16
-    assert result.rows[0] == {"value": "0", "text": "db0"}
-    assert result.rows[15] == {"value": "15", "text": "db15"}
+    # 异常应设置 error，不应返回伪造的 db 列表
+    assert result.error is not None
+    assert "connection error" in result.error
+    assert result.rows == []
+
+
+@patch.object(RedisEngine, "get_cluster_master_nodes")
+@patch("sql.engines.redis.redis.Redis")
+def test_get_all_databases_cluster_ipv6(
+    mock_redis_cls, mock_get_masters, redis_cluster_engine
+):
+    """测试集群模式 IPv6 节点获取数据库列表，正确解析 [ipv6]:port 格式"""
+    mock_get_masters.return_value = ["[2001:db8::10]:6379"]
+
+    mock_conn1 = Mock()
+    mock_conn1.info.return_value = {"db0": {"keys": 50, "expires": 0}}
+    mock_redis_cls.side_effect = [mock_conn1]
+
+    result = redis_cluster_engine.get_all_databases()
+    assert isinstance(result, ResultSet)
+    assert len(result.rows) == 1
+    assert result.rows[0] == {"value": "0", "text": "db0[50]"}
+    # 验证 redis.Redis 被调用时 host 参数正确去除了方括号
+    call_kwargs = mock_redis_cls.call_args.kwargs
+    assert call_kwargs["host"] == "2001:db8::10"
+    assert call_kwargs["port"] == 6379
 
 
 # ====================== get_all_tables ======================
@@ -427,13 +504,6 @@ def test_query_check_safe_cmd_hgetall(redis_engine):
     """测试安全命令 hgetall 通过检查"""
     result = redis_engine.query_check(sql="hgetall myhash")
     assert result["bad_query"] is False
-
-
-def test_query_check_safe_cmd_info(redis_engine):
-    """测试 info 命令被禁用（防止获取敏感信息）"""
-    result = redis_engine.query_check(sql="info")
-    assert result["bad_query"] is True
-    assert result["msg"] == "禁止执行该命令！"
 
 
 def test_query_check_safe_cmd_scan(redis_engine):

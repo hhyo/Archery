@@ -318,14 +318,22 @@
                     if (data.status === 0) {
                         var result = data.data;
                         $("#db_name").empty();
+                        var dbs = [];
                         for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            var item = result[i];
+                            // 支持字典格式 {"value": "0", "text": "db0[100]"}
+                            if (typeof item === 'object' && item !== null) {
+                                var name = "<option value=\"" + item.value + "\">" + item.text + "</option>";
+                            } else {
+                                var name = "<option value=\"" + item + "\">" + item + "</option>";
+                            }
                             $("#db_name").append(name);
+                            dbs.push(typeof item === 'object' && item !== null ? item.value : item);
                         }
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                         //自动补全提示
-                        setDbsCompleteData(result)
+                        setDbsCompleteData(dbs)
                     } else {
                         alert(data.msg);
                     }
