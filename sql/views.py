@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponseRedirect, FileResponse, Http404
+from django.http import HttpResponseRedirect, FileResponse, Http404, JsonResponse
 from django.urls import reverse
 
 from django.conf import settings
@@ -15,7 +15,8 @@ from sql.engines import get_engine, engine_map
 from common.utils.permission import superuser_required
 from common.utils.convert import Convert
 from sql.utils.tasks import task_info
-from sql.utils.resource_group import user_groups
+from sql.offlinedownload import OffLineDownLoad
+from sql.utils.resource_group import user_groups, user_instances
 
 from .models import (
     Users,
@@ -754,3 +755,39 @@ def sqlexportsubmit(request):
         "can_offline_download": can_offline_download,
     }
     return render(request, "sqlexportsubmit.html", context)
+
+
+@permission_required("sql.sqlexport_submit", raise_exception=True)
+def sqlexport_pre_check(request):
+    """数据导出提交前预检，按各引擎查询规则校验并统计导出行数。"""
+    result = {"status": 0, "msg": "ok", "data": {}}
+    instance_name = request.POST.get("instance_name")
+    db_name = request.POST.get("db_name")
+    sql_content = request.POST.get("sql_content")
+
+    if not instance_name or not db_name or not sql_content:
+        result["status"] = 1
+        result["msg"] = "页面提交参数可能为空"
+        return JsonResponse(result)
+
+    try:
+        instance = user_instances(request.user, tag_codes=["can_read"]).get(
+            instance_name=instance_name
+        )
+    except Instance.DoesNotExist:
+        result["status"] = 1
+        result["msg"] = "你所在组未关联该实例"
+        return JsonResponse(result)
+
+    instance.sql_content = sql_content
+    instance.selected_db_name = db_name
+    check_result = OffLineDownLoad().pre_count_check(workflow=instance)
+    result["data"] = {
+        "error_count": check_result.error_count,
+        "warning_count": check_result.warning_count,
+        "rows": check_result.to_dict(),
+    }
+    if check_result.error_count:
+        result["status"] = 1
+        result["msg"] = check_result.rows[0].errormessage if check_result.rows else ""
+    return JsonResponse(result)

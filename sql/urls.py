@@ -180,4 +180,5 @@ urlpatterns = [
     path("user/qrcode/<str:data>/", totp.generate_qrcode),
     path("sqlexportworkflow/", views.sqlexportworkflow),
     path("sqlexportsubmit/", views.sqlexportsubmit),
+    path("sqlexport/pre_check/", views.sqlexport_pre_check),
 ]
