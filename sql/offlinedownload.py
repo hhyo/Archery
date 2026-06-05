@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 import sqlparse
 import time
+import traceback
 
 import simplejson as json
 import pandas as pd
@@ -24,6 +25,38 @@ from sql.engines import get_engine
 from common.config import SysConfig
 
 logger = logging.getLogger("default")
+
+SQL_COUNT_ENGINES = {
+    "mysql",
+    "mssql",
+    "pgsql",
+    "oracle",
+    "phoenix",
+    "odps",
+    "clickhouse",
+    "cassandra",
+    "doris",
+}
+
+LINE_BASED_COMMAND_ENGINES = {"redis", "memcached"}
+
+
+def get_single_export_statement(raw_sql, db_type):
+    """Return one export statement while preserving non-SQL native commands."""
+    sql = raw_sql.strip()
+    if db_type in SQL_COUNT_ENGINES:
+        sql = sqlparse.format(sql, strip_comments=True)
+        sql_list = sqlparse.split(sql)
+        return sql_list, sql
+
+    if db_type in LINE_BASED_COMMAND_ENGINES:
+        sql_list = [line.strip() for line in sql.splitlines() if line.strip()]
+        return sql_list, sql
+
+    sql = sql.rstrip(";").strip()
+    if ";" in sql:
+        return [stmt.strip() for stmt in sql.split(";") if stmt.strip()], sql
+    return [sql] if sql else [], sql
 
 
 class OffLineDownLoad(EngineBase):
@@ -131,38 +164,143 @@ class OffLineDownLoad(EngineBase):
         config = SysConfig()
         # 获取前端提交的 SQL 和其他工单信息
         full_sql = workflow.sql_content
-        full_sql = sqlparse.format(full_sql, strip_comments=True)
-        full_sql = sqlparse.split(full_sql)[0]
-        sql = full_sql.strip()
-        count_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
-        clean_sql = sql.strip().lower()
-        instance = workflow
-        check_result = ReviewSet(full_sql=sql)
+        instance = workflow if hasattr(workflow, "db_type") else workflow.instance
+        db_name = getattr(workflow, "selected_db_name", workflow.db_name)
+        check_result = ReviewSet(full_sql=full_sql)
         check_result.syntax_type = 3
         check_engine = get_engine(instance=instance)
-        result_set = check_engine.query(db_name=workflow.db_name, sql=count_sql)
-        actual_rows_check = result_set.rows[0][0]
         max_export_rows_str = config.get("max_export_rows", "10000")
         max_export_rows = int(max_export_rows_str) if max_export_rows_str else 10000
+        max_execution_time = int(config.get("max_execution_time", 300))
 
-        allowed_prefixes = ("select", "with")  # 允许 SELECT 和 WITH 开头
-        if not clean_sql.startswith(allowed_prefixes):
+        try:
+            sql_list, full_sql = get_single_export_statement(full_sql, instance.db_type)
+        except Exception as e:
+            sql_list = []
+            parse_error = str(e)
+        else:
+            parse_error = ""
+
+        if not sql_list:
             result = ReviewResult(
                 stage="自动审核失败",
                 errlevel=2,
                 stagestatus="检查未通过！",
-                errormessage=f"违规语句！",
-                affected_rows=actual_rows_check,
+                errormessage=parse_error or "没有有效的查询语句",
+                affected_rows=0,
                 sql=full_sql,
             )
-        elif result_set.error:
+            check_result.rows = [result]
+            check_result.error_count = 1
+            return check_result
+        elif len(sql_list) > 1:
+            result = ReviewResult(
+                stage="自动审核失败",
+                errlevel=2,
+                stagestatus="检查未通过！",
+                errormessage="检测到多个查询语句，只能提交一个导出查询。",
+                affected_rows=0,
+                sql=full_sql,
+            )
+            check_result.rows = [result]
+            check_result.error_count = 1
+            return check_result
+
+        sql = sql_list[0].strip()
+        check_result.full_sql = sql
+
+        try:
+            query_check_info = check_engine.query_check(db_name=db_name, sql=sql)
+        except Exception as e:
+            logger.warning(
+                f"导出查询校验报错，语句：{sql}，错误信息：{traceback.format_exc()}"
+            )
+            result = ReviewResult(
+                stage="自动审核失败",
+                errlevel=2,
+                stagestatus="检查未通过！",
+                errormessage=str(e),
+                affected_rows=0,
+                sql=sql,
+            )
+            check_result.rows = [result]
+            check_result.error_count = 1
+            return check_result
+        if not query_check_info:
+            query_check_info = {"bad_query": False, "filtered_sql": sql}
+        if query_check_info.get("bad_query"):
+            result = ReviewResult(
+                stage="自动审核失败",
+                errlevel=2,
+                stagestatus="检查未通过！",
+                errormessage=query_check_info.get("msg") or "不支持的查询语法类型!",
+                affected_rows=0,
+                sql=sql,
+            )
+            check_result.rows = [result]
+            check_result.error_count = 1
+            return check_result
+
+        sql = query_check_info.get("filtered_sql") or sql
+        sql = sql.strip()
+        limit_num = max_export_rows + 1
+
+        try:
+            if instance.db_type in SQL_COUNT_ENGINES:
+                check_sql = f"SELECT COUNT(*) FROM ({sql.rstrip(';')}) t"
+                result_set = check_engine.query(
+                    db_name=db_name,
+                    sql=check_sql,
+                    max_execution_time=max_execution_time * 1000,
+                )
+                if result_set.error:
+                    check_sql = check_engine.filter_sql(sql=sql, limit_num=limit_num)
+                    result_set = check_engine.query(
+                        db_name=db_name,
+                        sql=check_sql,
+                        limit_num=limit_num,
+                        max_execution_time=max_execution_time * 1000,
+                    )
+                    actual_rows_check = getattr(result_set, "affected_rows", 0) or len(
+                        getattr(result_set, "rows", []) or []
+                    )
+                else:
+                    actual_rows_check = result_set.rows[0][0]
+            else:
+                check_sql = check_engine.filter_sql(sql=sql, limit_num=limit_num)
+                result_set = check_engine.query(
+                    db_name=db_name,
+                    sql=check_sql,
+                    limit_num=limit_num,
+                    max_execution_time=max_execution_time * 1000,
+                )
+                actual_rows_check = getattr(result_set, "affected_rows", 0) or len(
+                    getattr(result_set, "rows", []) or []
+                )
+        except Exception as e:
+            logger.warning(
+                f"导出行数统计报错，语句：{sql}，错误信息：{traceback.format_exc()}"
+            )
+            result = ReviewResult(
+                stage="自动审核失败",
+                errlevel=2,
+                stagestatus="检查未通过！",
+                errormessage=str(e),
+                affected_rows=0,
+                sql=sql,
+            )
+            check_result.rows = [result]
+            check_result.error_count = 1
+            return check_result
+
+        if result_set.error:
             result = ReviewResult(
                 stage="自动审核失败",
                 errlevel=2,
                 stagestatus="检查未通过！",
                 errormessage=result_set.error,
                 affected_rows=actual_rows_check,
-                sql=full_sql,
+                sql=sql,
             )
         elif actual_rows_check > max_export_rows:
             result = ReviewResult(
@@ -170,14 +308,14 @@ class OffLineDownLoad(EngineBase):
                 stagestatus="检查未通过！",
                 errormessage=f"导出数据行数({actual_rows_check})超过阈值({max_export_rows})。",
                 affected_rows=actual_rows_check,
-                sql=full_sql,
+                sql=sql,
             )
         else:
             result = ReviewResult(
                 errlevel=0,
                 stagestatus="行数统计完成",
                 errormessage="None",
-                sql=full_sql,
+                sql=sql,
                 affected_rows=actual_rows_check,
                 execute_time=0,
             )

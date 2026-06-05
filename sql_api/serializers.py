@@ -410,13 +410,13 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             user = self.context["request"].user
 
         # 验证提交用户的组权限（用户是否在该组、该组是否有指定实例）
+        tag_codes = (
+            ["can_read"] if workflow_data["is_offline_export"] else ["can_write"]
+        )
         try:
-            user_instances(user, tag_codes=["can_write"]).get(id=instance.id)
+            user_instances(user, tag_codes=tag_codes).get(id=instance.id)
         except instance.DoesNotExist:
-            if workflow_data["is_offline_export"]:
-                pass
-            else:
-                raise serializers.ValidationError({"errors": "你所在组未关联该实例！"})
+            raise serializers.ValidationError({"errors": "你所在组未关联该实例！"})
 
         # 再次交给engine进行检测，防止绕过
         try:
@@ -424,7 +424,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             sql_export = OffLineDownLoad()
             if workflow_data["is_offline_export"]:
                 instance.sql_content = sql_content
-                instance.db_name = workflow_data["db_name"]
+                instance.selected_db_name = workflow_data["db_name"]
                 check_result = sql_export.pre_count_check(workflow=instance)
             else:
                 check_result = check_engine.execute_check(
@@ -435,13 +435,13 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
 
         # 未开启备份选项，并且engine支持备份，强制设置备份
         is_backup = (
-            workflow_data["is_backup"] if "is_backup" in workflow_data.keys() else False
+            False
+            if workflow_data["is_offline_export"]
+            else workflow_data.get("is_backup", False)
         )
         sys_config = SysConfig()
         if not sys_config.get("enable_backup_switch") and check_engine.auto_backup:
-            if workflow_data["is_offline_export"]:
-                pass
-            else:
+            if not workflow_data["is_offline_export"]:
                 is_backup = True
 
         workflow_data.update(

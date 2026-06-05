@@ -42,8 +42,8 @@
                             <div class="form-group">
                                 <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
                                        class="form-control"
-                                       data-name="上线单名称" data-placeholder="请输入上线单名称!"
-                                       placeholder="请输入上线单名称，如:XX项目会员功能建表"
+                                       data-name="导出工单名称" data-placeholder="请输入导出工单名称!"
+                                       placeholder="请输入导出工单名称，如:XX项目会员数据导出"
                                        required>
                             </div>
                             <div class="form-group toggleable">
@@ -92,18 +92,6 @@
                                     <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                                 </select>
                             </div>
-                            {% if enable_backup_switch %}
-                                <div id="div-backup" class="form-group">
-                                    <select id="is_backup" name="is_backup"
-                                            class="selectpicker show-tick form-control bs-select-hidden"
-                                            data-name="是否选择备份"
-                                            title="请选择是否需要备份"
-                                            data-placeholder="请选择是否要备份" required>
-                                        <option value=True selected="selected">备份SQL</option>
-                                        <option value=False>不备份SQL</option>
-                                    </select>
-                                </div>
-                            {% endif %}
                             <!--可执行范围时间-->
                             <div class='form-group'>
                                 <input type="hidden" id="run_date_start" name="run_date_start">
@@ -127,7 +115,7 @@
                             <div class="form-group">
                                 <button type="button" id="btn-format" class="btn btn-info">美化</button>
                                 <button type="button" id="btn-autoreview" data-loading-text="检测中..."
-                                        class="btn btn-danger">SQL检测
+                                        class="btn btn-danger">导出校验
                                 </button>
                                 <button type="button" id="btn-submitsql" data-loading-text="提交中..."
                                         class="btn btn-success" disabled>
@@ -288,12 +276,6 @@
     <script>
         // 实例变更获取数据库补全提示
         $("#instance_name").change(function () {
-            var optgroup = $('#instance_name :selected').parent().attr('label');
-            $("#div-backup").show();
-            if (optgroup != "MySQL" && optgroup != "Oracle") {
-                $("#div-backup").hide();
-                $("#is_backup").val("False");
-            }
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "get",
@@ -390,7 +372,7 @@
                         return result;
                     }
                     if(fieldId == "workflow_name" && value.length>=50){
-                        alert("上线单名称/工单名称不能超过50个字符！");
+                        alert("导出工单名称不能超过50个字符！");
                         result = false;
                         return result;
                     }
@@ -442,15 +424,6 @@
             return true
         }
         
-        function removeStartsWith(str,prefix) {
-            if (typeof str !== 'string' || str === null) {
-                return str;
-            }
-            if (str.startsWith(prefix)) {
-                return str.substring(prefix.length);
-            }
-            return str;
-        };
         $("#btn-autoreview").click(function () {
             if (sqlquery_validate()) {
                 $("#btn-submitsql").prop("disabled", true);
@@ -460,7 +433,7 @@
                 $("#db_name").attr("disabled", true);
                 $("#instance_name").attr("disabled", true);
                 $("#group_name").attr("disabled", true);
-                sqlcount('explain')
+                sqlcount()
             }
         });
 
@@ -483,27 +456,6 @@
                 .filter(stmt => stmt.length > 0) // 过滤掉空语句
                 .length; // 统计语句数量
 
-            // 检查SQL开头
-            let trimmedSQL = sqlContent.trim().toUpperCase();
-            // 跳过所有开头的注释（单行/多行）
-            while (true) {
-                // 跳过单行注释 (--)
-                if (trimmedSQL.startsWith("--")) {
-                    const nlIndex = trimmedSQL.indexOf('\n');
-                    trimmedSQL = (nlIndex > -1) 
-                        ? trimmedSQL.substring(nlIndex + 1).trim() 
-                        : "";
-                    continue;
-                }
-                // 跳过多行注释 (/*...*/)
-                if (trimmedSQL.startsWith("/*")) {
-                    const endIndex = trimmedSQL.indexOf("*/");
-                    if (endIndex === -1) break; // 未闭合注释不处理
-                    trimmedSQL = trimmedSQL.substring(endIndex + 2).trim();
-                    continue;
-                }
-                break;
-            }
             if (!instance_name) {
                 alert("请选择实例！");
                 return result = false;
@@ -513,20 +465,15 @@
             } else if (!sqlContent) {
                 alert("SQL内容不能为空！");
                 return result = false;
-            } else if (!trimmedSQL.startsWith("SELECT") && !trimmedSQL.startsWith("WITH")) {
-                alert("SQL必须是查询语句！");
-                return result = false;
             } else if (isOfflineExport === 1 && totalSqlCnt > 1) {
-                alert("检测到多个SQL语句，只能提交一个SQL，请选中要提交导出工单的SQL重试。");
+                alert("检测到多个查询语句，只能提交一个导出查询，请选中要提交导出工单的语句重试。");
                 return result = false;
             }
             return result;
         }
         
         //count行数统计
-        function sqlcount(sql) {
-            var result = true;
-            var optgroup = $('#instance_name :selected').parent().attr('label');
+        function sqlcount() {
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
@@ -534,21 +481,15 @@
                 var sqlContent = editor.getValue();
             }
 
-            var sqlContent = sqlContent.trim().replace(/;$/, '');
-            var sqlContent = 'select count(1) from (' + sqlContent + '\n) t'
-             
             //提交请求
             $.ajax({
                 type: "post",
-                url: "/query/",
+                url: "/sqlexport/pre_check/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
                     db_name: $("#db_name").val(),
-                    schema_name: $("#schema_name").val(),
-                    tb_name: $("#table_name").val(),
-                    sql_content: sqlContent,
-                    limit_num: $("#limit_num").val()
+                    sql_content: sqlContent
                 },
                 complete: function () {
                     $("#db_name").attr("disabled", false);
@@ -586,7 +527,7 @@
             if (data.status === 0) {
                 var ActualRows = 0;
                 var maxExportRows = "{{ max_export_rows }}";
-                ActualRows = parseFloat(result['rows'][0][0]);
+                ActualRows = parseFloat(result['rows'][0]['affected_rows']);
                 if (ActualRows > maxExportRows) {
                     $("#btn-submitsql").prop("disabled", true);
                     showStatusNotice({
@@ -611,12 +552,16 @@
                     $("#btn-submitsql").prop("disabled", true);
                 }
             } else {
+                var msg = data.msg;
+                if (result && result['rows'] && result['rows'].length > 0) {
+                    msg = result['rows'][0]['errormessage'];
+                }
                 showStatusNotice({
                     noticeIconClass: 'icon-error',
                     statusClass: 'status-error',
                     title: '校验失败',
                     message: '错误：{msg}',
-                    params: { msg: data.msg },
+                    params: { msg: msg },
                     delay: 5000
                 });
             }
@@ -646,7 +591,7 @@
                             group_id: $("#group_name option:selected").attr("group-id"),
                             instance: $("#instance_name option:selected").attr("instance-id"),
                             db_name: formData.db_name,
-                            is_backup: 'False',
+                            is_backup: false,
                             run_date_start: formData.run_date_start,
                             run_date_end: formData.run_date_end,
                         },

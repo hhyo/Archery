@@ -69,6 +69,7 @@ class TestOfflineDownload(TestCase):
         )
         # 设置系统配置
         Config.objects.create(item="max_export_rows", value="10000")
+        Config.objects.create(item="max_execution_time", value="60")
         Config.objects.create(item="storage_type", value="local")
 
     def tearDown(self):
@@ -90,6 +91,10 @@ class TestOfflineDownload(TestCase):
         mock_result_set = MagicMock()
         mock_result_set.rows = [(500,)]
         mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "SELECT * FROM test_table",
+        }
         mock_engine.query.return_value = mock_result_set
         mock_get_engine.return_value = mock_engine
 
@@ -104,6 +109,11 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(result.warning_count, 0)
         self.assertEqual(result.rows[0].stagestatus, "行数统计完成")
         self.assertEqual(result.rows[0].affected_rows, 500)
+        mock_engine.query.assert_called_once_with(
+            db_name="test_db",
+            sql="SELECT COUNT(*) FROM (SELECT * FROM test_table) t",
+            max_execution_time=60000,
+        )
 
     @patch("sql.offlinedownload.get_engine")
     def test_pre_count_check_over_limit(self, mock_get_engine):
@@ -116,6 +126,10 @@ class TestOfflineDownload(TestCase):
         mock_result_set = MagicMock()
         mock_result_set.rows = [(15000,)]
         mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "SELECT * FROM test_table",
+        }
         mock_engine.query.return_value = mock_result_set
         mock_get_engine.return_value = mock_engine
 
@@ -137,6 +151,11 @@ class TestOfflineDownload(TestCase):
 
         # 模拟get_engine返回值
         mock_engine = MagicMock()
+        mock_engine.query_check.return_value = {
+            "bad_query": True,
+            "msg": "禁止执行该命令！",
+            "filtered_sql": "DELETE FROM test_table",
+        }
         mock_get_engine.return_value = mock_engine
 
         offline_download = OffLineDownLoad()
@@ -146,7 +165,116 @@ class TestOfflineDownload(TestCase):
         # 验证结果
         self.assertEqual(result.error_count, 1)
         self.assertEqual(result.warning_count, 0)
-        self.assertEqual(result.rows[0].errormessage, "违规语句！")
+        self.assertEqual(result.rows[0].errormessage, "禁止执行该命令！")
+        mock_engine.query.assert_not_called()
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_non_sql_query_uses_affected_rows(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - 非SQL引擎使用查询返回行数
+        """
+
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.rows = [("key1",), ("key2",)]
+        mock_result_set.affected_rows = 2
+        mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "scan 0 count 10",
+        }
+        mock_engine.filter_sql.return_value = "scan 0 count 10"
+        mock_engine.query.return_value = mock_result_set
+        mock_get_engine.return_value = mock_engine
+
+        offline_download = OffLineDownLoad()
+        self.workflow.db_type = "redis"
+        self.workflow.sql_content = "scan 0 count 10"
+        result = offline_download.pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].affected_rows, 2)
+        mock_engine.query.assert_called_once_with(
+            db_name="test_db",
+            sql="scan 0 count 10",
+            limit_num=10001,
+            max_execution_time=60000,
+        )
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_mongo_native_query(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - Mongo原生命令保持原样校验
+        """
+
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.rows = ["{}"]
+        mock_result_set.affected_rows = 100
+        mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "db.follow.find().limit(100)",
+        }
+        mock_engine.filter_sql.return_value = "db.follow.find().limit(100)"
+        mock_engine.query.return_value = mock_result_set
+        mock_get_engine.return_value = mock_engine
+
+        offline_download = OffLineDownLoad()
+        self.workflow.instance.db_type = "mongo"
+        self.workflow.sql_content = "db.follow.find().limit(100)"
+        result = offline_download.pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].affected_rows, 100)
+        mock_engine.query_check.assert_called_once_with(
+            db_name="test_db", sql="db.follow.find().limit(100)"
+        )
+        mock_engine.query.assert_called_once_with(
+            db_name="test_db",
+            sql="db.follow.find().limit(100)",
+            limit_num=10001,
+            max_execution_time=60000,
+        )
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_instance_uses_selected_db_without_overwriting_auth_db(
+        self, mock_get_engine
+    ):
+        """
+        测试pre_count_check方法 - Instance输入保留认证库并使用选择的业务库
+        """
+
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.rows = ["{}"]
+        mock_result_set.affected_rows = 1
+        mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "db.follow.find().limit(100)",
+        }
+        mock_engine.filter_sql.return_value = "db.follow.find().limit(100)"
+        mock_engine.query.return_value = mock_result_set
+        mock_get_engine.return_value = mock_engine
+
+        self.instance.db_type = "mongo"
+        self.instance.db_name = "admin"
+        self.instance.selected_db_name = "boomplay_follow"
+        self.instance.sql_content = "db.follow.find().limit(100)"
+        result = OffLineDownLoad().pre_count_check(self.instance)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(self.instance.db_name, "admin")
+        mock_engine.query_check.assert_called_once_with(
+            db_name="boomplay_follow", sql="db.follow.find().limit(100)"
+        )
+        mock_engine.query.assert_called_once_with(
+            db_name="boomplay_follow",
+            sql="db.follow.find().limit(100)",
+            limit_num=10001,
+            max_execution_time=60000,
+        )
 
     @patch("sql.offlinedownload.get_engine")
     @patch("sql.offlinedownload.DynamicStorage")
