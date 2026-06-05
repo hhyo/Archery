@@ -142,24 +142,29 @@ def generate_sql(request):
         )
     db_name = request.POST.get("db_name")
     schema_name = request.POST.get("schema_name")
-    tb_name = request.POST.get("tb_name")
+    # 获取多表名列表
+    tb_name_list = request.POST.getlist("tb_name_list[]") or request.POST.getlist(
+        "tb_name_list"
+    )
 
     result = {"status": 0, "msg": "ok", "data": ""}
     try:
         query_engine = get_engine(instance=instance)
-        query_result = query_engine.describe_table(
-            db_name, tb_name, schema_name=schema_name
-        )
+        # 循环获取表列表的表结构
+        table_structures = []
+        for tb_name in tb_name_list:
+            query_result = query_engine.describe_table(
+                db_name, tb_name, schema_name=schema_name
+            )
+            # 有些不存在表结构, 例如 redis
+            if len(query_result.rows) != 0:
+                table_structures.append(query_result.rows[0][-1])
+        # 拼接所有表结构
+        table_structure_str = "\n\n".join(table_structures)
         openai_client = OpenaiClient()
-        # 有些不存在表结构, 例如 redis
-        if len(query_result.rows) != 0:
-            result["data"] = openai_client.generate_sql_by_openai(
-                db_type, query_result.rows[0][-1], query_desc
-            )
-        else:
-            result["data"] = openai_client.generate_sql_by_openai(
-                db_type, "", query_desc
-            )
+        result["data"] = openai_client.generate_sql_by_openai(
+            db_type, table_structure_str, query_desc
+        )
     except Exception as msg:
         result["status"] = 1
         result["msg"] = str(msg)
