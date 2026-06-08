@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="row clearfix">
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    操作选项
+                </div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <select id="db_type" name="db_type"
+                                class="selectpicker show-tick form-control bs-select-hidden"
+                                title="请选择数据库类型:"
+                                required>
+                            <option value="mysql">MySQL</option>
+                            <option value="goinception">goInception</option>
+                            <option value="inception">Inception</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="instance_id1" name="instance_id1"
+                                class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                                title="请选择源实例:"
+                                data-placeholder="请选择源实例:" required>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="instance_id2" name="instance_id2"
+                                class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                                title="请选择目标实例:"
+                                data-placeholder="请选择目标实例:" required>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                <input id="diff_only" type="checkbox" checked>
+                                仅显示差异项
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input id="btn-compare" type="button" class="btn btn-danger" value="开始对比"
+                               onclick="compare_params()"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9 column">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    对比结果
+                </div>
+                <div class="panel-body">
+                    <div id="compare-stats" style="display:none;" class="row clearfix" style="margin-bottom:10px;">
+                        <div class="col-md-4">
+                            <div class="panel panel-primary">
+                                <div class="panel-heading">一致参数</div>
+                                <div class="panel-body text-center">
+                                    <h3 id="same-count">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="panel panel-danger">
+                                <div class="panel-heading">差异参数</div>
+                                <div class="panel-body text-center">
+                                    <h3 id="diff-count">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">总参数数</div>
+                                <div class="panel-body text-center">
+                                    <h3 id="total-count">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="compare-result" style="display:none;">
+                        <table id="compare-list" data-toggle="table" class="table table-hover"
+                               style="table-layout:fixed;word-break:break-word;overflow:hidden;"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block js %}
+    {% load static %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script>
+        // HTML转义函数，防止XSS
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // 获取实例列表
+        function load_instances() {
+            $.ajax({
+                type: "get",
+                url: "/group/user_all_instances/",
+                dataType: "json",
+                data: {
+                    db_type: [$("#db_type").val()]
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        let result = data['data'];
+                        $("#instance_id1").empty();
+                        $("#instance_id2").empty();
+                        for (let i = 0; i < result.length; i++) {
+                            let option = "<option value=\"" + result[i]['id'] + "\">" + result[i]['instance_name'] + "</option>";
+                            $("#instance_id1").append(option);
+                            $("#instance_id2").append(option);
+                        }
+                        $('#instance_id1').selectpicker('render');
+                        $('#instance_id1').selectpicker('refresh');
+                        $('#instance_id2').selectpicker('render');
+                        $('#instance_id2').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        // 页面加载时获取实例列表
+        $(function () {
+            load_instances();
+        });
+
+        // 数据库类型变更时重新加载实例列表
+        $("#db_type").change(function () {
+            load_instances();
+        });
+
+        // 执行参数对比
+        function compare_params() {
+            var instance_id1 = $('#instance_id1').val();
+            var instance_id2 = $('#instance_id2').val();
+            var diff_only = document.getElementById("diff_only").checked;
+
+            if (!instance_id1 || !instance_id2) {
+                alert('请选择源实例和目标实例！');
+                return;
+            }
+            if (instance_id1 === instance_id2) {
+                alert('源实例和目标实例不能相同！');
+                return;
+            }
+
+            $('#btn-compare').addClass('disabled');
+            $('#btn-compare').prop('disabled', true);
+            $("#compare-result").hide();
+            $("#compare-stats").hide();
+
+            $.ajax({
+                type: "post",
+                url: "/param/compare/",
+                dataType: "json",
+                data: {
+                    instance_id1: instance_id1,
+                    instance_id2: instance_id2,
+                    diff_only: diff_only
+                },
+                complete: function () {
+                    $('#btn-compare').removeClass('disabled');
+                    $('#btn-compare').prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        // 更新统计信息
+                        $('#same-count').text(result.same_count);
+                        $('#diff-count').text(result.diff_count);
+                        $('#total-count').text(result.total);
+                        $("#compare-stats").show();
+
+                        // 初始化表格
+                        $('#compare-list').bootstrapTable('destroy').bootstrapTable({
+                            escape: true,
+                            data: result.rows,
+                            striped: true,
+                            cache: false,
+                            pagination: true,
+                            sortable: true,
+                            sortOrder: "asc",
+                            sortName: 'variable_name',
+                            sidePagination: "client",
+                            pageNumber: 1,
+                            pageSize: 30,
+                            pageList: [20, 30, 50, 100, 500],
+                            search: true,
+                            strictSearch: false,
+                            showColumns: true,
+                            showRefresh: false,
+                            showExport: true,
+                            exportDataType: "all",
+                            minimumCountColumns: 2,
+                            clickToSelect: true,
+                            showToggle: true,
+                            cardView: false,
+                            detailView: true,
+                            detailFormatter: function (index, row) {
+                                if (row.description) {
+                                    return escapeHtml(row.description);
+                                }
+                                return '暂无描述';
+                            },
+                            locale: 'zh-CN',
+                            columns: [{
+                                title: '参数名',
+                                field: 'variable_name',
+                                sortable: true
+                            }, {
+                                title: '源实例参数值 (' + result.instance1_name + ')',
+                                field: 'instance1_value',
+                                sortable: true,
+                                formatter: function (value, row, index) {
+                                    if (row.diff_type === '值不同' || row.diff_type === '仅源实例存在') {
+                                        return "<span style='color:red;font-weight:bold;'>" + escapeHtml(value) + "</span>";
+                                    }
+                                    return escapeHtml(value);
+                                }
+                            }, {
+                                title: '目标实例参数值 (' + result.instance2_name + ')',
+                                field: 'instance2_value',
+                                sortable: true,
+                                formatter: function (value, row, index) {
+                                    if (row.diff_type === '值不同' || row.diff_type === '仅目标实例存在') {
+                                        return "<span style='color:red;font-weight:bold;'>" + escapeHtml(value) + "</span>";
+                                    }
+                                    return escapeHtml(value);
+                                }
+                            }, {
+                                title: '差异类型',
+                                field: 'diff_type',
+                                sortable: true,
+                                formatter: function (value, row, index) {
+                                    if (value === '值不同') {
+                                        return "<span class='label label-danger'>值不同</span>";
+                                    } else if (value === '仅源实例存在') {
+                                        return "<span class='label label-warning'>仅源实例存在</span>";
+                                    } else if (value === '仅目标实例存在') {
+                                        return "<span class='label label-info'>仅目标实例存在</span>";
+                                    }
+                                    return "<span class='label label-success'>一致</span>";
+                                }
+                            }, {
+                                title: '默认参数值',
+                                field: 'default_value',
+                                sortable: true,
+                                visible: false
+                            }, {
+                                title: '参数描述',
+                                field: 'description',
+                                visible: false
+                            }]
+                        });
+                        $("#compare-result").show();
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+    </script>
+{% endblock %}

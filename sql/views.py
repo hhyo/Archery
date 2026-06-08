@@ -511,6 +511,12 @@ def instance_param(request):
     return render(request, "param.html")
 
 
+@permission_required("sql.menu_param_compare", raise_exception=True)
+def param_compare(request):
+    """参数对比页面"""
+    return render(request, "param_compare.html")
+
+
 @permission_required("sql.menu_my2sql", raise_exception=True)
 def my2sql(request):
     """my2sql页面"""
