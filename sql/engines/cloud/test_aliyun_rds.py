@@ -1,5 +1,11 @@
 import simplejson as json
+import sys
+import types
 from unittest.mock import Mock
+
+aliyun_sdk = types.ModuleType("common.utils.aliyun_sdk")
+aliyun_sdk.Aliyun = Mock(name="Aliyun")
+sys.modules["common.utils.aliyun_sdk"] = aliyun_sdk
 
 from sql.engines.cloud import aliyun_rds
 from sql.engines.cloud.aliyun_rds import AliyunRDS
