@@ -831,7 +831,10 @@
                                 var template = $(div_obj_stat_tmp).html();
                                 $("#div_obj_stat-panel-body").empty();
                                 $.each(result['object_statistics'], function (i, result) {
-                                    if (result['structure']['column_list'].length > 0) {
+                                    var has_structure = result['structure']['column_list'].length > 0;
+                                    var has_table_info = result['table_info']['column_list'].length > 0;
+                                    var has_index_info = result['index_info']['column_list'].length > 0;
+                                    if (has_structure || has_table_info || has_index_info) {
                                         $("#div_obj_stat-panel-body").append(template);
                                         var tb_table_structure_id = 'tb_table_structure_' + i;
                                         var tb_table_info_id = 'tb_table_info_' + i;
@@ -841,75 +844,87 @@
                                         $('#tb_index_info').attr('id', tb_index_info_id);
 
                                         //===== TABLE STRUCTURE =====
-                                        //异步获取要动态生成的列
-                                        var columns = [];
-                                        $.each(result['structure']['column_list'], function (i, column) {
-                                            columns.push({
-                                                "field": i,
-                                                "title": column,
-                                                formatter: function (value, row, index) {
-                                                    if (value.length > 200) {
-                                                        var sql = value.substr(0, 200) + '...';
-                                                        return sql;
-                                                    } else {
-                                                        return value
+                                        if (has_structure) {
+                                            //异步获取要动态生成的列
+                                            var columns = [];
+                                            $.each(result['structure']['column_list'], function (i, column) {
+                                                columns.push({
+                                                    "field": i,
+                                                    "title": column,
+                                                    formatter: function (value, row, index) {
+                                                        if (value.length > 200) {
+                                                            var sql = value.substr(0, 200) + '...';
+                                                            return sql;
+                                                        } else {
+                                                            return value
+                                                        }
                                                     }
-                                                }
-                                            })
-                                        });
-                                        //初始化查询结果
-                                        $("#" + tb_table_structure_id).bootstrapTable('destroy').bootstrapTable({
-                                            escape: true,
-                                            data: result['structure']['rows'],
-                                            columns: columns,
-                                            detailView: true,   //是否显示父子表
-                                            //格式化详情
-                                            detailFormatter: function (index, row) {
-                                                var html = [];
-                                                $.each(row, function (key, value) {
-                                                    if (index === 0) {
-                                                        var sql = window.sqlFormatter.format(value);
-                                                        //替换所有的换行符
-                                                        sql = sql.replace(/\r\n/g, "<br>");
-                                                        sql = sql.replace(/\n/g, "<br>");
-                                                        //替换所有的空格
-                                                        sql = sql.replace(/\s/g, "&nbsp;");
-                                                        html.push('<span>' + sql + '</span>');
-                                                    }
-                                                });
-                                                return html.join('');
-                                            },
-                                        });
+                                                })
+                                            });
+                                            //初始化查询结果
+                                            $("#" + tb_table_structure_id).bootstrapTable('destroy').bootstrapTable({
+                                                escape: true,
+                                                data: result['structure']['rows'],
+                                                columns: columns,
+                                                detailView: true,   //是否显示父子表
+                                                //格式化详情
+                                                detailFormatter: function (index, row) {
+                                                    var html = [];
+                                                    $.each(row, function (key, value) {
+                                                        if (index === 0) {
+                                                            var sql = window.sqlFormatter.format(value);
+                                                            //替换所有的换行符
+                                                            sql = sql.replace(/\r\n/g, "<br>");
+                                                            sql = sql.replace(/\n/g, "<br>");
+                                                            //替换所有的空格
+                                                            sql = sql.replace(/\s/g, "&nbsp;");
+                                                            html.push('<span>' + sql + '</span>');
+                                                        }
+                                                    });
+                                                    return html.join('');
+                                                },
+                                            });
+                                        } else {
+                                            $("#" + tb_table_structure_id).replaceWith("<p>解析表结构出错或者无权限查看表结构</p>");
+                                        }
                                         //===== TABLE INFO =====
-                                        //异步获取要动态生成的列
-                                        var columns = [];
-                                        $.each(result['table_info']['column_list'], function (i, column) {
-                                            columns.push({
-                                                "field": i,
-                                                "title": column
-                                            })
-                                        });
-                                        //初始化查询结果
-                                        $("#" + tb_table_info_id).bootstrapTable('destroy').bootstrapTable({
-                                            escape: true,
-                                            data: result['table_info']['rows'],
-                                            columns: columns
-                                        });
+                                        if (has_table_info) {
+                                            //异步获取要动态生成的列
+                                            var columns = [];
+                                            $.each(result['table_info']['column_list'], function (i, column) {
+                                                columns.push({
+                                                    "field": i,
+                                                    "title": column
+                                                })
+                                            });
+                                            //初始化查询结果
+                                            $("#" + tb_table_info_id).bootstrapTable('destroy').bootstrapTable({
+                                                escape: true,
+                                                data: result['table_info']['rows'],
+                                                columns: columns
+                                            });
+                                        } else {
+                                            $("#" + tb_table_info_id).replaceWith("<p>未获取到表统计信息</p>");
+                                        }
                                         //===== INDEX INFO =====
-                                        //异步获取要动态生成的列
-                                        var columns = [];
-                                        $.each(result['index_info']['column_list'], function (i, column) {
-                                            columns.push({
-                                                "field": i,
-                                                "title": column
-                                            })
-                                        });
-                                        //初始化查询结果
-                                        $("#" + tb_index_info_id).bootstrapTable('destroy').bootstrapTable({
-                                            escape: true,
-                                            data: result['index_info']['rows'],
-                                            columns: columns
-                                        });
+                                        if (has_index_info) {
+                                            //异步获取要动态生成的列
+                                            var columns = [];
+                                            $.each(result['index_info']['column_list'], function (i, column) {
+                                                columns.push({
+                                                    "field": i,
+                                                    "title": column
+                                                })
+                                            });
+                                            //初始化查询结果
+                                            $("#" + tb_index_info_id).bootstrapTable('destroy').bootstrapTable({
+                                                escape: true,
+                                                data: result['index_info']['rows'],
+                                                columns: columns
+                                            });
+                                        } else {
+                                            $("#" + tb_index_info_id).replaceWith("<p>未获取到索引统计信息</p>");
+                                        }
                                     } else {
                                         $("#div_obj_stat-panel-body").append("<p>解析表出错或者表不存在，无法展示表信息</p>");
                                     }

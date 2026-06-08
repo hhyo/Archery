@@ -765,7 +765,10 @@ class MysqlEngine(EngineBase):
             conn.autocommit(True)
             cursor = conn.cursor(cursorclass)
             try:
-                cursor.execute(f"set session max_execution_time={max_execution_time};")
+                if self.server_fork_type == MysqlForkType.MARIADB:
+                    cursor.execute(f"set session max_statement_time={max_execution_time / 1000};")
+                else:
+                    cursor.execute(f"set session max_execution_time={max_execution_time};")
             except MySQLdb.OperationalError:
                 pass
             effect_row = cursor.execute(sql, parameters)
@@ -986,12 +989,7 @@ class MysqlEngine(EngineBase):
                 if isinstance(variables, list)
                 else "','".join(list(variables))
             )
-            db = (
-                "performance_schema"
-                if self.server_version > (5, 7)
-                else "information_schema"
-            )
-            sql = f"""select * from {db}.global_variables where variable_name in ('{variables}');"""
+            sql = f"""show global variables where variable_name in ('{variables}');"""
         else:
             sql = "show global variables;"
         return self.query(sql=sql)
