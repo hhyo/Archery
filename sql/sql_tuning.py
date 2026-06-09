@@ -5,6 +5,7 @@ import time
 from common.utils.const import SQLTuning
 from sql.engines import get_engine
 from sql.models import Instance
+from sql.engines.mysql import MysqlForkType
 from sql.utils.sql_utils import extract_tables
 
 
@@ -66,8 +67,11 @@ class SqlTuning(object):
     def sys_parameter(self):
         # 获取mysql版本信息
         server_version = self.engine.server_version
-        if server_version >= (5, 7, 6):
-            sql = self.sql_variable.replace("information_schema.global_variables", "performance_schema.global_variables")
+        if self.engine.server_fork_type != MysqlForkType.MARIADB and server_version >= (5, 7, 6):
+            sql = self.sql_variable.replace(
+                "information_schema.global_variables", 
+                "performance_schema.global_variables"
+                )
         else:
             sql = self.sql_variable
         return self.engine.query(sql=sql).to_sep_dict()
