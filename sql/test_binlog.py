@@ -13,7 +13,14 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import Client
 
-from sql.binlog import binlog_list, del_binlog, my2sql, my2sql_file
+from sql.binlog import (
+    binlog_list,
+    del_binlog,
+    my2sql,
+    my2sql_file,
+    parse_my2sql_output_line,
+    read_my2sql_output_files,
+)
 from sql.engines.models import ResultSet
 from sql.models import Instance
 
@@ -77,6 +84,114 @@ def _make_query_result(columns, rows, error=None):
     result.rows = rows
     result.error = error
     return result
+
+
+# ====================== my2sql 输出解析测试 ======================
+
+
+class TestMy2sqlOutputParser:
+    """my2sql 输出解析辅助函数测试"""
+
+    @pytest.mark.parametrize(
+        "line,extra_info,expected_sql",
+        [
+            ("INSERT INTO t1 VALUES(1)\n", "", "INSERT INTO t1 VALUES(1);"),
+            (
+                "  delete from t1 where id=1;\r\n",
+                "# at 123",
+                "delete from t1 where id=1;",
+            ),
+            (
+                "\tUpdate t1 set name='archery' where id=1",
+                "# extra",
+                "Update t1 set name='archery' where id=1;",
+            ),
+        ],
+    )
+    def test_parse_sql_line(self, line, extra_info, expected_sql):
+        """SQL 行会补充分号并保留 extra_info"""
+        row_info, current_extra_info = parse_my2sql_output_line(line, extra_info)
+
+        assert row_info["sql"] == expected_sql
+        assert current_extra_info == extra_info
+        if extra_info:
+            assert row_info["extra_info"] == extra_info
+        else:
+            assert "extra_info" not in row_info
+
+    def test_parse_comment_line_updates_extra_info(self):
+        """注释行作为下一条 SQL 的 extra_info"""
+        row_info, current_extra_info = parse_my2sql_output_line(
+            "  # datetime=2024-01-01 00:00:00\n", ""
+        )
+
+        assert row_info is None
+        assert current_extra_info == "# datetime=2024-01-01 00:00:00"
+
+    def test_parse_ignores_non_sql_line(self):
+        """非 SQL 行会被忽略且不改变 extra_info"""
+        row_info, current_extra_info = parse_my2sql_output_line("BEGIN\n", "# existing")
+
+        assert row_info is None
+        assert current_extra_info == "# existing"
+
+    def test_read_output_files_filters_and_limits_rows(self, tmp_path):
+        """仅读取普通 .sql 文件，并按 num 限制返回行数"""
+        first_file = tmp_path / "01.sql"
+        first_file.write_text(
+            "# datetime=2024-01-01 00:00:00\n"
+            "INSERT INTO t1 VALUES(1)\n"
+            "BEGIN\n"
+            "DELETE FROM t1 WHERE id=1;\n",
+            encoding="utf-8",
+        )
+        ignored_hidden_file = tmp_path / ".hidden.sql"
+        ignored_hidden_file.write_text(
+            "INSERT INTO hidden_table VALUES(1)\n", encoding="utf-8"
+        )
+        ignored_text_file = tmp_path / "notes.txt"
+        ignored_text_file.write_text(
+            "INSERT INTO text_table VALUES(1)\n", encoding="utf-8"
+        )
+        nested_dir = tmp_path / "nested"
+        nested_dir.mkdir()
+        nested_file = nested_dir / "02.sql"
+        nested_file.write_text("UPDATE t1 SET name='archery'\n", encoding="utf-8")
+
+        rows = read_my2sql_output_files(str(tmp_path), 2)
+
+        assert rows == [
+            {
+                "sql": "INSERT INTO t1 VALUES(1);",
+                "extra_info": "# datetime=2024-01-01 00:00:00",
+            },
+            {
+                "sql": "DELETE FROM t1 WHERE id=1;",
+                "extra_info": "# datetime=2024-01-01 00:00:00",
+            },
+        ]
+
+    def test_read_output_files_carries_extra_info_across_files(self, tmp_path):
+        """跨文件读取时沿用最近一次 extra_info"""
+        first_file = tmp_path / "01.sql"
+        first_file.write_text("# binlog=mysql-bin.000001\n", encoding="utf-8")
+        second_file = tmp_path / "02.sql"
+        second_file.write_text("UPDATE t1 SET id=2 WHERE id=1\n", encoding="utf-8")
+
+        rows = read_my2sql_output_files(str(tmp_path), 10)
+
+        assert rows == [
+            {
+                "sql": "UPDATE t1 SET id=2 WHERE id=1;",
+                "extra_info": "# binlog=mysql-bin.000001",
+            }
+        ]
+
+    def test_read_output_files_returns_empty_for_directory_without_sql(self, tmp_path):
+        """目录中没有可读取 SQL 文件时返回空列表"""
+        (tmp_path / "notes.txt").write_text("UPDATE t1 SET id=1\n", encoding="utf-8")
+
+        assert read_my2sql_output_files(str(tmp_path), 10) == []
 
 
 # ====================== binlog_list 测试 ======================
@@ -357,71 +472,6 @@ class TestMy2sql:
         # 验证子进程被终止
         mock_process.kill.assert_called_once()
         # 验证异步保存未触发
-        mock_async_task.assert_not_called()
-
-    @patch("sql.binlog.read_my2sql_output_files")
-    @patch("sql.binlog.async_task")
-    @patch("sql.binlog.My2SQL")
-    def test_my2sql_success_with_extra_info(
-        self,
-        mock_my2sql_cls,
-        mock_async_task,
-        mock_read_output_files,
-        client_with_super_user,
-        db_instance,
-    ):
-        """my2sql解析成功，返回SQL行及extraInfo"""
-        mock_my2sql = MagicMock()
-        mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
-        mock_my2sql.generate_args2cmd.return_value = ["my2sql", "-host", "127.0.0.1"]
-
-        extra_info = (
-            "# datetime=2026-06-09_15:52:26 database=palmmusic_item "
-            "table=col binlog=mysql-bin.002964 startpos=7658 stoppos=10463"
-        )
-        mock_read_output_files.return_value = [
-            {
-                "extra_info": extra_info,
-                "sql": "UPDATE `palmmusic_item`.`col` SET `version`=47 WHERE `colID`=0;",
-            },
-            {
-                "extra_info": extra_info,
-                "sql": "UPDATE `palmmusic_item`.`col` SET `version`=38 WHERE `colID`=1;",
-            },
-        ]
-        mock_process = MagicMock()
-        mock_process.communicate.return_value = ("", "")
-        mock_my2sql.execute_cmd.return_value = mock_process
-        mock_my2sql_cls.return_value = mock_my2sql
-
-        data = {
-            "instance_name": db_instance.instance_name,
-            "save_sql": "false",
-            "rollback": "false",
-            "num": "30",
-            "threads": "4",
-            "start_file": "mysql-bin.000001",
-            "start_pos": "",
-            "end_file": "",
-            "end_pos": "",
-            "stop_time": "",
-            "start_time": "",
-            "extra_info": "true",
-            "ignore_primary_key": "false",
-            "full_columns": "false",
-            "no_db_prefix": "false",
-            "file_per_table": "false",
-        }
-        r = client_with_super_user.post("/binlog/my2sql/", data=data)
-        result = json.loads(r.content)
-        assert result["status"] == 0
-        assert len(result["data"]) == 2
-        assert result["data"][0]["extra_info"] == extra_info
-        assert result["data"][1]["extra_info"] == extra_info
-        assert result["data"][0]["sql"].endswith(";")
-        mock_read_output_files.assert_called_once()
-        mock_process.communicate.assert_called_once()
-        mock_process.kill.assert_not_called()
         mock_async_task.assert_not_called()
 
     @patch("sql.binlog.async_task")
