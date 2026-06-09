@@ -193,6 +193,11 @@
                                         <a href="/instanceparam/">参数配置</a>
                                     </li>
                                 {% endif %}
+                                {% if perms.sql.menu_param_compare %}
+                                    <li>
+                                        <a href="/paramcompare/">参数对比</a>
+                                    </li>
+                                {% endif %}
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>

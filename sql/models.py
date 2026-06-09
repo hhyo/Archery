@@ -1005,6 +1005,7 @@ class Permission(models.Model):
             ("menu_database", "菜单 数据库管理"),
             ("menu_instance_account", "菜单 实例账号管理"),
             ("menu_param", "菜单 参数配置"),
+            ("menu_param_compare", "菜单 参数对比"),
             ("menu_data_dictionary", "菜单 数据字典"),
             ("menu_tools", "菜单 工具插件"),
             ("menu_archive", "菜单 数据归档"),
