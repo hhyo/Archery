@@ -658,6 +658,80 @@ class TestWorkflow(APITestCase):
         workflow_in_db = SqlWorkflow.objects.get(id=return_data["workflow"]["id"])
         assert workflow_in_db.status == "workflow_review_pass"
 
+    @patch("sql_api.serializers.OffLineDownLoad.pre_count_check")
+    def test_submit_offline_export_uses_can_read_and_disables_backup(
+        self, mock_pre_count_check
+    ):
+        """测试数据导出工单使用can_read权限并强制不备份"""
+        can_read = InstanceTag.objects.create(
+            tag_code="can_read", tag_name="支持查询", active=1
+        )
+        read_only_ins = Instance.objects.create(
+            instance_name="read_only_ins",
+            type="slave",
+            db_type="redis",
+            host="some_host",
+            port=6379,
+            user="ins_user",
+            password="some_str",
+        )
+        read_only_ins.resource_group.add(self.res_group.group_id)
+        read_only_ins.instance_tag.add(can_read.id)
+        check_result = ReviewSet(rows=[ReviewResult(errlevel=0, affected_rows=1)])
+        check_result.syntax_type = 3
+        mock_pre_count_check.return_value = check_result
+        json_data = {
+            "workflow": {
+                "workflow_name": "导出工单1",
+                "group_id": 1,
+                "db_name": "0",
+                "instance": read_only_ins.id,
+                "is_backup": True,
+                "is_offline_export": 1,
+                "export_format": "csv",
+            },
+            "sql_content": "get key1",
+        }
+
+        r = self.client.post("/api/v1/workflow/", json_data, format="json")
+
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        workflow = SqlWorkflow.objects.get(id=r.json()["workflow"]["id"])
+        self.assertEqual(workflow.syntax_type, 3)
+        self.assertFalse(workflow.is_backup)
+
+    def test_submit_workflow_still_requires_can_write(self):
+        """测试SQL上线工单仍然要求can_write权限"""
+        can_read = InstanceTag.objects.create(
+            tag_code="can_read", tag_name="支持查询", active=1
+        )
+        read_only_ins = Instance.objects.create(
+            instance_name="read_only_submit_ins",
+            type="slave",
+            db_type="redis",
+            host="some_host",
+            port=6379,
+            user="ins_user",
+            password="some_str",
+        )
+        read_only_ins.resource_group.add(self.res_group.group_id)
+        read_only_ins.instance_tag.add(can_read.id)
+        json_data = {
+            "workflow": {
+                "workflow_name": "上线工单1",
+                "group_id": 1,
+                "db_name": "0",
+                "instance": read_only_ins.id,
+                "is_offline_export": 0,
+            },
+            "sql_content": "set key1 value1",
+        }
+
+        r = self.client.post("/api/v1/workflow/", json_data, format="json")
+
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("你所在组未关联该实例", r.json()["errors"])
+
     def test_submit_param_is_None(self):
         """测试SQL提交，参数内容为空"""
         json_data = {

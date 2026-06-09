@@ -3,6 +3,7 @@ from django.test import TestCase, Client
 from django.conf import settings
 from django.http import HttpRequest
 from datetime import datetime, date
+from io import BytesIO
 import tempfile
 import os
 import shutil
@@ -15,6 +16,8 @@ import xml.etree.ElementTree as ET
 from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, Config, AuditEntry
 from sql.offlinedownload import (
     OffLineDownLoad,
+    StorageFileResponse,
+    get_single_export_statement,
     save_to_format_file,
     save_csv,
     save_json,
@@ -69,15 +72,178 @@ class TestOfflineDownload(TestCase):
         )
         # 设置系统配置
         Config.objects.create(item="max_export_rows", value="10000")
+        Config.objects.create(item="max_execution_time", value="60")
         Config.objects.create(item="storage_type", value="local")
 
     def tearDown(self):
         # 清理测试数据
-        SqlWorkflow.objects.all().delete()
         SqlWorkflowContent.objects.all().delete()
+        SqlWorkflow.objects.all().delete()
         Instance.objects.all().delete()
         Config.objects.all().delete()
         AuditEntry.objects.all().delete()
+
+    def test_get_single_export_statement_sql_engine_strips_comments(self):
+        """
+        测试SQL引擎语句解析 - 去除注释并拆分SQL
+        """
+        sql_list, normalized_sql = get_single_export_statement(
+            "-- comment\nSELECT * FROM test_table; SELECT 1", "mysql"
+        )
+
+        self.assertEqual(sql_list, ["SELECT * FROM test_table;", "SELECT 1"])
+        self.assertNotIn("comment", normalized_sql)
+
+    def test_get_single_export_statement_line_based_engine(self):
+        """
+        测试按行执行的引擎语句解析
+        """
+        sql_list, normalized_sql = get_single_export_statement(
+            "\nget key1\n\nset key2 value2\n", "redis"
+        )
+
+        self.assertEqual(sql_list, ["get key1", "set key2 value2"])
+        self.assertEqual(normalized_sql, "get key1\n\nset key2 value2")
+
+    def test_get_single_export_statement_native_engine(self):
+        """
+        测试原生命令引擎语句解析
+        """
+        sql_list, normalized_sql = get_single_export_statement("cmd1; cmd2; ", "mongo")
+
+        self.assertEqual(sql_list, ["cmd1", "cmd2"])
+        self.assertEqual(normalized_sql, "cmd1; cmd2")
+
+    def test_get_single_export_statement_empty_native_engine(self):
+        """
+        测试原生命令引擎空语句
+        """
+        sql_list, normalized_sql = get_single_export_statement(" ; ", "mongo")
+
+        self.assertEqual(sql_list, [])
+        self.assertEqual(normalized_sql, "")
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_empty_sql(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - 空SQL
+        """
+        offline_download = OffLineDownLoad()
+        self.workflow.sql_content = "   "
+
+        result = offline_download.pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errormessage, "没有有效的查询语句")
+        mock_get_engine.assert_called_once()
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_multiple_sql(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - 多条SQL
+        """
+        offline_download = OffLineDownLoad()
+        self.workflow.sql_content = "select 1; select 2"
+
+        result = offline_download.pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(
+            result.rows[0].errormessage, "检测到多个查询语句，只能提交一个导出查询。"
+        )
+        mock_get_engine.return_value.query_check.assert_not_called()
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_query_check_exception(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - 查询语法校验异常
+        """
+        mock_engine = MagicMock()
+        mock_engine.query_check.side_effect = Exception("check failed")
+        mock_get_engine.return_value = mock_engine
+        self.workflow.sql_content = "SELECT * FROM test_table"
+
+        result = OffLineDownLoad().pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errormessage, "check failed")
+        mock_engine.query.assert_not_called()
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_query_check_none_and_count_error_fallback(
+        self, mock_get_engine
+    ):
+        """
+        测试pre_count_check方法 - query_check为空且COUNT失败后降级limit查询
+        """
+        count_result = MagicMock()
+        count_result.error = "count error"
+        fallback_result = MagicMock()
+        fallback_result.error = None
+        fallback_result.rows = [(1,), (2,), (3,)]
+        fallback_result.affected_rows = 0
+
+        mock_engine = MagicMock()
+        mock_engine.query_check.return_value = None
+        mock_engine.filter_sql.return_value = "SELECT * FROM test_table LIMIT 10001"
+        mock_engine.query.side_effect = [count_result, fallback_result]
+        mock_get_engine.return_value = mock_engine
+        self.workflow.sql_content = "SELECT * FROM test_table"
+
+        result = OffLineDownLoad().pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].affected_rows, 3)
+        self.assertEqual(mock_engine.query.call_count, 2)
+        mock_engine.filter_sql.assert_called_once_with(
+            sql="SELECT * FROM test_table", limit_num=10001
+        )
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_count_query_exception(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - 行数统计查询异常
+        """
+        mock_engine = MagicMock()
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "SELECT * FROM test_table",
+        }
+        mock_engine.query.side_effect = Exception("count failed")
+        mock_get_engine.return_value = mock_engine
+        self.workflow.sql_content = "SELECT * FROM test_table"
+
+        result = OffLineDownLoad().pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errormessage, "count failed")
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_result_set_error_after_fallback(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - 降级查询返回错误
+        """
+        count_result = MagicMock()
+        count_result.error = "count not supported"
+        fallback_result = MagicMock()
+        fallback_result.error = "query failed"
+        fallback_result.rows = []
+        fallback_result.affected_rows = 0
+
+        mock_engine = MagicMock()
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "SELECT * FROM test_table",
+        }
+        mock_engine.filter_sql.return_value = "SELECT * FROM test_table LIMIT 10001"
+        mock_engine.query.side_effect = [count_result, fallback_result]
+        mock_get_engine.return_value = mock_engine
+        self.workflow.sql_content = "SELECT * FROM test_table"
+
+        result = OffLineDownLoad().pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errormessage, "query failed")
 
     @patch("sql.offlinedownload.get_engine")
     def test_pre_count_check_pass(self, mock_get_engine):
@@ -90,6 +256,10 @@ class TestOfflineDownload(TestCase):
         mock_result_set = MagicMock()
         mock_result_set.rows = [(500,)]
         mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "SELECT * FROM test_table",
+        }
         mock_engine.query.return_value = mock_result_set
         mock_get_engine.return_value = mock_engine
 
@@ -104,6 +274,11 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(result.warning_count, 0)
         self.assertEqual(result.rows[0].stagestatus, "行数统计完成")
         self.assertEqual(result.rows[0].affected_rows, 500)
+        mock_engine.query.assert_called_once_with(
+            db_name="test_db",
+            sql="SELECT COUNT(*) FROM (SELECT * FROM test_table) t",
+            max_execution_time=60000,
+        )
 
     @patch("sql.offlinedownload.get_engine")
     def test_pre_count_check_over_limit(self, mock_get_engine):
@@ -116,6 +291,10 @@ class TestOfflineDownload(TestCase):
         mock_result_set = MagicMock()
         mock_result_set.rows = [(15000,)]
         mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "SELECT * FROM test_table",
+        }
         mock_engine.query.return_value = mock_result_set
         mock_get_engine.return_value = mock_engine
 
@@ -137,6 +316,11 @@ class TestOfflineDownload(TestCase):
 
         # 模拟get_engine返回值
         mock_engine = MagicMock()
+        mock_engine.query_check.return_value = {
+            "bad_query": True,
+            "msg": "禁止执行该命令！",
+            "filtered_sql": "DELETE FROM test_table",
+        }
         mock_get_engine.return_value = mock_engine
 
         offline_download = OffLineDownLoad()
@@ -146,7 +330,116 @@ class TestOfflineDownload(TestCase):
         # 验证结果
         self.assertEqual(result.error_count, 1)
         self.assertEqual(result.warning_count, 0)
-        self.assertEqual(result.rows[0].errormessage, "违规语句！")
+        self.assertEqual(result.rows[0].errormessage, "禁止执行该命令！")
+        mock_engine.query.assert_not_called()
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_non_sql_query_uses_affected_rows(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - 非SQL引擎使用查询返回行数
+        """
+
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.rows = [("key1",), ("key2",)]
+        mock_result_set.affected_rows = 2
+        mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "scan 0 count 10",
+        }
+        mock_engine.filter_sql.return_value = "scan 0 count 10"
+        mock_engine.query.return_value = mock_result_set
+        mock_get_engine.return_value = mock_engine
+
+        offline_download = OffLineDownLoad()
+        self.workflow.db_type = "redis"
+        self.workflow.sql_content = "scan 0 count 10"
+        result = offline_download.pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].affected_rows, 2)
+        mock_engine.query.assert_called_once_with(
+            db_name="test_db",
+            sql="scan 0 count 10",
+            limit_num=10001,
+            max_execution_time=60000,
+        )
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_mongo_native_query(self, mock_get_engine):
+        """
+        测试pre_count_check方法 - Mongo原生命令保持原样校验
+        """
+
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.rows = ["{}"]
+        mock_result_set.affected_rows = 100
+        mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "db.follow.find().limit(100)",
+        }
+        mock_engine.filter_sql.return_value = "db.follow.find().limit(100)"
+        mock_engine.query.return_value = mock_result_set
+        mock_get_engine.return_value = mock_engine
+
+        offline_download = OffLineDownLoad()
+        self.workflow.instance.db_type = "mongo"
+        self.workflow.sql_content = "db.follow.find().limit(100)"
+        result = offline_download.pre_count_check(self.workflow)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].affected_rows, 100)
+        mock_engine.query_check.assert_called_once_with(
+            db_name="test_db", sql="db.follow.find().limit(100)"
+        )
+        mock_engine.query.assert_called_once_with(
+            db_name="test_db",
+            sql="db.follow.find().limit(100)",
+            limit_num=10001,
+            max_execution_time=60000,
+        )
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_pre_count_check_instance_uses_selected_db_without_overwriting_auth_db(
+        self, mock_get_engine
+    ):
+        """
+        测试pre_count_check方法 - Instance输入保留认证库并使用选择的业务库
+        """
+
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.rows = ["{}"]
+        mock_result_set.affected_rows = 1
+        mock_result_set.error = None
+        mock_engine.query_check.return_value = {
+            "bad_query": False,
+            "filtered_sql": "db.follow.find().limit(100)",
+        }
+        mock_engine.filter_sql.return_value = "db.follow.find().limit(100)"
+        mock_engine.query.return_value = mock_result_set
+        mock_get_engine.return_value = mock_engine
+
+        self.instance.db_type = "mongo"
+        self.instance.db_name = "admin"
+        self.instance.selected_db_name = "boomplay_follow"
+        self.instance.sql_content = "db.follow.find().limit(100)"
+        result = OffLineDownLoad().pre_count_check(self.instance)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(self.instance.db_name, "admin")
+        mock_engine.query_check.assert_called_once_with(
+            db_name="boomplay_follow", sql="db.follow.find().limit(100)"
+        )
+        mock_engine.query.assert_called_once_with(
+            db_name="boomplay_follow",
+            sql="db.follow.find().limit(100)",
+            limit_num=10001,
+            max_execution_time=60000,
+        )
 
     @patch("sql.offlinedownload.get_engine")
     @patch("sql.offlinedownload.DynamicStorage")
@@ -347,6 +640,25 @@ class TestOfflineDownload(TestCase):
         # 清理
         os.unlink(temp_file.name)
 
+    def test_save_xml_null_and_date_values(self):
+        """
+        测试save_xml方法处理NULL和date类型
+        """
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file.close()
+
+        result = [(None, date(2023, 1, 2))]
+        columns = ["id", "created_at"]
+
+        save_xml(temp_file.name, result, columns)
+
+        tree = ET.parse(temp_file.name)
+        row = tree.getroot().find("data")[0]
+        self.assertEqual(row.find("column-1").text, "(null)")
+        self.assertEqual(row.find("column-2").text, "2023-01-02")
+
+        os.unlink(temp_file.name)
+
     def test_save_xlsx(self):
         """
         测试save_xlsx方法
@@ -373,6 +685,25 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(df.iloc[1]["name"], "test2")
 
         # 清理
+        os.unlink(temp_file.name)
+
+    def test_save_xlsx_null_like_values(self):
+        """
+        测试save_xlsx方法处理None和NULL字符串
+        """
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+        temp_file.close()
+
+        result = [(1, None), (2, "NULL"), (3, "value")]
+        columns = ["id", "name"]
+
+        save_xlsx(temp_file.name, result, columns)
+
+        df = pd.read_excel(temp_file.name)
+        self.assertTrue(pd.isna(df.iloc[0]["name"]))
+        self.assertTrue(pd.isna(df.iloc[1]["name"]))
+        self.assertEqual(df.iloc[2]["name"], "value")
+
         os.unlink(temp_file.name)
 
     @patch("sql.offlinedownload.pd.DataFrame")
@@ -459,6 +790,21 @@ class TestOfflineDownload(TestCase):
         # 清理
         os.unlink(temp_file.name)
 
+    def test_save_sql_without_columns(self):
+        """
+        测试save_sql方法处理无列名场景
+        """
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".sql")
+        temp_file.close()
+
+        save_sql(temp_file.name, [(1, "test")], [])
+
+        with open(temp_file.name, "r") as f:
+            content = f.read()
+            self.assertEqual(content, "(1, 'test');\n")
+
+        os.unlink(temp_file.name)
+
     def test_save_to_format_file(self):
         """
         测试save_to_format_file方法
@@ -485,6 +831,29 @@ class TestOfflineDownload(TestCase):
 
         # 清理
         shutil.rmtree(temp_dir)
+
+    def test_save_to_format_file_supported_formats(self):
+        """
+        测试save_to_format_file方法 - 支持的所有格式分派
+        """
+        temp_dir = tempfile.mkdtemp()
+        result = [(1, "test1"), (2, "test2")]
+        columns = ["id", "name"]
+
+        try:
+            for format_type in ["json", "xml", "xlsx", "sql"]:
+                zip_file_name = save_to_format_file(
+                    format_type, result, self.workflow, columns, temp_dir
+                )
+                self.assertTrue(zip_file_name.endswith(".zip"))
+                with zipfile.ZipFile(
+                    os.path.join(temp_dir, zip_file_name), "r"
+                ) as zipf:
+                    file_list = zipf.namelist()
+                    self.assertEqual(len(file_list), 1)
+                    self.assertTrue(file_list[0].endswith(f".{format_type}"))
+        finally:
+            shutil.rmtree(temp_dir)
 
     def test_save_to_format_file_unsupported(self):
         """
@@ -568,3 +937,167 @@ class TestOfflineDownload(TestCase):
             "工单id：123，文件：missing.zip，error:文件不存在", audit_entry.extra_info
         )
         self.assertEqual(audit_entry.user_id, self.superuser.id)
+
+    @patch("django.http.response.signals.request_finished.send")
+    def test_storage_file_response_close_closes_storage(self, mock_request_finished):
+        """
+        测试StorageFileResponse关闭时同步关闭storage
+        """
+        storage = MagicMock()
+        response = StorageFileResponse(BytesIO(b"data"), storage=storage)
+
+        response.close()
+
+        storage.close.assert_called_once()
+        mock_request_finished.assert_called_once()
+
+    @patch("sql.offlinedownload.DynamicStorage")
+    def test_offline_file_download_local_success(self, mock_storage):
+        """
+        测试本地文件下载成功
+        """
+        AuditEntry.objects.all().delete()
+        mock_storage_instance = MagicMock()
+        mock_storage.return_value = mock_storage_instance
+        mock_storage_instance.exists.return_value = True
+        mock_storage_instance.open.return_value = BytesIO(b"zip-data")
+        mock_storage_instance.size.return_value = 8
+
+        request = HttpRequest()
+        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.method = "GET"
+        request.user = self.superuser
+
+        response = offline_file_download(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Disposition"], 'attachment; filename="export.zip"'
+        )
+        self.assertEqual(response["Content-Length"], "8")
+        self.assertEqual(response["Content-Encoding"], "identity")
+        mock_storage_instance.open.assert_called_once_with("export.zip", "rb")
+        self.assertEqual(AuditEntry.objects.count(), 1)
+
+    @patch("sql.offlinedownload.SysConfig")
+    @patch("sql.offlinedownload.DynamicStorage")
+    def test_offline_file_download_cloud_success(self, mock_storage, mock_sys_config):
+        """
+        测试云对象存储下载成功返回重定向信息
+        """
+        AuditEntry.objects.all().delete()
+        mock_sys_config.return_value.get.return_value = "s3c"
+        mock_storage_instance = MagicMock()
+        mock_storage.return_value = mock_storage_instance
+        mock_storage_instance.exists.return_value = True
+        mock_storage_instance.url.return_value = "https://example.com/export.zip"
+
+        request = HttpRequest()
+        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.method = "GET"
+        request.user = self.superuser
+
+        response = offline_file_download(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            json.loads(response.content),
+            {"type": "redirect", "url": "https://example.com/export.zip"},
+        )
+        mock_storage_instance.url.assert_called_once_with("export.zip")
+        self.assertEqual(AuditEntry.objects.count(), 1)
+
+    @patch("sql.offlinedownload.DynamicStorage")
+    def test_offline_file_download_local_open_exception(self, mock_storage):
+        """
+        测试本地文件打开异常
+        """
+        AuditEntry.objects.all().delete()
+        mock_storage_instance = MagicMock()
+        mock_storage.return_value = mock_storage_instance
+        mock_storage_instance.exists.return_value = True
+        mock_storage_instance.open.side_effect = Exception("open failed")
+
+        request = HttpRequest()
+        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.method = "GET"
+        request.user = self.superuser
+
+        response = offline_file_download(request)
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(
+            json.loads(response.content)["error"], "文件下载失败：请联系管理员。"
+        )
+        self.assertIn("open failed", AuditEntry.objects.last().extra_info)
+
+    @patch("sql.offlinedownload.SysConfig")
+    @patch("sql.offlinedownload.DynamicStorage")
+    def test_offline_file_download_cloud_url_exception(
+        self, mock_storage, mock_sys_config
+    ):
+        """
+        测试云对象存储生成URL异常
+        """
+        AuditEntry.objects.all().delete()
+        mock_sys_config.return_value.get.return_value = "azure"
+        mock_storage_instance = MagicMock()
+        mock_storage.return_value = mock_storage_instance
+        mock_storage_instance.exists.return_value = True
+        mock_storage_instance.url.side_effect = Exception("url failed")
+
+        request = HttpRequest()
+        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.method = "GET"
+        request.user = self.superuser
+
+        response = offline_file_download(request)
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(
+            json.loads(response.content)["error"], "文件下载失败：请联系管理员。"
+        )
+        self.assertIn("url failed", AuditEntry.objects.last().extra_info)
+
+    @patch("sql.offlinedownload.DynamicStorage")
+    def test_offline_file_download_outer_exception(self, mock_storage):
+        """
+        测试文件下载外层异常处理
+        """
+        AuditEntry.objects.all().delete()
+        mock_storage_instance = MagicMock()
+        mock_storage.return_value = mock_storage_instance
+        mock_storage_instance.exists.side_effect = Exception("exists failed")
+
+        request = HttpRequest()
+        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.method = "GET"
+        request.user = self.superuser
+
+        response = offline_file_download(request)
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(
+            json.loads(response.content)["error"], "内部错误，请联系管理员。"
+        )
+        self.assertIn("exists failed", AuditEntry.objects.last().extra_info)
+
+    @patch("sql.offlinedownload.DynamicStorage")
+    def test_offline_file_download_head_skips_audit(self, mock_storage):
+        """
+        测试HEAD请求不记录审计日志
+        """
+        AuditEntry.objects.all().delete()
+        mock_storage_instance = MagicMock()
+        mock_storage.return_value = mock_storage_instance
+        mock_storage_instance.exists.return_value = False
+
+        request = HttpRequest()
+        request.GET = {"file_name": "missing.zip", "workflow_id": "123"}
+        request.method = "HEAD"
+        request.user = self.superuser
+
+        response = offline_file_download(request)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(AuditEntry.objects.count(), 0)
