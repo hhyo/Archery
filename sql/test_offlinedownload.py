@@ -148,7 +148,9 @@ class TestOfflineDownload(TestCase):
         result = offline_download.pre_count_check(self.workflow)
 
         self.assertEqual(result.error_count, 1)
-        self.assertEqual(result.rows[0].errormessage, "检测到多个查询语句，只能提交一个导出查询。")
+        self.assertEqual(
+            result.rows[0].errormessage, "检测到多个查询语句，只能提交一个导出查询。"
+        )
         mock_get_engine.return_value.query_check.assert_not_called()
 
     @patch("sql.offlinedownload.get_engine")
@@ -844,7 +846,9 @@ class TestOfflineDownload(TestCase):
                     format_type, result, self.workflow, columns, temp_dir
                 )
                 self.assertTrue(zip_file_name.endswith(".zip"))
-                with zipfile.ZipFile(os.path.join(temp_dir, zip_file_name), "r") as zipf:
+                with zipfile.ZipFile(
+                    os.path.join(temp_dir, zip_file_name), "r"
+                ) as zipf:
                     file_list = zipf.namelist()
                     self.assertEqual(len(file_list), 1)
                     self.assertTrue(file_list[0].endswith(f".{format_type}"))
@@ -1073,7 +1077,9 @@ class TestOfflineDownload(TestCase):
         response = offline_file_download(request)
 
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(json.loads(response.content)["error"], "内部错误，请联系管理员。")
+        self.assertEqual(
+            json.loads(response.content)["error"], "内部错误，请联系管理员。"
+        )
         self.assertIn("exists failed", AuditEntry.objects.last().extra_info)
 
     @patch("sql.offlinedownload.DynamicStorage")
