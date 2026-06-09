@@ -359,6 +359,71 @@ class TestMy2sql:
         # 验证异步保存未触发
         mock_async_task.assert_not_called()
 
+    @patch("sql.binlog.read_my2sql_output_files")
+    @patch("sql.binlog.async_task")
+    @patch("sql.binlog.My2SQL")
+    def test_my2sql_success_with_extra_info(
+        self,
+        mock_my2sql_cls,
+        mock_async_task,
+        mock_read_output_files,
+        client_with_super_user,
+        db_instance,
+    ):
+        """my2sql解析成功，返回SQL行及extraInfo"""
+        mock_my2sql = MagicMock()
+        mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
+        mock_my2sql.generate_args2cmd.return_value = ["my2sql", "-host", "127.0.0.1"]
+
+        extra_info = (
+            "# datetime=2026-06-09_15:52:26 database=palmmusic_item "
+            "table=col binlog=mysql-bin.002964 startpos=7658 stoppos=10463"
+        )
+        mock_read_output_files.return_value = [
+            {
+                "extra_info": extra_info,
+                "sql": "UPDATE `palmmusic_item`.`col` SET `version`=47 WHERE `colID`=0;",
+            },
+            {
+                "extra_info": extra_info,
+                "sql": "UPDATE `palmmusic_item`.`col` SET `version`=38 WHERE `colID`=1;",
+            },
+        ]
+        mock_process = MagicMock()
+        mock_process.communicate.return_value = ("", "")
+        mock_my2sql.execute_cmd.return_value = mock_process
+        mock_my2sql_cls.return_value = mock_my2sql
+
+        data = {
+            "instance_name": db_instance.instance_name,
+            "save_sql": "false",
+            "rollback": "false",
+            "num": "30",
+            "threads": "4",
+            "start_file": "mysql-bin.000001",
+            "start_pos": "",
+            "end_file": "",
+            "end_pos": "",
+            "stop_time": "",
+            "start_time": "",
+            "extra_info": "true",
+            "ignore_primary_key": "false",
+            "full_columns": "false",
+            "no_db_prefix": "false",
+            "file_per_table": "false",
+        }
+        r = client_with_super_user.post("/binlog/my2sql/", data=data)
+        result = json.loads(r.content)
+        assert result["status"] == 0
+        assert len(result["data"]) == 2
+        assert result["data"][0]["extra_info"] == extra_info
+        assert result["data"][1]["extra_info"] == extra_info
+        assert result["data"][0]["sql"].endswith(";")
+        mock_read_output_files.assert_called_once()
+        mock_process.communicate.assert_called_once()
+        mock_process.kill.assert_not_called()
+        mock_async_task.assert_not_called()
+
     @patch("sql.binlog.async_task")
     @patch("sql.binlog.My2SQL")
     def test_my2sql_no_rows_with_stderr(
@@ -611,22 +676,25 @@ class TestMy2sql:
         assert result["status"] == 0
         assert len(result["data"]) == 2
 
+    @patch("sql.binlog.read_my2sql_output_files")
     @patch("sql.binlog.async_task")
     @patch("sql.binlog.My2SQL")
     def test_my2sql_extra_options(
-        self, mock_my2sql_cls, mock_async_task, client_with_super_user, db_instance
+        self,
+        mock_my2sql_cls,
+        mock_async_task,
+        mock_read_output_files,
+        client_with_super_user,
+        db_instance,
     ):
         """测试 extra_info、ignore_primary_key、full_columns 等选项"""
         mock_my2sql = MagicMock()
         mock_my2sql.check_args.return_value = {"status": 0, "msg": "ok", "data": {}}
         mock_my2sql.generate_args2cmd.return_value = ["my2sql"]
+        mock_read_output_files.return_value = [{"sql": "INSERT INTO t1 VALUES(1);"}]
 
         mock_process = MagicMock()
-        mock_process.stdout.readline.side_effect = [
-            "INSERT INTO t1 VALUES(1)",
-            "",
-        ]
-        mock_process.stderr.read.return_value = ""
+        mock_process.communicate.return_value = ("", "")
         mock_my2sql.execute_cmd.return_value = mock_process
         mock_my2sql_cls.return_value = mock_my2sql
 

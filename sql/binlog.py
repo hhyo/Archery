@@ -2,6 +2,8 @@
 import MySQLdb
 import logging
 import os
+import shutil
+import tempfile
 import time
 import traceback
 import shlex
@@ -20,6 +22,40 @@ from sql.notify import notify_for_my2sql
 from .models import Instance
 
 logger = logging.getLogger("default")
+
+
+def parse_my2sql_output_line(line, current_extra_info):
+    output_line = line.rstrip("\r\n")
+    content = output_line.lstrip()
+    if content.startswith("#"):
+        return None, content
+    if content[0:6].upper() in ("INSERT", "DELETE", "UPDATE"):
+        sql = content if content.endswith(";") else content + ";"
+        row_info = {"sql": sql}
+        if current_extra_info:
+            row_info["extra_info"] = current_extra_info
+        return row_info, current_extra_info
+    return None, current_extra_info
+
+
+def read_my2sql_output_files(output_dir, num):
+    rows = []
+    current_extra_info = ""
+    for root, _, files in os.walk(output_dir):
+        for file_name in sorted(files):
+            if not file_name.endswith(".sql") or file_name.startswith("."):
+                continue
+            file_path = os.path.join(root, file_name)
+            with open(file_path, encoding="utf-8") as sql_file:
+                for line in sql_file:
+                    row_info, current_extra_info = parse_my2sql_output_line(
+                        line, current_extra_info
+                    )
+                    if row_info:
+                        rows.append(row_info)
+                        if len(rows) >= num:
+                            return rows
+    return rows
 
 
 @permission_required("sql.menu_my2sql", raise_exception=True)
@@ -136,6 +172,11 @@ def my2sql(request):
     my2sql = My2SQL()
     username, password = instance.get_username_password()
     # 准备参数
+    temp_output_dir = tempfile.mkdtemp(prefix="my2sql_preview_")
+    output_to_screen = True
+    if extra_info:
+        output_to_screen = False
+
     args = {
         "host": instance.host,
         "user": username,
@@ -157,7 +198,8 @@ def my2sql(request):
         "full-columns": full_columns,
         "do-not-add-prifixDb": no_db_prefix,
         "file-per-table": file_per_table,
-        "output-toScreen": True,
+        "output-toScreen": output_to_screen,
+        "output-dir": temp_output_dir,
     }
 
     # 参数检查
@@ -171,34 +213,52 @@ def my2sql(request):
 
     # 执行命令
     try:
-        p = my2sql.execute_cmd(cmd_args)
-        # 读取前num行后结束
         rows = []
-        n = 1
-        for line in iter(p.stdout.readline, ""):
-            if n <= num and isinstance(line, str):
-                if line[0:6].upper() in ("INSERT", "DELETE", "UPDATE"):
-                    n = n + 1
-                    row_info = {}
-                    row_info["sql"] = line.rstrip("\r\n") + ";"
-                    rows.append(row_info)
-            else:
-                break
+        stderr = ""
+        p = my2sql.execute_cmd(cmd_args)
+        if extra_info:
+            _, stderr = p.communicate()
+            rows = read_my2sql_output_files(temp_output_dir, num)
+        else:
+            # 读取前num行后结束
+            n = 1
+            current_extra_info = ""
+            for line in iter(p.stdout.readline, ""):
+                if n <= num and isinstance(line, str):
+                    row_info, current_extra_info = parse_my2sql_output_line(
+                        line, current_extra_info
+                    )
+                    if row_info:
+                        n = n + 1
+                        rows.append(row_info)
+                else:
+                    break
 
-        if rows.__len__() == 0:
-            # 判断是否有异常
-            stderr = p.stderr.read()
-            if stderr and isinstance(stderr, str):
-                result["status"] = 1
-                result["msg"] = stderr
-                return HttpResponse(json.dumps(result), content_type="application/json")
-        # 终止子进程
-        p.kill()
+            if rows.__len__() == 0:
+                # 判断是否有异常
+                stderr = p.stderr.read()
+                if stderr and isinstance(stderr, str):
+                    result["status"] = 1
+                    result["msg"] = stderr
+                    return HttpResponse(
+                        json.dumps(result), content_type="application/json"
+                    )
+            # 终止子进程
+            p.kill()
+
+        if rows.__len__() == 0 and stderr and isinstance(stderr, str):
+            result["status"] = 1
+            result["msg"] = stderr
+            return HttpResponse(json.dumps(result), content_type="application/json")
+
         result["data"] = rows
     except Exception as e:
         logger.error(traceback.format_exc())
         result["status"] = 1
         result["msg"] = str(e)
+    finally:
+        if temp_output_dir:
+            shutil.rmtree(temp_output_dir, ignore_errors=True)
 
     # 异步保存到文件
     if save_sql:
