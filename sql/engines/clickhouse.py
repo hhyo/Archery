@@ -639,8 +639,6 @@ class ClickHouseEngine(EngineBase):
             table_metas.append(_meta)
         return table_metas
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     def processlist(self, command_type, **kwargs):
         """获取连接信息"""
         sql = """select
@@ -678,17 +676,7 @@ class ClickHouseEngine(EngineBase):
             return ResultSet(full_sql="")
         return self.execute(sql=kill_sql)
 
-<<<<<<< HEAD
-    def tablespace(self, offset=0, row_count=14):
-=======
-    def tablespace(self, offset=0, row_count=14, search=""):
->>>>>>> 7fb2775 (fix(search):修复Top表空间的后端搜索功能)
-=======
     def tablespace(self, offset=0, row_count=14, schema_search=""):
->>>>>>> 707b37f (代码优化)
-=======
-    def tablespace(self, offset=0, row_count=14, schema_search=""):
->>>>>>> 24ccc01 (修复bug)
         """获取表空间信息"""
         search_condition = ""
         if schema_search:
