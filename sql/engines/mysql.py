@@ -766,9 +766,13 @@ class MysqlEngine(EngineBase):
             cursor = conn.cursor(cursorclass)
             try:
                 if self.server_fork_type == MysqlForkType.MARIADB:
-                    cursor.execute(f"set session max_statement_time={max_execution_time / 1000};")
+                    cursor.execute(
+                        f"set session max_statement_time={max_execution_time / 1000};"
+                    )
                 else:
-                    cursor.execute(f"set session max_execution_time={max_execution_time};")
+                    cursor.execute(
+                        f"set session max_execution_time={max_execution_time};"
+                    )
             except MySQLdb.OperationalError:
                 pass
             effect_row = cursor.execute(sql, parameters)
