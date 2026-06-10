@@ -13,6 +13,7 @@ from django.views.decorators.cache import cache_page
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.convert import Convert
 from sql.engines import get_engine
+from sql.services.resource_service import list_instance_resources
 from sql.plugins.schemasync import SchemaSync
 from sql.utils.sql_utils import filter_db_list
 from .models import Instance, ParamTemplate, ParamHistory
@@ -485,107 +486,13 @@ def instance_resource(request):
     :param request:
     :return:
     """
-    instance_id = request.GET.get("instance_id")
-    instance_name = request.GET.get("instance_name")
-    db_name = request.GET.get("db_name", "")
-    schema_name = request.GET.get("schema_name", "")
-    tb_name = request.GET.get("tb_name", "")
-
-    resource_type = request.GET.get("resource_type")
-    if instance_id:
-        # 校验实例ID格式
-        try:
-            int(instance_id)
-        except (TypeError, ValueError) as e:
-            logger.error(f"实例ID不合法：{instance_id}，异常详情：{e}")
-            result = {"status": 1, "msg": "实例ID不合法", "data": []}
-            return HttpResponse(json.dumps(result), content_type="application/json")
-        try:
-            instance = Instance.objects.get(id=instance_id)
-        except Instance.DoesNotExist as e:
-            logger.error(f"实例不存在：{instance_id}，异常详情：{e}")
-            result = {"status": 1, "msg": "实例不存在", "data": []}
-            return HttpResponse(json.dumps(result), content_type="application/json")
-    else:
-        try:
-            instance = Instance.objects.get(instance_name=instance_name)
-        except Instance.DoesNotExist as e:
-            logger.error(f"实例不存在：{instance_name}，异常详情：{e}")
-            result = {"status": 1, "msg": "实例不存在", "data": []}
-            return HttpResponse(json.dumps(result), content_type="application/json")
-    result = {"status": 0, "msg": "ok", "data": []}
-
-    try:
-        query_engine = get_engine(instance=instance)
-        db_name = query_engine.escape_string(db_name)
-        schema_name = query_engine.escape_string(schema_name)
-        tb_name = query_engine.escape_string(tb_name)
-        if resource_type == "database":
-            resource = query_engine.get_all_databases()
-            resource.rows = filter_db_list(
-                db_list=resource.rows,
-                db_name_regex=query_engine.instance.show_db_name_regex,
-                is_match_regex=True,
-            )
-            resource.rows = filter_db_list(
-                db_list=resource.rows,
-                db_name_regex=query_engine.instance.denied_db_name_regex,
-                is_match_regex=False,
-            )
-        elif resource_type == "schema" and db_name:
-            resource = query_engine.get_all_schemas(db_name=db_name)
-        elif resource_type == "table" and db_name:
-            resource = query_engine.get_all_tables(
-                db_name=db_name, schema_name=schema_name
-            )
-        elif resource_type == "column" and db_name and tb_name:
-            resource = query_engine.get_all_columns_by_tb(
-                db_name=db_name, tb_name=tb_name, schema_name=schema_name
-            )
-        else:
-            raise TypeError("不支持的资源类型或者参数不完整！")
-    except Exception as msg:
-        logger.error(f"获取实例资源失败，异常详情：{msg}")
-        result["status"] = 1
-        result["msg"] = "获取实例资源失败，请联系管理员"
-    else:
-        if resource.error:
-            result["status"] = 1
-            result["msg"] = resource.error
-        else:
-            result["data"] = resource.rows
-    return HttpResponse(json.dumps(result), content_type="application/json")
-
-
-def describe(request):
-    """获取表结构"""
-    instance_name = request.POST.get("instance_name")
-    try:
-        instance = Instance.objects.get(instance_name=instance_name)
-    except Instance.DoesNotExist as e:
-        logger.error(f"实例不存在：{instance_name}，异常详情：{e}")
-        result = {"status": 1, "msg": "实例不存在", "data": []}
-        return HttpResponse(json.dumps(result), content_type="application/json")
-    db_name = request.POST.get("db_name")
-    schema_name = request.POST.get("schema_name")
-    tb_name = request.POST.get("tb_name")
-
-    result = {"status": 0, "msg": "ok", "data": []}
-
-    try:
-        query_engine = get_engine(instance=instance)
-        db_name = query_engine.escape_string(db_name)
-        schema_name = query_engine.escape_string(schema_name)
-        tb_name = query_engine.escape_string(tb_name)
-        query_result = query_engine.describe_table(
-            db_name, tb_name, schema_name=schema_name
-        )
-        result["data"] = query_result.__dict__
-    except Exception as msg:
-        logger.error(f"获取表结构失败，异常详情：{msg}")
-        result["status"] = 1
-        result["msg"] = "获取表结构失败，请联系管理员"
-    if result["data"].get("error"):
-        result["status"] = 1
-        result["msg"] = result["data"]["error"]
+    result = list_instance_resources(
+        user=request.user,
+        resource_type=request.GET.get("resource_type"),
+        instance_id=request.GET.get("instance_id"),
+        instance_name=request.GET.get("instance_name"),
+        db_name=request.GET.get("db_name", ""),
+        schema_name=request.GET.get("schema_name", ""),
+        tb_name=request.GET.get("tb_name", ""),
+    )
     return HttpResponse(json.dumps(result), content_type="application/json")

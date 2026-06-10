@@ -1,6 +1,6 @@
 import logging
 
-from rest_framework import views, generics, status, serializers
+from rest_framework import views, generics, status, serializers, permissions
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from sql.utils.sql_utils import filter_db_list
@@ -239,6 +239,8 @@ class InstanceResource(views.APIView):
 
 class TableInstanceLookup(views.APIView):
     """按表名查询所属实例列表。"""
+
+    permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
         summary="按表名查询所属实例",

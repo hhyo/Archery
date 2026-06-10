@@ -359,7 +359,7 @@
         $("#instance_name").change(function () {
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
@@ -408,7 +408,7 @@
         $("#db_name").change(function () {
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),

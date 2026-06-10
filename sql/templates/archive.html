@@ -391,7 +391,7 @@
         $("#src_instance_name").change(function () {
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#src_instance_name").val(),
@@ -422,7 +422,7 @@
         $("#dest_instance_name").change(function () {
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#dest_instance_name").val(),
@@ -455,7 +455,7 @@
         $("#src_db_name").change(function () {
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#src_instance_name").val(),
@@ -486,7 +486,7 @@
         $("#dest_db_name").change(function () {
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#dest_instance_name").val(),

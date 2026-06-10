@@ -2,3 +2,10 @@ venv
 env
 .env
 local_settings.py
+node_modules/
+.git/
+Dockerfile*
+.dockerignore
+*.log*
+.env*
+coverage/

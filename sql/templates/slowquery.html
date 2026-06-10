@@ -140,7 +140,7 @@
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name option:selected").text(),
@@ -195,7 +195,7 @@
             $(function () {
                 $.ajax({
                     type: "get",
-                    url: "/group/user_all_instances/",
+                    url: "/api/v1/sqlquery/instances/",
                     dataType: "json",
                     data: {
                         db_type: ['mysql', 'redis']

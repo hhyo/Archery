@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.permission import superuser_required
 from common.utils.convert import Convert
+from sql.services.resource_service import list_user_accessible_instances
 from sql.models import ResourceGroup, Users, Instance
 from sql.utils.resource_group import user_instances
 from sql.utils.workflow_audit import Audit
@@ -157,17 +158,12 @@ def instances(request):
 
 def user_all_instances(request):
     """获取用户所有实例列表（通过资源组间接关联）"""
-    user = request.user
-    type = request.GET.get("type")
-    db_type = request.GET.getlist("db_type[]")
-    tag_codes = request.GET.getlist("tag_codes[]")
-    instances = (
-        user_instances(user, type, db_type, tag_codes)
-        .order_by(Convert("instance_name", "gbk").asc())
-        .values("id", "type", "db_type", "instance_name")
+    result = list_user_accessible_instances(
+        user=request.user,
+        type=request.GET.get("type"),
+        db_type=request.GET.getlist("db_type[]"),
+        tag_codes=request.GET.getlist("tag_codes[]"),
     )
-    rows = [row for row in instances]
-    result = {"status": 0, "msg": "ok", "data": rows}
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 
