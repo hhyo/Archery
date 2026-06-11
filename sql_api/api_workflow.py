@@ -47,6 +47,7 @@ logger = logging.getLogger("default")
 
 
 class ExecuteCheck(views.APIView):
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
@@ -81,11 +82,10 @@ class WorkflowList(generics.ListAPIView):
     列出所有的workflow或者提交一条新的workflow
     """
 
-    permission_classes = [permissions.IsAuthenticated]
-
     filterset_class = WorkflowFilter
     pagination_class = CustomizedPagination
     serializer_class = WorkflowContentSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """
@@ -120,7 +120,7 @@ class WorkflowList(generics.ListAPIView):
         description="列出所有SQL上线工单（过滤，分页）",
     )
     def get(self, request):
-        workflows = self.filter_queryset(self.queryset)
+        workflows = self.filter_queryset(self.get_queryset())
         page_wf = self.paginate_queryset(queryset=workflows)
         serializer_obj = self.get_serializer(page_wf, many=True)
         data = {"data": serializer_obj.data}

@@ -103,9 +103,31 @@ class TestView(TransactionTestCase):
         )
         # 慢查询建表
         with connection.cursor() as cursor:
-            with open("src/init_sql/mysql_slow_query_review.sql") as fp:
-                content = fp.read()
-                cursor.execute(content)
+            if connection.vendor == "sqlite":
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS mysql_slow_query_review (
+                        checksum TEXT PRIMARY KEY,
+                        fingerprint TEXT,
+                        sample TEXT,
+                        first_seen TEXT,
+                        last_seen TEXT,
+                        reviewed_by TEXT,
+                        reviewed_on TEXT,
+                        comments TEXT
+                    )
+                    """)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS mysql_slow_query_review_history (
+                        checksum TEXT,
+                        sample TEXT,
+                        ts_min TEXT,
+                        ts_max TEXT
+                    )
+                    """)
+            else:
+                with open("src/init_sql/mysql_slow_query_review.sql") as fp:
+                    content = fp.read()
+                    cursor.execute(content)
 
     def tearDown(self):
         self.sys_config.purge()
@@ -117,9 +139,13 @@ class TestView(TransactionTestCase):
         QueryPrivilegesApply.objects.all().delete()
         ResourceGroup.objects.all().delete()
         with connection.cursor() as cursor:
-            cursor.execute(
-                "DROP table mysql_slow_query_review,mysql_slow_query_review_history"
-            )
+            if connection.vendor == "sqlite":
+                cursor.execute("DROP TABLE IF EXISTS mysql_slow_query_review")
+                cursor.execute("DROP TABLE IF EXISTS mysql_slow_query_review_history")
+            else:
+                cursor.execute(
+                    "DROP table mysql_slow_query_review,mysql_slow_query_review_history"
+                )
 
     def test_index(self):
         """测试index页面"""
@@ -512,9 +538,9 @@ class TestQuery(TransactionTestCase):
         archer_config = SysConfig()
         archer_config.set("disable_star", False)
 
-    @patch("sql.query.user_instances")
-    @patch("sql.query.get_engine")
-    @patch("sql.query.query_priv_check")
+    @patch("sql.services.sqlquery_service.user_instances")
+    @patch("sql.services.sqlquery_service.get_engine")
+    @patch("sql.services.sqlquery_service.query_priv_check")
     def testCorrectSQL(self, _priv_check, _get_engine, _user_instances):
         c = Client()
         some_sql = "select some from some_table limit 100;"
@@ -522,7 +548,7 @@ class TestQuery(TransactionTestCase):
         some_limit = 100
         c.force_login(self.u1)
         r = c.post(
-            "/query/",
+            "/api/v1/sqlquery/execute/",
             data={
                 "instance_name": self.slave1.instance_name,
                 "sql_content": some_sql,
@@ -530,7 +556,8 @@ class TestQuery(TransactionTestCase):
                 "limit_num": some_limit,
             },
         )
-        self.assertEqual(r.status_code, 403)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["status"], 1)
         c.force_login(self.u2)
         q_result = ResultSet(full_sql=some_sql, rows=["value"])
         q_result.column_list = ["some"]
@@ -542,6 +569,7 @@ class TestQuery(TransactionTestCase):
         }
         _get_engine.return_value.filter_sql.return_value = some_sql
         _get_engine.return_value.query.return_value = q_result
+        _get_engine.return_value.thread_id = None
         _get_engine.return_value.seconds_behind_master = 100
         _priv_check.return_value = {
             "status": 0,
@@ -549,7 +577,7 @@ class TestQuery(TransactionTestCase):
         }
         _user_instances.return_value.get.return_value = self.slave1
         r = c.post(
-            "/query/",
+            "/api/v1/sqlquery/execute/",
             data={
                 "instance_name": self.slave1.instance_name,
                 "sql_content": some_sql,
@@ -570,9 +598,9 @@ class TestQuery(TransactionTestCase):
         self.assertEqual(r_json["data"]["column_list"], ["some"])
         self.assertEqual(r_json["data"]["seconds_behind_master"], 100)
 
-    @patch("sql.query.user_instances")
-    @patch("sql.query.get_engine")
-    @patch("sql.query.query_priv_check")
+    @patch("sql.services.sqlquery_service.user_instances")
+    @patch("sql.services.sqlquery_service.get_engine")
+    @patch("sql.services.sqlquery_service.query_priv_check")
     def testSQLWithoutLimit(self, _priv_check, _get_engine, _user_instances):
         c = Client()
         some_limit = 100
@@ -590,13 +618,15 @@ class TestQuery(TransactionTestCase):
         }
         _get_engine.return_value.filter_sql.return_value = sql_with_limit
         _get_engine.return_value.query.return_value = q_result
+        _get_engine.return_value.thread_id = None
+        _get_engine.return_value.seconds_behind_master = 0
         _priv_check.return_value = {
             "status": 0,
             "data": {"limit_num": 100, "priv_check": True},
         }
         _user_instances.return_value.get.return_value = self.slave1
         r = c.post(
-            "/query/",
+            "/api/v1/sqlquery/execute/",
             data={
                 "instance_name": self.slave1.instance_name,
                 "sql_content": sql_without_limit,
@@ -616,7 +646,7 @@ class TestQuery(TransactionTestCase):
         self.assertEqual(r_json["data"]["rows"], ["value"])
         self.assertEqual(r_json["data"]["column_list"], ["some"])
 
-    @patch("sql.query.query_priv_check")
+    @patch("sql.services.sqlquery_service.query_priv_check")
     def testStarOptionOn(self, _priv_check):
         c = Client()
         c.force_login(self.u2)
@@ -630,7 +660,7 @@ class TestQuery(TransactionTestCase):
         archer_config = SysConfig()
         archer_config.set("disable_star", True)
         r = c.post(
-            "/query/",
+            "/api/v1/sqlquery/execute/",
             data={
                 "instance_name": self.slave1.instance_name,
                 "sql_content": sql_with_star,
@@ -660,7 +690,7 @@ class TestQuery(TransactionTestCase):
             "limit": 14,
             "offset": 0,
         }
-        r = c.get("/query/querylog/", data=data)
+        r = c.get("/api/v1/sqlquery/logs/", data=data)
         self.assertEqual(r.json()["total"], 1)
 
     def test_star(self):
@@ -668,7 +698,7 @@ class TestQuery(TransactionTestCase):
         c = Client()
         c.force_login(self.superuser1)
         r = c.post(
-            "/query/favorite/",
+            "/api/v1/sqlquery/favorites/",
             data={
                 "query_log_id": self.query_log.id,
                 "star": "true",
@@ -684,7 +714,7 @@ class TestQuery(TransactionTestCase):
         c = Client()
         c.force_login(self.superuser1)
         r = c.post(
-            "/query/favorite/",
+            "/api/v1/sqlquery/favorites/",
             data={"query_log_id": self.query_log.id, "star": "false", "alias": ""},
         )
         r_json = r.json()

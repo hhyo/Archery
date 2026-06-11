@@ -1,0 +1,306 @@
+openapi: 3.0.3
+info:
+  title: SQLQuery Interface API
+  version: 1.0.0
+  description: |
+    Canonical DRF contracts for the SQL query page refactor.
+
+    Current page compatibility is preserved through legacy aliases:
+    - `/group/user_all_instances/` -> `/api/v1/sqlquery/instances/`
+    - `/instance/instance_resource/` -> `/api/v1/sqlquery/resources/`
+    - `/query/` -> `/api/v1/sqlquery/execute/`
+    - `/query/querylog/` -> `/api/v1/sqlquery/logs/`
+    - `/query/favorite/` -> `/api/v1/sqlquery/favorites/`
+
+paths:
+  /api/v1/sqlquery/instances/:
+    get:
+      summary: Get all instances accessible to the current user
+      operationId: listSqlqueryInstances
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: db_type
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - in: query
+          name: tag_codes
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstanceListResponse'
+
+  /api/v1/sqlquery/resources/:
+    get:
+      summary: Get database or table resources for one instance
+      operationId: listSqlqueryResources
+      parameters:
+        - in: query
+          name: instance_name
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: resource_type
+          required: true
+          schema:
+            type: string
+            enum: [database, table]
+        - in: query
+          name: db_name
+          schema:
+            type: string
+        - in: query
+          name: schema_name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success or business error envelope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+
+  /api/v1/sqlquery/execute/:
+    post:
+      summary: Execute one SQL query for the current user
+      operationId: executeSqlquery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SqlQueryExecutionRequest'
+      responses:
+        '200':
+          description: Success or business error envelope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SqlQueryExecutionResponse'
+
+  /api/v1/sqlquery/logs/:
+    get:
+      summary: Get query history rows for bootstrap-table
+      operationId: listSqlqueryLogs
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: star
+          schema:
+            oneOf:
+              - type: string
+              - type: boolean
+        - in: query
+          name: query_log_id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: History result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryLogListResponse'
+
+  /api/v1/sqlquery/favorites/:
+    post:
+      summary: Favorite or unfavorite one query log
+      operationId: mutateSqlqueryFavorite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FavoriteMutationRequest'
+      responses:
+        '200':
+          description: Mutation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleStatusResponse'
+
+components:
+  schemas:
+    AccessibleInstanceItem:
+      type: object
+      required: [id, type, db_type, instance_name]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+        db_type:
+          type: string
+        instance_name:
+          type: string
+
+    InstanceListResponse:
+      type: object
+      required: [status, msg, data]
+      properties:
+        status:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessibleInstanceItem'
+
+    ResourceListResponse:
+      type: object
+      required: [status, msg, data]
+      properties:
+        status:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: integer
+
+    SqlQueryExecutionRequest:
+      type: object
+      required: [instance_name, db_name, sql_content, limit_num]
+      properties:
+        instance_name:
+          type: string
+        db_name:
+          type: string
+        schema_name:
+          type: string
+        tb_name:
+          type: string
+        sql_content:
+          type: string
+        limit_num:
+          type: integer
+          minimum: 0
+
+    SqlQueryExecutionPayload:
+      type: object
+      properties:
+        column_list:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            type: array
+            items: {}
+        query_time:
+          type: number
+        mask_time:
+          type: number
+        full_sql:
+          type: string
+        seconds_behind_master:
+          type: number
+        error:
+          type: string
+      additionalProperties: true
+
+    SqlQueryExecutionResponse:
+      type: object
+      required: [status, msg, data]
+      properties:
+        status:
+          type: integer
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/SqlQueryExecutionPayload'
+
+    QueryLogItem:
+      type: object
+      required: [id, instance_name, db_name, sqllog, effect_row, cost_time, user_display, favorite, alias, create_time]
+      properties:
+        id:
+          type: integer
+        instance_name:
+          type: string
+        db_name:
+          type: string
+        sqllog:
+          type: string
+        effect_row:
+          type: integer
+        cost_time:
+          type: number
+        user_display:
+          type: string
+        favorite:
+          type: boolean
+        alias:
+          type: string
+        create_time:
+          type: string
+
+    QueryLogListResponse:
+      type: object
+      required: [total, rows]
+      properties:
+        total:
+          type: integer
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryLogItem'
+
+    FavoriteMutationRequest:
+      type: object
+      required: [query_log_id, star]
+      properties:
+        query_log_id:
+          type: integer
+          minimum: 1
+        star:
+          oneOf:
+            - type: boolean
+            - type: string
+        alias:
+          type: string
+
+    SimpleStatusResponse:
+      type: object
+      required: [status, msg]
+      properties:
+        status:
+          type: integer
+        msg:
+          type: string

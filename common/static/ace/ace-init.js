@@ -130,7 +130,7 @@ function setColumnsCompleteData(result) {
     } else {
         $.ajax({
             type: "get",
-            url: "/instance/instance_resource/",
+            url: "/api/v1/sqlquery/resources/",
             dataType: "json",
             data: {
                 instance_name: $("#instance_name").val(),

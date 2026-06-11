@@ -614,7 +614,7 @@
             $(function () {
                 $.ajax({
                     type: "get",
-                    url: "/group/user_all_instances/",
+                    url: "/api/v1/sqlquery/instances/",
                     dataType: "json",
                     data: {
                         db_type: ['mysql', 'mssql', 'oracle', 'clickhouse']
@@ -682,7 +682,7 @@
             $('#obj_type').selectpicker('refresh');
             $.ajax({
                 type: "get",
-                url: "/instance/instance_resource/",
+                url: "/api/v1/sqlquery/resources/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
