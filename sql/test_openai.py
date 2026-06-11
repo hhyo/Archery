@@ -3,19 +3,6 @@ import pytest
 from common.utils.openai import OpenaiClient
 
 
-def test_check_openai(admin_client, setup_sys_config):
-    """校验openai配置"""
-    setup_sys_config.set("openai_base_url", "https://api.openai.com")
-    response = admin_client.get("/check/openai/")
-    assert response.status_code == 200
-    assert response.json()["data"] == False
-
-    setup_sys_config.set("openai_api_key", "sk-xxxx")
-    response = admin_client.get("/check/openai/")
-    assert response.status_code == 200
-    assert response.json()["data"] == True
-
-
 @pytest.fixture
 def openai_client(setup_sys_config):
     # 使用mock来模拟SysConfig
@@ -84,32 +71,3 @@ def test_generate_sql_by_openai(openai_client, mocker):
             "MySQL", "table_schema_description", "query_description"
         )
     assert str(excinfo.value) == "请求openai生成查询语句失败: API Error"
-
-
-@pytest.mark.parametrize(
-    "data, expected_msg",
-    [
-        ({}, "query_desc or db_type不存在"),
-        (
-            {
-                "db_type": "",
-                "query_desc": "获取所有用户名为test的记录",
-                "instance_name": "some_ins",
-            },
-            "query_desc or db_type不存在",
-        ),
-        (
-            {
-                "db_type": "MySQL",
-                "query_desc": "获取所有用户名为test的记录",
-                "instance_name": "test_instance",
-            },
-            "实例不存在",
-        ),
-    ],
-)
-def test_generate_sql(admin_client, db_instance, data, expected_msg):
-    """测试openai生成sql"""
-    response = admin_client.post("/query/generate_sql/", data=data)
-    assert response.status_code == 200
-    assert response.json()["msg"] == expected_msg

@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import datetime
 import json
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth.models import Permission
 from django.test import Client, TestCase, TransactionTestCase
@@ -11,20 +11,10 @@ from sql.engines.models import ResultSet
 from sql.models import (
     Instance,
     QueryLog,
-    QueryPrivileges,
-    QueryPrivilegesApply,
     ResourceGroup,
     Users,
 )
-from sql.query import (
-    check_openai,
-    favorite,
-    generate_sql,
-    kill_query_conn,
-    query,
-    querylog,
-    querylog_audit,
-)
+from sql.query import kill_query_conn
 
 
 class TestQuery(TransactionTestCase):
