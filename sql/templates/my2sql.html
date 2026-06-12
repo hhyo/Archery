@@ -449,6 +449,9 @@
                                 detailFormatter: function (index, row) {
                                     var html = [];
                                     $.each(row, function (key, value) {
+                                        if (key === 'extra_info' && value) {
+                                            html.push('<span>' + value + '</span><br>');
+                                        }
                                         if (key === 'sql') {
                                             var sql = window.sqlFormatter.format(value);
                                             //替换所有的换行符
@@ -463,9 +466,6 @@
                                 },
                                 data: data.data,
                                 columns: [{
-
-
-
                                     title: 'SQL',
                                     field: 'sql',
                                     formatter: function (value, row, index) {
@@ -477,8 +477,24 @@
                                         }
                                     }
                                 }, {
+                                    title: 'ExtraInfo',
+                                    field: 'extra_info',
+                                    formatter: function (value, row, index) {
+                                        if (!value) {
+                                            return '';
+                                        }
+                                        if (value.length > 200) {
+                                            return value.substr(0, 150) + '...';
+                                        }
+                                        return value;
+                                    }
+                                }, {
                                     title: '完整SQL',
                                     field: 'sql',
+                                    visible: false // 默认不显示
+                                }, {
+                                    title: '完整ExtraInfo',
+                                    field: 'extra_info',
                                     visible: false // 默认不显示
                                 }],
                                 onLoadSuccess: function () {
