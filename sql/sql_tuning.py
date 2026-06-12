@@ -5,6 +5,7 @@ import time
 from common.utils.const import SQLTuning
 from sql.engines import get_engine
 from sql.models import Instance
+from sql.engines.mysql import MysqlForkType
 from sql.utils.sql_utils import extract_tables
 
 
@@ -19,12 +20,12 @@ class SqlTuning(object):
     select
       lower(variable_name),
       variable_value
-    from performance_schema.global_variables
+    from information_schema.global_variables
     where upper(variable_name) in ('%s')
     order by variable_name;""" % ("','".join(SQLTuning.SYS_PARM_FILTER))
         self.sql_optimizer_switch = """
     select variable_value
-    from performance_schema.global_variables
+    from information_schema.global_variables
     where upper(variable_name) = 'OPTIMIZER_SWITCH';
     """
         self.sql_table_info = """
@@ -61,16 +62,22 @@ class SqlTuning(object):
         return [i["name"].strip("`") for i in extract_tables(self.sqltext)]
 
     def basic_information(self):
-        return self.engine.query(sql="select @@version", close_conn=False).to_sep_dict()
+        return self.engine.query(sql="select @@version").to_sep_dict()
 
     def sys_parameter(self):
         # 获取mysql版本信息
         server_version = self.engine.server_version
-        if server_version < (5, 7, 0):
-            sql = self.sql_variable.replace("performance_schema", "information_schema")
+        if (
+            self.engine.server_fork_type != MysqlForkType.MARIADB
+            and server_version >= (5, 7, 6)
+        ):
+            sql = self.sql_variable.replace(
+                "information_schema.global_variables",
+                "performance_schema.global_variables",
+            )
         else:
             sql = self.sql_variable
-        return self.engine.query(sql=sql, close_conn=False).to_sep_dict()
+        return self.engine.query(sql=sql).to_sep_dict()
 
     def optimizer_switch(self):
         # 获取mysql版本信息
@@ -81,7 +88,7 @@ class SqlTuning(object):
             )
         else:
             sql = self.sql_optimizer_switch
-        return self.engine.query(sql=sql, close_conn=False).to_sep_dict()
+        return self.engine.query(sql=sql).to_sep_dict()
 
     def sqlplan(self):
         plan = self.engine.query(
