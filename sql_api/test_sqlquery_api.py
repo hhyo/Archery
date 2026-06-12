@@ -127,6 +127,36 @@ def test_execute_calls_service(monkeypatch, api_client, privileged_user):
 
 
 @pytest.mark.django_db
+def test_execute_renders_non_utf8_bytes_with_simplejson(
+    monkeypatch, api_client, privileged_user
+):
+    expected = {
+        "status": 0,
+        "msg": "ok",
+        "data": {"rows": [[b"\xff\xbd"]], "column_list": ["blob"], "affected_rows": 1},
+    }
+    monkeypatch.setattr(
+        "sql_api.api_sqlquery.execute_sql_query", lambda **kwargs: expected
+    )
+
+    api_client.force_authenticate(user=privileged_user)
+    payload = {
+        "instance_name": "some_ins",
+        "db_name": "archery",
+        "sql_content": "select 1",
+        "limit_num": 10,
+    }
+    response = api_client.post(CANONICAL["execute"], payload, format="json")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": 0,
+        "msg": "ok",
+        "data": {"rows": [["/70="]], "column_list": ["blob"], "affected_rows": 1},
+    }
+
+
+@pytest.mark.django_db
 def test_logs_returns_bootstrap_table_shape(monkeypatch, api_client, privileged_user):
     expected = {"total": 1, "rows": [{"id": 1, "sqllog": "select 1"}]}
     monkeypatch.setattr(

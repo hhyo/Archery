@@ -12,6 +12,7 @@ from sql.services.resource_service import (
 )
 from sql.services.sqlquery_service import execute_sql_query
 
+from .renderers import SimpleJSONRenderer
 from .serializers import (
     SqlQueryExecuteSerializer,
     SqlQueryFavoriteSerializer,
@@ -78,6 +79,7 @@ class SQLQueryDescribeTableView(views.APIView):
 
 class SQLQueryExecuteView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
+    renderer_classes = [SimpleJSONRenderer]
 
     @extend_schema(summary="SQLQuery 执行查询")
     def post(self, request):
