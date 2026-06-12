@@ -397,3 +397,5 @@ def test_execute_sql_query_success_and_querylog_created(monkeypatch):
     assert result["data"]["seconds_behind_master"] == 0
     assert created["instance_name"] == "ins"
     assert created["effect_row"] == 5
+
+

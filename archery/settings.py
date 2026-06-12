@@ -274,7 +274,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 # API Framework
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+    "DEFAULT_RENDERER_CLASSES": ("sql_api.renderers.SimpleJSONRenderer",),
     # 鉴权
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
