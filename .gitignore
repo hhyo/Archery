@@ -23,6 +23,7 @@ sonar-project.properties
 local_settings.py
 src/docker-compose-dev
 .coverage
+coverage.xml
 archery_custom
 static/
 local_settings.py
