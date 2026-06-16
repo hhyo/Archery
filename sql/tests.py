@@ -12,10 +12,12 @@ from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from sql.binlog import my2sql_file
 from sql.engines.models import ResultSet
 from sql.utils.execute_sql import execute_callback
+from sql.query import kill_query_conn
 from sql.models import (
     Users,
     Instance,
     QueryPrivilegesApply,
+    QueryPrivileges,
     SqlWorkflow,
     SqlWorkflowContent,
     ResourceGroup,
@@ -483,6 +485,242 @@ class TestUser(TestCase):
         self.u1.save()
         self.u1.refresh_from_db()
         self.assertEqual(0, self.u1.failed_login_count)
+
+
+class TestQuery(TransactionTestCase):
+    def setUp(self):
+        self.slave1 = Instance(
+            instance_name="test_slave_instance",
+            type="slave",
+            db_type="mysql",
+            host="testhost",
+            port=3306,
+            user="mysql_user",
+            password="mysql_password",
+        )
+        self.slave2 = Instance(
+            instance_name="test_instance_non_mysql",
+            type="slave",
+            db_type="mssql",
+            host="some_host2",
+            port=3306,
+            user="some_user",
+            password="some_str",
+        )
+        self.slave1.save()
+        self.slave2.save()
+        self.superuser1 = User.objects.create(username="super1", is_superuser=True)
+        self.u1 = User.objects.create(
+            username="test_user", display="中文显示", is_active=True
+        )
+        self.u2 = User.objects.create(
+            username="test_user2", display="中文显示", is_active=True
+        )
+        self.query_log = QueryLog.objects.create(
+            instance_name=self.slave1.instance_name,
+            db_name="some_db",
+            sqllog="select 1;",
+            effect_row=10,
+            cost_time=1,
+            username=self.superuser1.username,
+        )
+        sql_query_perm = Permission.objects.get(codename="query_submit")
+        self.u2.user_permissions.add(sql_query_perm)
+
+    def tearDown(self):
+        QueryPrivileges.objects.all().delete()
+        QueryLog.objects.all().delete()
+        self.u1.delete()
+        self.u2.delete()
+        self.superuser1.delete()
+        self.slave1.delete()
+        self.slave2.delete()
+        archer_config = SysConfig()
+        archer_config.set("disable_star", False)
+
+    @patch("sql.services.sqlquery_service.user_instances")
+    @patch("sql.services.sqlquery_service.get_engine")
+    @patch("sql.services.sqlquery_service.query_priv_check")
+    def testCorrectSQL(self, _priv_check, _get_engine, _user_instances):
+        c = Client()
+        some_sql = "select some from some_table limit 100;"
+        some_db = "some_db"
+        some_limit = 100
+        c.force_login(self.u1)
+        r = c.post(
+            "/api/v1/sqlquery/execute/",
+            data={
+                "instance_name": self.slave1.instance_name,
+                "sql_content": some_sql,
+                "db_name": some_db,
+                "limit_num": some_limit,
+            },
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["status"], 1)
+        c.force_login(self.u2)
+        q_result = ResultSet(full_sql=some_sql, rows=["value"])
+        q_result.column_list = ["some"]
+        _get_engine.return_value.query_check.return_value = {
+            "msg": "",
+            "bad_query": False,
+            "filtered_sql": some_sql,
+            "has_star": False,
+        }
+        _get_engine.return_value.filter_sql.return_value = some_sql
+        _get_engine.return_value.query.return_value = q_result
+        _get_engine.return_value.thread_id = None
+        _get_engine.return_value.seconds_behind_master = 100
+        _priv_check.return_value = {
+            "status": 0,
+            "data": {"limit_num": 100, "priv_check": True},
+        }
+        _user_instances.return_value.get.return_value = self.slave1
+        r = c.post(
+            "/api/v1/sqlquery/execute/",
+            data={
+                "instance_name": self.slave1.instance_name,
+                "sql_content": some_sql,
+                "db_name": some_db,
+                "limit_num": some_limit,
+            },
+        )
+        _get_engine.return_value.query.assert_called_once_with(
+            some_db,
+            some_sql,
+            some_limit,
+            schema_name=None,
+            tb_name=None,
+            max_execution_time=60000,
+        )
+        r_json = r.json()
+        self.assertEqual(r_json["data"]["rows"], ["value"])
+        self.assertEqual(r_json["data"]["column_list"], ["some"])
+        self.assertEqual(r_json["data"]["seconds_behind_master"], 100)
+
+    @patch("sql.services.sqlquery_service.user_instances")
+    @patch("sql.services.sqlquery_service.get_engine")
+    @patch("sql.services.sqlquery_service.query_priv_check")
+    def testSQLWithoutLimit(self, _priv_check, _get_engine, _user_instances):
+        c = Client()
+        some_limit = 100
+        sql_without_limit = "select some from some_table"
+        sql_with_limit = "select some from some_table limit {0};".format(some_limit)
+        some_db = "some_db"
+        c.force_login(self.u2)
+        q_result = ResultSet(full_sql=sql_without_limit, rows=["value"])
+        q_result.column_list = ["some"]
+        _get_engine.return_value.query_check.return_value = {
+            "msg": "",
+            "bad_query": False,
+            "filtered_sql": sql_without_limit,
+            "has_star": False,
+        }
+        _get_engine.return_value.filter_sql.return_value = sql_with_limit
+        _get_engine.return_value.query.return_value = q_result
+        _get_engine.return_value.thread_id = None
+        _get_engine.return_value.seconds_behind_master = 0
+        _priv_check.return_value = {
+            "status": 0,
+            "data": {"limit_num": 100, "priv_check": True},
+        }
+        _user_instances.return_value.get.return_value = self.slave1
+        r = c.post(
+            "/api/v1/sqlquery/execute/",
+            data={
+                "instance_name": self.slave1.instance_name,
+                "sql_content": sql_without_limit,
+                "db_name": some_db,
+                "limit_num": some_limit,
+            },
+        )
+        _get_engine.return_value.query.assert_called_once_with(
+            some_db,
+            sql_with_limit,
+            some_limit,
+            schema_name=None,
+            tb_name=None,
+            max_execution_time=60000,
+        )
+        r_json = r.json()
+        self.assertEqual(r_json["data"]["rows"], ["value"])
+        self.assertEqual(r_json["data"]["column_list"], ["some"])
+
+    @patch("sql.services.sqlquery_service.query_priv_check")
+    def testStarOptionOn(self, _priv_check):
+        c = Client()
+        c.force_login(self.u2)
+        some_limit = 100
+        sql_with_star = "select * from some_table"
+        some_db = "some_db"
+        _priv_check.return_value = {
+            "status": 0,
+            "data": {"limit_num": 100, "priv_check": True},
+        }
+        archer_config = SysConfig()
+        archer_config.set("disable_star", True)
+        r = c.post(
+            "/api/v1/sqlquery/execute/",
+            data={
+                "instance_name": self.slave1.instance_name,
+                "sql_content": sql_with_star,
+                "db_name": some_db,
+                "limit_num": some_limit,
+            },
+        )
+        archer_config.set("disable_star", False)
+        r_json = r.json()
+        self.assertEqual(1, r_json["status"])
+
+    @patch("sql.query.get_engine")
+    def test_kill_query_conn(self, _get_engine):
+        kill_query_conn(self.slave1.id, 10)
+        _get_engine.return_value.kill_connection.return_value = ResultSet()
+
+    def test_query_log(self):
+        """测试获取查询历史"""
+        c = Client()
+        c.force_login(self.superuser1)
+        QueryLog(id=self.query_log.id, favorite=True, alias="test_a").save(
+            update_fields=["favorite", "alias"]
+        )
+        data = {
+            "star": "true",
+            "query_log_id": self.query_log.id,
+            "limit": 14,
+            "offset": 0,
+        }
+        r = c.get("/api/v1/sqlquery/logs/", data=data)
+        self.assertEqual(r.json()["total"], 1)
+
+    def test_star(self):
+        """测试查询语句收藏"""
+        c = Client()
+        c.force_login(self.superuser1)
+        r = c.post(
+            "/api/v1/sqlquery/favorites/",
+            data={
+                "query_log_id": self.query_log.id,
+                "star": "true",
+                "alias": "test_alias",
+            },
+        )
+        query_log = QueryLog.objects.get(id=self.query_log.id)
+        self.assertTrue(query_log.favorite)
+        self.assertEqual(query_log.alias, "test_alias")
+
+    def test_un_star(self):
+        """测试查询语句取消收藏"""
+        c = Client()
+        c.force_login(self.superuser1)
+        r = c.post(
+            "/api/v1/sqlquery/favorites/",
+            data={"query_log_id": self.query_log.id, "star": "false", "alias": ""},
+        )
+        r_json = r.json()
+        query_log = QueryLog.objects.get(id=self.query_log.id)
+        self.assertFalse(query_log.favorite)
+        self.assertEqual(query_log.alias, "")
 
 
 class TestWorkflowView(TransactionTestCase):
