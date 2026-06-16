@@ -41,9 +41,64 @@ from .serializers import (
     WorkflowLogListSerializer,
     AuditWorkflowSerializer,
     ExecuteWorkflowSerializer,
+    BatchWorkflowSubmitSerializer,
+    BatchWorkflowOperationSerializer,
 )
 
 logger = logging.getLogger("default")
+
+
+def _is_notify_enabled(phase):
+    sys_config = SysConfig()
+    return (
+        phase in sys_config.get("notify_phase_control").split(",")
+        if sys_config.get("notify_phase_control")
+        else True
+    )
+
+
+def _notify_submit_workflow(workflow_content):
+    if workflow_content.workflow.status in [
+        "workflow_manreviewing",
+        "workflow_review_pass",
+    ] and _is_notify_enabled("Apply"):
+        workflow_audit = Audit.detail_by_workflow_id(
+            workflow_id=workflow_content.workflow.id,
+            workflow_type=WorkflowType.SQL_REVIEW,
+        )
+        async_task(
+            notify_for_audit,
+            workflow_audit=workflow_audit,
+            timeout=60,
+            task_name=f"sqlreview-submit-{workflow_content.workflow.id}",
+        )
+
+
+def _execute_sql_workflow(workflow, user):
+    audit_id = Audit.detail_by_workflow_id(
+        workflow_id=workflow.id,
+        workflow_type=WorkflowType.SQL_REVIEW,
+    ).audit_id
+    SqlWorkflow(id=workflow.id, status="workflow_queuing").save(
+        update_fields=["status"]
+    )
+    del_schedule(f"sqlreview-timing-{workflow.id}")
+    Audit.add_log(
+        audit_id=audit_id,
+        operation_type=5,
+        operation_type_desc="执行工单",
+        operation_info="工单执行排队中",
+        operator=user.username,
+        operator_display=user.display,
+    )
+    async_task(
+        "sql.utils.execute_sql.execute",
+        workflow.id,
+        user,
+        hook="sql.utils.execute_sql.execute_callback",
+        timeout=-1,
+        task_name=f"sqlreview-execute-{workflow.id}",
+    )
 
 
 class ExecuteCheck(views.APIView):
@@ -137,29 +192,46 @@ class WorkflowList(generics.ListAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         workflow_content = serializer.save()
-        sys_config = SysConfig()
-        is_notified = (
-            "Apply" in sys_config.get("notify_phase_control").split(",")
-            if sys_config.get("notify_phase_control")
-            else True
-        )
-        if (
-            workflow_content.workflow.status
-            in ["workflow_manreviewing", "workflow_review_pass"]
-            and is_notified
-        ):
-            # 获取审核信息
-            workflow_audit = Audit.detail_by_workflow_id(
-                workflow_id=workflow_content.workflow.id,
-                workflow_type=WorkflowType.SQL_REVIEW,
-            )
-            async_task(
-                notify_for_audit,
-                workflow_audit=workflow_audit,
-                timeout=60,
-                task_name=f"sqlreview-submit-{workflow_content.workflow.id}",
-            )
+        _notify_submit_workflow(workflow_content)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class BatchWorkflowSubmit(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="批量提交SQL上线工单",
+        request=BatchWorkflowSubmitSerializer,
+        description="按实例和数据库组合批量提交SQL上线工单",
+    )
+    @method_decorator(permission_required("sql.sql_submit", raise_exception=True))
+    def post(self, request):
+        serializer = BatchWorkflowSubmitSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        workflow_contents = serializer.save()
+        for workflow_content in workflow_contents:
+            _notify_submit_workflow(workflow_content)
+        workflows = [
+            {
+                "id": workflow_content.workflow.id,
+                "workflow_name": workflow_content.workflow.workflow_name,
+                "instance": workflow_content.workflow.instance_id,
+                "instance_name": workflow_content.workflow.instance.instance_name,
+                "db_name": workflow_content.workflow.db_name,
+                "status": workflow_content.workflow.status,
+            }
+            for workflow_content in workflow_contents
+        ]
+        return Response(
+            {
+                "workflow_count": len(workflow_contents),
+                "first_workflow_id": workflows[0]["id"] if workflows else None,
+                "workflows": workflows,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class WorkflowAuditList(generics.ListAPIView):
@@ -353,31 +425,7 @@ class ExecuteWorkflow(views.APIView):
 
             # 交由系统执行
             if mode == "auto":
-                # 修改工单状态为排队中
-                SqlWorkflow(id=workflow_id, status="workflow_queuing").save(
-                    update_fields=["status"]
-                )
-                # 删除定时执行任务
-                schedule_name = f"sqlreview-timing-{workflow_id}"
-                del_schedule(schedule_name)
-                # 加入执行队列
-                async_task(
-                    "sql.utils.execute_sql.execute",
-                    workflow_id,
-                    user,
-                    hook="sql.utils.execute_sql.execute_callback",
-                    timeout=-1,
-                    task_name=f"sqlreview-execute-{workflow_id}",
-                )
-                # 增加工单日志
-                Audit.add_log(
-                    audit_id=audit_id,
-                    operation_type=5,
-                    operation_type_desc="执行工单",
-                    operation_info="工单执行排队中",
-                    operator=user.username,
-                    operator_display=user.display,
-                )
+                _execute_sql_workflow(SqlWorkflow.objects.get(id=workflow_id), user)
 
             # 线下手工执行
             elif mode == "manual":
@@ -417,6 +465,134 @@ class ExecuteWorkflow(views.APIView):
             )
 
         return Response({"msg": "开始执行，执行结果请到工单详情页查看"})
+
+
+class BatchWorkflowOperate(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="批量操作SQL上线工单",
+        request=BatchWorkflowOperationSerializer,
+        description="批量审核、执行或终止SQL上线工单",
+    )
+    def post(self, request):
+        serializer = BatchWorkflowOperationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        operation = serializer.validated_data["operation"]
+        workflows = serializer.validated_data["workflows"]
+        remark = serializer.validated_data.get("remark", "")
+        user = request.user
+        status_value = workflows[0].status
+
+        if operation == "audit":
+            if status_value != "workflow_manreviewing":
+                raise serializers.ValidationError({"errors": "仅待审核工单可批量审核"})
+            for workflow in workflows:
+                auditor = get_auditor(workflow=workflow)
+                try:
+                    auditor.can_operate(WorkflowAction.PASS, user)
+                except AuditException as e:
+                    raise serializers.ValidationError(
+                        {"errors": f"工单 {workflow.id} 无审核权限，{str(e)}"}
+                    )
+            notify_args = []
+            with transaction.atomic():
+                for workflow in workflows:
+                    auditor = get_auditor(workflow=workflow)
+                    workflow_audit_detail = auditor.operate(
+                        WorkflowAction.PASS, user, remark
+                    )
+                    if auditor.audit.current_status == WorkflowStatus.PASSED:
+                        auditor.workflow.status = "workflow_review_pass"
+                        auditor.workflow.save(update_fields=["status"])
+                    notify_args.append((auditor.audit, workflow_audit_detail))
+            if _is_notify_enabled("Pass"):
+                for workflow_audit, workflow_audit_detail in notify_args:
+                    async_task(
+                        notify_for_audit,
+                        workflow_audit=workflow_audit,
+                        workflow_audit_detail=workflow_audit_detail,
+                        timeout=60,
+                        task_name=f"notify-audit-{workflow_audit}-{WorkflowType(workflow_audit.workflow_type).label}",
+                    )
+
+        elif operation == "execute":
+            if status_value not in ["workflow_review_pass", "workflow_timingtask"]:
+                raise serializers.ValidationError(
+                    {"errors": "仅审核通过工单可批量执行"}
+                )
+            if not (
+                user.has_perm("sql.sql_execute")
+                or user.has_perm("sql.sql_execute_for_resource_group")
+            ):
+                raise serializers.ValidationError({"errors": "你无权执行当前工单！"})
+            for workflow in workflows:
+                if can_execute(user, workflow.id) is False:
+                    raise serializers.ValidationError(
+                        {"errors": f"工单 {workflow.id} 无执行权限"}
+                    )
+                if on_correct_time_period(workflow.id) is False:
+                    raise serializers.ValidationError(
+                        {"errors": f"工单 {workflow.id} 不在可执行时间范围内"}
+                    )
+            for workflow in workflows:
+                _execute_sql_workflow(workflow, user)
+
+        elif operation == "cancel":
+            if status_value not in [
+                "workflow_manreviewing",
+                "workflow_review_pass",
+                "workflow_timingtask",
+            ]:
+                raise serializers.ValidationError({"errors": "当前状态不支持批量终止"})
+            actions = []
+            for workflow in workflows:
+                if can_cancel(user, workflow.id) is False:
+                    raise serializers.ValidationError(
+                        {"errors": f"工单 {workflow.id} 无终止权限"}
+                    )
+                if user.username == workflow.engineer:
+                    action = WorkflowAction.ABORT
+                elif user.has_perm("sql.sql_review"):
+                    action = WorkflowAction.REJECT
+                else:
+                    raise serializers.ValidationError(
+                        {"errors": f"工单 {workflow.id} 无终止权限"}
+                    )
+                auditor = get_auditor(workflow=workflow)
+                try:
+                    auditor.can_operate(action, user)
+                except AuditException as e:
+                    raise serializers.ValidationError(
+                        {"errors": f"工单 {workflow.id} 无终止权限，{str(e)}"}
+                    )
+                actions.append((workflow, action))
+            notify_args = []
+            schedules_to_delete = []
+            with transaction.atomic():
+                for workflow, action in actions:
+                    was_timingtask = workflow.status == "workflow_timingtask"
+                    auditor = get_auditor(workflow=workflow)
+                    workflow_audit_detail = auditor.operate(action, user, remark)
+                    auditor.workflow.status = "workflow_abort"
+                    auditor.workflow.save(update_fields=["status"])
+                    if was_timingtask:
+                        schedules_to_delete.append(f"sqlreview-timing-{workflow.id}")
+                    notify_args.append((auditor.audit, workflow_audit_detail))
+            for schedule_name in schedules_to_delete:
+                del_schedule(schedule_name)
+            if _is_notify_enabled("Cancel"):
+                for workflow_audit, workflow_audit_detail in notify_args:
+                    async_task(
+                        notify_for_audit,
+                        workflow_audit=workflow_audit,
+                        workflow_audit_detail=workflow_audit_detail,
+                        timeout=60,
+                        task_name=f"notify-audit-{workflow_audit}-{WorkflowType(workflow_audit.workflow_type).label}",
+                    )
+
+        return Response({"msg": "批量操作完成", "processed_count": len(workflows)})
 
 
 class WorkflowLogList(generics.ListAPIView):
