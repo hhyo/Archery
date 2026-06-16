@@ -505,8 +505,13 @@ class TestWorkflow(APITestCase):
             ],
         )
         mock_get_engine.return_value = mock_engine
+        mock_engine.get_all_databases.return_value = MagicMock(
+            rows=["test_db", "db2"], error=None
+        )
+        self.mock_get_engine = mock_get_engine
+        self.mock_engine = mock_engine
         self.async_task_patcher = patch("sql_api.api_workflow.async_task")
-        self.async_task_patcher.start()
+        self.mock_async_task = self.async_task_patcher.start()
         self.notify_patcher = patch("sql.notify.auto_notify")
         self.notify_patcher.start()
 
@@ -521,6 +526,56 @@ class TestWorkflow(APITestCase):
         self.get_engine_patcher.stop()
         self.async_task_patcher.stop()
         self.notify_patcher.stop()
+
+    def _create_instance(self, instance_name, db_type="mysql"):
+        instance = Instance.objects.create(
+            instance_name=instance_name,
+            type="master",
+            db_type=db_type,
+            host="some_host",
+            port=3306,
+            user="ins_user",
+            password="some_str",
+        )
+        instance.resource_group.add(self.res_group)
+        instance.instance_tag.add(self.ins_tag.id)
+        return instance
+
+    def _create_sql_workflow(self, workflow_name, workflow_status, audit_status):
+        workflow = SqlWorkflow.objects.create(
+            workflow_name=workflow_name,
+            group_id=1,
+            group_name=self.res_group.group_name,
+            engineer=self.user.username,
+            engineer_display=self.user.display,
+            audit_auth_groups=str(self.group.id),
+            status=workflow_status,
+            is_backup=False,
+            instance=self.ins,
+            db_name="test_db",
+            syntax_type=1,
+        )
+        SqlWorkflowContent.objects.create(
+            workflow=workflow,
+            sql_content="alter table abc add column note varchar(64);",
+            review_content="[]",
+            execute_result="",
+        )
+        WorkflowAudit.objects.create(
+            group_id=1,
+            group_name=self.res_group.group_name,
+            workflow_id=workflow.id,
+            workflow_type=2,
+            workflow_title=workflow.workflow_name,
+            workflow_remark="",
+            audit_auth_groups=str(self.group.id),
+            current_audit=str(self.group.id) if audit_status == 0 else "-1",
+            next_audit="-1",
+            current_status=audit_status,
+            create_user=self.user.username,
+            create_user_display=self.user.display,
+        )
+        return workflow
 
     def test_get_sql_workflow_list(self):
         """测试获取SQL上线工单列表"""
@@ -649,6 +704,64 @@ class TestWorkflow(APITestCase):
         self.assertEqual(r.json()["workflow"]["workflow_name"], "上线工单1")
         self.assertEqual(r.json()["workflow"]["engineer"], self.user.username)
         self.assertEqual(r.json()["workflow"]["engineer_display"], self.user.display)
+
+    def test_batch_submit_workflow_creates_cross_product_and_checks_once(self):
+        """测试批量提交生成实例和数据库笛卡尔积，且只检测一次"""
+        instance2 = self._create_instance("second_ins")
+        json_data = {
+            "workflow": {
+                "workflow_name": "批量上线",
+                "demand_url": "test",
+                "group_id": 1,
+                "instances": [self.ins.id, instance2.id],
+                "db_names": ["test_db", "db2"],
+                "is_backup": False,
+                "is_offline_export": 0,
+            },
+            "sql_content": "alter table abc add column note varchar(64);",
+        }
+
+        r = self.client.post("/api/v1/workflow/batch/submit/", json_data, format="json")
+
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(r.json()["workflow_count"], 4)
+        self.mock_engine.execute_check.assert_called_once_with(
+            db_name="test_db", sql="alter table abc add column note varchar(64);"
+        )
+        workflows = SqlWorkflow.objects.exclude(id=self.wf1.id).order_by("id")
+        self.assertEqual(workflows.count(), 4)
+        self.assertEqual(
+            [(wf.instance.instance_name, wf.db_name) for wf in workflows],
+            [
+                ("some_ins", "test_db"),
+                ("some_ins", "db2"),
+                ("second_ins", "test_db"),
+                ("second_ins", "db2"),
+            ],
+        )
+        self.assertTrue(
+            all(wf.workflow_name.startswith("批量上线-") for wf in workflows)
+        )
+
+    def test_batch_submit_rejects_mixed_db_type(self):
+        """测试批量提交拒绝混合数据库类型实例"""
+        instance2 = self._create_instance("pgsql_ins", db_type="pgsql")
+        json_data = {
+            "workflow": {
+                "workflow_name": "批量上线",
+                "group_id": 1,
+                "instances": [self.ins.id, instance2.id],
+                "db_names": ["test_db"],
+                "is_offline_export": 0,
+            },
+            "sql_content": "alter table abc add column note varchar(64);",
+        }
+
+        r = self.client.post("/api/v1/workflow/batch/submit/", json_data, format="json")
+
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("同一数据库类型", str(r.json()["errors"]))
+        self.assertEqual(SqlWorkflow.objects.count(), 1)
 
     def test_submit_workflow_super(self):
         """测试管理员提交SQL上线工单，可以指定用户"""
@@ -820,3 +933,69 @@ class TestWorkflow(APITestCase):
         r = self.client.post("/api/v1/workflow/execute/", execute_data, format="json")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(r.json(), {"msg": "开始执行，执行结果请到工单详情页查看"})
+
+    def test_batch_audit_workflow(self):
+        """测试批量审核工单"""
+        workflow2 = self._create_sql_workflow(
+            "batch_review", "workflow_manreviewing", 0
+        )
+        json_data = {
+            "operation": "audit",
+            "workflow_ids": [self.wf1.id, workflow2.id],
+            "remark": "批量通过",
+        }
+
+        r = self.client.post(
+            "/api/v1/workflow/batch/operate/", json_data, format="json"
+        )
+
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.json()["processed_count"], 2)
+        self.wf1.refresh_from_db()
+        workflow2.refresh_from_db()
+        self.assertEqual(self.wf1.status, "workflow_review_pass")
+        self.assertEqual(workflow2.status, "workflow_review_pass")
+
+    def test_batch_execute_workflow(self):
+        """测试批量执行工单"""
+        workflow1 = self._create_sql_workflow(
+            "batch_execute_1", "workflow_review_pass", 1
+        )
+        workflow2 = self._create_sql_workflow(
+            "batch_execute_2", "workflow_review_pass", 1
+        )
+        json_data = {
+            "operation": "execute",
+            "workflow_ids": [workflow1.id, workflow2.id],
+        }
+
+        r = self.client.post(
+            "/api/v1/workflow/batch/operate/", json_data, format="json"
+        )
+
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        workflow1.refresh_from_db()
+        workflow2.refresh_from_db()
+        self.assertEqual(workflow1.status, "workflow_queuing")
+        self.assertEqual(workflow2.status, "workflow_queuing")
+        self.assertEqual(self.mock_async_task.call_count, 2)
+
+    def test_batch_operate_rejects_mixed_status(self):
+        """测试批量操作拒绝混合状态工单"""
+        workflow2 = self._create_sql_workflow("batch_mixed", "workflow_review_pass", 1)
+        json_data = {
+            "operation": "cancel",
+            "workflow_ids": [self.wf1.id, workflow2.id],
+            "remark": "批量终止",
+        }
+
+        r = self.client.post(
+            "/api/v1/workflow/batch/operate/", json_data, format="json"
+        )
+
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("同一状态", str(r.json()["errors"]))
+        self.wf1.refresh_from_db()
+        workflow2.refresh_from_db()
+        self.assertEqual(self.wf1.status, "workflow_manreviewing")
+        self.assertEqual(workflow2.status, "workflow_review_pass")
