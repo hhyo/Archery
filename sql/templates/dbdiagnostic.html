@@ -367,7 +367,8 @@
                         return {
                             offset: params.offset,
                             limit: params.limit,
-                            instance_name: $("#instance_name").val()
+                            instance_name: $("#instance_name").val(),
+                            schema_search: params.search  // 传递搜索关键词给后端
                         }
                     },
                     columns: tablespaceListColumns,

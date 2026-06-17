@@ -1,17 +1,18 @@
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 from unittest.mock import patch, Mock, ANY
 
 import MySQLdb
-from django.test import TestCase
+from django.test import SimpleTestCase
 
 from common.config import SysConfig
 from sql.engines import ResultSet, ReviewSet
 from sql.engines.models import ReviewResult
-from sql.engines.mysql import MysqlEngine
-from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
+from sql.engines.mysql import MysqlEngine, MysqlForkType
+from sql.models import Instance
 
 
-class TestMysql(TestCase):
+class TestMysql(SimpleTestCase):
     def setUp(self):
         self.ins1 = Instance(
             instance_name="some_ins",
@@ -22,9 +23,8 @@ class TestMysql(TestCase):
             user="ins_user",
             password="some_str",
         )
-        self.ins1.save()
         self.sys_config = SysConfig()
-        self.wf = SqlWorkflow.objects.create(
+        self.wf = SimpleNamespace(
             workflow_name="some_name",
             group_id=1,
             group_name="g1",
@@ -37,13 +37,10 @@ class TestMysql(TestCase):
             db_name="some_db",
             syntax_type=1,
         )
-        SqlWorkflowContent.objects.create(workflow=self.wf)
+        self.wf.sqlworkflowcontent = SimpleNamespace(sql_content="update user set id=1")
 
     def tearDown(self):
-        self.ins1.delete()
-        self.sys_config.purge()
-        SqlWorkflow.objects.all().delete()
-        SqlWorkflowContent.objects.all().delete()
+        self.sys_config.sys_config = {}
 
     @patch("MySQLdb.connect")
     def test_engine_base_info(self, _conn):
@@ -514,7 +511,6 @@ class TestMysql(TestCase):
 
     @patch("sql.engines.mysql.GoInceptionEngine")
     def test_execute_check_select_sql(self, _inception_engine):
-        self.sys_config.set("goinception", "true")
         sql = "select * from user"
         inc_row = ReviewResult(
             id=1,
@@ -536,15 +532,20 @@ class TestMysql(TestCase):
             full_sql=sql, rows=[inc_row]
         )
         new_engine = MysqlEngine(instance=self.ins1)
+        config = {
+            "goinception": "true",
+            "critical_ddl_regex": "",
+            "ddl_dml_separation": False,
+        }
+        new_engine.config.get = Mock(
+            side_effect=lambda key, default=None: config.get(key, default)
+        )
         check_result = new_engine.execute_check(db_name="archery", sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
     @patch("sql.engines.mysql.GoInceptionEngine")
     def test_execute_check_critical_sql(self, _inception_engine):
-        self.sys_config.set("goinception", "true")
-        self.sys_config.set("critical_ddl_regex", "^|update")
-        self.sys_config.get_all_config()
         sql = "update user set id=1"
         inc_row = ReviewResult(
             id=1,
@@ -566,13 +567,20 @@ class TestMysql(TestCase):
             full_sql=sql, rows=[inc_row]
         )
         new_engine = MysqlEngine(instance=self.ins1)
+        config = {
+            "goinception": "true",
+            "critical_ddl_regex": "^|update",
+            "ddl_dml_separation": False,
+        }
+        new_engine.config.get = Mock(
+            side_effect=lambda key, default=None: config.get(key, default)
+        )
         check_result = new_engine.execute_check(db_name="archery", sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
     @patch("sql.engines.mysql.GoInceptionEngine")
     def test_execute_check_normal_sql(self, _inception_engine):
-        self.sys_config.set("goinception", "true")
         sql = "update user set id=1"
         row = ReviewResult(
             id=1,
@@ -587,6 +595,14 @@ class TestMysql(TestCase):
             full_sql=sql, rows=[row]
         )
         new_engine = MysqlEngine(instance=self.ins1)
+        config = {
+            "goinception": "true",
+            "critical_ddl_regex": "",
+            "ddl_dml_separation": False,
+        }
+        new_engine.config.get = Mock(
+            side_effect=lambda key, default=None: config.get(key, default)
+        )
         check_result = new_engine.execute_check(db_name="archery", sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
@@ -602,7 +618,6 @@ class TestMysql(TestCase):
     @patch.object(MysqlEngine, "query")
     @patch("sql.engines.mysql.GoInceptionEngine")
     def test_execute_workflow(self, _inception_engine, _query):
-        self.sys_config.set("goinception", "true")
         sql = "update user set id=1"
         _inception_engine.return_value.execute.return_value = ReviewSet(full_sql=sql)
         _query.return_value.rows = (("0",),)
@@ -647,7 +662,6 @@ class TestMysql(TestCase):
 
     @patch("sql.engines.mysql.GoInceptionEngine")
     def test_osc_go_inception(self, _inception_engine):
-        self.sys_config.set("goinception", "false")
         _inception_engine.return_value.osc_control.return_value = ReviewSet()
         command = "get"
         sqlsha1 = "xxxxx"
@@ -656,7 +670,6 @@ class TestMysql(TestCase):
 
     @patch("sql.engines.mysql.GoInceptionEngine")
     def test_osc_inception(self, _inception_engine):
-        self.sys_config.set("goinception", "true")
         _inception_engine.return_value.osc_control.return_value = ReviewSet()
         command = "get"
         sqlsha1 = "xxxxx"
@@ -840,3 +853,288 @@ class TestMysql(TestCase):
                 }
             ],
         )
+
+    def test_auto_backup(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        self.assertTrue(new_engine.auto_backup)
+
+    @patch("schemaobject.SchemaObject")
+    @patch("sql.engines.mysql.build_database_url")
+    def test_schema_object(self, build_database_url, schema_object):
+        build_database_url.return_value = "mysql://some_host:1366"
+        new_engine = MysqlEngine(instance=self.ins1)
+
+        self.assertEqual(new_engine.schema_object, schema_object.return_value)
+        build_database_url.assert_called_once_with(
+            host="some_host",
+            username="ins_user",
+            password="some_str",
+            port=1366,
+        )
+        schema_object.assert_called_once_with(
+            "mysql://some_host:1366", charset="utf8mb4"
+        )
+
+    @patch("MySQLdb.connect")
+    def test_server_info_and_fork_type(self, connect):
+        connect.return_value.get_server_info.return_value = "10.4.2-MariaDB"
+        engine = MysqlEngine(instance=self.ins1)
+
+        self.assertEqual(engine.server_info, "10.4.2-MariaDB")
+        self.assertEqual(engine.server_fork_type, MysqlForkType.MARIADB)
+        self.assertEqual(engine.server_info, "10.4.2-MariaDB")
+        connect.return_value.get_server_info.assert_called_once()
+
+    @patch("MySQLdb.connect")
+    def test_server_version_with_missing_numeric_part(self, connect):
+        connect.return_value.get_server_info.return_value = "8.0.rc"
+        engine = MysqlEngine(instance=self.ins1)
+
+        self.assertTupleEqual(engine.server_version, (8, 0, None))
+
+    @patch.object(MysqlEngine, "query")
+    def test_seconds_behind_master_uses_replica_status_and_empty_result(self, query):
+        query.return_value = ResultSet(rows=[])
+        engine = MysqlEngine(instance=self.ins1)
+        engine._server_version = (8, 4, 0)
+        engine._server_info = "8.4.0"
+
+        self.assertIsNone(engine.seconds_behind_master)
+        query.assert_called_once_with(
+            sql="show replica status",
+            close_conn=False,
+            cursorclass=MySQLdb.cursors.DictCursor,
+        )
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_group_tables_by_db(self, query):
+        query.return_value = ResultSet(rows=[("alpha", "c1"), ("beta", "c2")])
+        engine = MysqlEngine(instance=self.ins1)
+
+        self.assertEqual(
+            engine.get_group_tables_by_db("some_db"),
+            {"a": [["alpha", "c1"]], "b": [["beta", "c2"]]},
+        )
+
+    @patch.object(MysqlEngine, "query")
+    def test_table_detail_helpers(self, query):
+        query.return_value = ResultSet(column_list=["c1"], rows=[("row",)])
+        engine = MysqlEngine(instance=self.ins1)
+
+        self.assertEqual(
+            engine.get_table_meta_data("some_db", "some_tb"),
+            {"column_list": ["c1"], "rows": ("row",)},
+        )
+        self.assertEqual(
+            engine.get_table_desc_data("some_db", "some_tb"),
+            {"column_list": ["c1"], "rows": [("row",)]},
+        )
+        self.assertEqual(
+            engine.get_table_index_data("some_db", "some_tb"),
+            {"column_list": ["c1"], "rows": [("row",)]},
+        )
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_events_list_one_time(self, query):
+        query.return_value = ResultSet(
+            rows=[("e1", "DISABLED", "ONE TIME", None, None)]
+        )
+        engine = MysqlEngine(instance=self.ins1)
+
+        self.assertEqual(
+            engine.get_events_list("some_db"),
+            {"e": [["e1", "DISABLED ONE TIME"]]},
+        )
+
+    def test_result_set_binary_as_hex(self):
+        result_set = ResultSet(
+            rows=[(b"\x0f", "plain"), (None, "empty")],
+            column_type=["BLOB", "VARCHAR"],
+        )
+
+        result = MysqlEngine.result_set_binary_as_hex(result_set)
+
+        self.assertEqual(result.rows, (["0f", "plain"], [None, "empty"]))
+
+    @patch("MySQLdb.connect")
+    def test_query_fetchall_binary_and_max_execution_time_fallback(self, connect):
+        cursor = Mock()
+        cursor.execute.side_effect = [MySQLdb.OperationalError(), 2]
+        cursor.fetchall.return_value = [(b"\x0a",)]
+        cursor.description = (("payload", 252),)
+        connect.return_value.cursor.return_value = cursor
+        engine = MysqlEngine(instance=self.ins1)
+
+        result = engine.query(sql="select payload from t", binary_as_hex=True)
+
+        self.assertEqual(result.column_type, ["BLOB"])
+        self.assertEqual(result.rows, (["0a"],))
+        self.assertEqual(result.affected_rows, 2)
+
+    @patch.object(MysqlEngine, "get_connection", side_effect=RuntimeError("boom"))
+    def test_query_connection_error(self, _get_connection):
+        engine = MysqlEngine(instance=self.ins1)
+
+        result = engine.query(sql="select 1")
+
+        self.assertEqual(result.error, "boom")
+
+    @patch.object(MysqlEngine, "query")
+    def test_query_check_empty_star_explain_and_forbidden_user(self, query):
+        engine = MysqlEngine(instance=self.ins1)
+        query.return_value = ResultSet()
+        query.return_value.error = "syntax error"
+
+        empty_result = engine.query_check(sql="-- only comment")
+        self.assertTrue(empty_result["bad_query"])
+        self.assertEqual(empty_result["msg"], "不支持的查询语法类型!")
+        self.assertEqual(
+            engine.query_check(sql="select * from t")["msg"], "syntax error"
+        )
+
+        query.return_value.error = None
+        forbidden = engine.query_check(db_name="mysql", sql="select id from user")
+        self.assertTrue(forbidden["bad_query"])
+        self.assertEqual(forbidden["msg"], "您无权查看该表")
+
+    @patch("sql.engines.mysql.GoInceptionEngine")
+    def test_execute_check_inception_error_and_ddl_dml_separation(self, inception):
+        check_error = ReviewSet()
+        check_error.error = "check error"
+        inception.return_value.execute_check.return_value = check_error
+        engine = MysqlEngine(instance=self.ins1)
+
+        with self.assertRaises(RuntimeError):
+            engine.execute_check(db_name="archery", sql="update user set id=1")
+
+        rows = [
+            ReviewResult(id=1, sql="create table t(id int)"),
+            ReviewResult(id=2, sql="insert into t values(1)"),
+        ]
+        inception.return_value.execute_check.return_value = ReviewSet(rows=rows)
+        config = {"critical_ddl_regex": "", "ddl_dml_separation": True}
+        engine = MysqlEngine(instance=self.ins1)
+        engine.config.get = Mock(
+            side_effect=lambda key, default=None: config.get(key, default)
+        )
+
+        result = engine.execute_check(
+            db_name="archery",
+            sql="create table t(id int);insert into t values(1);",
+        )
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[1].errormessage, "DDL语句和DML语句不能同时执行！")
+
+    @patch.object(MysqlEngine, "query")
+    def test_execute_workflow_read_only(self, query):
+        query.return_value = ResultSet(rows=[("ON",)])
+        engine = MysqlEngine(instance=self.ins1)
+
+        result = engine.execute_workflow(self.wf)
+
+        self.assertEqual(result.error, ("实例read_only=1，禁止执行变更语句!",))
+        self.assertEqual(result.rows[0].sql, "update user set id=1")
+
+    @patch.object(MysqlEngine, "get_connection")
+    def test_execute_error(self, get_connection):
+        cursor = Mock()
+        cursor.execute.side_effect = RuntimeError("execute failed")
+        get_connection.return_value.cursor.return_value = cursor
+        engine = MysqlEngine(instance=self.ins1)
+
+        result = engine.execute(sql="select 1")
+
+        self.assertEqual(result.error, "execute failed")
+
+    @patch("sql.engines.mysql.GoInceptionEngine")
+    def test_get_rollback(self, inception):
+        inception.return_value.get_rollback.return_value = ReviewSet()
+        engine = MysqlEngine(instance=self.ins1)
+
+        self.assertIsInstance(engine.get_rollback(self.wf), ReviewSet)
+
+    @patch.object(MysqlEngine, "query")
+    def test_processlist_empty_and_escaped_command(self, query):
+        query.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+
+        engine.processlist("")
+        engine.processlist("Query'")
+
+        self.assertIn("command= 'Query';", query.call_args_list[0].args[1])
+        self.assertIn("Query\\'", query.call_args_list[1].args[1])
+
+    @patch.object(MysqlEngine, "query")
+    def test_get_kill_command_and_kill_reject_invalid_ids(self, query):
+        engine = MysqlEngine(instance=self.ins1)
+
+        self.assertIsNone(engine.get_kill_command([1, "2"]))
+        result = engine.kill([1, "2"])
+
+        self.assertIsInstance(result, ResultSet)
+        query.assert_not_called()
+
+    @patch.object(MysqlEngine, "query")
+    def test_tablespace_search_filters_are_escaped(self, query):
+        query.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+
+        engine.tablespace(schema_search="app_'")
+        engine.tablespace_count(schema_search="app_'")
+
+        self.assertIn("app_\\'", query.call_args_list[0].args[1])
+        self.assertIn("app_\\'", query.call_args_list[1].args[1])
+
+    @patch.object(MysqlEngine, "query")
+    def test_trxandlocks_uses_performance_schema_for_mysql_8(self, query):
+        query.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+        engine._server_version = (8, 0, 1)
+
+        engine.trxandlocks()
+
+        self.assertIn("performance_schema.`data_locks`", query.call_args.args[1])
+
+    @patch("MySQLdb.connect")
+    @patch.object(MysqlEngine, "query")
+    def test_get_instance_users_summary_fallback_without_lock(self, query, connect):
+        connect.return_value.get_server_info.return_value = "8.0.0"
+        failed = ResultSet()
+        failed.error = "unknown column account_locked"
+        fallback = ResultSet(rows=[("`u`@`%`", "u", "%")])
+        grants = ResultSet(rows=[("grant usage",)])
+        query.side_effect = [failed, fallback, grants]
+        engine = MysqlEngine(instance=self.ins1)
+
+        result = engine.get_instance_users_summary()
+
+        self.assertIsNone(result.rows[0]["is_locked"])
+        self.assertEqual(result.rows[0]["privileges"], [("grant usage",)])
+
+    @patch.object(MysqlEngine, "execute")
+    def test_drop_and_reset_instance_user(self, execute):
+        execute.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+
+        engine.drop_instance_user("`u`@`%`")
+        engine.reset_instance_user_pwd("`u`@`%`", "new'pwd")
+
+        self.assertEqual(execute.call_args_list[0].kwargs["sql"], "DROP USER `u`@`%`;")
+        self.assertIn("new\\'pwd", execute.call_args_list[1].kwargs["sql"])
+
+    @patch.object(MysqlEngine, "execute")
+    def test_create_instance_user_multiple_hosts(self, execute):
+        execute.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+
+        result = engine.create_instance_user(
+            user="some_user",
+            host="%|localhost",
+            password1="123456",
+            remark="multi",
+        )
+
+        self.assertEqual([row["host"] for row in result.rows], ["%", "localhost"])
+        self.assertIn("'some_user'@'%'", execute.call_args.kwargs["sql"])
+        self.assertIn("'some_user'@'localhost'", execute.call_args.kwargs["sql"])

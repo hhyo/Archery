@@ -254,6 +254,14 @@ class EngineBase:
         """修改实例参数值，返回一个 ResultSet"""
         return ResultSet()
 
+    def tablespace(self, offset=0, row_count=14, schema_search=""):
+        """获取表空间信息，返回一个 ResultSet"""
+        return ResultSet()
+
+    def tablespace_count(self, schema_search=""):
+        """获取表空间数量，返回一个 ResultSet"""
+        return ResultSet()
+
 
 def get_engine_map():
     available_engines = settings.AVAILABLE_ENGINES

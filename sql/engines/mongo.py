@@ -1748,7 +1748,7 @@ class MongoEngine(EngineBase):
         "local",
     ]
 
-    def tablespace(self, offset=0, row_count=14):
+    def tablespace(self, offset=0, row_count=14, schema_search=""):
         """获取表空间信息"""
         result_set = ResultSet(
             full_sql="db.collection.aggregate([ { $collStats: { storageStats: { } } } ])"
@@ -1800,6 +1800,13 @@ class MongoEngine(EngineBase):
                         )
                         continue
 
+            # 搜索过滤
+            if schema_search:
+                search_lower = schema_search.lower()
+                rows = [
+                    row for row in rows if search_lower in row.get("ns", "").lower()
+                ]
+
             # 按照 totalSize 倒序
             rows.sort(key=lambda x: x["totalSize"], reverse=True)
             # 分页
@@ -1824,7 +1831,7 @@ class MongoEngine(EngineBase):
             result_set.error = str(e)
         return result_set
 
-    def tablespace_count(self):
+    def tablespace_count(self, schema_search=""):
         """获取表空间数量"""
         result_set = ResultSet()
         try:
@@ -1839,7 +1846,15 @@ class MongoEngine(EngineBase):
                 if db_name in self.forbidden_databases:
                     continue
                 db = conn[db_name]
-                count += len(db.list_collection_names())
+                collection_names = db.list_collection_names()
+                if schema_search:
+                    search_lower = schema_search.lower()
+                    collection_names = [
+                        c
+                        for c in collection_names
+                        if search_lower in f"{db_name}.{c}".lower()
+                    ]
+                count += len(collection_names)
             result_set.rows = [(count,)]
         except Exception as e:
             logger.warning(

@@ -419,6 +419,46 @@ def test_execute_check_alter_delete_non_mergetree(mock_get_engine, mock_instance
 
 @patch.object(ClickHouseEngine, "server_version", new=(21, 1, 2))
 @patch.object(ClickHouseEngine, "get_table_engine")
+@patch.object(ClickHouseEngine, "explain_check")
+def test_execute_check_alter_delete_mergetree_calls_explain(
+    mock_explain, mock_get_engine, mock_instance
+):
+    mock_get_engine.return_value = {"status": 1, "engine": "ReplacingMergeTree"}
+    mock_explain.return_value = ReviewResult(
+        id=1,
+        errlevel=0,
+        stagestatus="Audit completed",
+        errormessage="None",
+        sql="alter table t1 delete where id=1",
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    _mock_config(engine)
+    ret = engine.execute_check(db_name="db", sql="alter table t1 delete where id=1;")
+    assert ret.rows[0].errlevel == 0
+    mock_explain.assert_called_once()
+
+
+@patch.object(ClickHouseEngine, "server_version", new=(21, 1, 2))
+@patch.object(ClickHouseEngine, "explain_check")
+def test_execute_check_other_alter_calls_explain(mock_explain, mock_instance):
+    mock_explain.return_value = ReviewResult(
+        id=1,
+        errlevel=0,
+        stagestatus="Audit completed",
+        errormessage="None",
+        sql="alter user default identified by 'pwd'",
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    _mock_config(engine)
+    ret = engine.execute_check(
+        db_name="db", sql="alter user default identified by 'pwd';"
+    )
+    assert ret.rows[0].errlevel == 0
+    mock_explain.assert_called_once()
+
+
+@patch.object(ClickHouseEngine, "server_version", new=(21, 1, 2))
+@patch.object(ClickHouseEngine, "get_table_engine")
 def test_execute_check_truncate_unsupported_engine(mock_get_engine, mock_instance):
     mock_get_engine.return_value = {"status": 1, "engine": "View"}
     engine = ClickHouseEngine(instance=mock_instance)
@@ -426,6 +466,27 @@ def test_execute_check_truncate_unsupported_engine(mock_get_engine, mock_instanc
     ret = engine.execute_check(db_name="db", sql="truncate table t1;")
     assert ret.rows[0].errlevel == 2
     assert "TRUNCATE" in ret.rows[0].errormessage
+
+
+@patch.object(ClickHouseEngine, "server_version", new=(21, 1, 2))
+@patch.object(ClickHouseEngine, "get_table_engine")
+@patch.object(ClickHouseEngine, "explain_check")
+def test_execute_check_truncate_supported_engine_calls_explain(
+    mock_explain, mock_get_engine, mock_instance
+):
+    mock_get_engine.return_value = {"status": 1, "engine": "MergeTree"}
+    mock_explain.return_value = ReviewResult(
+        id=1,
+        errlevel=0,
+        stagestatus="Audit completed",
+        errormessage="None",
+        sql="truncate table t1",
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    _mock_config(engine)
+    ret = engine.execute_check(db_name="db", sql="truncate table t1;")
+    assert ret.rows[0].errlevel == 0
+    mock_explain.assert_called_once()
 
 
 @patch.object(ClickHouseEngine, "server_version", new=(21, 1, 2))
@@ -467,6 +528,24 @@ def test_execute_check_insert_bad_syntax(mock_instance):
     ret = engine.execute_check(db_name="db", sql="insert into ;")
     assert ret.rows[0].errlevel == 2
     assert "INSERT语法不正确" in ret.rows[0].errormessage
+
+
+@patch.object(ClickHouseEngine, "server_version", new=(21, 1, 2))
+@patch.object(ClickHouseEngine, "explain_check")
+def test_execute_check_other_statement_uses_explain(mock_explain, mock_instance):
+    mock_explain.return_value = ReviewResult(
+        id=1,
+        errlevel=1,
+        stagestatus="Audit completed",
+        errormessage="warning",
+        sql="create database db2",
+    )
+    engine = ClickHouseEngine(instance=mock_instance)
+    _mock_config(engine)
+    ret = engine.execute_check(db_name="db", sql="create database db2;")
+    assert ret.rows[0].errlevel == 1
+    assert ret.warning_count == 1
+    mock_explain.assert_called_once()
 
 
 # ----------------- execute -----------------
@@ -662,6 +741,18 @@ def test_tablespace_custom_pagination(mock_query, mock_instance):
 
 
 @patch.object(ClickHouseEngine, "query")
+def test_tablespace_with_schema_search(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(rows=[])
+    engine = ClickHouseEngine(instance=mock_instance)
+    engine.tablespace(schema_search="sales")
+    call_sql = mock_query.call_args.kwargs.get(
+        "sql", mock_query.call_args[1].get("sql")
+    )
+    assert "database LIKE '%sales%'" in call_sql
+    assert "table LIKE '%sales%'" in call_sql
+
+
+@patch.object(ClickHouseEngine, "query")
 def test_tablespace_empty(mock_query, mock_instance):
     mock_query.return_value = ResultSet(
         column_list=[
@@ -694,6 +785,19 @@ def test_tablespace_count(mock_query, mock_instance):
     assert "count(DISTINCT" in call_sql
     assert "system.parts" in call_sql
     assert rs.rows[0][0] == 5
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_tablespace_count_with_schema_search(mock_query, mock_instance):
+    mock_query.return_value = ResultSet(rows=[(2,)])
+    engine = ClickHouseEngine(instance=mock_instance)
+    rs = engine.tablespace_count(schema_search="sales")
+    call_sql = mock_query.call_args.kwargs.get(
+        "sql", mock_query.call_args[1].get("sql")
+    )
+    assert "database LIKE '%sales%'" in call_sql
+    assert "table LIKE '%sales%'" in call_sql
+    assert rs.rows[0][0] == 2
 
 
 @patch.object(ClickHouseEngine, "query")
@@ -762,6 +866,14 @@ def test_processlist_empty(mock_query, mock_instance):
 def test_get_kill_command_empty(mock_instance):
     engine = ClickHouseEngine(instance=mock_instance)
     assert engine.get_kill_command([]) == ""
+
+
+def test_get_kill_command_skips_blank_query_id(mock_instance):
+    engine = ClickHouseEngine(instance=mock_instance)
+    cmd = engine.get_kill_command(["qid-1", "   ", "qid-2"])
+    assert cmd.count("KILL QUERY WHERE query_id = ") == 2
+    assert "qid-1" in cmd
+    assert "qid-2" in cmd
 
 
 def test_get_kill_command_single(mock_instance):

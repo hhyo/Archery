@@ -676,8 +676,17 @@ class ClickHouseEngine(EngineBase):
             return ResultSet(full_sql="")
         return self.execute(sql=kill_sql)
 
-    def tablespace(self, offset=0, row_count=14):
+    def tablespace(self, offset=0, row_count=14, schema_search=""):
         """获取表空间信息"""
+        search_condition = ""
+        if schema_search:
+            search_escaped = self.escape_string(schema_search)
+            search_condition = (
+                " AND (database LIKE '%{keyword}%' OR table LIKE '%{keyword}%')".format(
+                    keyword=search_escaped
+                )
+            )
+        limit_clause = "{},{}".format(offset, row_count)
         sql = """SELECT
             database,
             table,
@@ -690,18 +699,31 @@ class ClickHouseEngine(EngineBase):
             round((sum(data_compressed_bytes) / sum(data_uncompressed_bytes)) * 100, 2) AS compress_ratio
         FROM system.parts
         WHERE active = 1
-            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema')
+            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema'){search_condition}
         GROUP BY database, table, engine
         ORDER BY table_rows DESC
-        LIMIT {},{};""".format(offset, row_count)
+        LIMIT {limit_clause};""".format(
+            search_condition=search_condition,
+            limit_clause=limit_clause,
+        )
         return self.query(sql=sql)
 
-    def tablespace_count(self):
+    def tablespace_count(self, schema_search=""):
         """获取表空间数量"""
+        search_condition = ""
+        if schema_search:
+            search_escaped = self.escape_string(schema_search)
+            search_condition = (
+                " AND (database LIKE '%{keyword}%' OR table LIKE '%{keyword}%')".format(
+                    keyword=search_escaped
+                )
+            )
         sql = """SELECT count(DISTINCT (database, table))
         FROM system.parts
         WHERE active
-            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema')"""
+            AND database NOT IN ('system', 'INFORMATION_SCHEMA', 'information_schema'){search_condition}""".format(
+            search_condition=search_condition
+        )
         return self.query(sql=sql)
 
     def close(self):

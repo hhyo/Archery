@@ -1,9 +1,11 @@
 import pytest
 import json
 import datetime
+import re
 from unittest.mock import patch, MagicMock
 from bson.objectid import ObjectId
 from bson.int64 import Int64
+from bson.regex import Regex
 
 from sql.engines.mongo import MongoEngine, JsonDecoder, mongo_error
 from sql.engines.models import ResultSet
@@ -104,6 +106,32 @@ class TestJsonDecoder:
     def test_decode_negative_number(self):
         val = self.de.decode("{'a':-10}")
         assert val["a"] == -10
+
+    def test_decode_regex_literal(self):
+        val = self.de.decode(r"{'name':/archery.*/im}")
+        assert isinstance(val["name"], Regex)
+        assert val["name"].pattern == "archery.*"
+        assert val["name"].flags & re.IGNORECASE
+        assert val["name"].flags & re.MULTILINE
+
+    def test_decode_nested_empty_values(self):
+        assert self.de.decode("{'a':[],'b':{}}") == {"a": [], "b": {}}
+
+    def test_decode_invalid_key(self):
+        with pytest.raises(Exception, match="invalid key"):
+            self.de.decode("{1:'a'}")
+
+    def test_decode_unexpected_object_token(self):
+        with pytest.raises(Exception, match="unexpected token"):
+            self.de.decode("{'a':1 'b':2}")
+
+    def test_decode_missing_array_end(self):
+        with pytest.raises(Exception, match='missing "\\]"'):
+            self.de.decode("[1,2")
+
+    def test_decode_unclosed_regex(self):
+        with pytest.raises(Exception, match='missing closing "/"'):
+            self.de.decode(r"{'name':/archery")
 
 
 # ====================== __split_args ======================
@@ -367,6 +395,20 @@ class TestExecuteShellSql:
         result_doc = json.loads(result)
         assert result_doc["indexName"] == "name_1"
 
+    def test_createIndexes(self, mongo_engine):
+        mock_coll = self._mock_collection(mongo_engine)
+        mock_coll.create_indexes.return_value = ["name_1", "age_-1"]
+
+        success, result, affected = mongo_engine._execute_shell_sql(
+            "db.test.createIndexes([{'key':{'name':1},'name':'name_1'},{'key':{'age':-1},'name':'age_-1'}])",
+            "test_db",
+        )
+        assert success is True
+        assert affected == 0
+        result_doc = json.loads(result)
+        assert result_doc["indexNames"] == ["name_1", "age_-1"]
+        assert mock_coll.create_indexes.call_count == 1
+
     def test_ensureIndex(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_coll.create_index.return_value = "age_1"
@@ -402,6 +444,39 @@ class TestExecuteShellSql:
         assert success is True
         mock_coll.rename.assert_called_once_with("new_name")
 
+    def test_renameCollection_with_options(self, mongo_engine):
+        mock_coll = self._mock_collection(mongo_engine)
+        success, result, affected = mongo_engine._execute_shell_sql(
+            "db.test.renameCollection('new_name',{'dropTarget':true})", "test_db"
+        )
+        assert success is True
+        assert affected == 0
+        mock_coll.rename.assert_called_once_with("new_name", dropTarget=True)
+
+    def test_convertToCapped_with_size_document(self, mongo_engine):
+        mock_conn, mock_db, _ = _mock_collection(mongo_engine)
+        mock_db.command.return_value = {"ok": 1}
+
+        success, result, affected = mongo_engine._execute_shell_sql(
+            "db.test.convertToCapped({'size':1024})", "test_db"
+        )
+        assert success is True
+        assert affected == 0
+        assert json.loads(result)["ok"] == 1
+        mock_db.command.assert_called_once_with("convertToCapped", "test", size=1024)
+        assert mock_conn.__getitem__.called
+
+    def test_convertToCapped_with_numeric_size(self, mongo_engine):
+        _, mock_db, _ = _mock_collection(mongo_engine)
+        mock_db.command.return_value = {"ok": 1}
+
+        success, result, affected = mongo_engine._execute_shell_sql(
+            "db.test.convertToCapped(2048)", "test_db"
+        )
+        assert success is True
+        assert affected == 0
+        mock_db.command.assert_called_once_with("convertToCapped", "test", size=2048)
+
     def test_bulkWrite(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
@@ -420,6 +495,58 @@ class TestExecuteShellSql:
         assert success is True
         assert affected == 3
         mock_coll.bulk_write.assert_called_once()
+
+    def test_bulkWrite_all_supported_operation_types(self, mongo_engine):
+        mock_coll = self._mock_collection(mongo_engine)
+        mock_result = MagicMock()
+        mock_result.modified_count = 2
+        mock_result.deleted_count = 2
+        mock_result.inserted_count = 1
+        mock_result.upserted_count = 1
+        mock_result.matched_count = 2
+        mock_result.acknowledged = True
+        mock_coll.bulk_write.return_value = mock_result
+
+        success, result, affected = mongo_engine._execute_shell_sql(
+            "db.test.bulkWrite(["
+            "{'updateMany':{'filter':{'a':1},'update':{'$set':{'b':2}},'upsert':'1'}},"
+            "{'deleteOne':{'filter':{'a':1}}},"
+            "{'deleteMany':{'filter':{'b':2}}},"
+            "{'replaceOne':{'filter':{'c':3},'replacement':{'c':4},'upsert':1}}"
+            "], {'ordered':false})",
+            "test_db",
+        )
+        assert success is True
+        assert affected == 5
+        assert json.loads(result)["upsertedCount"] == 1
+        _, kwargs = mock_coll.bulk_write.call_args
+        assert kwargs == {"ordered": False}
+
+    def test_bool_options_are_normalized_from_strings_and_numbers(self, mongo_engine):
+        mock_coll = self._mock_collection(mongo_engine)
+        update_result = MagicMock()
+        update_result.acknowledged = True
+        update_result.matched_count = 1
+        update_result.modified_count = 1
+        mock_coll.update_one.return_value = update_result
+
+        success, _, _ = mongo_engine._execute_shell_sql(
+            "db.test.updateOne({'a':1},{'$set':{'b':2}},{'upsert':'1'})",
+            "test_db",
+        )
+        assert success is True
+        assert mock_coll.update_one.call_args.kwargs["upsert"] is True
+
+        replace_result = MagicMock()
+        replace_result.acknowledged = True
+        replace_result.matched_count = 1
+        replace_result.modified_count = 1
+        mock_coll.replace_one.return_value = replace_result
+        success, _, _ = mongo_engine._execute_shell_sql(
+            "db.test.replaceOne({'a':1},{'b':2},{'upsert':0})", "test_db"
+        )
+        assert success is True
+        assert mock_coll.replace_one.call_args.kwargs["upsert"] is False
 
     def test_unsupported_statement(self, mongo_engine):
         self._mock_collection(mongo_engine)
@@ -922,6 +1049,12 @@ class TestParseQuerySentence:
         assert qd["method"] == "findOne"
         assert qd["findOne_filter"] == "{'a':1}"
 
+    def test_findOne_with_projection(self, mongo_engine):
+        qd = mongo_engine.parse_query_sentence("db.test.findOne({'a':1},{'name':1})")
+        assert qd["method"] == "findOne"
+        assert qd["findOne_filter"] == "{'a':1}"
+        assert qd["findOne_projection"] == "{'name':1}"
+
     def test_findOne_no_args(self, mongo_engine):
         qd = mongo_engine.parse_query_sentence("db.test.findOne()")
         assert qd["method"] == "findOne"
@@ -931,6 +1064,14 @@ class TestParseQuerySentence:
         qd = mongo_engine.parse_query_sentence("db.test.countDocuments({'a':1})")
         assert qd["method"] == "countDocuments"
         assert qd["countDocuments_filter"] == "{'a':1}"
+
+    def test_countDocuments_with_options(self, mongo_engine):
+        qd = mongo_engine.parse_query_sentence(
+            "db.test.countDocuments({'a':1},{'limit':2})"
+        )
+        assert qd["method"] == "countDocuments"
+        assert qd["countDocuments_filter"] == "{'a':1}"
+        assert qd["countDocuments_options"] == "{'limit':2}"
 
     def test_distinct(self, mongo_engine):
         qd = mongo_engine.parse_query_sentence("db.test.distinct('name')")
@@ -1000,6 +1141,15 @@ class TestQueryCheck:
 
 
 class TestQuery:
+    def _mock_query_collection(self, mongo_engine):
+        mock_conn = MagicMock()
+        mock_db = MagicMock()
+        mock_coll = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_coll)
+        mock_conn.__getitem__ = MagicMock(return_value=mock_db)
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+        return mock_conn, mock_db, mock_coll
+
     def test_query_count(self, mongo_engine):
         mock_conn = MagicMock()
         mock_db = MagicMock()
@@ -1080,6 +1230,111 @@ class TestQuery:
         assert result.error is None
         assert result.column_list == ["distinct"]
 
+    def test_query_find_with_projection_sort_limit_skip_and_no_close(
+        self, mongo_engine
+    ):
+        _, _, mock_coll = self._mock_query_collection(mongo_engine)
+        find_result = MagicMock()
+        sort_result = MagicMock()
+        limit_result = [{"name": "archery"}]
+        mock_coll.find.return_value = find_result
+        find_result.sort.return_value = sort_result
+        sort_result.limit.return_value.skip.return_value = limit_result
+        mongo_engine.close = MagicMock()
+
+        result = mongo_engine.query(
+            db_name="test_db",
+            sql="db.test.find({'a':1},{'name':1}).sort({'name':1}).limit(5).skip(2)",
+            limit_num=10,
+            close_conn=False,
+        )
+        assert result.error is None
+        assert result.affected_rows == 1
+        mock_coll.find.assert_called_once_with({"a": 1}, {"name": 1})
+        find_result.sort.assert_called_once_with([("name", 1)])
+        sort_result.limit.assert_called_once_with(5)
+        sort_result.limit.return_value.skip.assert_called_once_with(2)
+        mongo_engine.close.assert_not_called()
+
+    def test_query_explain_filters_server_info_and_ok(self, mongo_engine):
+        _, _, mock_coll = self._mock_query_collection(mongo_engine)
+        mock_coll.find.return_value.explain.return_value = {
+            "queryPlanner": {"stage": "COLLSCAN"},
+            "serverInfo": {},
+            "ok": 1,
+        }
+
+        result = mongo_engine.query(
+            db_name="test_db", sql="db.test.find({'a':1}).explain()", limit_num=10
+        )
+        assert result.error is None
+        assert result.column_list == ["explain"]
+        assert len(result.rows) == 1
+        assert "queryPlanner" in result.rows[0][0]
+
+    def test_query_getIndexes(self, mongo_engine):
+        _, _, mock_coll = self._mock_query_collection(mongo_engine)
+        mock_coll.index_information.return_value = {"_id_": {"key": [("_id", 1)]}}
+
+        result = mongo_engine.query(
+            db_name="test_db", sql="db.test.getIndexes()", limit_num=10
+        )
+        assert result.error is None
+        assert result.column_list == ["index_list"]
+        assert "_id_" in result.rows[0][0]
+
+    def test_query_stats(self, mongo_engine):
+        _, mock_db, _ = self._mock_query_collection(mongo_engine)
+        mock_db.command.return_value = {"ns": "test_db.test", "count": 3, "ok": 1}
+
+        result = mongo_engine.query(
+            db_name="test_db", sql="db.test.stats()", limit_num=10
+        )
+        assert result.error is None
+        assert result.column_list == ["stats"]
+        assert len(result.rows) == 2
+        assert all("ok" not in json.loads(row[0]) for row in result.rows)
+
+    def test_query_countDocuments_with_options(self, mongo_engine):
+        _, _, mock_coll = self._mock_query_collection(mongo_engine)
+        mock_coll.count_documents.return_value = 2
+
+        result = mongo_engine.query(
+            db_name="test_db",
+            sql="db.test.countDocuments({'a':1},{'limit':2})",
+            limit_num=10,
+        )
+        assert result.error is None
+        assert result.column_list == ["count"]
+        mock_coll.count_documents.assert_called_once_with({"a": 1}, **{"limit": 2})
+
+    def test_query_distinct_with_filter(self, mongo_engine):
+        _, _, mock_coll = self._mock_query_collection(mongo_engine)
+        mock_coll.distinct.return_value = ["archery"]
+
+        result = mongo_engine.query(
+            db_name="test_db",
+            sql="db.test.distinct('name', {'active':true})",
+            limit_num=10,
+        )
+        assert result.error is None
+        assert result.column_list == ["distinct"]
+        mock_coll.distinct.assert_called_once_with("name", {"active": True})
+
+    def test_query_aggregate_group(self, mongo_engine):
+        _, _, mock_coll = self._mock_query_collection(mongo_engine)
+        mock_coll.aggregate.return_value = [{"_id": "a", "total": 2}]
+
+        result = mongo_engine.query(
+            db_name="test_db",
+            sql="db.test.aggregate([{'$group':{'_id':'$name','total':{'$sum':1}}}])",
+            limit_num=10,
+        )
+        assert result.error is None
+        assert result.column_list == ["mongodballdata", "_id", "total"]
+        assert result.affected_rows == 1
+        mock_coll.aggregate.assert_called_once()
+
     def test_query_error(self, mongo_engine):
         mongo_engine.get_connection = MagicMock(side_effect=Exception("conn failed"))
 
@@ -1123,6 +1378,48 @@ class TestProcesslist:
 
         result = mongo_engine.processlist("Active")
         assert result.error is not None
+
+    def test_processlist_full_all_inner_and_mongos_client(self, mongo_engine):
+        operations = [
+            {
+                "opid": 1,
+                "clientMetadata": {"mongos": {"client": "mongos-client"}},
+                "effectiveUsers": ["legacy-user"],
+            },
+            {"opid": 2, "effectiveUsers": []},
+        ]
+        mock_conn = MagicMock()
+        cursor_mock = MagicMock()
+        cursor_mock.__enter__ = MagicMock(return_value=iter(operations))
+        cursor_mock.__exit__ = MagicMock(return_value=False)
+        mock_conn.admin.aggregate.return_value = cursor_mock
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+
+        full_result = mongo_engine.processlist("Full")
+        assert len(full_result.rows) == 2
+        assert full_result.rows[0]["client"] == "mongos-client"
+        assert full_result.rows[0]["effectiveUsers_user"] is None
+
+        cursor_mock.__enter__.return_value = iter(operations)
+        all_result = mongo_engine.processlist("All")
+        assert [row["opid"] for row in all_result.rows] == [1]
+
+        cursor_mock.__enter__.return_value = iter(operations)
+        inner_result = mongo_engine.processlist("Inner")
+        assert [row["opid"] for row in inner_result.rows] == [2]
+
+    def test_processlist_defaults_to_active(self, mongo_engine):
+        mock_conn = MagicMock()
+        cursor_mock = MagicMock()
+        cursor_mock.__enter__ = MagicMock(return_value=iter([]))
+        cursor_mock.__exit__ = MagicMock(return_value=False)
+        mock_conn.admin.aggregate.return_value = cursor_mock
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+
+        result = mongo_engine.processlist(None)
+        assert result.error is None
+        current_op_arg = mock_conn.admin.aggregate.call_args.args[0][0]["$currentOp"]
+        assert current_op_arg["idleConnections"] is False
 
 
 class TestKillOp:
@@ -1303,6 +1600,22 @@ class TestParseTuple:
         )
         # 缺失的字段被填充为 "(N/A)"
         assert any("(N/A)" in str(item) for row in rows for item in row)
+
+    def test_parse_tuple_formats_oid_and_date(self, mongo_engine):
+        cursor = [
+            {
+                "payload_oid": {"$oid": "507f1f77bcf86cd799439011"},
+                "payload_date": {"$date": 1704067200000},
+            }
+        ]
+        rows, _ = mongo_engine.parse_tuple(
+            cursor,
+            "test_db",
+            "test",
+            projection={"payload_oid": 1, "payload_date": 1},
+        )
+        assert "ObjectId('507f1f77bcf86cd799439011')" in rows[0][1]
+        assert "2024-" in rows[0][2]
 
 
 # ====================== tablespace / tablespace_count ======================
@@ -1638,6 +1951,33 @@ class TestTablespace:
         assert row["nindexes"] == 0
         assert row["totalIndexSize"] == 0.0
 
+    def test_tablespace_schema_search_filters_case_insensitively(self, mongo_engine):
+        db_collections = {
+            "mydb": {
+                "collections": ["users", "orders"],
+                "stats": {
+                    "users": {
+                        "storageStats": {
+                            "ns": "mydb.users",
+                            "totalSize": 2 * 1024 * 1024,
+                        }
+                    },
+                    "orders": {
+                        "storageStats": {
+                            "ns": "mydb.orders",
+                            "totalSize": 1 * 1024 * 1024,
+                        }
+                    },
+                },
+            }
+        }
+        self._build_mock_conn(mongo_engine, db_collections)
+
+        result = mongo_engine.tablespace(schema_search="USER")
+        assert result.error is None
+        assert len(result.rows) == 1
+        assert result.rows[0]["ns"] == "mydb.users"
+
 
 class TestTablespaceCount:
     def test_tablespace_count_basic(self, mongo_engine):
@@ -1701,3 +2041,16 @@ class TestTablespaceCount:
         result = mongo_engine.tablespace_count()
         assert result.error is None
         assert result.rows[0][0] == 0
+
+    def test_tablespace_count_schema_search(self, mongo_engine):
+        """按库名.集合名进行搜索过滤后计数"""
+        mock_conn = MagicMock()
+        mock_conn.list_database_names.return_value = ["mydb"]
+        mock_db = MagicMock()
+        mock_db.list_collection_names.return_value = ["users", "orders"]
+        mock_conn.__getitem__ = MagicMock(return_value=mock_db)
+        mongo_engine.get_connection = MagicMock(return_value=mock_conn)
+
+        result = mongo_engine.tablespace_count(schema_search="USER")
+        assert result.error is None
+        assert result.rows[0][0] == 1
