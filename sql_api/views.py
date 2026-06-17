@@ -186,6 +186,7 @@ def debug(request):
         "wx_app_secret",
         "aliyun_access_key_secret",
         "tencent_secret_key",
+        "openai_api_key",
     ]
     sys_config.update({k: "******" for k in secret_keys})
 
