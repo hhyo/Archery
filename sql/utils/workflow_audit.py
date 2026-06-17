@@ -409,9 +409,16 @@ class AuditV2:
             raise AuditException(f"不支持的工单类型: {self.workflow_type}")
 
         if action == WorkflowAction.ABORT:
-            if actor.username != self.audit.create_user:
-                raise AuditException(f"只有工单提交者可以撤回工单")
-            return True
+            if actor.username == self.audit.create_user:
+                return True
+            if self.workflow_type == WorkflowType.SQL_REVIEW and getattr(
+                self.workflow, "id", None
+            ):
+                from sql.utils.sql_review import can_execute
+
+                if can_execute(actor, self.workflow.id):
+                    return True
+            raise AuditException(f"只有工单提交者或执行人可以撤回工单")
         if action in [WorkflowAction.PASS, WorkflowAction.REJECT]:
             # 需要检查权限
             # 超级用户可以审批所有工单

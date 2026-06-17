@@ -1,6 +1,5 @@
 import datetime
 import logging
-import traceback
 
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
@@ -126,7 +125,8 @@ class ExecuteCheck(views.APIView):
                 db_name=db_name, sql=request.data["full_sql"].strip()
             )
         except Exception as e:
-            raise serializers.ValidationError({"errors": f"{e}"})
+            logger.error(f"SQL检查失败: {e}", exc_info=True)
+            raise serializers.ValidationError({"errors": "SQL检查失败，请联系管理员"})
         check_result.rows = check_result.to_dict()
         serializer_obj = ExecuteCheckResultSerializer(check_result)
         return Response(serializer_obj.data)
@@ -329,7 +329,15 @@ class AuditWorkflow(views.APIView):
                 action, user, serializer.data["audit_remark"]
             )
         except AuditException as e:
-            raise serializers.ValidationError({"errors": f"操作失败, {str(e)}"})
+            logger.error(
+                f"工单 {workflow_audit.workflow_id} 审核操作失败: {e}",
+                exc_info=True,
+            )
+            raise serializers.ValidationError(
+                {
+                    "errors": f"工单 {workflow_audit.workflow_id} 操作权限不足，请联系管理员"
+                }
+            )
 
         # 最后处置一下原本工单的状态
         if auditor.workflow_type == WorkflowType.QUERY:
@@ -493,8 +501,9 @@ class BatchWorkflowOperate(views.APIView):
                 try:
                     auditor.can_operate(WorkflowAction.PASS, user)
                 except AuditException as e:
+                    logger.error(f"工单 {workflow.id} 审核失败: {e}", exc_info=True)
                     raise serializers.ValidationError(
-                        {"errors": f"工单 {workflow.id} 无审核权限，{str(e)}"}
+                        {"errors": f"工单 {workflow.id} 操作权限不足，请联系管理员"}
                     )
             notify_args = []
             with transaction.atomic():
@@ -554,6 +563,11 @@ class BatchWorkflowOperate(views.APIView):
                     )
                 if user.username == workflow.engineer:
                     action = WorkflowAction.ABORT
+                elif workflow.status in [
+                    "workflow_review_pass",
+                    "workflow_timingtask",
+                ] and can_execute(user, workflow.id):
+                    action = WorkflowAction.ABORT
                 elif user.has_perm("sql.sql_review"):
                     action = WorkflowAction.REJECT
                 else:
@@ -564,8 +578,9 @@ class BatchWorkflowOperate(views.APIView):
                 try:
                     auditor.can_operate(action, user)
                 except AuditException as e:
+                    logger.error(f"工单 {workflow.id} 终止失败: {e}", exc_info=True)
                     raise serializers.ValidationError(
-                        {"errors": f"工单 {workflow.id} 无终止权限，{str(e)}"}
+                        {"errors": f"工单 {workflow.id} 操作权限不足，请联系管理员"}
                     )
                 actions.append((workflow, action))
             notify_args = []

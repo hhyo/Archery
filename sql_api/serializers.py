@@ -23,7 +23,6 @@ from sql.utils.resource_group import user_instances
 from sql.utils.sql_utils import filter_db_list
 from common.utils.const import WorkflowType, WorkflowStatus
 from common.config import SysConfig
-import traceback
 import logging
 from sql.offlinedownload import OffLineDownLoad
 
@@ -240,8 +239,10 @@ class AliyunRdsSerializer(serializers.ModelSerializer):
                 ak = CloudAccessKey.objects.create(**rds_data)
                 rds = AliyunRdsConfig.objects.create(ak=ak, **validated_data)
         except Exception as e:
-            logger.error(f"创建AliyunRds报错，错误信息：{traceback.format_exc()}")
-            raise serializers.ValidationError({"errors": str(e)})
+            logger.error(f"创建AliyunRds失败: {e}", exc_info=True)
+            raise serializers.ValidationError(
+                {"errors": "创建AliyunRds失败，请联系管理员"}
+            )
         else:
             return rds
 
@@ -484,8 +485,9 @@ def _visible_db_names(instance):
     query_engine = get_engine(instance=instance)
     resource = query_engine.get_all_databases()
     if getattr(resource, "error", None):
+        logger.error(f"获取实例 {instance.id} 数据库列表失败: {resource.error}")
         raise serializers.ValidationError(
-            {"errors": f"{instance.instance_name}: {resource.error}"}
+            {"errors": f"{instance.instance_name}: 获取数据库列表失败，请联系管理员"}
         )
     db_list = filter_db_list(
         db_list=resource.rows,
@@ -526,8 +528,8 @@ def _create_workflow_content(workflow_data, sql_content, check_result):
             auditor.workflow.save()
             return workflow_content
     except Exception as e:
-        logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
-        raise serializers.ValidationError({"errors": str(e)})
+        logger.error(f"提交工单失败: {e}", exc_info=True)
+        raise serializers.ValidationError({"errors": "提交工单失败，请联系管理员"})
 
 
 class WorkflowContentSerializer(serializers.ModelSerializer):
@@ -565,7 +567,8 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
                     db_name=workflow_data["db_name"], sql=sql_content
                 )
         except Exception as e:
-            raise serializers.ValidationError({"errors": str(e)})
+            logger.error(f"提交工单SQL检查失败: {e}", exc_info=True)
+            raise serializers.ValidationError({"errors": "SQL检查失败，请联系管理员"})
 
         # 未开启备份选项，并且engine支持备份，强制设置备份
         is_backup = (
@@ -711,7 +714,8 @@ class BatchWorkflowSubmitSerializer(serializers.Serializer):
                 db_name=first_db_name, sql=sql_content
             )
         except Exception as e:
-            raise serializers.ValidationError({"errors": str(e)})
+            logger.error(f"批量提交工单SQL检查失败: {e}", exc_info=True)
+            raise serializers.ValidationError({"errors": "SQL检查失败，请联系管理员"})
 
         is_backup = base_workflow_data.get("is_backup", False)
         sys_config = SysConfig()
@@ -760,8 +764,10 @@ class BatchWorkflowSubmitSerializer(serializers.Serializer):
                         auditor.workflow.save()
                         workflow_contents.append(workflow_content)
         except Exception as e:
-            logger.error(f"批量提交工单报错，错误信息：{traceback.format_exc()}")
-            raise serializers.ValidationError({"errors": str(e)})
+            logger.error(f"批量提交工单失败: {e}", exc_info=True)
+            raise serializers.ValidationError(
+                {"errors": "批量提交工单失败，请联系管理员"}
+            )
 
         return workflow_contents
 
