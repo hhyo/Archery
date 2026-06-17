@@ -331,7 +331,10 @@
             }
             var remark = "";
             if (operation === "audit") {
-                remark = prompt("请输入审核备注：", "") || "";
+                remark = prompt("请输入审核备注：", "");
+                if (remark === null) {
+                    return;
+                }
             } else if (operation === "cancel") {
                 remark = prompt("请输入终止原因：", "") || "";
                 if (!remark) {
