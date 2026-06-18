@@ -692,6 +692,186 @@ class TestQueryPrivilegesCheck(TestCase):
         )
 
 
+class TestQueryPrivModify(TestCase):
+    """测试 query_priv_modify 接口"""
+
+    def setUp(self):
+        self.superuser = User.objects.create(username="super", is_superuser=True)
+        self.user = User.objects.create(username="user")
+        self.no_perm_user = User.objects.create(username="noperm")
+        query_mgtpriv = Permission.objects.get(codename="query_mgtpriv")
+        self.user.user_permissions.add(query_mgtpriv)
+        self.slave = Instance.objects.create(
+            instance_name="test_instance",
+            type="slave",
+            db_type="mysql",
+            host=settings.DATABASES["default"]["HOST"],
+            port=settings.DATABASES["default"]["PORT"],
+            user=settings.DATABASES["default"]["USER"],
+            password=settings.DATABASES["default"]["PASSWORD"],
+        )
+        self.db_name = settings.DATABASES["default"]["TEST"]["NAME"]
+        tomorrow = datetime.today() + timedelta(days=1)
+        self.priv = QueryPrivileges.objects.create(
+            user_name=self.user.username,
+            user_display="user",
+            instance=self.slave,
+            db_name=self.db_name,
+            table_name="test_table",
+            valid_date=tomorrow,
+            limit_num=100,
+            priv_type=2,
+        )
+        self.client = Client()
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.user.delete()
+        self.no_perm_user.delete()
+        Instance.objects.all().delete()
+        QueryPrivileges.objects.all().delete()
+
+    def test_modify_no_privilege_id(self):
+        """未传 privilege_id 或 privilege_ids，返回错误"""
+        self.client.force_login(self.user)
+        r = self.client.post("/query/modifyprivileges/", data={"type": "1"})
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 1)
+        self.assertIn("privilege_id", result["msg"])
+
+    def test_modify_invalid_privilege_id(self):
+        """传入非法 privilege_id，返回格式错误"""
+        self.client.force_login(self.user)
+        r = self.client.post(
+            "/query/modifyprivileges/", data={"type": "1", "privilege_id": "abc"}
+        )
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 1)
+        self.assertIn("格式错误", result["msg"])
+
+    def test_modify_invalid_privilege_ids(self):
+        """传入非法 privilege_ids，返回格式错误"""
+        self.client.force_login(self.user)
+        r = self.client.post(
+            "/query/modifyprivileges/", data={"type": "1", "privilege_ids": "1,abc,3"}
+        )
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 1)
+        self.assertIn("格式错误", result["msg"])
+
+    def test_modify_privilege_not_exist(self):
+        """传入不存在的 privilege_id，返回权限不存在"""
+        self.client.force_login(self.user)
+        r = self.client.post(
+            "/query/modifyprivileges/", data={"type": "1", "privilege_id": "999999"}
+        )
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 1)
+        self.assertIn("不存在", result["msg"])
+
+    def test_modify_delete_single(self):
+        """type=1，单条删除权限（is_deleted=1）"""
+        self.client.force_login(self.user)
+        r = self.client.post(
+            "/query/modifyprivileges/",
+            data={"type": "1", "privilege_id": str(self.priv.privilege_id)},
+        )
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 0)
+        self.priv.refresh_from_db()
+        self.assertEqual(self.priv.is_deleted, 1)
+
+    def test_modify_delete_batch(self):
+        """type=1，批量删除权限"""
+        tomorrow = datetime.today() + timedelta(days=1)
+        priv2 = QueryPrivileges.objects.create(
+            user_name=self.user.username,
+            user_display="user",
+            instance=self.slave,
+            db_name=self.db_name,
+            table_name="test_table2",
+            valid_date=tomorrow,
+            limit_num=50,
+            priv_type=2,
+        )
+        self.client.force_login(self.user)
+        ids = f"{self.priv.privilege_id},{priv2.privilege_id}"
+        r = self.client.post(
+            "/query/modifyprivileges/", data={"type": "1", "privilege_ids": ids}
+        )
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 0)
+        self.priv.refresh_from_db()
+        priv2.refresh_from_db()
+        self.assertEqual(self.priv.is_deleted, 1)
+        self.assertEqual(priv2.is_deleted, 1)
+
+    def test_modify_update_single(self):
+        """type=2，单条变更权限的 valid_date 和 limit_num"""
+        self.client.force_login(self.user)
+        new_date = (datetime.today() + timedelta(days=10)).strftime("%Y-%m-%d")
+        r = self.client.post(
+            "/query/modifyprivileges/",
+            data={
+                "type": "2",
+                "privilege_id": str(self.priv.privilege_id),
+                "valid_date": new_date,
+                "limit_num": "200",
+            },
+        )
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 0)
+        self.priv.refresh_from_db()
+        self.assertEqual(self.priv.limit_num, 200)
+
+    def test_modify_update_batch(self):
+        """type=2，批量变更权限的 valid_date 和 limit_num"""
+        tomorrow = datetime.today() + timedelta(days=1)
+        priv2 = QueryPrivileges.objects.create(
+            user_name=self.user.username,
+            user_display="user",
+            instance=self.slave,
+            db_name=self.db_name,
+            table_name="test_table2",
+            valid_date=tomorrow,
+            limit_num=50,
+            priv_type=2,
+        )
+        self.client.force_login(self.user)
+        ids = f"{self.priv.privilege_id},{priv2.privilege_id}"
+        new_date = (datetime.today() + timedelta(days=10)).strftime("%Y-%m-%d")
+        r = self.client.post(
+            "/query/modifyprivileges/",
+            data={
+                "type": "2",
+                "privilege_ids": ids,
+                "valid_date": new_date,
+                "limit_num": "300",
+            },
+        )
+        result = json.loads(r.content)
+        self.assertEqual(result["status"], 0)
+        self.priv.refresh_from_db()
+        priv2.refresh_from_db()
+        self.assertEqual(self.priv.limit_num, 300)
+        self.assertEqual(priv2.limit_num, 300)
+
+    def test_modify_no_permission(self):
+        """无 query_mgtpriv 权限的用户访问，返回 403"""
+        from django.core.exceptions import PermissionDenied
+        from sql.query_privileges import query_priv_modify
+        from django.test import RequestFactory
+
+        factory = RequestFactory()
+        request = factory.post(
+            "/query/modifyprivileges/",
+            data={"type": "1", "privilege_id": str(self.priv.privilege_id)},
+        )
+        request.user = self.no_perm_user
+        with self.assertRaises(PermissionDenied):
+            query_priv_modify(request)
+
+
 def test_query_privilege_audit(
     sql_query_apply, resource_group, super_user, client, fake_generate_audit_setting
 ):
@@ -713,3 +893,99 @@ def test_query_privilege_audit(
     )
     sql_query_apply.refresh_from_db()
     assert sql_query_apply.status == WorkflowStatus.PASSED
+
+
+class TestQueryPrivExpireReminder(TestCase):
+    """测试查询权限到期提醒"""
+
+    def setUp(self):
+        self.superuser = User.objects.create(
+            username="super", is_superuser=True, email="admin@test.com"
+        )
+        self.user = User.objects.create(
+            username="user", display="普通用户", email="user@test.com"
+        )
+        self.user_no_email = User.objects.create(
+            username="user_no_email", display="无邮箱用户"
+        )
+        self.slave = Instance.objects.create(
+            instance_name="test_instance",
+            type="slave",
+            db_type="mysql",
+            host=settings.DATABASES["default"]["HOST"],
+            port=settings.DATABASES["default"]["PORT"],
+            user=settings.DATABASES["default"]["USER"],
+            password=settings.DATABASES["default"]["PASSWORD"],
+        )
+        self.sys_config = SysConfig()
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.user.delete()
+        self.user_no_email.delete()
+        Instance.objects.all().delete()
+        QueryPrivileges.objects.all().delete()
+
+    @patch("sql.query_privileges.MsgSender.send_email")
+    def test_no_expire_privs(self, mock_send_email):
+        """没有即将到期的权限，不发送邮件"""
+        sql.query_privileges.query_priv_expire_reminder()
+        mock_send_email.assert_not_called()
+
+    @patch("sql.query_privileges.MsgSender.send_email")
+    def test_send_reminder(self, mock_send_email):
+        """有即将到期的权限，发送 HTML 邮件给用户并抄送管理员"""
+        expire_date = date.today() + timedelta(days=2)
+        QueryPrivileges.objects.create(
+            user_name=self.user.username,
+            user_display=self.user.display,
+            instance=self.slave,
+            db_name="test_db",
+            table_name="test_table",
+            valid_date=expire_date,
+            limit_num=100,
+            priv_type=2,
+        )
+        sql.query_privileges.query_priv_expire_reminder()
+        mock_send_email.assert_called_once()
+        args = mock_send_email.call_args
+        self.assertIn("查询权限即将到期提醒", args[0][0])
+        self.assertEqual(args[0][2], ["user@test.com"])
+        self.assertEqual(args[1]["list_cc_addr"], ["admin@test.com"])
+        self.assertEqual(args[1]["content_type"], "html")
+        self.assertIn("<table", args[0][1])
+        self.assertIn("</table>", args[0][1])
+
+    @patch("sql.query_privileges.MsgSender.send_email")
+    def test_user_no_email(self, mock_send_email):
+        """用户未配置邮箱，跳过发送"""
+        expire_date = date.today() + timedelta(days=1)
+        QueryPrivileges.objects.create(
+            user_name=self.user_no_email.username,
+            user_display=self.user_no_email.display,
+            instance=self.slave,
+            db_name="test_db",
+            table_name="test_table",
+            valid_date=expire_date,
+            limit_num=100,
+            priv_type=2,
+        )
+        sql.query_privileges.query_priv_expire_reminder()
+        mock_send_email.assert_not_called()
+
+    @patch("sql.query_privileges.MsgSender.send_email")
+    def test_user_not_exist(self, mock_send_email):
+        """用户不存在，跳过发送"""
+        expire_date = date.today() + timedelta(days=1)
+        QueryPrivileges.objects.create(
+            user_name="not_exist_user",
+            user_display="不存在用户",
+            instance=self.slave,
+            db_name="test_db",
+            table_name="test_table",
+            valid_date=expire_date,
+            limit_num=100,
+            priv_type=2,
+        )
+        sql.query_privileges.query_priv_expire_reminder()
+        mock_send_email.assert_not_called()

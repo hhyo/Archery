@@ -93,7 +93,8 @@ class MsgSender(object):
             main_msg = email.mime.multipart.MIMEMultipart()
 
             # 添加文本内容
-            text_msg = email.mime.text.MIMEText(body, "plain", "utf-8")
+            content_type = kwargs.get("content_type", "plain")
+            text_msg = email.mime.text.MIMEText(body, content_type, "utf-8")
             main_msg.attach(text_msg)
 
             # 添加附件

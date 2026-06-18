@@ -24,7 +24,14 @@ from common.config import SysConfig
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines.goinception import GoInceptionEngine
-from sql.models import QueryPrivilegesApply, QueryPrivileges, Instance, ResourceGroup
+from sql.models import (
+    QueryPrivilegesApply,
+    QueryPrivileges,
+    Instance,
+    ResourceGroup,
+    Users,
+)
+from common.utils.sendmsg import MsgSender
 from sql.notify import notify_for_audit
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.workflow_audit import Audit, AuditException, get_auditor
@@ -383,34 +390,52 @@ def user_query_priv(request):
 @permission_required("sql.query_mgtpriv", raise_exception=True)
 def query_priv_modify(request):
     """
-    变更权限信息
+    变更权限信息，支持单条和批量操作
     :param request:
     :return:
     """
-    privilege_id = request.POST.get("privilege_id")
     type = request.POST.get("type")
     result = {"status": 0, "msg": "ok", "data": []}
 
-    # type=1删除权限,type=2变更权限
-    try:
-        privilege = QueryPrivileges.objects.get(privilege_id=int(privilege_id))
-    except QueryPrivileges.DoesNotExist:
+    # 支持批量操作：privilege_ids 为逗号分隔的 id 列表，privilege_id 为单条操作
+    privilege_ids_str = request.POST.get("privilege_ids", "")
+    privilege_id = request.POST.get("privilege_id", "")
+
+    if privilege_ids_str:
+        try:
+            id_list = [int(i) for i in privilege_ids_str.split(",") if i.strip()]
+        except ValueError:
+            result["msg"] = "privilege_ids 参数格式错误"
+            result["status"] = 1
+            return HttpResponse(json.dumps(result), content_type="application/json")
+    elif privilege_id:
+        try:
+            id_list = [int(privilege_id)]
+        except ValueError:
+            result["msg"] = "privilege_id 参数格式错误"
+            result["status"] = 1
+            return HttpResponse(json.dumps(result), content_type="application/json")
+    else:
+        result["msg"] = "请传入 privilege_id 或 privilege_ids"
+        result["status"] = 1
+        return HttpResponse(json.dumps(result), content_type="application/json")
+
+    privileges = QueryPrivileges.objects.filter(privilege_id__in=id_list)
+    if not privileges.exists():
         result["msg"] = "待操作权限不存在"
         result["status"] = 1
         return HttpResponse(json.dumps(result), content_type="application/json")
 
+    # type=1删除权限,type=2变更权限
     if int(type) == 1:
-        # 删除权限
-        privilege.is_deleted = 1
-        privilege.save(update_fields=["is_deleted"])
+        # 批量删除权限
+        privileges.update(is_deleted=1)
         return HttpResponse(json.dumps(result), content_type="application/json")
     elif int(type) == 2:
-        # 变更权限
+        # 批量变更权限
         valid_date = request.POST.get("valid_date")
         limit_num = request.POST.get("limit_num")
-        privilege.valid_date = valid_date
-        privilege.limit_num = limit_num
-        privilege.save(update_fields=["valid_date", "limit_num"])
+        privileges.update(valid_date=valid_date, limit_num=limit_num)
         return HttpResponse(json.dumps(result), content_type="application/json")
 
 
@@ -601,3 +626,94 @@ def _query_apply_audit_call_back(apply_id, workflow_status):
                 for table_name in apply_queryset.table_list.split(",")
             ]
         QueryPrivileges.objects.bulk_create(insert_list)
+
+
+def query_priv_expire_reminder():
+    """
+    查询权限到期提醒任务
+    扫描 valid_date 在 3 天内到期的权限，向权限持有人和管理员发送提醒邮件
+    """
+    now = datetime.datetime.now()
+    today = now.date()
+    expire_threshold = today + datetime.timedelta(days=3)
+
+    # 查询即将到期的权限（未删除）
+    expire_privs = QueryPrivileges.objects.filter(
+        valid_date__gte=today,
+        valid_date__lte=expire_threshold,
+        is_deleted=0,
+    ).order_by("user_name", "valid_date")
+
+    if not expire_privs.exists():
+        logger.info("暂无即将到期的查询权限，跳过提醒")
+        return
+
+    # 按用户聚合权限
+    user_priv_map = {}
+    for priv in expire_privs:
+        user_priv_map.setdefault(priv.user_name, []).append(priv)
+
+    # 获取管理员邮件列表
+    admin_emails = list(
+        Users.objects.filter(is_superuser=True, email__isnull=False)
+        .exclude(email="")
+        .values_list("email", flat=True)
+    )
+
+    msg_sender = MsgSender()
+    base_url = SysConfig().get("archery_base_url", "http://127.0.0.1:9123").rstrip("/")
+
+    for user_name, privs in user_priv_map.items():
+        try:
+            user = Users.objects.get(username=user_name)
+            user_email = user.email
+        except Users.DoesNotExist:
+            logger.warning(f"用户 {user_name} 不存在，跳过权限到期提醒")
+            continue
+
+        if not user_email:
+            logger.warning(f"用户 {user_name} 未配置邮箱，跳过权限到期提醒")
+            continue
+
+        # 构造 HTML 邮件内容
+        rows_html = ""
+        for priv in privs:
+            priv_type_display = "库权限" if priv.priv_type == 1 else "表权限"
+            tb_name = priv.table_name if priv.priv_type == 2 else "-"
+            rows_html += (
+                f"<tr><td>{priv.instance.instance_name}</td>"
+                f"<td>{priv.db_name}</td>"
+                f"<td>{tb_name}</td>"
+                f"<td>{priv_type_display}</td>"
+                f"<td>{priv.valid_date}</td>"
+                f"<td>{priv.limit_num}</td></tr>"
+            )
+
+        msg_content = f"""<html>
+<body>
+<p>您好，</p>
+<p>您有以下查询权限将在 3 天内到期，请及时申请续期：</p>
+<table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ddd;">
+  <thead>
+    <tr><th>实例</th><th>数据库</th><th>表</th><th>权限类型</th><th>到期日</th><th>行数限制</th></tr>
+  </thead>
+  <tbody>
+    {rows_html}
+  </tbody>
+</table>
+<p>请及时到查询权限申请页面进行续期申请，以免影响正常使用。<br>
+访问地址：<a href="{base_url}/queryapplylist/">{base_url}/queryapplylist/</a></p>
+<p style="color: gray;">本邮件由 Archery 系统自动发送</p>
+</body>
+</html>"""
+        msg_title = "[Archery]查询权限即将到期提醒"
+
+        # 发送给用户，抄送管理员
+        to = [user_email]
+        list_cc = admin_emails if admin_emails else []
+        msg_sender.send_email(
+            msg_title, msg_content, to, list_cc_addr=list_cc, content_type="html"
+        )
+        logger.info(f"已发送查询权限到期提醒给用户 {user_name}，权限数量：{len(privs)}")
+
+    logger.info(f"查询权限到期提醒任务完成，共提醒 {len(user_priv_map)} 位用户")
