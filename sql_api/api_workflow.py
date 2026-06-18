@@ -48,6 +48,7 @@ logger = logging.getLogger("default")
 
 
 def _is_notify_enabled(phase):
+    """判断指定工单阶段是否开启消息通知。"""
     sys_config = SysConfig()
     return (
         phase in sys_config.get("notify_phase_control").split(",")
@@ -56,7 +57,8 @@ def _is_notify_enabled(phase):
     )
 
 
-def _notify_submit_workflow(workflow_content):
+def _notify_pending_auditors(workflow_content):
+    """SQL工单提交后，通知待审核人进行审核。"""
     if workflow_content.workflow.status in [
         "workflow_manreviewing",
         "workflow_review_pass",
@@ -74,6 +76,7 @@ def _notify_submit_workflow(workflow_content):
 
 
 def _execute_sql_workflow(workflow, user):
+    """将SQL上线工单置为执行排队状态，并提交异步执行任务。"""
     audit_id = Audit.detail_by_workflow_id(
         workflow_id=workflow.id,
         workflow_type=WorkflowType.SQL_REVIEW,
@@ -192,11 +195,17 @@ class WorkflowList(generics.ListAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         workflow_content = serializer.save()
-        _notify_submit_workflow(workflow_content)
+        _notify_pending_auditors(workflow_content)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class BatchWorkflowSubmit(views.APIView):
+    """
+    批量提交SQL上线工单。
+
+    根据请求中的实例和数据库组合创建多条SQL上线工单，提交后按通知配置提醒待审核人。
+    """
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
@@ -212,7 +221,7 @@ class BatchWorkflowSubmit(views.APIView):
         serializer.is_valid(raise_exception=True)
         workflow_contents = serializer.save()
         for workflow_content in workflow_contents:
-            _notify_submit_workflow(workflow_content)
+            _notify_pending_auditors(workflow_content)
         workflows = [
             {
                 "id": workflow_content.workflow.id,
@@ -476,6 +485,13 @@ class ExecuteWorkflow(views.APIView):
 
 
 class BatchWorkflowOperate(views.APIView):
+    """
+    批量操作SQL上线工单。
+
+    支持批量审核通过、批量执行和批量终止工单，并按操作类型处理权限校验、状态流转、
+    定时任务清理和消息通知。
+    """
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(

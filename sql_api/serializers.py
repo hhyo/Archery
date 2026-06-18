@@ -464,6 +464,7 @@ class WorkflowSerializer(serializers.ModelSerializer):
 
 
 def _get_submit_user(request_user, engineer):
+    """根据当前请求用户和指定用户名确定工单提交人。"""
     # 管理员可以指定提交人信息，其他用户只能替自己提交。
     if request_user.is_superuser and engineer:
         try:
@@ -474,6 +475,7 @@ def _get_submit_user(request_user, engineer):
 
 
 def _normalize_db_resource_value(item):
+    """将数据库资源列表中的不同返回格式统一转换为数据库名称字符串。"""
     if isinstance(item, dict):
         return str(item.get("value"))
     if isinstance(item, (list, tuple)) and len(item) == 1:
@@ -482,6 +484,7 @@ def _normalize_db_resource_value(item):
 
 
 def _visible_db_names(instance):
+    """获取实例中经过展示和屏蔽规则过滤后的可见数据库名称集合。"""
     query_engine = get_engine(instance=instance)
     resource = query_engine.get_all_databases()
     if getattr(resource, "error", None):
@@ -503,6 +506,7 @@ def _visible_db_names(instance):
 
 
 def _build_batch_workflow_name(base_name, instance_name, db_name):
+    """为批量提交的子工单生成包含实例名和数据库名的工单名称。"""
     suffix = f"-{instance_name}-{db_name}"
     if len(suffix) >= 50:
         return suffix[:50]
@@ -510,6 +514,7 @@ def _build_batch_workflow_name(base_name, instance_name, db_name):
 
 
 def _create_workflow_content(workflow_data, sql_content, check_result):
+    """创建单个 SQL 工单、保存 SQL 内容并初始化审批流程。"""
     try:
         with transaction.atomic():
             workflow = SqlWorkflow(**workflow_data)
@@ -607,17 +612,21 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
 
 
 class BatchWorkflowSubmitSerializer(serializers.Serializer):
+    """批量提交 SQL 上线工单的参数校验和工单创建序列化器。"""
+
     workflow = serializers.DictField()
     sql_content = serializers.CharField(label="SQL内容")
 
     @staticmethod
     def _dedupe_check(values, field_name):
+        """校验列表字段是否存在重复值，并统一转换为字符串列表。"""
         normalized = [str(value) for value in values]
         if len(normalized) != len(set(normalized)):
             raise serializers.ValidationError({"errors": f"{field_name} 存在重复项"})
         return normalized
 
     def validate(self, attrs):
+        """校验批量提交参数、实例权限、资源组关系和数据库可见性。"""
         workflow_payload = attrs["workflow"].copy()
         sql_content = attrs["sql_content"].strip()
         if not sql_content:
@@ -699,6 +708,7 @@ class BatchWorkflowSubmitSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
+        """按实例和数据库组合批量创建 SQL 上线工单及其审批记录。"""
         sql_content = validated_data["sql_content"]
         instances = validated_data["instances"]
         db_names = validated_data["db_names"]
@@ -901,6 +911,8 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
 
 
 class BatchWorkflowOperationSerializer(serializers.Serializer):
+    """批量审核、执行或终止 SQL 工单的参数校验序列化器。"""
+
     operation = serializers.ChoiceField(
         choices=["audit", "execute", "cancel"], label="批量操作类型"
     )
@@ -915,6 +927,7 @@ class BatchWorkflowOperationSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
+        """校验批量操作工单是否存在、状态是否一致以及终止原因是否完整。"""
         workflow_ids = attrs["workflow_ids"]
         if len(workflow_ids) != len(set(workflow_ids)):
             raise serializers.ValidationError({"errors": "工单ID存在重复项"})
