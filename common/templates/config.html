@@ -332,6 +332,30 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label for="auto_dml_level"
+                                       class="col-sm-4 control-label">AUTO_DML_LEVEL</label>
+                                <div class="col-sm-5">
+                                    <input type="number" class="form-control"
+                                           id="auto_dml_level"
+                                           key="auto_dml_level"
+                                           value="{{ config.auto_dml_level }}"
+                                           min="0"
+                                           placeholder="DML免审批级数，无需最后多少层审批，默认0" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="auto_dml_max_affected_rows"
+                                       class="col-sm-4 control-label">AUTO_DML_MAX_AFFECTED_ROWS</label>
+                                <div class="col-sm-5">
+                                    <input type="number" class="form-control"
+                                           id="auto_dml_max_affected_rows"
+                                           key="auto_dml_max_affected_rows"
+                                           value="{{ config.auto_dml_max_affected_rows }}"
+                                           min="0"
+                                           placeholder="DML免审批允许工单最大影响行数，默认10000" />
+                                </div>
+                            </div>
                         </div>
                         <h5 style="color: darkgrey"><b>SQL查询</b></h5>
                         <h6 style="color:red">注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析</h6>
