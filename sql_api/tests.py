@@ -7,9 +7,11 @@ from django.contrib.auth.models import Group, Permission
 from rest_framework.test import APITestCase
 from rest_framework import status
 from common.config import SysConfig
+from common.utils.const import WorkflowStatus
 from sql.utils.workflow_audit import AuditSetting
 from sql.engines import ReviewSet
 from sql.engines.models import ReviewResult
+from sql_api import serializers as api_serializers
 from sql.models import (
     ResourceGroup,
     Instance,
@@ -19,6 +21,7 @@ from sql.models import (
     SqlWorkflow,
     SqlWorkflowContent,
     WorkflowAudit,
+    WorkflowAuditDetail,
     WorkflowLog,
     InstanceTag,
     WorkflowAuditSetting,
@@ -505,8 +508,13 @@ class TestWorkflow(APITestCase):
             ],
         )
         mock_get_engine.return_value = mock_engine
+        mock_engine.get_all_databases.return_value = MagicMock(
+            rows=["test_db", "db2"], error=None
+        )
+        self.mock_get_engine = mock_get_engine
+        self.mock_engine = mock_engine
         self.async_task_patcher = patch("sql_api.api_workflow.async_task")
-        self.async_task_patcher.start()
+        self.mock_async_task = self.async_task_patcher.start()
         self.notify_patcher = patch("sql.notify.auto_notify")
         self.notify_patcher.start()
 
@@ -521,6 +529,56 @@ class TestWorkflow(APITestCase):
         self.get_engine_patcher.stop()
         self.async_task_patcher.stop()
         self.notify_patcher.stop()
+
+    def _create_instance(self, instance_name, db_type="mysql"):
+        instance = Instance.objects.create(
+            instance_name=instance_name,
+            type="master",
+            db_type=db_type,
+            host="some_host",
+            port=3306,
+            user="ins_user",
+            password="some_str",
+        )
+        instance.resource_group.add(self.res_group)
+        instance.instance_tag.add(self.ins_tag.id)
+        return instance
+
+    def _create_sql_workflow(self, workflow_name, workflow_status, audit_status):
+        workflow = SqlWorkflow.objects.create(
+            workflow_name=workflow_name,
+            group_id=1,
+            group_name=self.res_group.group_name,
+            engineer=self.user.username,
+            engineer_display=self.user.display,
+            audit_auth_groups=str(self.group.id),
+            status=workflow_status,
+            is_backup=False,
+            instance=self.ins,
+            db_name="test_db",
+            syntax_type=1,
+        )
+        SqlWorkflowContent.objects.create(
+            workflow=workflow,
+            sql_content="alter table abc add column note varchar(64);",
+            review_content="[]",
+            execute_result="",
+        )
+        WorkflowAudit.objects.create(
+            group_id=1,
+            group_name=self.res_group.group_name,
+            workflow_id=workflow.id,
+            workflow_type=2,
+            workflow_title=workflow.workflow_name,
+            workflow_remark="",
+            audit_auth_groups=str(self.group.id),
+            current_audit=str(self.group.id) if audit_status == 0 else "-1",
+            next_audit="-1",
+            current_status=audit_status,
+            create_user=self.user.username,
+            create_user_display=self.user.display,
+        )
+        return workflow
 
     def test_get_sql_workflow_list(self):
         """测试获取SQL上线工单列表"""
@@ -545,6 +603,59 @@ class TestWorkflow(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(r.json()["count"], 1)
 
+    def test_get_disabled_workflow_sub_resources(self):
+        """测试待审核和日志接口不开放GET方法"""
+        audit_response = self.client.get("/api/v1/workflow/auditlist/", format="json")
+        log_response = self.client.get("/api/v1/workflow/log/", format="json")
+
+        self.assertEqual(audit_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(log_response.status_code, status.HTTP_200_OK)
+        self.assertIn("不被允许", audit_response.json()["detail"])
+        self.assertIn("不被允许", log_response.json()["detail"])
+
+    def test_workflow_api_invalid_payload_branches(self):
+        """测试工单审核、执行和日志接口参数错误分支"""
+        audit_response = self.client.post("/api/v1/workflow/audit/", {}, format="json")
+        execute_response = self.client.post(
+            "/api/v1/workflow/execute/", {}, format="json"
+        )
+        log_response = self.client.post("/api/v1/workflow/log/", {}, format="json")
+
+        self.assertEqual(audit_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(execute_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(log_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_execute_archive_workflow_dispatches_async_task(self):
+        """测试数据归档工单执行分支提交异步任务"""
+        WorkflowAudit.objects.create(
+            group_id=1,
+            group_name="some_group",
+            workflow_id=self.wf1.id,
+            workflow_type=3,
+            workflow_title="归档工单",
+            workflow_remark="",
+            audit_auth_groups="1",
+            current_audit="-1",
+            next_audit="-1",
+            current_status=WorkflowStatus.PASSED,
+            create_user=self.user.username,
+            create_user_display=self.user.display,
+        )
+
+        response = self.client.post(
+            "/api/v1/workflow/execute/",
+            {"workflow_id": self.wf1.id, "workflow_type": 3},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.mock_async_task.assert_any_call(
+            "sql.archiver.archive",
+            self.wf1.id,
+            timeout=-1,
+            task_name=f"archive-{self.wf1.id}",
+        )
+
     def test_check_param_is_None(self):
         """测试工单检测，参数内容为空"""
         json_data = {
@@ -565,8 +676,9 @@ class TestWorkflow(APITestCase):
         }
         _get_engine.side_effect = RuntimeError("RuntimeError")
         r = self.client.post("/api/v1/workflow/sqlcheck/", json_data, format="json")
-        print(json.loads(r.content))
-        self.assertDictEqual(json.loads(r.content), {"errors": "RuntimeError"})
+        self.assertDictEqual(
+            json.loads(r.content), {"errors": "SQL检查失败，请联系管理员"}
+        )
 
     @patch("sql_api.api_workflow.get_engine")
     def test_check(self, _get_engine):
@@ -649,6 +761,64 @@ class TestWorkflow(APITestCase):
         self.assertEqual(r.json()["workflow"]["workflow_name"], "上线工单1")
         self.assertEqual(r.json()["workflow"]["engineer"], self.user.username)
         self.assertEqual(r.json()["workflow"]["engineer_display"], self.user.display)
+
+    def test_batch_submit_workflow_creates_cross_product_and_checks_once(self):
+        """测试批量提交生成实例和数据库笛卡尔积，且只检测一次"""
+        instance2 = self._create_instance("second_ins")
+        json_data = {
+            "workflow": {
+                "workflow_name": "批量上线",
+                "demand_url": "test",
+                "group_id": 1,
+                "instances": [self.ins.id, instance2.id],
+                "db_names": ["test_db", "db2"],
+                "is_backup": False,
+                "is_offline_export": 0,
+            },
+            "sql_content": "alter table abc add column note varchar(64);",
+        }
+
+        r = self.client.post("/api/v1/workflow/batch/submit/", json_data, format="json")
+
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(r.json()["workflow_count"], 4)
+        self.mock_engine.execute_check.assert_called_once_with(
+            db_name="test_db", sql="alter table abc add column note varchar(64);"
+        )
+        workflows = SqlWorkflow.objects.exclude(id=self.wf1.id).order_by("id")
+        self.assertEqual(workflows.count(), 4)
+        self.assertEqual(
+            [(wf.instance.instance_name, wf.db_name) for wf in workflows],
+            [
+                ("some_ins", "test_db"),
+                ("some_ins", "db2"),
+                ("second_ins", "test_db"),
+                ("second_ins", "db2"),
+            ],
+        )
+        self.assertTrue(
+            all(wf.workflow_name.startswith("批量上线-") for wf in workflows)
+        )
+
+    def test_batch_submit_rejects_mixed_db_type(self):
+        """测试批量提交拒绝混合数据库类型实例"""
+        instance2 = self._create_instance("pgsql_ins", db_type="pgsql")
+        json_data = {
+            "workflow": {
+                "workflow_name": "批量上线",
+                "group_id": 1,
+                "instances": [self.ins.id, instance2.id],
+                "db_names": ["test_db"],
+                "is_offline_export": 0,
+            },
+            "sql_content": "alter table abc add column note varchar(64);",
+        }
+
+        r = self.client.post("/api/v1/workflow/batch/submit/", json_data, format="json")
+
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("同一数据库类型", str(r.json()["errors"]))
+        self.assertEqual(SqlWorkflow.objects.count(), 1)
 
     def test_submit_workflow_super(self):
         """测试管理员提交SQL上线工单，可以指定用户"""
@@ -820,3 +990,513 @@ class TestWorkflow(APITestCase):
         r = self.client.post("/api/v1/workflow/execute/", execute_data, format="json")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(r.json(), {"msg": "开始执行，执行结果请到工单详情页查看"})
+
+    def test_batch_audit_workflow(self):
+        """测试批量审核工单"""
+        workflow2 = self._create_sql_workflow(
+            "batch_review", "workflow_manreviewing", 0
+        )
+        json_data = {
+            "operation": "audit",
+            "workflow_ids": [self.wf1.id, workflow2.id],
+            "remark": "批量通过",
+        }
+
+        r = self.client.post(
+            "/api/v1/workflow/batch/operate/", json_data, format="json"
+        )
+
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.json()["processed_count"], 2)
+        self.wf1.refresh_from_db()
+        workflow2.refresh_from_db()
+        self.assertEqual(self.wf1.status, "workflow_review_pass")
+        self.assertEqual(workflow2.status, "workflow_review_pass")
+
+    def test_batch_execute_workflow(self):
+        """测试批量执行工单"""
+        workflow1 = self._create_sql_workflow(
+            "batch_execute_1", "workflow_review_pass", 1
+        )
+        workflow2 = self._create_sql_workflow(
+            "batch_execute_2", "workflow_review_pass", 1
+        )
+        json_data = {
+            "operation": "execute",
+            "workflow_ids": [workflow1.id, workflow2.id],
+        }
+
+        r = self.client.post(
+            "/api/v1/workflow/batch/operate/", json_data, format="json"
+        )
+
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        workflow1.refresh_from_db()
+        workflow2.refresh_from_db()
+        self.assertEqual(workflow1.status, "workflow_queuing")
+        self.assertEqual(workflow2.status, "workflow_queuing")
+        self.assertEqual(self.mock_async_task.call_count, 2)
+
+    def test_batch_cancel_allows_resource_group_executor(self):
+        """测试资源组执行人可批量终止审核通过/定时执行工单"""
+        executor = User.objects.create_user(
+            username="executor",
+            password="executor_password",
+            display="执行人",
+            is_active=True,
+        )
+        executor.user_permissions.add(
+            Permission.objects.get(codename="sql_execute_for_resource_group")
+        )
+        executor.resource_group.add(self.res_group)
+        r = self.client.post(
+            "/api/auth/token/",
+            {"username": "executor", "password": "executor_password"},
+            format="json",
+        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + r.data["access"])
+
+        for workflow_status in ["workflow_review_pass", "workflow_timingtask"]:
+            with self.subTest(workflow_status=workflow_status):
+                workflow = self._create_sql_workflow(
+                    f"batch_cancel_{workflow_status}", workflow_status, 1
+                )
+                json_data = {
+                    "operation": "cancel",
+                    "workflow_ids": [workflow.id],
+                    "remark": "批量终止",
+                }
+
+                r = self.client.post(
+                    "/api/v1/workflow/batch/operate/", json_data, format="json"
+                )
+
+                self.assertEqual(r.status_code, status.HTTP_200_OK)
+                workflow.refresh_from_db()
+                self.assertEqual(workflow.status, "workflow_abort")
+                audit = WorkflowAudit.objects.get(workflow_id=workflow.id)
+                audit_detail = WorkflowAuditDetail.objects.get(audit_id=audit.audit_id)
+                self.assertEqual(audit_detail.audit_user, executor.username)
+                self.assertEqual(audit_detail.audit_status, WorkflowStatus.ABORTED)
+
+    def test_batch_operate_rejects_mixed_status(self):
+        """测试批量操作拒绝混合状态工单"""
+        workflow2 = self._create_sql_workflow("batch_mixed", "workflow_review_pass", 1)
+        json_data = {
+            "operation": "cancel",
+            "workflow_ids": [self.wf1.id, workflow2.id],
+            "remark": "批量终止",
+        }
+
+        r = self.client.post(
+            "/api/v1/workflow/batch/operate/", json_data, format="json"
+        )
+
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("同一状态", str(r.json()["errors"]))
+        self.wf1.refresh_from_db()
+        workflow2.refresh_from_db()
+        self.assertEqual(self.wf1.status, "workflow_manreviewing")
+        self.assertEqual(workflow2.status, "workflow_review_pass")
+
+    def test_two_factor_serializers_validate_missing_user_and_required_fields(self):
+        """测试2FA序列化器校验用户和必填配置"""
+        cases = [
+            (
+                api_serializers.TwoFASerializer,
+                {"engineer": "missing", "auth_type": "totp", "enable": "false"},
+                "不存在该用户",
+            ),
+            (
+                api_serializers.TwoFASerializer,
+                {
+                    "engineer": self.user.username,
+                    "auth_type": "sms",
+                    "enable": "true",
+                },
+                "缺少 phone",
+            ),
+            (
+                api_serializers.TwoFAStateSerializer,
+                {"engineer": "missing"},
+                "不存在该用户",
+            ),
+            (
+                api_serializers.TwoFASaveSerializer,
+                {"engineer": self.user.username, "auth_type": "sms"},
+                "缺少 phone",
+            ),
+            (
+                api_serializers.TwoFASaveSerializer,
+                {"engineer": self.user.username, "auth_type": "totp"},
+                "缺少 key",
+            ),
+            (
+                api_serializers.TwoFAVerifySerializer,
+                {
+                    "engineer": self.user.username,
+                    "auth_type": "sms",
+                    "otp": 123456,
+                },
+                "缺少 phone",
+            ),
+        ]
+
+        for serializer_class, payload, expected_error in cases:
+            with self.subTest(serializer=serializer_class.__name__):
+                serializer = serializer_class(data=payload)
+                self.assertFalse(serializer.is_valid())
+                self.assertIn(expected_error, str(serializer.errors))
+
+    def test_query_resource_serializer_requires_locator_and_resource_scope(self):
+        """测试查询资源序列化器校验定位参数和资源层级"""
+        cases = [
+            ({"resource_type": "database"}, "instance_id 或 instance_name"),
+            (
+                {"instance_name": "some_ins", "resource_type": "table"},
+                "db_name 不能为空",
+            ),
+            (
+                {
+                    "instance_name": "some_ins",
+                    "resource_type": "column",
+                    "db_name": "test_db",
+                },
+                "column 查询需提供",
+            ),
+        ]
+
+        for payload, expected_error in cases:
+            serializer = api_serializers.SqlQueryResourceQuerySerializer(data=payload)
+            self.assertFalse(serializer.is_valid())
+            self.assertIn(expected_error, str(serializer.errors))
+
+        serializer = api_serializers.SqlQueryResourceQuerySerializer(
+            data={
+                "instance_name": "some_ins",
+                "resource_type": "column",
+                "db_name": "test_db",
+                "tb_name": "test_table",
+            }
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_simple_query_serializers_normalize_boolean_flags(self):
+        """测试查询日志和收藏序列化器将布尔字符串归一化"""
+        logs_serializer = api_serializers.SqlQueryLogsQuerySerializer(
+            data={"star": "TRUE"}
+        )
+        self.assertTrue(logs_serializer.is_valid(), logs_serializer.errors)
+        self.assertTrue(logs_serializer.validated_data["star"])
+
+        favorite_serializer = api_serializers.SqlQueryFavoriteSerializer(
+            data={"query_log_id": 1, "star": "false"}
+        )
+        self.assertTrue(favorite_serializer.is_valid(), favorite_serializer.errors)
+        self.assertFalse(favorite_serializer.validated_data["star"])
+
+    def test_workflow_serializer_normalizes_empty_run_dates_and_group_error(self):
+        """测试工单序列化器处理空执行时间和不存在资源组"""
+        serializer = api_serializers.WorkflowSerializer(
+            data={
+                "workflow_name": "定时上线",
+                "group_id": self.res_group.group_id,
+                "instance": self.ins.id,
+                "db_name": "test_db",
+                "is_backup": False,
+                "run_date_start": "",
+                "run_date_end": "",
+            }
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertIsNone(serializer.validated_data["run_date_start"])
+        self.assertIsNone(serializer.validated_data["run_date_end"])
+
+        serializer = api_serializers.WorkflowSerializer(
+            data={
+                "workflow_name": "定时上线",
+                "group_id": 99999,
+                "instance": self.ins.id,
+                "db_name": "test_db",
+                "is_backup": False,
+            }
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("不存在该资源组", str(serializer.errors))
+
+    def test_execute_check_and_instance_resource_serializers_reject_missing_instance(
+        self,
+    ):
+        """测试依赖实例的序列化器拒绝不存在实例"""
+        instance_resource = api_serializers.InstanceResourceSerializer(
+            data={"instance_id": 99999, "resource_type": "database"}
+        )
+        self.assertFalse(instance_resource.is_valid())
+        self.assertIn("不存在该实例", str(instance_resource.errors))
+
+        execute_check = api_serializers.ExecuteCheckSerializer(
+            data={"instance_id": 99999, "db_name": "test_db", "full_sql": "select 1"}
+        )
+        self.assertFalse(execute_check.is_valid())
+        self.assertIn("不存在该实例", str(execute_check.errors))
+
+    def test_submit_user_helper_uses_request_user_or_validates_superuser_override(self):
+        """测试提交用户选择逻辑"""
+        normal_user = User.objects.create_user(
+            username="normal_submitter", display="普通提交人", is_active=True
+        )
+        self.assertEqual(
+            api_serializers._get_submit_user(normal_user, self.user.username),
+            normal_user,
+        )
+        self.assertEqual(
+            api_serializers._get_submit_user(self.user, normal_user.username),
+            normal_user,
+        )
+        with self.assertRaisesMessage(Exception, "不存在用户"):
+            api_serializers._get_submit_user(self.user, "missing_user")
+
+    def test_db_resource_helpers_normalize_and_report_engine_errors(self):
+        """测试数据库资源辅助函数处理不同格式和引擎错误"""
+        self.assertEqual(
+            api_serializers._normalize_db_resource_value({"value": "test_db"}),
+            "test_db",
+        )
+        self.assertEqual(api_serializers._normalize_db_resource_value(["db2"]), "db2")
+        self.assertEqual(api_serializers._normalize_db_resource_value("db3"), "db3")
+        self.assertEqual(
+            api_serializers._build_batch_workflow_name(
+                "very-long-workflow-name" * 4,
+                "instance_with_long_name",
+                "database_with_long_name",
+            ),
+            "ve-instance_with_long_name-database_with_long_name",
+        )
+        self.assertEqual(
+            api_serializers._build_batch_workflow_name(
+                "base",
+                "instance_name_longer_than_fifty_characters_for_test",
+                "database_name_longer_than_fifty_characters_for_test",
+            ),
+            "-instance_name_longer_than_fifty_characters_for_test-database_name_longer_than_fifty_characters_for_test"[
+                :50
+            ],
+        )
+
+        self.mock_engine.get_all_databases.return_value = MagicMock(
+            rows=[], error="boom"
+        )
+        with self.assertRaisesMessage(Exception, "获取数据库列表失败"):
+            api_serializers._visible_db_names(self.ins)
+
+    def test_batch_submit_serializer_validation_error_branches(self):
+        """测试批量提交序列化器常见参数错误分支"""
+        base_workflow = {
+            "workflow_name": "批量上线",
+            "group_id": self.res_group.group_id,
+            "is_offline_export": 0,
+        }
+        request = MagicMock(user=self.user)
+        cases = [
+            (
+                {
+                    "workflow": {**base_workflow, "instances": [self.ins.id]},
+                    "sql_content": " ",
+                },
+                "该字段不能为空",
+            ),
+            (
+                {
+                    "workflow": {**base_workflow, "db_names": ["test_db"]},
+                    "sql_content": "select 1",
+                },
+                "请选择实例",
+            ),
+            (
+                {
+                    "workflow": {**base_workflow, "instances": [self.ins.id]},
+                    "sql_content": "select 1",
+                },
+                "请选择数据库",
+            ),
+            (
+                {
+                    "workflow": {
+                        **base_workflow,
+                        "instances": ["bad"],
+                        "db_names": ["test_db"],
+                    },
+                    "sql_content": "select 1",
+                },
+                "实例ID格式错误",
+            ),
+            (
+                {
+                    "workflow": {
+                        **base_workflow,
+                        "instances": [self.ins.id, self.ins.id],
+                        "db_names": ["test_db"],
+                    },
+                    "sql_content": "select 1",
+                },
+                "实例 存在重复项",
+            ),
+            (
+                {
+                    "workflow": {
+                        **base_workflow,
+                        "instances": [self.ins.id],
+                        "db_names": ["test_db", "test_db"],
+                    },
+                    "sql_content": "select 1",
+                },
+                "数据库 存在重复项",
+            ),
+            (
+                {
+                    "workflow": {
+                        **base_workflow,
+                        "instances": [self.ins.id],
+                        "db_names": ["test_db"],
+                        "is_offline_export": 1,
+                    },
+                    "sql_content": "select 1",
+                },
+                "批量提交不支持离线导出工单",
+            ),
+            (
+                {
+                    "workflow": {
+                        **base_workflow,
+                        "instances": [99999],
+                        "db_names": ["test_db"],
+                    },
+                    "sql_content": "select 1",
+                },
+                "不存在实例",
+            ),
+        ]
+
+        for payload, expected_error in cases:
+            with self.subTest(expected_error=expected_error):
+                serializer = api_serializers.BatchWorkflowSubmitSerializer(
+                    data=payload, context={"request": request}
+                )
+                self.assertFalse(serializer.is_valid())
+                self.assertIn(expected_error, str(serializer.errors))
+
+    def test_batch_submit_serializer_rejects_unlinked_group_and_invisible_db(self):
+        """测试批量提交拒绝未关联资源组实例和无权限数据库"""
+        other_group = ResourceGroup.objects.create(group_name="other")
+        unlinked_instance = Instance.objects.create(
+            instance_name="unlinked_ins",
+            type="master",
+            db_type="mysql",
+            host="some_host",
+            port=3306,
+            user="ins_user",
+            password="some_str",
+        )
+        unlinked_instance.instance_tag.add(self.ins_tag.id)
+        request = MagicMock(user=self.user)
+
+        serializer = api_serializers.BatchWorkflowSubmitSerializer(
+            data={
+                "workflow": {
+                    "workflow_name": "批量上线",
+                    "group_id": other_group.group_id,
+                    "instances": [unlinked_instance.id],
+                    "db_names": ["test_db"],
+                    "is_offline_export": 0,
+                },
+                "sql_content": "select 1",
+            },
+            context={"request": request},
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("资源组未关联实例", str(serializer.errors))
+
+        serializer = api_serializers.BatchWorkflowSubmitSerializer(
+            data={
+                "workflow": {
+                    "workflow_name": "批量上线",
+                    "group_id": self.res_group.group_id,
+                    "instances": [self.ins.id],
+                    "db_names": ["missing_db"],
+                    "is_offline_export": 0,
+                },
+                "sql_content": "select 1",
+            },
+            context={"request": request},
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("不存在或无权限访问数据库", str(serializer.errors))
+
+    def test_workflow_operation_serializers_validation_error_branches(self):
+        """测试审核、日志、执行和批量操作序列化器错误分支"""
+        cases = [
+            (
+                api_serializers.AuditWorkflowSerializer,
+                {
+                    "engineer": "missing",
+                    "workflow_id": self.wf1.id,
+                    "workflow_type": 2,
+                    "audit_remark": "test",
+                    "audit_type": "pass",
+                },
+                "不存在该用户",
+            ),
+            (
+                api_serializers.WorkflowAuditSerializer,
+                {"engineer": "missing"},
+                "不存在该用户",
+            ),
+            (
+                api_serializers.WorkflowLogSerializer,
+                {"workflow_id": 99999, "workflow_type": 2},
+                "不存在该工单",
+            ),
+            (
+                api_serializers.ExecuteWorkflowSerializer,
+                {"workflow_id": self.wf1.id, "workflow_type": 2},
+                "缺少 mode",
+            ),
+            (
+                api_serializers.ExecuteWorkflowSerializer,
+                {"workflow_id": self.wf1.id, "workflow_type": 2, "mode": "manual"},
+                "缺少 engineer",
+            ),
+            (
+                api_serializers.ExecuteWorkflowSerializer,
+                {
+                    "workflow_id": self.wf1.id,
+                    "workflow_type": 2,
+                    "mode": "manual",
+                    "engineer": "missing",
+                },
+                "不存在该用户",
+            ),
+        ]
+
+        for serializer_class, payload, expected_error in cases:
+            serializer = serializer_class(data=payload)
+            self.assertFalse(serializer.is_valid())
+            self.assertIn(expected_error, str(serializer.errors))
+
+        serializer = api_serializers.BatchWorkflowOperationSerializer(
+            data={"operation": "audit", "workflow_ids": [self.wf1.id, self.wf1.id]}
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("工单ID存在重复项", str(serializer.errors))
+
+        serializer = api_serializers.BatchWorkflowOperationSerializer(
+            data={"operation": "cancel", "workflow_ids": [self.wf1.id]}
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("终止原因不能为空", str(serializer.errors))
+
+        serializer = api_serializers.BatchWorkflowOperationSerializer(
+            data={"operation": "audit", "workflow_ids": [99999]}
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("不存在工单", str(serializer.errors))

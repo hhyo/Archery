@@ -43,6 +43,18 @@
                 提交SQL
             </button>
         </div>
+        <div class="form-group">
+            <div class="btn-group">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                    批量操作 <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a href="javascript:;" class="batch-operation" data-operation="audit">批量审核SQL</a></li>
+                    <li><a href="javascript:;" class="batch-operation" data-operation="execute">批量执行SQL</a></li>
+                    <li><a href="javascript:;" class="batch-operation" data-operation="cancel">批量终止工单</a></li>
+                </ul>
+            </div>
+        </div>
     </div>
     <!-- 审核列表的表格-->
     <div class="table-responsive">
@@ -186,6 +198,8 @@
                         }
                     },
                 columns: [{
+                    checkbox: true
+                }, {
                     title: '工单名称',
                     field: 'workflow_name',
                     formatter: function (value, row, index) {
@@ -281,6 +295,96 @@
             });
 
         }
+
+        function getBatchSelectedRows(operation) {
+            var selectedRows = $("#sqlaudit-list").bootstrapTable('getSelections');
+            if (selectedRows.length === 0) {
+                alert("请先勾选工单");
+                return null;
+            }
+            var firstStatus = selectedRows[0].status;
+            for (var i = 0; i < selectedRows.length; i++) {
+                if (selectedRows[i].status !== firstStatus) {
+                    alert("批量操作的工单必须处于同一个状态");
+                    return null;
+                }
+            }
+            if (operation === "audit" && firstStatus !== "workflow_manreviewing") {
+                alert("仅待审核工单可批量审核");
+                return null;
+            }
+            if (operation === "execute" && ["workflow_review_pass", "workflow_timingtask"].indexOf(firstStatus) === -1) {
+                alert("仅审核通过或定时执行工单可批量执行");
+                return null;
+            }
+            if (operation === "cancel" && ["workflow_manreviewing", "workflow_review_pass", "workflow_timingtask"].indexOf(firstStatus) === -1) {
+                alert("当前状态不支持批量终止");
+                return null;
+            }
+            return selectedRows;
+        }
+
+        function batchOperate(operation) {
+            var selectedRows = getBatchSelectedRows(operation);
+            if (!selectedRows) {
+                return;
+            }
+            var remark = "";
+            if (operation === "audit") {
+                remark = prompt("请输入审核备注：", "");
+                if (remark === null) {
+                    return;
+                }
+            } else if (operation === "cancel") {
+                remark = prompt("请输入终止原因：", "") || "";
+                if (!remark) {
+                    alert("终止原因不能为空");
+                    return;
+                }
+            } else if (operation === "execute") {
+                var hasNoBackup = selectedRows.some(function (row) {
+                    return String(row.is_backup) !== "true";
+                });
+                var message = hasNoBackup
+                    ? "选中的工单存在未备份工单，将不会自动备份数据，请确认是否立即批量执行？"
+                    : "请确认是否立即批量执行？";
+                if (!confirm(message)) {
+                    return;
+                }
+            }
+            $.ajax({
+                type: "post",
+                url: "/api/v1/workflow/batch/operate/",
+                dataType: "json",
+                contentType: "application/json;",
+                data: JSON.stringify({
+                    operation: operation,
+                    workflow_ids: selectedRows.map(function (row) {
+                        return row.id;
+                    }),
+                    remark: remark,
+                    mode: "auto"
+                }),
+                success: function (data) {
+                    alert(data.msg);
+                    $("#sqlaudit-list").bootstrapTable('uncheckAll');
+                    get_workflow_list();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    if (XMLHttpRequest.responseJSON && XMLHttpRequest.responseJSON.errors) {
+                        alert(XMLHttpRequest.responseJSON.errors);
+                    } else if (XMLHttpRequest.responseText) {
+                        alert(XMLHttpRequest.responseText);
+                    } else {
+                        alert(errorThrown);
+                    }
+                }
+            });
+        }
+
+        $(".batch-operation").click(function () {
+            batchOperate($(this).data("operation"));
+        });
 
         // 获取操作日志
         function getLog(obj) {

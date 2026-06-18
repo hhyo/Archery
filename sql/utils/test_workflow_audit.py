@@ -714,7 +714,7 @@ def test_can_operate_abort_by_others(
     super_user,
     create_auth_group,
 ):
-    """测试非工单创建者不能撤回工单"""
+    """测试非工单创建者或执行人不能撤回工单"""
     fake_generate_audit_setting.return_value = AuditSetting(
         auto_pass=False, audit_auth_groups=[create_auth_group.id]
     )
@@ -724,7 +724,7 @@ def test_can_operate_abort_by_others(
     audit.audit.save()
     with pytest.raises(AuditException) as exc_info:
         audit.can_operate(WorkflowAction.ABORT, super_user)
-    assert "只有工单提交者可以撤回工单" in str(exc_info.value)
+    assert "只有工单提交者或执行人可以撤回工单" in str(exc_info.value)
 
 
 @pytest.mark.parametrize(
