@@ -1,6 +1,18 @@
 # -*- coding: UTF-8 -*-
-from clickhouse_driver import connect
-from clickhouse_driver.util.escape import escape_chars_map
+"""ClickHouse engine using HTTP protocol for compatibility with newer server versions.
+
+The native TCP protocol (clickhouse-driver) only supports ClickHouse up to ~v20.10
+(revision 54468). Newer versions like 23.x and above use a revised protocol that
+causes "Unknown packet" errors. This engine uses the HTTP interface (port 8123)
+which is protocol-version-independent.
+
+The HTTP port is configurable via the SysConfig key 'ck_http_port', defaulting to 8123.
+"""
+
+import json
+import urllib.request
+import urllib.parse
+import urllib.error
 from sql.utils.sql_utils import get_syntax_type
 from .models import ResultSet, ReviewResult, ReviewSet
 from common.utils.timer import FuncTimer
@@ -12,6 +24,8 @@ import re
 
 logger = logging.getLogger("default")
 
+DEFAULT_HTTP_PORT = 8123
+
 
 class ClickHouseEngine(EngineBase):
     test_query = "SELECT 1"
@@ -19,27 +33,75 @@ class ClickHouseEngine(EngineBase):
     def __init__(self, instance=None):
         super(ClickHouseEngine, self).__init__(instance=instance)
         self.config = SysConfig()
+        self.http_port = int(self.config.get("ck_http_port", DEFAULT_HTTP_PORT))
+        self._server_version = None
+
+    @property
+    def http_url(self):
+        host = self.host
+        if "," in host:
+            host = host.split(",")[0].strip()
+        return f"http://{host}:{self.http_port}"
+
+    def _build_url(self, db_name=None, params=None):
+        query_params = {
+            "user": self.user,
+            "password": self.password,
+        }
+        if db_name:
+            query_params["database"] = db_name
+        if params:
+            for key, val in params.items():
+                query_params[f"param_{key}"] = str(val)
+        return f"{self.http_url}/?{urllib.parse.urlencode(query_params)}"
+
+    def _http_execute(self, sql, db_name=None, timeout=30, params=None, want_json=True):
+        """Execute SQL via ClickHouse HTTP interface.
+
+        For queries that return data, appends FORMAT JSONCompact to get structured
+        results. For DDL/DML statements, sends the SQL directly.
+
+        Returns:
+            - If want_json and query returns data: dict with 'meta', 'data', 'rows'
+            - Otherwise: raw response string
+        """
+        is_query = bool(re.match(r"^select|^show|^explain|^with|^desc", sql.strip(), re.I))
+
+        if want_json and is_query:
+            # Don't add FORMAT if SQL already has one
+            if re.search(r"\bFORMAT\b", sql, re.I):
+                sql_to_send = sql.rstrip(";").rstrip()
+            else:
+                sql_to_send = sql.rstrip(";").rstrip() + " FORMAT JSONCompact"
+        else:
+            sql_to_send = sql
+
+        url = self._build_url(db_name=db_name, params=params)
+        req = urllib.request.Request(url, data=sql_to_send.encode("utf-8"), method="POST")
+        req.add_header("Content-Type", "text/plain; charset=utf-8")
+
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                body = resp.read().decode("utf-8")
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode("utf-8", errors="replace")
+            # CK HTTP errors contain the error message in the body
+            raise Exception(error_body.split("Stack trace")[0].strip())
+        except Exception as e:
+            raise e
+
+        if want_json and is_query:
+            try:
+                return json.loads(body)
+            except json.JSONDecodeError:
+                # If JSON parsing fails, return raw body
+                return body
+        return body
 
     def get_connection(self, db_name=None):
-        if self.conn:
-            return self.conn
-        if db_name:
-            self.conn = connect(
-                host=self.host,
-                port=self.port,
-                user=self.user,
-                password=self.password,
-                database=db_name,
-                connect_timeout=10,
-            )
-        else:
-            self.conn = connect(
-                host=self.host,
-                port=self.port,
-                user=self.user,
-                password=self.password,
-                connect_timeout=10,
-            )
+        """HTTP connections are stateless, this returns the URL for reference."""
+        if not self.conn:
+            self.conn = self._build_url(db_name=db_name)
         return self.conn
 
     name = "ClickHouse"
@@ -47,30 +109,44 @@ class ClickHouseEngine(EngineBase):
 
     def escape_string(self, value: str) -> str:
         """字符串参数转义"""
-        return "%s" % "".join(escape_chars_map.get(c, c) for c in value)
+        # Simple escaping for CK identifiers
+        return value.replace("\\", "\\\\").replace("'", "\\'")
 
     @property
     def auto_backup(self):
-        """是否支持备份"""
         return False
 
     @property
     def server_version(self):
-        sql = "select value from system.build_options where name = 'VERSION_FULL';"
-        result = self.query(sql=sql)
-        version = result.rows[0][0].split(" ")[1]
-        return tuple([int(n) for n in version.split(".")[:3]])
+        if self._server_version:
+            return self._server_version
+        try:
+            result = self._http_execute("SELECT version()", timeout=10)
+            if isinstance(result, dict):
+                version_str = result["data"][0][0]
+            else:
+                version_str = result.strip()
+            # Parse version like "23.3.22.3" or "23.3.22.3-altinity-stable"
+            version_parts = version_str.split(" ")[0].split(".")
+            self._server_version = tuple(int(n) for n in version_parts[:3])
+        except Exception as e:
+            logger.warning(f"ClickHouse获取版本失败: {e}")
+            self._server_version = (0, 0, 0)
+        return self._server_version
 
     def get_table_engine(self, tb_name):
         """获取某个table的engine type"""
-        db, tb = tb_name.split(".")
-        sql = f"""select engine from system.tables where database=%(db)s and name=%(tb)s"""
-        query_result = self.query(sql=sql, parameters={"db": db, "tb": tb})
-        if query_result.rows:
-            result = {"status": 1, "engine": query_result.rows[0][0]}
-        else:
-            result = {"status": 0, "engine": "None"}
-        return result
+        db, tb = tb_name.split(".", 1)
+        sql = "SELECT engine FROM system.tables WHERE database = {db:String} AND name = {tb:String} FORMAT JSONCompact"
+        try:
+            result = self._http_execute(
+                sql, params={"db": db, "tb": tb}, timeout=30
+            )
+            if isinstance(result, dict) and result["data"]:
+                return {"status": 1, "engine": result["data"][0][0]}
+        except Exception:
+            pass
+        return {"status": 0, "engine": "None"}
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
@@ -95,15 +171,15 @@ class ClickHouseEngine(EngineBase):
 
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
-        sql = f"""select
+        sql = """select
             name,
             type,
             comment
         from
             system.columns
         where
-            database = %(db_name)s
-        and table = %(tb_name)s;"""
+            database = {db_name:String}
+        and table = {tb_name:String}"""
         result = self.query(
             db_name=db_name,
             sql=sql,
@@ -116,7 +192,7 @@ class ClickHouseEngine(EngineBase):
     def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet 类似查询"""
         tb_name = self.escape_string(tb_name)
-        sql = f"show create table `{tb_name}`;"
+        sql = f"show create table `{tb_name}`"
         result = self.query(db_name=db_name, sql=sql)
 
         result.rows[0] = (tb_name,) + (
@@ -136,18 +212,17 @@ class ClickHouseEngine(EngineBase):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         try:
-            conn = self.get_connection(db_name=db_name)
-            cursor = conn.cursor()
-            cursor.execute(sql, parameters)
-            if int(limit_num) > 0:
-                rows = cursor.fetchmany(size=int(limit_num))
+            raw = self._http_execute(sql, db_name=db_name, params=parameters)
+            if isinstance(raw, dict):
+                # JSONCompact format: {"meta": [{"name": "col1"...}], "data": [["val1"...]], "rows": N}
+                result_set.column_list = [col["name"] for col in raw.get("meta", [])]
+                result_set.rows = [tuple(row) for row in raw.get("data", [])]
+                if int(limit_num) > 0:
+                    result_set.rows = result_set.rows[:int(limit_num)]
+                result_set.affected_rows = len(result_set.rows)
             else:
-                rows = cursor.fetchall()
-            fields = cursor.description
-
-            result_set.column_list = [i[0] for i in fields] if fields else []
-            result_set.rows = rows
-            result_set.affected_rows = len(rows)
+                # Non-JSON response (shouldn't happen for SELECT, but handle gracefully)
+                result_set.error = f"Unexpected response format: {str(raw)[:200]}"
         except Exception as e:
             logger.warning(f"ClickHouse语句执行报错，语句：{sql}，错误信息{e}")
             result_set.error = str(e).split("Stack trace")[0]
@@ -159,7 +234,6 @@ class ClickHouseEngine(EngineBase):
     def query_check(self, db_name=None, sql=""):
         # 查询语句的检查、注释去除、切分
         result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
-        # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
             sql = sqlparse.format(sql, strip_comments=True)
             sql = sqlparse.split(sql)[0]
@@ -187,14 +261,11 @@ class ClickHouseEngine(EngineBase):
         return result
 
     def filter_sql(self, sql="", limit_num=0):
-        # 对查询sql增加limit限制,limit n 或 limit n,n 或 limit n offset n统一改写成limit n
+        # 对查询sql增加limit限制
         sql = sql.rstrip(";").strip()
         if re.match(r"^select", sql, re.I):
-            # LIMIT N
             limit_n = re.compile(r"limit\s+(\d+)\s*$", re.I)
-            # LIMIT M OFFSET N
             limit_offset = re.compile(r"limit\s+(\d+)\s+offset\s+(\d+)\s*$", re.I)
-            # LIMIT M,N
             offset_comma_limit = re.compile(r"limit\s+(\d+)\s*,\s*(\d+)\s*$", re.I)
             if limit_n.search(sql):
                 sql_limit = limit_n.search(sql).group(1)
@@ -227,7 +298,6 @@ class ClickHouseEngine(EngineBase):
             affected_rows=0,
             execute_time=0,
         )
-        # clickhouse版本>=21.1.2 explain ast才支持非select语句检查
         if self.server_version >= (21, 1, 2):
             explain_result = self.query(db_name=db_name, sql=f"explain ast {statement}")
             if explain_result.error:
@@ -245,16 +315,14 @@ class ClickHouseEngine(EngineBase):
         sql = sqlparse.format(sql, strip_comments=True)
         sql_list = sqlparse.split(sql)
 
-        # 禁用/高危语句检查
         check_result = ReviewSet(full_sql=sql)
         line = 1
         critical_ddl_regex = self.config.get("critical_ddl_regex", "")
         p = re.compile(critical_ddl_regex)
-        check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
+        check_result.syntax_type = 2
 
         for statement in sql_list:
             statement = statement.rstrip(";")
-            # 禁用语句
             if re.match(r"^select|^show", statement, re.M | re.IGNORECASE):
                 result = ReviewResult(
                     id=line,
@@ -263,7 +331,6 @@ class ClickHouseEngine(EngineBase):
                     errormessage="仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
                     sql=statement,
                 )
-            # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
                 result = ReviewResult(
                     id=line,
@@ -272,12 +339,8 @@ class ClickHouseEngine(EngineBase):
                     errormessage="禁止提交匹配" + critical_ddl_regex + "条件的语句！",
                     sql=statement,
                 )
-            # alter语句
             elif re.match(r"^alter", statement, re.M | re.IGNORECASE):
-                # alter table语句
-                if re.match(
-                    r"^alter\s+table\s+(.+?)\s+", statement, re.M | re.IGNORECASE
-                ):
+                if re.match(r"^alter\s+table\s+(.+?)\s+", statement, re.M | re.IGNORECASE):
                     table_name = re.match(
                         r"^alter\s+table\s+(.+?)\s+", statement, re.M | re.IGNORECASE
                     ).group(1)
@@ -286,57 +349,33 @@ class ClickHouseEngine(EngineBase):
                     table_engine = self.get_table_engine(table_name)["engine"]
                     table_exist = self.get_table_engine(table_name)["status"]
                     if table_exist == 1:
-                        if not table_engine.endswith(
-                            "MergeTree"
-                        ) and table_engine not in ("Merge", "Distributed"):
+                        if not table_engine.endswith("MergeTree") and table_engine not in ("Merge", "Distributed"):
                             result = ReviewResult(
-                                id=line,
-                                errlevel=2,
-                                stagestatus="驳回不支持SQL",
+                                id=line, errlevel=2, stagestatus="驳回不支持SQL",
                                 errormessage="ALTER TABLE仅支持*MergeTree，Merge以及Distributed等引擎表！",
                                 sql=statement,
                             )
                         else:
-                            # delete与update语句，实际是alter语句的变种
-                            if re.match(
-                                r"^alter\s+table\s+(.+?)\s+(delete|update)\s+",
-                                statement,
-                                re.M | re.IGNORECASE,
-                            ):
+                            if re.match(r"^alter\s+table\s+(.+?)\s+(delete|update)\s+", statement, re.M | re.IGNORECASE):
                                 if not table_engine.endswith("MergeTree"):
                                     result = ReviewResult(
-                                        id=line,
-                                        errlevel=2,
-                                        stagestatus="驳回不支持SQL",
+                                        id=line, errlevel=2, stagestatus="驳回不支持SQL",
                                         errormessage="DELETE与UPDATE仅支持*MergeTree引擎表！",
                                         sql=statement,
                                     )
                                 else:
-                                    result = self.explain_check(
-                                        check_result, db_name, line, statement
-                                    )
+                                    result = self.explain_check(check_result, db_name, line, statement)
                             else:
-                                result = self.explain_check(
-                                    check_result, db_name, line, statement
-                                )
+                                result = self.explain_check(check_result, db_name, line, statement)
                     else:
                         result = ReviewResult(
-                            id=line,
-                            errlevel=2,
-                            stagestatus="表不存在",
-                            errormessage=f"表 {table_name} 不存在！",
-                            sql=statement,
+                            id=line, errlevel=2, stagestatus="表不存在",
+                            errormessage=f"表 {table_name} 不存在！", sql=statement,
                         )
-                # 其他alter语句
                 else:
                     result = self.explain_check(check_result, db_name, line, statement)
-            # truncate语句
-            elif re.match(
-                r"^truncate\s+table\s+(.+?)(\s|$)", statement, re.M | re.IGNORECASE
-            ):
-                table_name = re.match(
-                    r"^truncate\s+table\s+(.+?)(\s|$)", statement, re.M | re.IGNORECASE
-                ).group(1)
+            elif re.match(r"^truncate\s+table\s+(.+?)(\s|$)", statement, re.M | re.IGNORECASE):
+                table_name = re.match(r"^truncate\s+table\s+(.+?)(\s|$)", statement, re.M | re.IGNORECASE).group(1)
                 if "." not in table_name:
                     table_name = f"{db_name}.{table_name}"
                 table_engine = self.get_table_engine(table_name)["engine"]
@@ -344,76 +383,49 @@ class ClickHouseEngine(EngineBase):
                 if table_exist == 1:
                     if table_engine in ("View", "File", "URL", "Buffer", "Null"):
                         result = ReviewResult(
-                            id=line,
-                            errlevel=2,
-                            stagestatus="驳回不支持SQL",
+                            id=line, errlevel=2, stagestatus="驳回不支持SQL",
                             errormessage="TRUNCATE不支持View,File,URL,Buffer和Null表引擎！",
                             sql=statement,
                         )
                     else:
-                        result = self.explain_check(
-                            check_result, db_name, line, statement
-                        )
+                        result = self.explain_check(check_result, db_name, line, statement)
                 else:
                     result = ReviewResult(
-                        id=line,
-                        errlevel=2,
-                        stagestatus="表不存在",
-                        errormessage=f"表 {table_name} 不存在！",
-                        sql=statement,
+                        id=line, errlevel=2, stagestatus="表不存在",
+                        errormessage=f"表 {table_name} 不存在！", sql=statement,
                     )
-            # insert语句，explain无法正确判断，暂时只做表存在性检查与简单关键字匹配
             elif re.match(r"^insert", statement, re.M | re.IGNORECASE):
-                if re.match(
-                    r"^insert\s+into\s+([a-zA-Z_][0-9a-zA-Z_.]+)([\w\W]*?)(values|format|select)(\s+|\()",
-                    statement,
-                    re.M | re.IGNORECASE,
-                ):
+                if re.match(r"^insert\s+into\s+([a-zA-Z_][0-9a-zA-Z_.]+)([\w\W]*?)(values|format|select)(\s+|\()", statement, re.M | re.IGNORECASE):
                     table_name = re.match(
                         r"^insert\s+into\s+([a-zA-Z_][0-9a-zA-Z_.]+)([\w\W]*?)(values|format|select)(\s+|\()",
-                        statement,
-                        re.M | re.IGNORECASE,
+                        statement, re.M | re.IGNORECASE
                     ).group(1)
                     if "." not in table_name:
                         table_name = f"{db_name}.{table_name}"
                     table_exist = self.get_table_engine(table_name)["status"]
                     if table_exist == 1:
                         result = ReviewResult(
-                            id=line,
-                            errlevel=0,
-                            stagestatus="Audit completed",
-                            errormessage="None",
-                            sql=statement,
-                            affected_rows=0,
-                            execute_time=0,
+                            id=line, errlevel=0, stagestatus="Audit completed",
+                            errormessage="None", sql=statement, affected_rows=0, execute_time=0,
                         )
                     else:
                         result = ReviewResult(
-                            id=line,
-                            errlevel=2,
-                            stagestatus="表不存在",
-                            errormessage=f"表 {table_name} 不存在！",
-                            sql=statement,
+                            id=line, errlevel=2, stagestatus="表不存在",
+                            errormessage=f"表 {table_name} 不存在！", sql=statement,
                         )
                 else:
                     result = ReviewResult(
-                        id=line,
-                        errlevel=2,
-                        stagestatus="驳回不支持SQL",
-                        errormessage="INSERT语法不正确！",
-                        sql=statement,
+                        id=line, errlevel=2, stagestatus="驳回不支持SQL",
+                        errormessage="INSERT语法不正确！", sql=statement,
                     )
-            # 其他语句使用explain ast简单检查
             else:
                 result = self.explain_check(check_result, db_name, line, statement)
 
-            # 没有找出DDL语句的才继续执行此判断
             if check_result.syntax_type == 2:
                 if get_syntax_type(statement, parser=False, db_type="mysql") == "DDL":
                     check_result.syntax_type = 1
             check_result.rows += [result]
             line += 1
-        # 统计警告和错误数量
         for r in check_result.rows:
             if r.errlevel == 1:
                 check_result.warning_count += 1
@@ -431,48 +443,31 @@ class ClickHouseEngine(EngineBase):
         line = 1
         for statement in sql_list:
             with FuncTimer() as t:
-                result = self.execute(
-                    db_name=workflow.db_name, sql=statement, close_conn=True
-                )
+                result = self.execute(db_name=workflow.db_name, sql=statement, close_conn=True)
             if not result.error:
                 execute_result.rows.append(
                     ReviewResult(
-                        id=line,
-                        errlevel=0,
-                        stagestatus="Execute Successfully",
-                        errormessage="None",
-                        sql=statement,
-                        affected_rows=0,
-                        execute_time=t.cost,
+                        id=line, errlevel=0, stagestatus="Execute Successfully",
+                        errormessage="None", sql=statement, affected_rows=0, execute_time=t.cost,
                     )
                 )
                 line += 1
             else:
-                # 追加当前报错语句信息到执行结果中
                 execute_result.error = result.error
                 execute_result.rows.append(
                     ReviewResult(
-                        id=line,
-                        errlevel=2,
-                        stagestatus="Execute Failed",
+                        id=line, errlevel=2, stagestatus="Execute Failed",
                         errormessage=f"异常信息：{result.error}",
-                        sql=statement,
-                        affected_rows=0,
-                        execute_time=0,
+                        sql=statement, affected_rows=0, execute_time=0,
                     )
                 )
                 line += 1
-                # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
-                for statement in sql_list[line - 1 :]:
+                for statement in sql_list[line - 1:]:
                     execute_result.rows.append(
                         ReviewResult(
-                            id=line,
-                            errlevel=0,
-                            stagestatus="Audit completed",
+                            id=line, errlevel=0, stagestatus="Audit completed",
                             errormessage=f"前序语句失败, 未执行",
-                            sql=statement,
-                            affected_rows=0,
-                            execute_time=0,
+                            sql=statement, affected_rows=0, execute_time=0,
                         )
                     )
                     line += 1
@@ -482,12 +477,9 @@ class ClickHouseEngine(EngineBase):
     def execute(self, db_name=None, sql="", close_conn=True, parameters=None):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
-        conn = self.get_connection(db_name=db_name)
         try:
-            cursor = conn.cursor()
             for statement in sqlparse.split(sql):
-                cursor.execute(statement, parameters)
-            cursor.close()
+                self._http_execute(statement.strip(), db_name=db_name, params=parameters, want_json=False)
         except Exception as e:
             logger.warning(f"ClickHouse语句执行报错，语句：{sql}，错误信息{e}")
             result.error = str(e).split("Stack trace")[0]
@@ -498,13 +490,13 @@ class ClickHouseEngine(EngineBase):
     def get_group_tables_by_db(self, db_name):
         """获取首字符分组的table列表，返回一个dict"""
         data = {}
-        sql = f"""SELECT
+        sql = """SELECT
                     name,
                     comment
                 FROM
                     system.tables
                 WHERE
-                    database = %(db_name)s"""
+                    database = {db_name:String}"""
         result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
         for row in result.rows:
             table_name, table_cmt = row[0], row[1]
@@ -514,8 +506,8 @@ class ClickHouseEngine(EngineBase):
         return data
 
     def get_table_meta_data(self, db_name, tb_name, **kwargs):
-        """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
-        sql = f"""SELECT
+        """数据字典页面使用：获取表格的元信息"""
+        sql = """SELECT
                     name as table_name,
                     engine,
                     total_rows as table_rows,
@@ -529,18 +521,16 @@ class ClickHouseEngine(EngineBase):
                 FROM
                     system.tables
                 WHERE
-                    database = %(db_name)s
-                    AND name = %(tb_name)s"""
+                    database = {db_name:String}
+                    AND name = {tb_name:String}"""
         _meta_data = self.query(
-            db_name=db_name,
-            sql=sql,
-            parameters={"db_name": db_name, "tb_name": tb_name},
+            db_name=db_name, sql=sql, parameters={"db_name": db_name, "tb_name": tb_name},
         )
         return {"column_list": _meta_data.column_list, "rows": _meta_data.rows[0]}
 
     def get_table_desc_data(self, db_name, tb_name, **kwargs):
         """获取表格字段信息"""
-        sql = f"""SELECT
+        sql = """SELECT
                     name as `列名`,
                     type as `列类型`,
                     default_kind as `默认值类型`,
@@ -552,19 +542,17 @@ class ClickHouseEngine(EngineBase):
                 FROM
                     system.columns
                 WHERE
-                    database = %(db_name)s
-                    AND table = %(tb_name)s
+                    database = {db_name:String}
+                    AND table = {tb_name:String}
                 ORDER BY position"""
         _desc_data = self.query(
-            db_name=db_name,
-            sql=sql,
-            parameters={"db_name": db_name, "tb_name": tb_name},
+            db_name=db_name, sql=sql, parameters={"db_name": db_name, "tb_name": tb_name},
         )
         return {"column_list": _desc_data.column_list, "rows": _desc_data.rows}
 
     def get_table_index_data(self, db_name, tb_name, **kwargs):
         """获取表格索引信息（ClickHouse的data skipping index）"""
-        sql = f"""SELECT
+        sql = """SELECT
                     name as `索引名`,
                     type_full as `索引类型`,
                     expr as `索引表达式`,
@@ -572,30 +560,26 @@ class ClickHouseEngine(EngineBase):
                 FROM
                     system.data_skipping_indices
                 WHERE
-                    database = %(db_name)s
-                    AND table = %(tb_name)s"""
+                    database = {db_name:String}
+                    AND table = {tb_name:String}"""
         _index_data = self.query(
-            db_name=db_name,
-            sql=sql,
-            parameters={"db_name": db_name, "tb_name": tb_name},
+            db_name=db_name, sql=sql, parameters={"db_name": db_name, "tb_name": tb_name},
         )
         return {"column_list": _index_data.column_list, "rows": _index_data.rows}
 
     def get_tables_metas_data(self, db_name, **kwargs):
         """获取数据库所有表格信息，用作数据字典导出接口"""
-        sql_tbs = f"""SELECT
+        sql_tbs = """SELECT
                         name as TABLE_NAME,
                         comment as TABLE_COMMENT,
                         engine as ENGINE
                     FROM
                         system.tables
                     WHERE
-                        database = %(db_name)s
+                        database = {db_name:String}
                     ORDER BY name"""
         result = self.query(
-            db_name=db_name,
-            sql=sql_tbs,
-            close_conn=False,
+            db_name=db_name, sql=sql_tbs, close_conn=False,
             parameters={"db_name": db_name},
         )
         tbs = []
@@ -614,7 +598,7 @@ class ClickHouseEngine(EngineBase):
             ]
             _meta["ENGINE_KEYS"] = engine_keys
             _meta["TABLE_INFO"] = tb
-            sql_cols = f"""SELECT
+            sql_cols = """SELECT
                             name as COLUMN_NAME,
                             type as COLUMN_TYPE,
                             default_expression as COLUMN_DEFAULT,
@@ -623,13 +607,11 @@ class ClickHouseEngine(EngineBase):
                         FROM
                             system.columns
                         WHERE
-                            database = %(db_name)s
-                            AND table = %(tb_name)s
+                            database = {db_name:String}
+                            AND table = {tb_name:String}
                         ORDER BY position"""
             query_result = self.query(
-                db_name=db_name,
-                sql=sql_cols,
-                close_conn=False,
+                db_name=db_name, sql=sql_cols, close_conn=False,
                 parameters={"db_name": db_name, "tb_name": tb["TABLE_NAME"]},
             )
             columns = []
@@ -727,6 +709,5 @@ class ClickHouseEngine(EngineBase):
         return self.query(sql=sql)
 
     def close(self):
-        if self.conn:
-            self.conn.close()
-            self.conn = None
+        """HTTP connections are stateless, just clear the reference."""
+        self.conn = None

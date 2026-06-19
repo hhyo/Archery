@@ -1449,27 +1449,30 @@ class TestClickHouse(TestCase):
         SqlWorkflow.objects.all().delete()
         SqlWorkflowContent.objects.all().delete()
 
-    @patch.object(ClickHouseEngine, "query")
-    def test_server_version(self, mock_query):
-        result = ResultSet()
-        result.rows = [("ClickHouse 22.1.3.7",)]
-        mock_query.return_value = result
+    @patch.object(ClickHouseEngine, "_http_execute")
+    def test_server_version(self, mock_http):
+        mock_http.return_value = {
+            "meta": [{"name": "version()"}],
+            "data": [["22.1.3.7"]],
+            "rows": 1,
+        }
         new_engine = ClickHouseEngine(instance=self.ins1)
         server_version = new_engine.server_version
         self.assertTupleEqual(server_version, (22, 1, 3))
 
-    @patch.object(ClickHouseEngine, "query")
-    def test_table_engine(self, mock_query):
+    @patch.object(ClickHouseEngine, "_http_execute")
+    def test_table_engine(self, mock_http):
         table_name = "default.tb_test"
-        result = ResultSet()
-        result.rows = [("MergeTree",)]
-        mock_query.return_value = result
+        mock_http.return_value = {
+            "meta": [{"name": "engine"}],
+            "data": [["MergeTree"]],
+            "rows": 1,
+        }
         new_engine = ClickHouseEngine(instance=self.ins1)
         table_engine = new_engine.get_table_engine(table_name)
         self.assertDictEqual(table_engine, {"status": 1, "engine": "MergeTree"})
 
-    @patch("clickhouse_driver.connect")
-    def test_engine_base_info(self, _conn):
+    def test_engine_base_info(self):
         new_engine = ClickHouseEngine(instance=self.ins1)
         self.assertEqual(new_engine.name, "ClickHouse")
         self.assertEqual(new_engine.info, "ClickHouse engine")
@@ -1558,11 +1561,13 @@ class TestClickHouse(TestCase):
             },
         )
 
-    @patch.object(ClickHouseEngine, "query")
-    def test_explain_check(self, mock_query):
-        result = ResultSet()
-        result.rows = [("ClickHouse 20.1.3.7",)]
-        mock_query.return_value = result
+    @patch.object(ClickHouseEngine, "_http_execute")
+    def test_explain_check(self, mock_http):
+        mock_http.return_value = {
+            "meta": [{"name": "version()"}],
+            "data": [["20.1.3.7"]],
+            "rows": 1,
+        }
         new_engine = ClickHouseEngine(instance=self.ins1)
         server_version = new_engine.server_version
         sql = "insert into tb_test(note) values ('xbb');"
@@ -1581,12 +1586,14 @@ class TestClickHouse(TestCase):
             "仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
         )
 
-    @patch.object(ClickHouseEngine, "query")
-    def test_execute_check_alter_sql(self, mock_query):
+    @patch.object(ClickHouseEngine, "_http_execute")
+    def test_execute_check_alter_sql(self, mock_http):
         table_name = "default.tb_test"
-        result = ResultSet()
-        result.rows = [("Log",)]
-        mock_query.return_value = result
+        mock_http.return_value = {
+            "meta": [{"name": "engine"}],
+            "data": [["Log"]],
+            "rows": 1,
+        }
         new_engine = ClickHouseEngine(instance=self.ins1)
         table_engine = new_engine.get_table_engine(table_name)
         alter_sql = "alter table tb_test add column remark String"
@@ -1596,12 +1603,14 @@ class TestClickHouse(TestCase):
             "ALTER TABLE仅支持*MergeTree，Merge以及Distributed等引擎表！",
         )
 
-    @patch.object(ClickHouseEngine, "query")
-    def test_execute_check_truncate_sql(self, mock_query):
+    @patch.object(ClickHouseEngine, "_http_execute")
+    def test_execute_check_truncate_sql(self, mock_http):
         table_name = "default.tb_test"
-        result = ResultSet()
-        result.rows = [("File",)]
-        mock_query.return_value = result
+        mock_http.return_value = {
+            "meta": [{"name": "engine"}],
+            "data": [["File"]],
+            "rows": 1,
+        }
         new_engine = ClickHouseEngine(instance=self.ins1)
         table_engine = new_engine.get_table_engine(table_name)
         alter_sql = "truncate table tb_test"
@@ -1611,12 +1620,14 @@ class TestClickHouse(TestCase):
             "TRUNCATE不支持View,File,URL,Buffer和Null表引擎！",
         )
 
-    @patch.object(ClickHouseEngine, "query")
-    def test_execute_check_insert_sql(self, mock_query):
+    @patch.object(ClickHouseEngine, "_http_execute")
+    def test_execute_check_insert_sql(self, mock_http):
         table_name = "default.tb_test"
-        result = ResultSet()
-        result.rows = [("Log",)]
-        mock_query.return_value = result
+        mock_http.return_value = {
+            "meta": [{"name": "engine"}],
+            "data": [["Log"]],
+            "rows": 1,
+        }
         new_engine = ClickHouseEngine(instance=self.ins1)
         table_engine = new_engine.get_table_engine(table_name)
         alter_sql = "insert into tb_test(name) values('nick');"
