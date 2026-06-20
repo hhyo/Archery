@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class Const(object):
@@ -11,28 +12,28 @@ class Const(object):
 
 
 class WorkflowType(models.IntegerChoices):
-    QUERY = 1, "查询权限申请"
-    SQL_REVIEW = 2, "SQL上线申请"
-    ARCHIVE = 3, "数据归档申请"
+    QUERY = 1, _("Query Privilege Request")
+    SQL_REVIEW = 2, _("SQL Deployment Request")
+    ARCHIVE = 3, _("Data Archive Request")
 
 
 class WorkflowStatus(models.IntegerChoices):
-    WAITING = 0, "待审核"
-    PASSED = 1, "审核通过"
-    REJECTED = 2, "审核不通过"
-    ABORTED = 3, "审核取消"
+    WAITING = 0, _("Pending Review")
+    PASSED = 1, _("Approved")
+    REJECTED = 2, _("Rejected")
+    ABORTED = 3, _("Cancelled")
 
 
 class WorkflowAction(models.IntegerChoices):
     """工单操作列表, 必须是动词, 不是一种状态"""
 
-    SUBMIT = 0, "提交"
-    PASS = 1, "审核通过"
-    REJECT = 2, "审核不通过"
-    ABORT = 3, "审核取消"
-    EXECUTE_SET_TIME = 4, "设置定时执行"
-    EXECUTE_START = 5, "开始执行"
-    EXECUTE_END = 6, "执行结束"
+    SUBMIT = 0, _("Submit")
+    PASS = 1, _("Approve")
+    REJECT = 2, _("Reject")
+    ABORT = 3, _("Cancel")
+    EXECUTE_SET_TIME = 4, _("Schedule Execution")
+    EXECUTE_START = 5, _("Execution Started")
+    EXECUTE_END = 6, _("Execution Finished")
 
 
 class SQLTuning:

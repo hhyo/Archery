@@ -2759,7 +2759,7 @@ msgid "Instance Account"
 msgstr "实例账号列表"
 
 msgid "Instance Account List"
-msgstr "Instance Account List"
+msgstr "实例账号列表"
 
 msgid "Instance Configuration"
 msgstr "实例配置"
@@ -2771,7 +2771,7 @@ msgid "Instance Database"
 msgstr "实例数据库"
 
 msgid "Instance Database List"
-msgstr "Instance Database List"
+msgstr "数据库实例"
 
 msgid "Instance Host"
 msgstr "实例连接"
@@ -3278,7 +3278,7 @@ msgid "Workflow Audit ID"
 msgstr "工单审批id"
 
 msgid "Workflow Audit List"
-msgstr "Workflow Audit List"
+msgstr "工作流审批列表"
 
 msgid "Workflow Logs"
 msgstr "工作流日志"
@@ -3993,3 +3993,367 @@ msgstr "zcount key min max 统计给定分数范围内的成员数量。"
 
 msgid "zrank key member returns the index of a member in a sorted set."
 msgstr "zrank key member 返回有序集合中 member 的索引。"
+
+msgid "Regex. Example: ^(test_db|dmp_db|za.*)$. Redis example: ^(0|4|6|11|12|13)$"
+msgstr "正则表达式。示例：^(test_db|dmp_db|za.*)$。Redis示例: ^(0|4|6|11|12|13)$"
+
+msgid "Regular expression used by the masking rule. The expression must include capture groups; hidden groups will be replaced with ****."
+msgstr "规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替"
+
+msgid "Valid value, range parameter [1-65535], value parameter [ON|OFF]"
+msgstr "有效参数值，范围参数[1-65535]，值参数[ON|OFF]"
+
+msgid "Workflow Type 0 Unknown, 1 DDL, 2 DML, 3 Offline Export Workflow"
+msgstr "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单"
+
+msgid "Three-part generic masking rule: automatically splits a field into three parts by length and masks the middle part."
+msgstr "三段式通用脱敏规则：根据字段长度自动分成三份，中间段脱敏。"
+
+msgid "Manually Reviewing"
+msgstr "workflow_manreviewing"
+
+msgid "Regex. Hidden rules take priority over visible rules."
+msgstr "正则表达式。隐藏大于显示，此规则优先。"
+
+msgid "Execute SQL Deployment Request (Own Requests Only)"
+msgstr "执行SQL上线工单(仅自己提交的)"
+
+msgid "Queued"
+msgstr "workflow_queuing"
+
+msgid "Sleep Seconds After Each Archive Batch"
+msgstr "归档limit行记录后的休眠秒数"
+
+msgid "Execute SQL Deployment Request (Resource Group Scope)"
+msgstr "执行SQL上线工单(资源组粒度)"
+
+msgid "Workflow Finished"
+msgstr "workflow_finish"
+
+msgid "Workflow Aborted"
+msgstr "workflow_abort"
+
+msgid "SQL Statement Executed for Online Change"
+msgstr "在线变更配置执行的SQL语句"
+
+msgid "Can Query All Instances in the Resource Group"
+msgstr "可查询所在资源组内的所有实例"
+
+msgid "Auto Review JSON"
+msgstr "自动审核内容的JSON格式"
+
+msgid "SchemaSync Menu"
+msgstr "菜单 SchemaSync"
+
+msgid "Record online query SQL logs"
+msgstr "记录在线查询sql的日志"
+
+msgid "Alibaba Cloud RDS Instance ID"
+msgstr "对应阿里云RDS实例ID"
+
+msgid "AK Configuration for the RDS Instance"
+msgstr "RDS实例对应的AK配置"
+
+msgid "Dashboard Menu"
+msgstr "菜单 Dashboard"
+
+msgid "Run SQLAdvisor"
+msgstr "执行SQLAdvisor"
+
+msgid "Execution Result JSON"
+msgstr "执行结果的JSON格式"
+
+msgid "Run SQLTuning"
+msgstr "执行SQLTuning"
+
+msgid "Visible Database Regex"
+msgstr "显示的数据库列表正则"
+
+msgid "Hidden Database Regex"
+msgstr "隐藏的数据库列表正则"
+
+msgid "Query Privilege Check"
+msgstr "查询权限是否正常校验"
+
+msgid "Masking Rule Hit"
+msgstr "查询是否命中脱敏规则"
+
+msgid "Query Result Masked"
+msgstr "查询结果是否正常脱敏"
+
+msgid "OpenAPI Menu"
+msgstr "菜单 OpenAPI"
+
+msgid "Redis Slow Query Statistics"
+msgstr "Redis慢日志统计"
+
+msgid "Redis Slow Query Details"
+msgstr "Redis慢日志明细"
+
+msgid "Is Offline Export Workflow"
+msgstr "是否为离线导出工单"
+
+msgid "Unable to get the related workflow"
+msgstr "无法获取到关联工单"
+
+msgid "Query Privilege Request Records"
+msgstr "查询权限申请记录表"
+
+msgid "Three-part Generic Masking Rule"
+msgstr "三段式通用脱敏规则"
+
+msgid "Cloud Access Credentials"
+msgstr "云服务认证信息配置"
+
+msgid "Instance Account Management Menu"
+msgstr "菜单 实例账号管理"
+
+msgid "My2SQL Menu"
+msgstr "菜单 My2SQL"
+
+msgid "Submit SQL Deployment Request"
+msgstr "提交SQL上线工单"
+
+msgid "Review SQL Deployment Request"
+msgstr "审核SQL上线工单"
+
+msgid "Feishu OpenID"
+msgstr "飞书OpenID"
+
+msgid "Modified At"
+msgstr "参数被修改时间点"
+
+msgid "Alibaba Cloud RDS Configuration"
+msgstr "阿里云rds配置"
+
+msgid "SQL Review Menu"
+msgstr "菜单 SQL审核"
+
+msgid "SQL Deployment Menu"
+msgstr "菜单 SQL上线"
+
+msgid "SQL Analysis Menu"
+msgstr "菜单 SQL分析"
+
+msgid "SQL Query Menu"
+msgstr "菜单 SQL查询"
+
+msgid "SQL Optimization Menu"
+msgstr "菜单 SQL优化"
+
+msgid "Database Management Menu"
+msgstr "菜单 数据库管理"
+
+msgid "Enable SSL"
+msgstr "是否启用SSL"
+
+msgid "Online Query Menu"
+msgstr "菜单 在线查询"
+
+msgid "Privilege Management Menu"
+msgstr "菜单 权限管理"
+
+msgid "Optimization Tools Menu"
+msgstr "菜单 优化工具"
+
+msgid "Slow Query Log Menu"
+msgstr "菜单 慢查日志"
+
+msgid "Instance Management Menu"
+msgstr "菜单 实例管理"
+
+msgid "Instance List Menu"
+msgstr "菜单 实例列表"
+
+msgid "Session Management Menu"
+msgstr "菜单 会话管理"
+
+msgid "Parameter Configuration Menu"
+msgstr "菜单 参数配置"
+
+msgid "Parameter Comparison Menu"
+msgstr "菜单 参数对比"
+
+msgid "Data Dictionary Menu"
+msgstr "菜单 数据字典"
+
+msgid "Tools & Plugins Menu"
+msgstr "菜单 工具插件"
+
+msgid "Data Archive Menu"
+msgstr "菜单 数据归档"
+
+msgid "Data Export Menu"
+msgstr "菜单 数据导出"
+
+msgid "System Management Menu"
+msgstr "菜单 系统管理"
+
+msgid "Documentation Menu"
+msgstr "菜单 相关文档"
+
+msgid "Run SQL Analysis"
+msgstr "执行SQL分析"
+
+msgid "Can Query All Instances"
+msgstr "可查询所有实例"
+
+msgid "Instance Tag Configuration"
+msgstr "实例标签配置"
+
+msgid "Offline Export Workflow"
+msgstr "离线导出工单"
+
+msgid "Related Business ID"
+msgstr "关联业务id"
+
+msgid "Requester Display Name"
+msgstr "申请人中文名"
+
+msgid "Action Type Description"
+msgstr "操作类型描述"
+
+msgid "Missed/Unknown"
+msgstr "未命中/未知"
+
+msgid "Data Masking Field Configuration"
+msgstr "脱敏字段配置"
+
+msgid "Masking Rule Configuration"
+msgstr "脱敏规则配置"
+
+msgid "Groups to Mask"
+msgstr "需要隐藏的组"
+
+msgid "System Updated At"
+msgstr "系统修改时间"
+
+msgid "Modifier Display Name"
+msgstr "修改人中文名"
+
+msgid "Archive Configuration Name"
+msgstr "归档配置说明"
+
+msgid "Archived Successfully"
+msgstr "是否归档成功"
+
+msgid "Run SOAR"
+msgstr "执行SOAR"
+
+msgid "Submit Query Privilege Request"
+msgstr "申请查询权限"
+
+msgid "Review Query Privilege Request"
+msgstr "审核查询权限"
+
+msgid "Modify Instance Parameters"
+msgstr "修改实例参数"
+
+msgid "Submit Archive Request"
+msgstr "提交归档申请"
+
+msgid "Review Archive Request"
+msgstr "审核归档申请"
+
+msgid "Manage Archive Requests"
+msgstr "管理归档申请"
+
+msgid "Login Audit Log"
+msgstr "登录审计日志"
+
+msgid "Resource Group Management"
+msgstr "资源组管理"
+
+msgid "SMS Code"
+msgstr "短信验证码"
+
+msgid "Approval Configuration"
+msgstr "审批配置表"
+
+msgid "Deleted"
+msgstr "是否删除"
+
+msgid "Authentication Type"
+msgstr "认证类型"
+
+msgid "Mobile Number"
+msgstr "手机号码"
+
+msgid "Created At"
+msgstr "创建时间"
+
+msgid "Tunnel Endpoint"
+msgstr "隧道连接"
+
+msgid "Key File"
+msgstr "密钥地址"
+
+msgid "Key Password"
+msgstr "密钥密码"
+
+msgid "Updated At"
+msgstr "更新时间"
+
+msgid "Run Mode"
+msgstr "运行模式"
+
+msgid "Tunnel"
+msgstr "连接隧道"
+
+msgid "Finished At"
+msgstr "结束时间"
+
+msgid "Request Remark"
+msgstr "申请备注"
+
+msgid "Action Type"
+msgstr "操作类型"
+
+msgid "Action Info"
+msgstr "操作信息"
+
+msgid "Elapsed Time"
+msgstr "执行耗时"
+
+msgid "Favorited"
+msgstr "是否收藏"
+
+msgid "Statement Tag"
+msgstr "语句标识"
+
+msgid "Column Description"
+msgstr "字段描述"
+
+msgid "Another Instance"
+msgstr "其他实例"
+
+msgid "Delete Directly"
+msgstr "直接删除"
+
+msgid "Error Message"
+msgstr "错误信息"
+
+msgid "User Name"
+msgstr "用户名称"
+
+msgid "Action Time"
+msgstr "操作时间"
+
+msgid "Profile"
+msgstr "个人信息"
+
+msgid "Tunnel Information"
+msgstr "隧道信息"
+
+msgid "Connection Information"
+msgstr "连接信息"
+
+msgid "File Name"
+msgstr "文件名"
+
+msgid "Variable Name"
+msgstr "参数名"
+
+msgid "Replica"
+msgstr "从库"
+
