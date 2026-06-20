@@ -38,8 +38,12 @@ class ResourceGroup(models.Model):
     group_parent_id = models.BigIntegerField(_("Parent ID"), default=0)
     group_sort = models.IntegerField(_("Sort Order"), default=1)
     group_level = models.IntegerField(_("Level"), default=1)
-    ding_webhook = models.CharField(_("DingTalk Webhook URL"), max_length=255, blank=True)
-    feishu_webhook = models.CharField(_("Feishu Webhook URL"), max_length=255, blank=True)
+    ding_webhook = models.CharField(
+        _("DingTalk Webhook URL"), max_length=255, blank=True
+    )
+    feishu_webhook = models.CharField(
+        _("Feishu Webhook URL"), max_length=255, blank=True
+    )
     qywx_webhook = models.CharField(_("WeCom Webhook URL"), max_length=255, blank=True)
     is_deleted = models.IntegerField(
         _("Deleted"), choices=((0, _("No")), (1, _("Yes"))), default=0
@@ -173,12 +177,18 @@ class Tunnel(models.Model):
     password = fields.EncryptedCharField(
         verbose_name=_("Password"), max_length=300, default="", blank=True, null=True
     )
-    pkey = fields.EncryptedTextField(verbose_name=_("Private Key"), blank=True, null=True)
+    pkey = fields.EncryptedTextField(
+        verbose_name=_("Private Key"), blank=True, null=True
+    )
     pkey_path = models.FileField(
         verbose_name=_("Key File"), blank=True, null=True, upload_to="keys/"
     )
     pkey_password = fields.EncryptedCharField(
-        verbose_name=_("Key Password"), max_length=300, default="", blank=True, null=True
+        verbose_name=_("Key Password"),
+        max_length=300,
+        default="",
+        blank=True,
+        null=True,
     )
     create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
     update_time = models.DateTimeField(_("Updated At"), auto_now=True)
@@ -206,9 +216,13 @@ class Instance(models.Model, PasswordMixin):
 
     instance_name = models.CharField(_("Instance Name"), max_length=50, unique=True)
     type = models.CharField(
-        _("Instance Type"), max_length=6, choices=(("master", _("Master")), ("slave", _("Replica")))
+        _("Instance Type"),
+        max_length=6,
+        choices=(("master", _("Master")), ("slave", _("Replica"))),
     )
-    db_type = models.CharField(_("Database Type"), max_length=20, choices=DB_TYPE_CHOICES)
+    db_type = models.CharField(
+        _("Database Type"), max_length=20, choices=DB_TYPE_CHOICES
+    )
     mode = models.CharField(
         _("Run Mode"),
         max_length=10,
@@ -232,7 +246,9 @@ class Instance(models.Model, PasswordMixin):
         max_length=1024,
         default="",
         blank=True,
-        help_text=_("Regex. Example: ^(test_db|dmp_db|za.*)$. Redis example: ^(0|4|6|11|12|13)$"),
+        help_text=_(
+            "Regex. Example: ^(test_db|dmp_db|za.*)$. Redis example: ^(0|4|6|11|12|13)$"
+        ),
     )
     denied_db_name_regex = models.CharField(
         _("Hidden Database Regex"),
@@ -329,7 +345,12 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     db_name = models.CharField(_("Database"), max_length=64)
     syntax_type = models.IntegerField(
         _("Workflow Type 0 Unknown, 1 DDL, 2 DML, 3 Offline Export Workflow"),
-        choices=((0, _("Other")), (1, "DDL"), (2, "DML"), (3, _("Offline Export Workflow"))),
+        choices=(
+            (0, _("Other")),
+            (1, "DDL"),
+            (2, "DML"),
+            (3, _("Offline Export Workflow")),
+        ),
         default=0,
     )
     is_backup = models.BooleanField(
@@ -341,10 +362,14 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
         default=True,
     )
     engineer = models.CharField(_("Initiator"), max_length=30)
-    engineer_display = models.CharField(_("Initiator Display Name"), max_length=50, default="")
+    engineer_display = models.CharField(
+        _("Initiator Display Name"), max_length=50, default=""
+    )
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
     audit_auth_groups = models.CharField(_("Approval Group List"), max_length=255)
-    run_date_start = models.DateTimeField(_("Execution Start Time"), null=True, blank=True)
+    run_date_start = models.DateTimeField(
+        _("Execution Start Time"), null=True, blank=True
+    )
     run_date_end = models.DateTimeField(_("Execution End Time"), null=True, blank=True)
     create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
     finish_time = models.DateTimeField(_("Finished At"), null=True, blank=True)
@@ -431,9 +456,13 @@ class WorkflowAudit(models.Model):
     audit_auth_groups = models.CharField(_("Approval Group List"), max_length=255)
     current_audit = models.CharField(_("Current Approval Group"), max_length=20)
     next_audit = models.CharField(_("Next Approval Group"), max_length=20)
-    current_status = models.IntegerField(_("Review Status"), choices=WorkflowStatus.choices)
+    current_status = models.IntegerField(
+        _("Review Status"), choices=WorkflowStatus.choices
+    )
     create_user = models.CharField(_("Requester"), max_length=30)
-    create_user_display = models.CharField(_("Requester Display Name"), max_length=50, default="")
+    create_user_display = models.CharField(
+        _("Requester Display Name"), max_length=50, default=""
+    )
     create_time = models.DateTimeField(_("Request Time"), auto_now_add=True)
     sys_time = models.DateTimeField(_("System Time"), auto_now=True)
 
@@ -469,7 +498,9 @@ class WorkflowAuditDetail(models.Model):
     audit_id = models.IntegerField(_("Workflow Audit ID"))
     audit_user = models.CharField(_("Reviewer"), max_length=30)
     audit_time = models.DateTimeField(_("Review Time"))
-    audit_status = models.IntegerField(_("Review Status"), choices=WorkflowStatus.choices)
+    audit_status = models.IntegerField(
+        _("Review Status"), choices=WorkflowStatus.choices
+    )
     remark = models.CharField(_("Review Remark"), default="", max_length=1000)
     sys_time = models.DateTimeField(_("System Time"), auto_now=True)
 
@@ -491,7 +522,9 @@ class WorkflowAuditSetting(models.Model):
     audit_setting_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField(_("Group ID"))
     group_name = models.CharField(_("Group Name"), max_length=100)
-    workflow_type = models.IntegerField(_("Approval Type"), choices=WorkflowType.choices)
+    workflow_type = models.IntegerField(
+        _("Approval Type"), choices=WorkflowType.choices
+    )
     audit_auth_groups = models.CharField(_("Approval Group List"), max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -521,7 +554,9 @@ class WorkflowLog(models.Model):
     operation_type_desc = models.CharField(_("Action Type Description"), max_length=10)
     operation_info = models.CharField(_("Action Info"), max_length=1000)
     operator = models.CharField(_("Operator"), max_length=30)
-    operator_display = models.CharField(_("Operator Display Name"), max_length=50, default="")
+    operator_display = models.CharField(
+        _("Operator Display Name"), max_length=50, default=""
+    )
     operation_time = models.DateTimeField(auto_now_add=True)
 
     def __int__(self):
@@ -545,7 +580,9 @@ class QueryPrivilegesApply(models.Model, WorkflowAuditMixin):
     title = models.CharField(_("Request Title"), max_length=50)
     # TODO user_name display 改为外键
     user_name = models.CharField(_("Requester"), max_length=30)
-    user_display = models.CharField(_("Requester Display Name"), max_length=50, default="")
+    user_display = models.CharField(
+        _("Requester Display Name"), max_length=50, default=""
+    )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_list = models.TextField(_("Database"), default="")  # 逗号分隔的数据库列表
     table_list = models.TextField(_("Table"), default="")  # 逗号分隔的表列表
@@ -581,7 +618,9 @@ class QueryPrivileges(models.Model):
 
     privilege_id = models.AutoField(primary_key=True)
     user_name = models.CharField(_("Username"), max_length=30)
-    user_display = models.CharField(_("Requester Display Name"), max_length=50, default="")
+    user_display = models.CharField(
+        _("Requester Display Name"), max_length=50, default=""
+    )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_name = models.CharField(_("Database"), max_length=64, default="")
     table_name = models.CharField(_("Table"), max_length=64, default="")
@@ -625,7 +664,9 @@ class QueryLog(models.Model):
     cost_time = models.CharField(_("Elapsed Time"), max_length=10, default="")
     # TODO 改为user 外键
     username = models.CharField(_("Operator"), max_length=30)
-    user_display = models.CharField(_("Operator Display Name"), max_length=50, default="")
+    user_display = models.CharField(
+        _("Operator Display Name"), max_length=50, default=""
+    )
     priv_check = models.BooleanField(
         _("Query Privilege Check"),
         choices=(
@@ -686,7 +727,9 @@ class DataMaskingColumns(models.Model):
     rule_type = models.IntegerField(
         _("Rule Type"),
         choices=rule_type_choices,
-        help_text=_("Three-part generic masking rule: automatically splits a field into three parts by length and masks the middle part."),
+        help_text=_(
+            "Three-part generic masking rule: automatically splits a field into three parts by length and masks the middle part."
+        ),
     )
     active = models.BooleanField(
         _("Active Status"), choices=((False, _("Inactive")), (True, _("Active")))
@@ -713,13 +756,19 @@ class DataMaskingRules(models.Model):
     脱敏规则配置
     """
 
-    rule_type = models.IntegerField(_("Rule Type"), choices=rule_type_choices, unique=True)
+    rule_type = models.IntegerField(
+        _("Rule Type"), choices=rule_type_choices, unique=True
+    )
     rule_regex = models.CharField(
-        _("Regular expression used by the masking rule. The expression must include capture groups; hidden groups will be replaced with ****."),
+        _(
+            "Regular expression used by the masking rule. The expression must include capture groups; hidden groups will be replaced with ****."
+        ),
         max_length=255,
     )
     hide_group = models.IntegerField(_("Groups to Mask"))
-    rule_desc = models.CharField(_("Rule Description"), max_length=100, default="", blank=True)
+    rule_desc = models.CharField(
+        _("Rule Description"), max_length=100, default="", blank=True
+    )
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -783,12 +832,16 @@ class ParamTemplate(models.Model):
     实例参数模板配置
     """
 
-    db_type = models.CharField(_("Database Type"), max_length=20, choices=DB_TYPE_CHOICES)
+    db_type = models.CharField(
+        _("Database Type"), max_length=20, choices=DB_TYPE_CHOICES
+    )
     variable_name = models.CharField(_("Variable Name"), max_length=64)
     default_value = models.CharField(_("Default Value"), max_length=1024)
     editable = models.BooleanField(_("Editable"), default=False)
     valid_values = models.CharField(
-        _("Valid value, range parameter [1-65535], value parameter [ON|OFF]"), max_length=1024, blank=True
+        _("Valid value, range parameter [1-65535], value parameter [ON|OFF]"),
+        max_length=1024,
+        blank=True,
     )
     description = models.CharField(_("Description"), max_length=1024, blank=True)
     create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
@@ -811,7 +864,9 @@ class ParamHistory(models.Model):
     variable_name = models.CharField(_("Variable Name"), max_length=64)
     old_var = models.CharField(_("Old Value"), max_length=1024)
     new_var = models.CharField(_("New Value"), max_length=1024)
-    set_sql = models.CharField(_("SQL Statement Executed for Online Change"), max_length=1024)
+    set_sql = models.CharField(
+        _("SQL Statement Executed for Online Change"), max_length=1024
+    )
     user_name = models.CharField(_("Modifier"), max_length=30)
     user_display = models.CharField(_("Modifier Display Name"), max_length=50)
     create_time = models.DateTimeField(_("Modified At"), auto_now_add=True)
@@ -831,7 +886,9 @@ class ArchiveConfig(models.Model, WorkflowAuditMixin):
 
     title = models.CharField(_("Archive Configuration Name"), max_length=50)
     resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
-    audit_auth_groups = models.CharField(_("Approval Group List"), max_length=255, blank=True)
+    audit_auth_groups = models.CharField(
+        _("Approval Group List"), max_length=255, blank=True
+    )
     src_instance = models.ForeignKey(
         Instance, related_name="src_instance", on_delete=models.CASCADE
     )
@@ -844,13 +901,21 @@ class ArchiveConfig(models.Model, WorkflowAuditMixin):
         blank=True,
         null=True,
     )
-    dest_db_name = models.CharField(_("Target Database"), max_length=64, blank=True, null=True)
-    dest_table_name = models.CharField(_("Target Table"), max_length=64, blank=True, null=True)
+    dest_db_name = models.CharField(
+        _("Target Database"), max_length=64, blank=True, null=True
+    )
+    dest_table_name = models.CharField(
+        _("Target Table"), max_length=64, blank=True, null=True
+    )
     condition = models.CharField(_("Archive Condition (WHERE clause)"), max_length=1000)
     mode = models.CharField(
         _("Archive Mode"),
         max_length=10,
-        choices=(("file", _("File")), ("dest", _("Another Instance")), ("purge", _("Delete Directly"))),
+        choices=(
+            ("file", _("File")),
+            ("dest", _("Another Instance")),
+            ("purge", _("Delete Directly")),
+        ),
     )
     no_delete = models.BooleanField(_("Keep Source Data"))
     sleep = models.IntegerField(_("Sleep Seconds After Each Archive Batch"), default=1)
@@ -863,7 +928,9 @@ class ArchiveConfig(models.Model, WorkflowAuditMixin):
         _("Requester Display Name"), max_length=50, blank=True, default=""
     )
     create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
-    last_archive_time = models.DateTimeField(_("Last Archive Time"), blank=True, null=True)
+    last_archive_time = models.DateTimeField(
+        _("Last Archive Time"), blank=True, null=True
+    )
     sys_time = models.DateTimeField(_("System Updated At"), auto_now=True)
 
     class Meta:
@@ -884,7 +951,11 @@ class ArchiveLog(models.Model):
     mode = models.CharField(
         _("Archive Mode"),
         max_length=10,
-        choices=(("file", _("File")), ("dest", _("Another Instance")), ("purge", _("Delete Directly"))),
+        choices=(
+            ("file", _("File")),
+            ("dest", _("Another Instance")),
+            ("purge", _("Delete Directly")),
+        ),
     )
     no_delete = models.BooleanField(_("Keep Source Data"))
     sleep = models.IntegerField(_("Sleep Seconds After Each Archive Batch"), default=0)
@@ -912,7 +983,9 @@ class Config(models.Model):
 
     item = models.CharField(_("Config Item"), max_length=100, unique=True)
     value = fields.EncryptedCharField(verbose_name=_("Config Value"), max_length=500)
-    description = models.CharField(_("Description"), max_length=200, default="", blank=True)
+    description = models.CharField(
+        _("Description"), max_length=200, default="", blank=True
+    )
 
     class Meta:
         managed = True
@@ -965,9 +1038,13 @@ class AliyunRdsConfig(models.Model):
     """
 
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
-    rds_dbinstanceid = models.CharField(_("Alibaba Cloud RDS Instance ID"), max_length=100)
+    rds_dbinstanceid = models.CharField(
+        _("Alibaba Cloud RDS Instance ID"), max_length=100
+    )
     ak = models.ForeignKey(
-        CloudAccessKey, verbose_name=_("AK Configuration for the RDS Instance"), on_delete=models.CASCADE
+        CloudAccessKey,
+        verbose_name=_("AK Configuration for the RDS Instance"),
+        on_delete=models.CASCADE,
     )
     is_enable = models.BooleanField(_("Enabled"), default=False)
 
@@ -1016,7 +1093,10 @@ class Permission(models.Model):
             ("menu_openapi", _("OpenAPI Menu")),
             ("sql_submit", _("Submit SQL Deployment Request")),
             ("sql_review", _("Review SQL Deployment Request")),
-            ("sql_execute_for_resource_group", _("Execute SQL Deployment Request (Resource Group Scope)")),
+            (
+                "sql_execute_for_resource_group",
+                _("Execute SQL Deployment Request (Resource Group Scope)"),
+            ),
             ("sql_execute", _("Execute SQL Deployment Request (Own Requests Only)")),
             ("sql_analyze", _("Run SQL Analysis")),
             ("optimize_sqladvisor", _("Run SQLAdvisor")),
@@ -1027,7 +1107,10 @@ class Permission(models.Model):
             ("query_review", _("Review Query Privilege Request")),
             ("query_submit", _("Submit SQL Query")),
             ("query_all_instances", _("Can Query All Instances")),
-            ("query_resource_group_instance", _("Can Query All Instances in the Resource Group")),
+            (
+                "query_resource_group_instance",
+                _("Can Query All Instances in the Resource Group"),
+            ),
             ("process_view", _("View Sessions")),
             ("process_kill", _("Kill Sessions")),
             ("tablespace_view", _("View Tablespace")),

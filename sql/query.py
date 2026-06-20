@@ -328,7 +328,9 @@ def generate_sql(request):
     db_type = request.POST.get("db_type")
     if not query_desc or not db_type:
         return HttpResponse(
-            json.dumps({"status": 1, "msg": _("query_desc or db_type is missing"), "data": []}),  # query_desc or db_type不存在
+            json.dumps(
+                {"status": 1, "msg": _("query_desc or db_type is missing"), "data": []}
+            ),  # query_desc or db_type不存在
             content_type="application/json",
         )
 
@@ -337,7 +339,9 @@ def generate_sql(request):
         instance = Instance.objects.get(instance_name=instance_name)
     except Instance.DoesNotExist:
         return HttpResponse(
-            json.dumps({"status": 1, "msg": _("Instance does not exist"), "data": []}),  # 实例不存在
+            json.dumps(
+                {"status": 1, "msg": _("Instance does not exist"), "data": []}
+            ),  # 实例不存在
             content_type="application/json",
         )
     db_name = request.POST.get("db_name")
@@ -390,7 +394,9 @@ def check_openai(request):
             json.dumps(
                 {
                     "status": 1,
-                    "msg": _("OpenAI configuration is missing. Required: [openai_base_url, openai_api_key, default_chat_model]"),  # openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]
+                    "msg": _(
+                        "OpenAI configuration is missing. Required: [openai_base_url, openai_api_key, default_chat_model]"
+                    ),  # openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]
                     "data": False,
                 }
             ),

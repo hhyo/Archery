@@ -44,7 +44,9 @@ def go_inception(request):
     except Exception as e:
         logger.error(traceback.format_exc())
         result["status"] = 1
-        result["msg"] = _("Unable to connect to goInception\n%s") % str(e)  # 无法连接goInception
+        result["msg"] = _("Unable to connect to goInception\n%s") % str(
+            e
+        )  # 无法连接goInception
         return HttpResponse(json.dumps(result), content_type="application/json")
     else:
         cur.close()
@@ -63,7 +65,9 @@ def go_inception(request):
     except Exception as e:
         logger.error(traceback.format_exc())
         result["status"] = 1
-        result["msg"] = _("Unable to connect to goInception backup database\n%s") % str(e)  # 无法连接goInception备份库
+        result["msg"] = _("Unable to connect to goInception backup database\n%s") % str(
+            e
+        )  # 无法连接goInception备份库
     else:
         cur.close()
         conn.close()
@@ -84,7 +88,9 @@ def email(request):
     mail_smtp_password = request.POST.get("mail_smtp_password", "")
     if not mail:
         result["status"] = 1
-        result["msg"] = _("Please enable email notifications first!")  # 请先开启邮件通知！
+        result["msg"] = _(
+            "Please enable email notifications first!"
+        )  # 请先开启邮件通知！
         # 返回结果
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
@@ -93,11 +99,15 @@ def email(request):
             raise ValueError
     except ValueError:
         result["status"] = 1
-        result["msg"] = _("Port number must be a positive integer")  # 端口号只能为正整数
+        result["msg"] = _(
+            "Port number must be a positive integer"
+        )  # 端口号只能为正整数
         return HttpResponse(json.dumps(result), content_type="application/json")
     if not request.user.email:
         result["status"] = 1
-        result["msg"] = _("Please complete the current user's email information first!")  # 请先完善当前用户邮箱信息！
+        result["msg"] = _(
+            "Please complete the current user's email information first!"
+        )  # 请先完善当前用户邮箱信息！
         return HttpResponse(json.dumps(result), content_type="application/json")
     bd = _("Archery email send test...")  # Archery 邮件发送测试...
     subj = _("Archery email send test")  # Archery 邮件发送测试
@@ -127,7 +137,9 @@ def instance(request):
         test_result = engine.test_connection()
         if test_result.error:
             result["status"] = 1
-            result["msg"] = _("Unable to connect to instance,\n%s") % test_result.error  # 无法连接实例
+            result["msg"] = (
+                _("Unable to connect to instance,\n%s") % test_result.error
+            )  # 无法连接实例
     except Exception as e:
         result["status"] = 1
         result["msg"] = _("Unable to connect to instance,\n%s") % str(e)  # 无法连接实例
@@ -145,7 +157,9 @@ def file_storage_connect(request):
     max_export_rows = max_export_rows if max_export_rows else "10000"
     try:
         if not max_export_rows.isdigit():
-            raise TypeError(_("max_export_rows must be an integer"))  # max_export_rows 必须是整数
+            raise TypeError(
+                _("max_export_rows must be an integer")
+            )  # max_export_rows 必须是整数
     except TypeError as e:
         result["status"] = 1
         result["msg"] = _("Parameter type error: %s") % str(e)  # 参数类型错误
@@ -160,7 +174,9 @@ def file_storage_connect(request):
             custom_params = json.loads(custom_params_str)
         except json.JSONDecodeError:
             result["status"] = 1
-            result["msg"] = _("Custom parameter format error, please enter valid JSON format")  # 自定义参数格式错误，请输入有效的JSON格式
+            result["msg"] = _(
+                "Custom parameter format error, please enter valid JSON format"
+            )  # 自定义参数格式错误，请输入有效的JSON格式
             return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 构建配置字典

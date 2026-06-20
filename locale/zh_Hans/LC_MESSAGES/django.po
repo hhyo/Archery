@@ -2425,7 +2425,7 @@ msgid "Aborted"
 msgstr "人工终止流程"
 
 msgid "Exception"
-msgstr "执行异常"
+msgstr "执行有异常"
 
 msgid "Review Passed"
 msgstr "审核通过"

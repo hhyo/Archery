@@ -30,7 +30,11 @@ from common.utils import ding_api
 
 urlpatterns = [
     path("", views.index),
-    path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog",),
+    path(
+        "jsi18n/",
+        JavaScriptCatalog.as_view(),
+        name="javascript-catalog",
+    ),
     path("index/", views.index),
     path("login/", views.login, name="login"),
     path("login/2fa/", views.twofa, name="twofa"),
