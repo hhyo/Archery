@@ -275,15 +275,15 @@ class Instance(models.Model, PasswordMixin):
 
 
 SQL_WORKFLOW_CHOICES = (
-    ("Workflow Finished", _("Workflow Finished")),
-    ("Workflow Aborted", _("Workflow Aborted")),
-    ("Manually Reviewing", _("Manually Reviewing")),
-    ("Review Passed", _("Review Passed")),
-    ("Scheduled", _("Scheduled")),
-    ("Queued", _("Queued")),
-    ("Executing", _("Executing")),
-    ("Auto Review Failed", _("Auto Review Failed")),
-    ("Exception", _("Exception")),
+    ("workflow_finish", _("Workflow Finished")),
+    ("workflow_abort", _("Workflow Aborted")),
+    ("workflow_manreviewing", _("Manually Reviewing")),
+    ("workflow_review_pass", _("Review Passed")),
+    ("workflow_timingtask", _("Scheduled")),
+    ("workflow_queuing", _("Queued")),
+    ("workflow_executing", _("Executing")),
+    ("workflow_autoreviewwrong", _("Auto Review Failed")),
+    ("workflow_exception", _("Exception")),
 )
 
 

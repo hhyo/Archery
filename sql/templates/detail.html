@@ -928,7 +928,7 @@
         });
 
         function getWorkflowStatus(workflow_id) {
-            document.getElementById("workflow_detail_disaply").innerHTML = gettext("确认中...");
+            document.getElementById("workflow_detail_disaply").innerHTML = gettext("Confirming...");
             if (retryCnt <= 120) {
                 clearTimeout(key);
                 key = setTimeout(function () {

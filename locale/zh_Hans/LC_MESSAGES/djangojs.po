@@ -251,22 +251,19 @@ msgid "Enter verification code"
 msgstr "输入6位验证码完成绑定"
 
 #: common/templates/base.html:1361
-#, fuzzy
 #| msgid "Please enter your display name"
 msgid "Please enter your password"
-msgstr "请填写中文名"
+msgstr "请输入密码"
 
 #: common/templates/base.html:1371
-#, fuzzy
 #| msgid "Configuration"
 msgid "Configuration saved"
-msgstr "配置项管理"
+msgstr "配置已保存"
 
 #: common/templates/base.html:1399
-#, fuzzy
 #| msgid "Please enter your display name"
 msgid "Please enter your phone number"
-msgstr "请填写中文名"
+msgstr "请输入手机号码"
 
 #: common/templates/base.html:1407
 msgid "Verification code sent and valid for 5 minutes"
@@ -704,7 +701,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Menu Documentation"
 msgid "Django Documentation"
-msgstr "菜单 相关文档"
+msgstr "相关文档"
 
 #: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:231
 msgid "Topics, references, &amp; how-to’s"
@@ -1846,7 +1843,7 @@ msgstr ""
 msgid "Offline Export Format"
 msgstr "离线导出数据格式"
 
-msgid "确认中..."
+msgid "Confirming..."
 msgstr "确认中..."
 
 # Language names
@@ -2759,7 +2756,7 @@ msgid "Instance Account"
 msgstr "实例账号列表"
 
 msgid "Instance Account List"
-msgstr "Instance Account List"
+msgstr "实例账号列表"
 
 msgid "Instance Configuration"
 msgstr "实例配置"
@@ -2771,13 +2768,13 @@ msgid "Instance Database"
 msgstr "实例数据库"
 
 msgid "Instance Database List"
-msgstr "Instance Database List"
+msgstr "实例数据库列表"
 
 msgid "Instance Host"
 msgstr "实例连接"
 
 msgid "Instance Parameter Histories"
-msgstr "Instance Parameter Histories"
+msgstr "实例参数历史"
 
 msgid "Instance Parameter History"
 msgstr "实例参数修改历史"
@@ -2834,76 +2831,76 @@ msgid "Master"
 msgstr "主库"
 
 msgid "Menu Dashboard"
-msgstr "菜单 Dashboard"
+msgstr "仪表盘"
 
 msgid "Menu Data Archive"
-msgstr "菜单 数据归档"
+msgstr "数据归档"
 
 msgid "Menu Data Dictionary"
-msgstr "菜单 数据字典"
+msgstr "数据字典"
 
 msgid "Menu Data Export"
-msgstr "菜单 数据导出"
+msgstr "数据导出"
 
 msgid "Menu Database Management"
-msgstr "菜单 数据库管理"
+msgstr "数据库管理"
 
 msgid "Menu Instance Account Management"
-msgstr "菜单 实例账号管理"
+msgstr "实例账号管理"
 
 msgid "Menu Instance List"
-msgstr "菜单 实例列表"
+msgstr "实例列表"
 
 msgid "Menu Instance Management"
-msgstr "菜单 实例管理"
+msgstr "实例管理"
 
 msgid "Menu My2SQL"
-msgstr "菜单 My2SQL"
+msgstr "My2SQL"
 
 msgid "Menu Online Query"
-msgstr "菜单 在线查询"
+msgstr "在线查询"
 
 msgid "Menu OpenAPI"
-msgstr "菜单 OpenAPI"
+msgstr "OpenAPI"
 
 msgid "Menu Optimization Tools"
-msgstr "Menu Optimization Tools"
+msgstr "优化工具"
 
 msgid "Menu Parameter Configuration"
-msgstr "菜单 参数配置"
+msgstr "参数配置"
 
 msgid "Menu Privilege Management"
-msgstr "Menu Privilege Management"
+msgstr "权限管理"
 
 msgid "Menu SQL Analysis"
-msgstr "菜单 SQL分析"
+msgstr "SQL分析"
 
 msgid "Menu SQL Optimization"
-msgstr "菜单 SQL优化"
+msgstr "SQL优化"
 
 msgid "Menu SQL Query"
-msgstr "菜单 SQL查询"
+msgstr "SQL查询"
 
 msgid "Menu SQL Review"
-msgstr "Menu SQL Review"
+msgstr "SQL审核"
 
 msgid "Menu SQL Workflow"
-msgstr "菜单 SQL上线"
+msgstr "SQL上线"
 
 msgid "Menu SchemaSync"
-msgstr "菜单 SchemaSync"
+msgstr "SchemaSync"
 
 msgid "Menu Session Management"
-msgstr "菜单 会话管理"
+msgstr "会话管理"
 
 msgid "Menu Slow Query Log"
-msgstr "菜单 慢查日志"
+msgstr "慢查日志"
 
 msgid "Menu System Management"
-msgstr "菜单 系统管理"
+msgstr "系统管理"
 
 msgid "Menu Tools"
-msgstr "菜单 工具插件"
+msgstr "工具插件"
 
 msgid "Modified By"
 msgstr "修改人"
@@ -3013,7 +3010,7 @@ msgid "Query Privilege Application"
 msgstr "查询权限申请"
 
 msgid "Query Privilege Applications"
-msgstr "Query Privilege Applications"
+msgstr "查询权限申请"
 
 msgid "Query Privilege Record"
 msgstr "查询权限记录"
@@ -3111,7 +3108,7 @@ msgid "SQL Workflow Content"
 msgstr "SQL工单内容"
 
 msgid "SQL Workflow Contents"
-msgstr "SQL Workflow Contents"
+msgstr "SQL工单内容"
 
 msgid "SQL Workflows"
 msgstr "SQL工单"
@@ -3141,7 +3138,7 @@ msgid "Sleep Seconds After Archive Limit"
 msgstr "归档limit行后的休眠秒数"
 
 msgid "Slow Query Histories"
-msgstr "Slow Query Histories"
+msgstr "慢查询历史"
 
 msgid "Slow Query History"
 msgstr "慢日志明细"
@@ -3278,7 +3275,7 @@ msgid "Workflow Audit ID"
 msgstr "工单审批id"
 
 msgid "Workflow Audit List"
-msgstr "Workflow Audit List"
+msgstr "工作流审批列表"
 
 msgid "Workflow Logs"
 msgstr "工作流日志"
@@ -3287,31 +3284,31 @@ msgid "Workflow Type (0=Unknown, 1=DDL, 2=DML, 3=Offline Export)"
 msgstr "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单"
 
 msgid "workflow_abort"
-msgstr "workflow_abort"
+msgstr "人工终止流程"
 
 msgid "workflow_autoreviewwrong"
-msgstr "workflow_autoreviewwrong"
+msgstr "自动审核不通过"
 
 msgid "workflow_exception"
-msgstr "workflow_exception"
+msgstr "执行有异常"
 
 msgid "workflow_executing"
-msgstr "workflow_executing"
+msgstr "执行中"
 
 msgid "workflow_finish"
-msgstr "workflow_finish"
+msgstr "已正常结束"
 
 msgid "workflow_manreviewing"
-msgstr "workflow_manreviewing"
+msgstr "等待审核人审核"
 
 msgid "workflow_queuing"
-msgstr "workflow_queuing"
+msgstr "排队中"
 
 msgid "workflow_review_pass"
-msgstr "workflow_review_pass"
+msgstr "审核通过"
 
 msgid "workflow_timingtask"
-msgstr "workflow_timingtask"
+msgstr "定时执行"
 
 # Backend messages (auth, check, workflow, query, notify)
 msgid "Archery email send test"
@@ -3325,9 +3322,9 @@ msgid ""
 "Archive mode: {mode}\n"
 "Archive condition: {condition}\n"
 msgstr ""
-"归档表：{}\n"
-"归档模式：{}\n"
-"归档条件：{}\n"
+"归档表：{table}\n"
+"归档模式：{mode}\n"
+"归档条件：{condition}\n"
 
 msgid "Audit failed: {error}"
 msgstr "审核失败: {error}"
@@ -3406,7 +3403,7 @@ msgstr ""
 "default_chat_model]"
 
 msgid "Parameter type error: %s"
-msgstr "参数类型错误"
+msgstr "参数类型错误: %s"
 
 msgid "Please complete the current user's email information first!"
 msgstr "请先完善当前用户邮箱信息！"
@@ -3539,7 +3536,7 @@ msgstr "时间不能为空"
 msgid ""
 "Too many failed login attempts, account is locked! Please wait about %d "
 "seconds before trying again"
-msgstr "登录失败超过限制，该账号已被锁定！请等候大约{lock_time}秒再试"
+msgstr "登录失败超过限制，该账号已被锁定！请等候大约%d秒再试"
 
 msgid ""
 "Unable to connect to goInception backup database\n"

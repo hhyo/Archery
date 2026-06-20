@@ -343,23 +343,35 @@ def generate_sql(request):
     db_name = request.POST.get("db_name")
     schema_name = request.POST.get("schema_name")
     tb_name = request.POST.get("tb_name")
+    tb_name_list = request.POST.getlist("tb_name_list[]") or request.POST.getlist(
+        "tb_name_list"
+    )
+
+    table_names = []
+    if tb_name:
+        table_names.append(tb_name)
+    for table_name in tb_name_list:
+        if table_name and table_name not in table_names:
+            table_names.append(table_name)
 
     result = {"status": 0, "msg": "ok", "data": ""}
     try:
         query_engine = get_engine(instance=instance)
-        query_result = query_engine.describe_table(
-            db_name, tb_name, schema_name=schema_name
-        )
         openai_client = OpenaiClient()
-        # 有些不存在表结构, 例如 redis
-        if len(query_result.rows) != 0:
-            result["data"] = openai_client.generate_sql_by_openai(
-                db_type, query_result.rows[0][-1], query_desc
+
+        table_schema_list = []
+        for table_name in table_names:
+            query_result = query_engine.describe_table(
+                db_name, table_name, schema_name=schema_name
             )
-        else:
-            result["data"] = openai_client.generate_sql_by_openai(
-                db_type, "", query_desc
-            )
+            # 有些不存在表结构, 例如 redis
+            if len(query_result.rows) != 0:
+                table_schema_list.append(query_result.rows[0][-1])
+
+        table_schema = "\n\n".join(table_schema_list)
+        result["data"] = openai_client.generate_sql_by_openai(
+            db_type, table_schema, query_desc
+        )
     except Exception as msg:
         result["status"] = 1
         result["msg"] = str(msg)
