@@ -1,17 +1,18 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    操作选项
+                    {% trans "Operation Options" %}
                 </div>
                 <div class="panel-body">
                     <div class="form-group">
                         <select id="db_type" name="db_type"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                title="请选择数据库类型:"
+                                title="{% trans 'Please select a database type:' %}"
                                 required>
                             <option value="mysql">MySQL</option>
                             <option value="goinception">goInception</option>
@@ -21,27 +22,27 @@
                     <div class="form-group">
                         <select id="instance_id1" name="instance_id1"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择源实例:"
-                                data-placeholder="请选择源实例:" required>
+                                title="{% trans 'Please select the source instance:' %}"
+                                data-placeholder="{% trans 'Please select the source instance:' %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="instance_id2" name="instance_id2"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择目标实例:"
-                                data-placeholder="请选择目标实例:" required>
+                                title="{% trans 'Please select the target instance:' %}"
+                                data-placeholder="{% trans 'Please select the target instance:' %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <div class="checkbox">
                             <label>
                                 <input id="diff_only" type="checkbox" checked>
-                                仅显示差异项
+                                {% trans "Show differences only" %}
                             </label>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input id="btn-compare" type="button" class="btn btn-danger" value="开始对比"
+                        <input id="btn-compare" type="button" class="btn btn-danger" value="{% trans 'Start Comparison' %}"
                                onclick="compare_params()"/>
                     </div>
                 </div>
@@ -50,13 +51,13 @@
         <div class="col-md-9 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    对比结果
+                    {% trans "Comparison Results" %}
                 </div>
                 <div class="panel-body">
                     <div id="compare-stats" style="display:none;" class="row clearfix" style="margin-bottom:10px;">
                         <div class="col-md-4">
                             <div class="panel panel-primary">
-                                <div class="panel-heading">一致参数</div>
+                                <div class="panel-heading">{% trans "Matching Parameters" %}</div>
                                 <div class="panel-body text-center">
                                     <h3 id="same-count">0</h3>
                                 </div>
@@ -64,7 +65,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="panel panel-danger">
-                                <div class="panel-heading">差异参数</div>
+                                <div class="panel-heading">{% trans "Different Parameters" %}</div>
                                 <div class="panel-body text-center">
                                     <h3 id="diff-count">0</h3>
                                 </div>
@@ -72,7 +73,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="panel panel-default">
-                                <div class="panel-heading">总参数数</div>
+                                <div class="panel-heading">{% trans "Total Parameters" %}</div>
                                 <div class="panel-body text-center">
                                     <h3 id="total-count">0</h3>
                                 </div>
@@ -154,11 +155,11 @@
             var diff_only = document.getElementById("diff_only").checked;
 
             if (!instance_id1 || !instance_id2) {
-                alert('请选择源实例和目标实例！');
+                alert(gettext('Please select the source instance and the target instance!'));
                 return;
             }
             if (instance_id1 === instance_id2) {
-                alert('源实例和目标实例不能相同！');
+                alert(gettext('The source instance and the target instance cannot be the same!'));
                 return;
             }
 
@@ -218,54 +219,54 @@
                                 if (row.description) {
                                     return escapeHtml(row.description);
                                 }
-                                return '暂无描述';
+                                return gettext('No description available');
                             },
-                            locale: 'zh-CN',
+                            locale: window.getBootstrapTableLocale(),
                             columns: [{
-                                title: '参数名',
+                                title: gettext('Parameter Name'),
                                 field: 'variable_name',
                                 sortable: true
                             }, {
-                                title: '源实例参数值 (' + result.instance1_name + ')',
+                                title: gettext('Source Instance Value') + ' (' + result.instance1_name + ')',
                                 field: 'instance1_value',
                                 sortable: true,
                                 formatter: function (value, row, index) {
-                                    if (row.diff_type === '值不同' || row.diff_type === '仅源实例存在') {
+                                    if (row.diff_type === gettext('Values differ') || row.diff_type === gettext('Only exists in source instance')) {
                                         return "<span style='color:red;font-weight:bold;'>" + escapeHtml(value) + "</span>";
                                     }
                                     return escapeHtml(value);
                                 }
                             }, {
-                                title: '目标实例参数值 (' + result.instance2_name + ')',
+                                title: gettext('Target Instance Value') + ' (' + result.instance2_name + ')',
                                 field: 'instance2_value',
                                 sortable: true,
                                 formatter: function (value, row, index) {
-                                    if (row.diff_type === '值不同' || row.diff_type === '仅目标实例存在') {
+                                    if (row.diff_type === gettext('Values differ') || row.diff_type === gettext('Only exists in target instance')) {
                                         return "<span style='color:red;font-weight:bold;'>" + escapeHtml(value) + "</span>";
                                     }
                                     return escapeHtml(value);
                                 }
                             }, {
-                                title: '差异类型',
+                                title: gettext('Difference Type'),
                                 field: 'diff_type',
                                 sortable: true,
                                 formatter: function (value, row, index) {
-                                    if (value === '值不同') {
-                                        return "<span class='label label-danger'>值不同</span>";
-                                    } else if (value === '仅源实例存在') {
-                                        return "<span class='label label-warning'>仅源实例存在</span>";
-                                    } else if (value === '仅目标实例存在') {
-                                        return "<span class='label label-info'>仅目标实例存在</span>";
+                                    if (value === gettext('Values differ')) {
+                                        return "<span class='label label-danger'>" + gettext('Values differ') + "</span>";
+                                    } else if (value === gettext('Only exists in source instance')) {
+                                        return "<span class='label label-warning'>" + gettext('Only exists in source instance') + "</span>";
+                                    } else if (value === gettext('Only exists in target instance')) {
+                                        return "<span class='label label-info'>" + gettext('Only exists in target instance') + "</span>";
                                     }
-                                    return "<span class='label label-success'>一致</span>";
+                                    return "<span class='label label-success'>" + gettext('Matching') + "</span>";
                                 }
                             }, {
-                                title: '默认参数值',
+                                title: gettext('Default Value'),
                                 field: 'default_value',
                                 sortable: true,
                                 visible: false
                             }, {
-                                title: '参数描述',
+                                title: gettext('Parameter Description'),
                                 field: 'description',
                                 visible: false
                             }]

@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 
 from sql.models import SqlWorkflow, QueryPrivilegesApply, Users, Instance
 
@@ -133,13 +134,13 @@ def get_chart_data(start_date, end_date):
     )
     line1.add_xaxis(attr)
     line1.add_yaxis(
-        "检索行数",
+        _("DB Result Rows"),
         effect_value,
         is_smooth=True,
         markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="average")]),
     )
     line1.add_yaxis(
-        "检索次数",
+        _("Query Count"),
         count_value,
         is_smooth=True,
         markline_opts=opts.MarkLineOpts(

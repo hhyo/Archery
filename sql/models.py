@@ -6,7 +6,7 @@ from typing import Optional
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from mirage import fields
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from mirage.crypto import Crypto
 
@@ -33,16 +33,20 @@ class ResourceGroup(models.Model):
     资源组
     """
 
-    group_id = models.AutoField("组ID", primary_key=True)
-    group_name = models.CharField("组名称", max_length=100, unique=True)
-    group_parent_id = models.BigIntegerField("父级id", default=0)
-    group_sort = models.IntegerField("排序", default=1)
-    group_level = models.IntegerField("层级", default=1)
-    ding_webhook = models.CharField("钉钉webhook地址", max_length=255, blank=True)
-    feishu_webhook = models.CharField("飞书webhook地址", max_length=255, blank=True)
-    qywx_webhook = models.CharField("企业微信webhook地址", max_length=255, blank=True)
+    group_id = models.AutoField(_("Group ID"), primary_key=True)
+    group_name = models.CharField(_("Group Name"), max_length=100, unique=True)
+    group_parent_id = models.BigIntegerField(_("Parent ID"), default=0)
+    group_sort = models.IntegerField(_("Sort Order"), default=1)
+    group_level = models.IntegerField(_("Level"), default=1)
+    ding_webhook = models.CharField(
+        _("DingTalk Webhook URL"), max_length=255, blank=True
+    )
+    feishu_webhook = models.CharField(
+        _("Feishu Webhook URL"), max_length=255, blank=True
+    )
+    qywx_webhook = models.CharField(_("WeCom Webhook URL"), max_length=255, blank=True)
     is_deleted = models.IntegerField(
-        "是否删除", choices=((0, "否"), (1, "是")), default=0
+        _("Deleted"), choices=((0, _("No")), (1, _("Yes"))), default=0
     )
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -53,8 +57,8 @@ class ResourceGroup(models.Model):
     class Meta:
         managed = True
         db_table = "resource_group"
-        verbose_name = "资源组管理"
-        verbose_name_plural = "资源组管理"
+        verbose_name = _("Resource Group Management")
+        verbose_name_plural = _("Resource Group Management")
 
 
 class Users(AbstractUser):
@@ -62,16 +66,16 @@ class Users(AbstractUser):
     用户信息扩展
     """
 
-    display = models.CharField("显示的中文名", max_length=50, default="")
-    ding_user_id = models.CharField("钉钉UserID", max_length=64, blank=True)
-    wx_user_id = models.CharField("企业微信UserID", max_length=64, blank=True)
-    feishu_open_id = models.CharField("飞书OpenID", max_length=64, blank=True)
-    failed_login_count = models.IntegerField("失败计数", default=0)
+    display = models.CharField(_("Display Name"), max_length=50, default="")
+    ding_user_id = models.CharField(_("DingTalk User ID"), max_length=64, blank=True)
+    wx_user_id = models.CharField(_("WeCom User ID"), max_length=64, blank=True)
+    feishu_open_id = models.CharField(_("Feishu OpenID"), max_length=64, blank=True)
+    failed_login_count = models.IntegerField(_("Failed Login Count"), default=0)
     last_login_failed_at = models.DateTimeField(
-        "上次失败登录时间", blank=True, null=True
+        _("Last Failed Login Time"), blank=True, null=True
     )
     resource_group = models.ManyToManyField(
-        ResourceGroup, verbose_name="资源组", blank=True
+        ResourceGroup, verbose_name=_("Resource Group"), blank=True
     )
 
     def save(self, *args, **kwargs):
@@ -87,8 +91,8 @@ class Users(AbstractUser):
     class Meta:
         managed = True
         db_table = "sql_users"
-        verbose_name = "用户管理"
-        verbose_name_plural = "用户管理"
+        verbose_name = _("User Management")
+        verbose_name_plural = _("User Management")
 
 
 class TwoFactorAuthConfig(models.Model):
@@ -97,37 +101,37 @@ class TwoFactorAuthConfig(models.Model):
     """
 
     auth_type_choice = (
-        ("totp", "Google身份验证器"),
-        ("sms", "短信验证码"),
+        ("totp", _("Google Authenticator")),
+        ("sms", _("SMS Code")),
     )
 
-    username = fields.EncryptedCharField(verbose_name="用户名", max_length=200)
+    username = fields.EncryptedCharField(verbose_name=_("Username"), max_length=200)
     auth_type = fields.EncryptedCharField(
-        verbose_name="认证类型", max_length=128, choices=auth_type_choice
+        verbose_name=_("Authentication Type"), max_length=128, choices=auth_type_choice
     )
     phone = fields.EncryptedCharField(
-        verbose_name="手机号码", max_length=64, null=True, default=""
+        verbose_name=_("Mobile Number"), max_length=64, null=True, default=""
     )
     secret_key = fields.EncryptedCharField(
-        verbose_name="用户密钥", max_length=256, null=True
+        verbose_name=_("Secret Key"), max_length=256, null=True
     )
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
 
     class Meta:
         managed = True
         db_table = "2fa_config"
-        verbose_name = "2FA配置"
-        verbose_name_plural = "2FA配置"
+        verbose_name = _("2FA Configuration")
+        verbose_name_plural = _("2FA Configuration")
         unique_together = ("user", "auth_type")
 
 
 class InstanceTag(models.Model):
-    """实例标签配置"""
+    """Instance Tag Configuration"""
 
-    tag_code = models.CharField("标签代码", max_length=20, unique=True)
-    tag_name = models.CharField("标签名称", max_length=20, unique=True)
-    active = models.BooleanField("激活状态", default=True)
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
+    tag_code = models.CharField(_("Tag Code"), max_length=20, unique=True)
+    tag_name = models.CharField(_("Tag Name"), max_length=20, unique=True)
+    active = models.BooleanField(_("Active Status"), default=True)
+    create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
 
     def __str__(self):
         return self.tag_name
@@ -135,8 +139,8 @@ class InstanceTag(models.Model):
     class Meta:
         managed = True
         db_table = "sql_instance_tag"
-        verbose_name = "实例标签"
-        verbose_name_plural = "实例标签"
+        verbose_name = _("Instance Tag")
+        verbose_name_plural = _("Instance Tag")
 
 
 DB_TYPE_CHOICES = (
@@ -164,24 +168,30 @@ class Tunnel(models.Model):
     SSH隧道配置
     """
 
-    tunnel_name = models.CharField("隧道名称", max_length=50, unique=True)
-    host = models.CharField("隧道连接", max_length=200)
-    port = models.IntegerField("端口", default=0)
+    tunnel_name = models.CharField(_("Tunnel Name"), max_length=50, unique=True)
+    host = models.CharField(_("Tunnel Endpoint"), max_length=200)
+    port = models.IntegerField(_("Port"), default=0)
     user = fields.EncryptedCharField(
-        verbose_name="用户名", max_length=200, default="", blank=True, null=True
+        verbose_name=_("Username"), max_length=200, default="", blank=True, null=True
     )
     password = fields.EncryptedCharField(
-        verbose_name="密码", max_length=300, default="", blank=True, null=True
+        verbose_name=_("Password"), max_length=300, default="", blank=True, null=True
     )
-    pkey = fields.EncryptedTextField(verbose_name="密钥", blank=True, null=True)
+    pkey = fields.EncryptedTextField(
+        verbose_name=_("Private Key"), blank=True, null=True
+    )
     pkey_path = models.FileField(
-        verbose_name="密钥地址", blank=True, null=True, upload_to="keys/"
+        verbose_name=_("Key File"), blank=True, null=True, upload_to="keys/"
     )
     pkey_password = fields.EncryptedCharField(
-        verbose_name="密钥密码", max_length=300, default="", blank=True, null=True
+        verbose_name=_("Key Password"),
+        max_length=300,
+        default="",
+        blank=True,
+        null=True,
     )
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    update_time = models.DateTimeField("更新时间", auto_now=True)
+    create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
+    update_time = models.DateTimeField(_("Updated At"), auto_now=True)
 
     def __str__(self):
         return self.tunnel_name
@@ -195,8 +205,8 @@ class Tunnel(models.Model):
     class Meta:
         managed = True
         db_table = "ssh_tunnel"
-        verbose_name = "隧道配置"
-        verbose_name_plural = "隧道配置"
+        verbose_name = _("Tunnel Configuration")
+        verbose_name_plural = _("Tunnel Configuration")
 
 
 class Instance(models.Model, PasswordMixin):
@@ -204,65 +214,71 @@ class Instance(models.Model, PasswordMixin):
     各个线上实例配置
     """
 
-    instance_name = models.CharField("实例名称", max_length=50, unique=True)
+    instance_name = models.CharField(_("Instance Name"), max_length=50, unique=True)
     type = models.CharField(
-        "实例类型", max_length=6, choices=(("master", "主库"), ("slave", "从库"))
+        _("Instance Type"),
+        max_length=6,
+        choices=(("master", _("Master")), ("slave", _("Replica"))),
     )
-    db_type = models.CharField("数据库类型", max_length=20, choices=DB_TYPE_CHOICES)
+    db_type = models.CharField(
+        _("Database Type"), max_length=20, choices=DB_TYPE_CHOICES
+    )
     mode = models.CharField(
-        "运行模式",
+        _("Run Mode"),
         max_length=10,
         default="",
         blank=True,
-        choices=(("standalone", "单机"), ("cluster", "集群")),
+        choices=(("standalone", _("Standalone")), ("cluster", _("Cluster"))),
     )
-    host = models.CharField("实例连接", max_length=200)
-    port = models.IntegerField("端口", default=0)
+    host = models.CharField(_("Instance Host"), max_length=200)
+    port = models.IntegerField(_("Port"), default=0)
     user = fields.EncryptedCharField(
-        verbose_name="用户名", max_length=200, default="", blank=True
+        verbose_name=_("Username"), max_length=200, default="", blank=True
     )
     password = fields.EncryptedCharField(
-        verbose_name="密码", max_length=300, default="", blank=True
+        verbose_name=_("Password"), max_length=300, default="", blank=True
     )
-    is_ssl = models.BooleanField("是否启用SSL", default=False)
-    verify_ssl = models.BooleanField("是否验证服务端SSL证书", default=True)
-    db_name = models.CharField("数据库", max_length=64, default="", blank=True)
+    is_ssl = models.BooleanField(_("Enable SSL"), default=False)
+    verify_ssl = models.BooleanField(_("Verify Server SSL Certificate"), default=True)
+    db_name = models.CharField(_("Database"), max_length=64, default="", blank=True)
     show_db_name_regex = models.CharField(
-        "显示的数据库列表正则",
+        _("Visible Database Regex"),
         max_length=1024,
         default="",
         blank=True,
-        help_text="正则表达式。示例：^(test_db|dmp_db|za.*)$。Redis示例: ^(0|4|6|11|12|13)$",
+        help_text=_(
+            "Regex. Example: ^(test_db|dmp_db|za.*)$. Redis example: ^(0|4|6|11|12|13)$"
+        ),
     )
     denied_db_name_regex = models.CharField(
-        "隐藏的数据库列表正则",
+        _("Hidden Database Regex"),
         max_length=1024,
         default="",
         blank=True,
-        help_text="正则表达式。隐藏大于显示，此规则优先。",
+        help_text=_("Regex. Hidden rules take priority over visible rules."),
     )
 
-    charset = models.CharField("字符集", max_length=20, default="", blank=True)
+    charset = models.CharField(_("Charset"), max_length=20, default="", blank=True)
     service_name = models.CharField(
         "Oracle service name", max_length=50, null=True, blank=True
     )
     sid = models.CharField("Oracle sid", max_length=50, null=True, blank=True)
     resource_group = models.ManyToManyField(
-        ResourceGroup, verbose_name="资源组", blank=True
+        ResourceGroup, verbose_name=_("Resource Group"), blank=True
     )
     instance_tag = models.ManyToManyField(
-        InstanceTag, verbose_name="实例标签", blank=True
+        InstanceTag, verbose_name=_("Instance Tag"), blank=True
     )
     tunnel = models.ForeignKey(
         Tunnel,
-        verbose_name="连接隧道",
+        verbose_name=_("Tunnel"),
         blank=True,
         null=True,
         on_delete=models.CASCADE,
         default=None,
     )
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    update_time = models.DateTimeField("更新时间", auto_now=True)
+    create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
+    update_time = models.DateTimeField(_("Updated At"), auto_now=True)
 
     def __str__(self):
         return self.instance_name
@@ -270,20 +286,20 @@ class Instance(models.Model, PasswordMixin):
     class Meta:
         managed = True
         db_table = "sql_instance"
-        verbose_name = "实例配置"
-        verbose_name_plural = "实例配置"
+        verbose_name = _("Instance Configuration")
+        verbose_name_plural = _("Instance Configuration")
 
 
 SQL_WORKFLOW_CHOICES = (
-    ("workflow_finish", _("workflow_finish")),
-    ("workflow_abort", _("workflow_abort")),
-    ("workflow_manreviewing", _("workflow_manreviewing")),
-    ("workflow_review_pass", _("workflow_review_pass")),
-    ("workflow_timingtask", _("workflow_timingtask")),
-    ("workflow_queuing", _("workflow_queuing")),
-    ("workflow_executing", _("workflow_executing")),
-    ("workflow_autoreviewwrong", _("workflow_autoreviewwrong")),
-    ("workflow_exception", _("workflow_exception")),
+    ("workflow_finish", _("Workflow Finished")),
+    ("workflow_abort", _("Workflow Aborted")),
+    ("workflow_manreviewing", _("Manually Reviewing")),
+    ("workflow_review_pass", _("Review Passed")),
+    ("workflow_timingtask", _("Scheduled")),
+    ("workflow_queuing", _("Queued")),
+    ("workflow_executing", _("Executing")),
+    ("workflow_autoreviewwrong", _("Auto Review Failed")),
+    ("workflow_exception", _("Exception")),
 )
 
 
@@ -321,48 +337,57 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     存放各个SQL上线工单的基础内容
     """
 
-    workflow_name = models.CharField("工单内容", max_length=50)
-    demand_url = models.CharField("需求链接", max_length=500, blank=True)
-    group_id = models.IntegerField("组ID")
-    group_name = models.CharField("组名称", max_length=100)
+    workflow_name = models.CharField(_("Workflow Name"), max_length=50)
+    demand_url = models.CharField(_("Request URL"), max_length=500, blank=True)
+    group_id = models.IntegerField(_("Group ID"))
+    group_name = models.CharField(_("Group Name"), max_length=100)
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = models.CharField("数据库", max_length=64)
+    db_name = models.CharField(_("Database"), max_length=64)
     syntax_type = models.IntegerField(
-        "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单",
-        choices=((0, "其他"), (1, "DDL"), (2, "DML"), (3, "离线导出工单")),
+        _("Workflow Type 0 Unknown, 1 DDL, 2 DML, 3 Offline Export Workflow"),
+        choices=(
+            (0, _("Other")),
+            (1, "DDL"),
+            (2, "DML"),
+            (3, _("Offline Export Workflow")),
+        ),
         default=0,
     )
     is_backup = models.BooleanField(
-        "是否备份",
+        _("Backup"),
         choices=(
-            (False, "否"),
-            (True, "是"),
+            (False, _("No")),
+            (True, _("Yes")),
         ),
         default=True,
     )
-    engineer = models.CharField("发起人", max_length=30)
-    engineer_display = models.CharField("发起人中文名", max_length=50, default="")
+    engineer = models.CharField(_("Initiator"), max_length=30)
+    engineer_display = models.CharField(
+        _("Initiator Display Name"), max_length=50, default=""
+    )
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
-    audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
-    run_date_start = models.DateTimeField("可执行起始时间", null=True, blank=True)
-    run_date_end = models.DateTimeField("可执行结束时间", null=True, blank=True)
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    finish_time = models.DateTimeField("结束时间", null=True, blank=True)
+    audit_auth_groups = models.CharField(_("Approval Group List"), max_length=255)
+    run_date_start = models.DateTimeField(
+        _("Execution Start Time"), null=True, blank=True
+    )
+    run_date_end = models.DateTimeField(_("Execution End Time"), null=True, blank=True)
+    create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
+    finish_time = models.DateTimeField(_("Finished At"), null=True, blank=True)
     is_manual = models.IntegerField(
-        "是否原生执行", choices=((0, "否"), (1, "是")), default=0
+        _("Native Execution"), choices=((0, _("No")), (1, _("Yes"))), default=0
     )
     is_offline_export = models.IntegerField(
-        "是否为离线导出工单",
+        _("Is Offline Export Workflow"),
         choices=(
-            (0, "否"),
-            (1, "是"),
+            (0, _("No")),
+            (1, _("Yes")),
         ),
         default=0,
     )
 
     # 导出格式
     export_format = models.CharField(
-        "导出格式",
+        _("Export Format"),
         max_length=10,
         choices=(
             ("csv", "CSV"),
@@ -377,7 +402,7 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     )
 
     file_name = models.CharField(
-        "文件名",
+        _("File Name"),
         max_length=255,  # 适当调整最大长度
         null=True,  # 允许为空
         blank=True,  # 允许为空字符串
@@ -389,8 +414,8 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     class Meta:
         managed = True
         db_table = "sql_workflow"
-        verbose_name = "SQL工单"
-        verbose_name_plural = "SQL工单"
+        verbose_name = _("SQL Workflow")
+        verbose_name_plural = _("SQL Workflow")
 
 
 class SqlWorkflowContent(models.Model):
@@ -400,9 +425,9 @@ class SqlWorkflowContent(models.Model):
     """
 
     workflow = models.OneToOneField(SqlWorkflow, on_delete=models.CASCADE)
-    sql_content = models.TextField("具体sql内容")
-    review_content = models.TextField("自动审核内容的JSON格式")
-    execute_result = models.TextField("执行结果的JSON格式", blank=True)
+    sql_content = models.TextField(_("SQL Content"))
+    review_content = models.TextField(_("Auto Review JSON"))
+    execute_result = models.TextField(_("Execution Result JSON"), blank=True)
 
     def __str__(self):
         return self.workflow.workflow_name
@@ -410,8 +435,8 @@ class SqlWorkflowContent(models.Model):
     class Meta:
         managed = True
         db_table = "sql_workflow_content"
-        verbose_name = "SQL工单内容"
-        verbose_name_plural = "SQL工单内容"
+        verbose_name = _("SQL Workflow Content")
+        verbose_name_plural = _("SQL Workflow Content")
 
 
 class WorkflowAudit(models.Model):
@@ -420,22 +445,26 @@ class WorkflowAudit(models.Model):
     """
 
     audit_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField("组ID")
-    group_name = models.CharField("组名称", max_length=100)
-    workflow_id = models.BigIntegerField("关联业务id")
-    workflow_type = models.IntegerField("申请类型", choices=WorkflowType.choices)
-    workflow_title = models.CharField("申请标题", max_length=50)
+    group_id = models.IntegerField(_("Group ID"))
+    group_name = models.CharField(_("Group Name"), max_length=100)
+    workflow_id = models.BigIntegerField(_("Related Business ID"))
+    workflow_type = models.IntegerField(_("Request Type"), choices=WorkflowType.choices)
+    workflow_title = models.CharField(_("Request Title"), max_length=50)
     workflow_remark = models.CharField(
-        "申请备注", default="", max_length=140, blank=True
+        _("Request Remark"), default="", max_length=140, blank=True
     )
-    audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
-    current_audit = models.CharField("当前审批权限组", max_length=20)
-    next_audit = models.CharField("下级审批权限组", max_length=20)
-    current_status = models.IntegerField("审核状态", choices=WorkflowStatus.choices)
-    create_user = models.CharField("申请人", max_length=30)
-    create_user_display = models.CharField("申请人中文名", max_length=50, default="")
-    create_time = models.DateTimeField("申请时间", auto_now_add=True)
-    sys_time = models.DateTimeField("系统时间", auto_now=True)
+    audit_auth_groups = models.CharField(_("Approval Group List"), max_length=255)
+    current_audit = models.CharField(_("Current Approval Group"), max_length=20)
+    next_audit = models.CharField(_("Next Approval Group"), max_length=20)
+    current_status = models.IntegerField(
+        _("Review Status"), choices=WorkflowStatus.choices
+    )
+    create_user = models.CharField(_("Requester"), max_length=30)
+    create_user_display = models.CharField(
+        _("Requester Display Name"), max_length=50, default=""
+    )
+    create_time = models.DateTimeField(_("Request Time"), auto_now_add=True)
+    sys_time = models.DateTimeField(_("System Time"), auto_now=True)
 
     def get_workflow(self):
         """尝试从 audit 中取出 workflow"""
@@ -445,7 +474,7 @@ class WorkflowAudit(models.Model):
             return SqlWorkflow.objects.get(id=self.workflow_id)
         elif self.workflow_type == WorkflowType.ARCHIVE:
             return ArchiveConfig.objects.get(id=self.workflow_id)
-        raise ValueError("无法获取到关联工单")
+        raise ValueError(_("Unable to get the related workflow"))
 
     def __int__(self):
         return self.audit_id
@@ -454,8 +483,8 @@ class WorkflowAudit(models.Model):
         managed = True
         db_table = "workflow_audit"
         unique_together = ("workflow_id", "workflow_type")
-        verbose_name = "工作流审批列表"
-        verbose_name_plural = "工作流审批列表"
+        verbose_name = _("Workflow Audit List")
+        verbose_name_plural = _("Workflow Audit List")
 
 
 class WorkflowAuditDetail(models.Model):
@@ -466,12 +495,14 @@ class WorkflowAuditDetail(models.Model):
     """
 
     audit_detail_id = models.AutoField(primary_key=True)
-    audit_id = models.IntegerField("审核主表id")
-    audit_user = models.CharField("审核人", max_length=30)
-    audit_time = models.DateTimeField("审核时间")
-    audit_status = models.IntegerField("审核状态", choices=WorkflowStatus.choices)
-    remark = models.CharField("审核备注", default="", max_length=1000)
-    sys_time = models.DateTimeField("系统时间", auto_now=True)
+    audit_id = models.IntegerField(_("Workflow Audit ID"))
+    audit_user = models.CharField(_("Reviewer"), max_length=30)
+    audit_time = models.DateTimeField(_("Review Time"))
+    audit_status = models.IntegerField(
+        _("Review Status"), choices=WorkflowStatus.choices
+    )
+    remark = models.CharField(_("Review Remark"), default="", max_length=1000)
+    sys_time = models.DateTimeField(_("System Time"), auto_now=True)
 
     def __int__(self):
         return self.audit_detail_id
@@ -479,8 +510,8 @@ class WorkflowAuditDetail(models.Model):
     class Meta:
         managed = True
         db_table = "workflow_audit_detail"
-        verbose_name = "工作流审批明细"
-        verbose_name_plural = "工作流审批明细"
+        verbose_name = _("Workflow Audit Detail")
+        verbose_name_plural = _("Workflow Audit Detail")
 
 
 class WorkflowAuditSetting(models.Model):
@@ -489,10 +520,12 @@ class WorkflowAuditSetting(models.Model):
     """
 
     audit_setting_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField("组ID")
-    group_name = models.CharField("组名称", max_length=100)
-    workflow_type = models.IntegerField("审批类型", choices=WorkflowType.choices)
-    audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
+    group_id = models.IntegerField(_("Group ID"))
+    group_name = models.CharField(_("Group Name"), max_length=100)
+    workflow_type = models.IntegerField(
+        _("Approval Type"), choices=WorkflowType.choices
+    )
+    audit_auth_groups = models.CharField(_("Approval Group List"), max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -503,8 +536,8 @@ class WorkflowAuditSetting(models.Model):
         managed = True
         db_table = "workflow_audit_setting"
         unique_together = ("group_id", "workflow_type")
-        verbose_name = "审批流程配置"
-        verbose_name_plural = "审批流程配置"
+        verbose_name = _("Approval Configuration")
+        verbose_name_plural = _("Approval Configuration")
 
 
 class WorkflowLog(models.Model):
@@ -513,15 +546,17 @@ class WorkflowLog(models.Model):
     """
 
     id = models.AutoField(primary_key=True)
-    audit_id = models.IntegerField("工单审批id", db_index=True)
+    audit_id = models.IntegerField(_("Workflow Audit ID"), db_index=True)
     operation_type = models.SmallIntegerField(
-        "操作类型", choices=WorkflowAction.choices
+        _("Action Type"), choices=WorkflowAction.choices
     )
     # operation_type_desc 字段实际无意义
-    operation_type_desc = models.CharField("操作类型描述", max_length=10)
-    operation_info = models.CharField("操作信息", max_length=1000)
-    operator = models.CharField("操作人", max_length=30)
-    operator_display = models.CharField("操作人中文名", max_length=50, default="")
+    operation_type_desc = models.CharField(_("Action Type Description"), max_length=10)
+    operation_info = models.CharField(_("Action Info"), max_length=1000)
+    operator = models.CharField(_("Operator"), max_length=30)
+    operator_display = models.CharField(
+        _("Operator Display Name"), max_length=50, default=""
+    )
     operation_time = models.DateTimeField(auto_now_add=True)
 
     def __int__(self):
@@ -530,8 +565,8 @@ class WorkflowLog(models.Model):
     class Meta:
         managed = True
         db_table = "workflow_log"
-        verbose_name = "工作流日志"
-        verbose_name_plural = "工作流日志"
+        verbose_name = _("Workflow Log")
+        verbose_name_plural = _("Workflow Log")
 
 
 class QueryPrivilegesApply(models.Model, WorkflowAuditMixin):
@@ -540,27 +575,29 @@ class QueryPrivilegesApply(models.Model, WorkflowAuditMixin):
     """
 
     apply_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField("组ID")
-    group_name = models.CharField("组名称", max_length=100)
-    title = models.CharField("申请标题", max_length=50)
+    group_id = models.IntegerField(_("Group ID"))
+    group_name = models.CharField(_("Group Name"), max_length=100)
+    title = models.CharField(_("Request Title"), max_length=50)
     # TODO user_name display 改为外键
-    user_name = models.CharField("申请人", max_length=30)
-    user_display = models.CharField("申请人中文名", max_length=50, default="")
+    user_name = models.CharField(_("Requester"), max_length=30)
+    user_display = models.CharField(
+        _("Requester Display Name"), max_length=50, default=""
+    )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_list = models.TextField("数据库", default="")  # 逗号分隔的数据库列表
-    table_list = models.TextField("表", default="")  # 逗号分隔的表列表
-    valid_date = models.DateField("有效时间")
-    limit_num = models.IntegerField("行数限制", default=100)
+    db_list = models.TextField(_("Database"), default="")  # 逗号分隔的数据库列表
+    table_list = models.TextField(_("Table"), default="")  # 逗号分隔的表列表
+    valid_date = models.DateField(_("Valid Time"))
+    limit_num = models.IntegerField(_("Row Limit"), default=100)
     priv_type = models.IntegerField(
-        "权限类型",
+        _("Privilege Type"),
         choices=(
             (1, "DATABASE"),
             (2, "TABLE"),
         ),
         default=0,
     )
-    status = models.IntegerField("审核状态", choices=WorkflowStatus.choices)
-    audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
+    status = models.IntegerField(_("Review Status"), choices=WorkflowStatus.choices)
+    audit_auth_groups = models.CharField(_("Approval Group List"), max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -570,8 +607,8 @@ class QueryPrivilegesApply(models.Model, WorkflowAuditMixin):
     class Meta:
         managed = True
         db_table = "query_privileges_apply"
-        verbose_name = "查询权限申请记录表"
-        verbose_name_plural = "查询权限申请记录表"
+        verbose_name = _("Query Privilege Request Records")
+        verbose_name_plural = _("Query Privilege Request Records")
 
 
 class QueryPrivileges(models.Model):
@@ -580,22 +617,24 @@ class QueryPrivileges(models.Model):
     """
 
     privilege_id = models.AutoField(primary_key=True)
-    user_name = models.CharField("用户名", max_length=30)
-    user_display = models.CharField("申请人中文名", max_length=50, default="")
+    user_name = models.CharField(_("Username"), max_length=30)
+    user_display = models.CharField(
+        _("Requester Display Name"), max_length=50, default=""
+    )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = models.CharField("数据库", max_length=64, default="")
-    table_name = models.CharField("表", max_length=64, default="")
-    valid_date = models.DateField("有效时间")
-    limit_num = models.IntegerField("行数限制", default=100)
+    db_name = models.CharField(_("Database"), max_length=64, default="")
+    table_name = models.CharField(_("Table"), max_length=64, default="")
+    valid_date = models.DateField(_("Valid Time"))
+    limit_num = models.IntegerField(_("Row Limit"), default=100)
     priv_type = models.IntegerField(
-        "权限类型",
+        _("Privilege Type"),
         choices=(
             (1, "DATABASE"),
             (2, "TABLE"),
         ),
         default=0,
     )
-    is_deleted = models.IntegerField("是否删除", default=0)
+    is_deleted = models.IntegerField(_("Deleted"), default=0)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -608,8 +647,8 @@ class QueryPrivileges(models.Model):
         indexes = [
             models.Index(fields=["user_name", "instance", "db_name", "table_name"]),
         ]
-        verbose_name = "查询权限记录"
-        verbose_name_plural = "查询权限记录"
+        verbose_name = _("Query Privilege Records")
+        verbose_name_plural = _("Query Privilege Records")
 
 
 class QueryLog(models.Model):
@@ -618,62 +657,64 @@ class QueryLog(models.Model):
     """
 
     # TODO 改为实例外键
-    instance_name = models.CharField("实例名称", max_length=50)
-    db_name = models.CharField("数据库名称", max_length=64)
-    sqllog = models.TextField("执行的查询语句")
-    effect_row = models.BigIntegerField("返回行数")
-    cost_time = models.CharField("执行耗时", max_length=10, default="")
+    instance_name = models.CharField(_("Instance Name"), max_length=50)
+    db_name = models.CharField(_("Database Name"), max_length=64)
+    sqllog = models.TextField(_("Executed Query"))
+    effect_row = models.BigIntegerField(_("Returned Rows"))
+    cost_time = models.CharField(_("Elapsed Time"), max_length=10, default="")
     # TODO 改为user 外键
-    username = models.CharField("操作人", max_length=30)
-    user_display = models.CharField("操作人中文名", max_length=50, default="")
+    username = models.CharField(_("Operator"), max_length=30)
+    user_display = models.CharField(
+        _("Operator Display Name"), max_length=50, default=""
+    )
     priv_check = models.BooleanField(
-        "查询权限是否正常校验",
+        _("Query Privilege Check"),
         choices=(
-            (False, "跳过"),
-            (True, "正常"),
+            (False, _("Skipped")),
+            (True, _("Normal")),
         ),
         default=False,
     )
     hit_rule = models.BooleanField(
-        "查询是否命中脱敏规则",
-        choices=((False, "未命中/未知"), (True, "命中")),
+        _("Masking Rule Hit"),
+        choices=((False, _("Missed/Unknown")), (True, _("Hit"))),
         default=False,
     )
     masking = models.BooleanField(
-        "查询结果是否正常脱敏",
+        _("Query Result Masked"),
         choices=(
-            (False, "否"),
-            (True, "是"),
+            (False, _("No")),
+            (True, _("Yes")),
         ),
         default=False,
     )
     favorite = models.BooleanField(
-        "是否收藏",
+        _("Favorited"),
         choices=(
-            (False, "否"),
-            (True, "是"),
+            (False, _("No")),
+            (True, _("Yes")),
         ),
         default=False,
     )
-    alias = models.CharField("语句标识", max_length=64, default="", blank=True)
-    create_time = models.DateTimeField("操作时间", auto_now_add=True)
+    alias = models.CharField(_("Statement Tag"), max_length=64, default="", blank=True)
+    create_time = models.DateTimeField(_("Action Time"), auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = True
         db_table = "query_log"
-        verbose_name = "查询日志"
-        verbose_name_plural = "查询日志"
+        verbose_name = _("Query Log")
+        verbose_name_plural = _("Query Log")
 
 
 rule_type_choices = (
-    (1, "手机号"),
-    (2, "证件号码"),
-    (3, "银行卡"),
-    (4, "邮箱"),
-    (5, "金额"),
-    (6, "其他"),
-    (100, "三段式通用脱敏规则"),
+    (1, _("Mobile Number")),
+    (2, _("ID Number")),
+    (3, _("Bank Card")),
+    (4, _("Email")),
+    (5, _("Amount")),
+    (6, _("Other")),
+    (100, _("Three-part Generic Masking Rule")),
 )
 
 
@@ -682,21 +723,23 @@ class DataMaskingColumns(models.Model):
     脱敏字段配置
     """
 
-    column_id = models.AutoField("字段id", primary_key=True)
+    column_id = models.AutoField(_("Field ID"), primary_key=True)
     rule_type = models.IntegerField(
-        "规则类型",
+        _("Rule Type"),
         choices=rule_type_choices,
-        help_text="三段式通用脱敏规则：根据字段长度自动分成三份，中间段脱敏。",
+        help_text=_(
+            "Three-part generic masking rule: automatically splits a field into three parts by length and masks the middle part."
+        ),
     )
     active = models.BooleanField(
-        "激活状态", choices=((False, "未激活"), (True, "激活"))
+        _("Active Status"), choices=((False, _("Inactive")), (True, _("Active")))
     )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    table_schema = models.CharField("字段所在库名", max_length=64)
-    table_name = models.CharField("字段所在表名", max_length=64)
-    column_name = models.CharField("字段名", max_length=64)
+    table_schema = models.CharField(_("Database Name"), max_length=64)
+    table_name = models.CharField(_("Table Name"), max_length=64)
+    column_name = models.CharField(_("Column Name"), max_length=64)
     column_comment = models.CharField(
-        "字段描述", max_length=1024, default="", blank=True
+        _("Column Description"), max_length=1024, default="", blank=True
     )
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -704,8 +747,8 @@ class DataMaskingColumns(models.Model):
     class Meta:
         managed = True
         db_table = "data_masking_columns"
-        verbose_name = "脱敏字段配置"
-        verbose_name_plural = "脱敏字段配置"
+        verbose_name = _("Data Masking Field Configuration")
+        verbose_name_plural = _("Data Masking Field Configuration")
 
 
 class DataMaskingRules(models.Model):
@@ -713,20 +756,26 @@ class DataMaskingRules(models.Model):
     脱敏规则配置
     """
 
-    rule_type = models.IntegerField("规则类型", choices=rule_type_choices, unique=True)
+    rule_type = models.IntegerField(
+        _("Rule Type"), choices=rule_type_choices, unique=True
+    )
     rule_regex = models.CharField(
-        "规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替",
+        _(
+            "Regular expression used by the masking rule. The expression must include capture groups; hidden groups will be replaced with ****."
+        ),
         max_length=255,
     )
-    hide_group = models.IntegerField("需要隐藏的组")
-    rule_desc = models.CharField("规则描述", max_length=100, default="", blank=True)
+    hide_group = models.IntegerField(_("Groups to Mask"))
+    rule_desc = models.CharField(
+        _("Rule Description"), max_length=100, default="", blank=True
+    )
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = True
         db_table = "data_masking_rules"
-        verbose_name = "脱敏规则配置"
-        verbose_name_plural = "脱敏规则配置"
+        verbose_name = _("Masking Rule Configuration")
+        verbose_name_plural = _("Masking Rule Configuration")
 
 
 class InstanceAccount(models.Model):
@@ -735,25 +784,25 @@ class InstanceAccount(models.Model):
     """
 
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    user = fields.EncryptedCharField(verbose_name="账号", max_length=128)
+    user = fields.EncryptedCharField(verbose_name=_("Account"), max_length=128)
     host = models.CharField(
-        verbose_name="主机", max_length=64
+        verbose_name=_("Host"), max_length=64
     )  # mysql数据库存储主机信息
     db_name = models.CharField(
-        verbose_name="数据库名称", max_length=128
+        verbose_name=_("Database Name"), max_length=128
     )  # mongo数据库存储数据库名称
     password = fields.EncryptedCharField(
-        verbose_name="密码", max_length=128, default="", blank=True
+        verbose_name=_("Password"), max_length=128, default="", blank=True
     )
-    remark = models.CharField("备注", max_length=255)
-    sys_time = models.DateTimeField("系统修改时间", auto_now=True)
+    remark = models.CharField(_("Remark"), max_length=255)
+    sys_time = models.DateTimeField(_("System Updated At"), auto_now=True)
 
     class Meta:
         managed = True
         db_table = "instance_account"
         unique_together = ("instance", "user", "host", "db_name")
-        verbose_name = "实例账号列表"
-        verbose_name_plural = "实例账号列表"
+        verbose_name = _("Instance Account List")
+        verbose_name_plural = _("Instance Account List")
 
 
 class InstanceDatabase(models.Model):
@@ -762,20 +811,20 @@ class InstanceDatabase(models.Model):
     """
 
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = models.CharField("数据库名", max_length=128)
-    owner = models.CharField("负责人", max_length=50, default="", blank=True)
+    db_name = models.CharField(_("Database Name"), max_length=128)
+    owner = models.CharField(_("Owner"), max_length=50, default="", blank=True)
     owner_display = models.CharField(
-        "负责人中文名", max_length=50, default="", blank=True
+        _("Owner Display Name"), max_length=50, default="", blank=True
     )
-    remark = models.CharField("备注", max_length=255, default="", blank=True)
-    sys_time = models.DateTimeField("系统修改时间", auto_now=True)
+    remark = models.CharField(_("Remark"), max_length=255, default="", blank=True)
+    sys_time = models.DateTimeField(_("System Updated At"), auto_now=True)
 
     class Meta:
         managed = True
         db_table = "instance_database"
         unique_together = ("instance", "db_name")
-        verbose_name = "实例数据库"
-        verbose_name_plural = "实例数据库列表"
+        verbose_name = _("Instance Database")
+        verbose_name_plural = _("Instance Database List")
 
 
 class ParamTemplate(models.Model):
@@ -783,23 +832,27 @@ class ParamTemplate(models.Model):
     实例参数模板配置
     """
 
-    db_type = models.CharField("数据库类型", max_length=20, choices=DB_TYPE_CHOICES)
-    variable_name = models.CharField("参数名", max_length=64)
-    default_value = models.CharField("默认参数值", max_length=1024)
-    editable = models.BooleanField("是否支持修改", default=False)
-    valid_values = models.CharField(
-        "有效参数值，范围参数[1-65535]，值参数[ON|OFF]", max_length=1024, blank=True
+    db_type = models.CharField(
+        _("Database Type"), max_length=20, choices=DB_TYPE_CHOICES
     )
-    description = models.CharField("参数描述", max_length=1024, blank=True)
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    sys_time = models.DateTimeField("系统时间修改", auto_now=True)
+    variable_name = models.CharField(_("Variable Name"), max_length=64)
+    default_value = models.CharField(_("Default Value"), max_length=1024)
+    editable = models.BooleanField(_("Editable"), default=False)
+    valid_values = models.CharField(
+        _("Valid value, range parameter [1-65535], value parameter [ON|OFF]"),
+        max_length=1024,
+        blank=True,
+    )
+    description = models.CharField(_("Description"), max_length=1024, blank=True)
+    create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
+    sys_time = models.DateTimeField(_("System Updated At"), auto_now=True)
 
     class Meta:
         managed = True
         db_table = "param_template"
         unique_together = ("db_type", "variable_name")
-        verbose_name = "实例参数模板配置"
-        verbose_name_plural = "实例参数模板配置"
+        verbose_name = _("Instance Parameter Template")
+        verbose_name_plural = _("Instance Parameter Template")
 
 
 class ParamHistory(models.Model):
@@ -808,20 +861,22 @@ class ParamHistory(models.Model):
     """
 
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    variable_name = models.CharField("参数名", max_length=64)
-    old_var = models.CharField("修改前参数值", max_length=1024)
-    new_var = models.CharField("修改后参数值", max_length=1024)
-    set_sql = models.CharField("在线变更配置执行的SQL语句", max_length=1024)
-    user_name = models.CharField("修改人", max_length=30)
-    user_display = models.CharField("修改人中文名", max_length=50)
-    create_time = models.DateTimeField("参数被修改时间点", auto_now_add=True)
+    variable_name = models.CharField(_("Variable Name"), max_length=64)
+    old_var = models.CharField(_("Old Value"), max_length=1024)
+    new_var = models.CharField(_("New Value"), max_length=1024)
+    set_sql = models.CharField(
+        _("SQL Statement Executed for Online Change"), max_length=1024
+    )
+    user_name = models.CharField(_("Modifier"), max_length=30)
+    user_display = models.CharField(_("Modifier Display Name"), max_length=50)
+    create_time = models.DateTimeField(_("Modified At"), auto_now_add=True)
 
     class Meta:
         managed = True
         ordering = ["-create_time"]
         db_table = "param_history"
-        verbose_name = "实例参数修改历史"
-        verbose_name_plural = "实例参数修改历史"
+        verbose_name = _("Instance Parameter History")
+        verbose_name_plural = _("Instance Parameter History")
 
 
 class ArchiveConfig(models.Model, WorkflowAuditMixin):
@@ -829,14 +884,16 @@ class ArchiveConfig(models.Model, WorkflowAuditMixin):
     归档配置表
     """
 
-    title = models.CharField("归档配置说明", max_length=50)
+    title = models.CharField(_("Archive Configuration Name"), max_length=50)
     resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
-    audit_auth_groups = models.CharField("审批权限组列表", max_length=255, blank=True)
+    audit_auth_groups = models.CharField(
+        _("Approval Group List"), max_length=255, blank=True
+    )
     src_instance = models.ForeignKey(
         Instance, related_name="src_instance", on_delete=models.CASCADE
     )
-    src_db_name = models.CharField("源数据库", max_length=64)
-    src_table_name = models.CharField("源表", max_length=64)
+    src_db_name = models.CharField(_("Source Database"), max_length=64)
+    src_table_name = models.CharField(_("Source Table"), max_length=64)
     dest_instance = models.ForeignKey(
         Instance,
         related_name="dest_instance",
@@ -844,33 +901,43 @@ class ArchiveConfig(models.Model, WorkflowAuditMixin):
         blank=True,
         null=True,
     )
-    dest_db_name = models.CharField("目标数据库", max_length=64, blank=True, null=True)
-    dest_table_name = models.CharField("目标表", max_length=64, blank=True, null=True)
-    condition = models.CharField("归档条件，where条件", max_length=1000)
+    dest_db_name = models.CharField(
+        _("Target Database"), max_length=64, blank=True, null=True
+    )
+    dest_table_name = models.CharField(
+        _("Target Table"), max_length=64, blank=True, null=True
+    )
+    condition = models.CharField(_("Archive Condition (WHERE clause)"), max_length=1000)
     mode = models.CharField(
-        "归档模式",
+        _("Archive Mode"),
         max_length=10,
-        choices=(("file", "文件"), ("dest", "其他实例"), ("purge", "直接删除")),
+        choices=(
+            ("file", _("File")),
+            ("dest", _("Another Instance")),
+            ("purge", _("Delete Directly")),
+        ),
     )
-    no_delete = models.BooleanField("是否保留源数据")
-    sleep = models.IntegerField("归档limit行后的休眠秒数", default=1)
+    no_delete = models.BooleanField(_("Keep Source Data"))
+    sleep = models.IntegerField(_("Sleep Seconds After Each Archive Batch"), default=1)
     status = models.IntegerField(
-        "审核状态", choices=WorkflowStatus.choices, blank=True, default=1
+        _("Review Status"), choices=WorkflowStatus.choices, blank=True, default=1
     )
-    state = models.BooleanField("是否启用归档", default=True)
-    user_name = models.CharField("申请人", max_length=30, blank=True, default="")
+    state = models.BooleanField(_("Enabled"), default=True)
+    user_name = models.CharField(_("Requester"), max_length=30, blank=True, default="")
     user_display = models.CharField(
-        "申请人中文名", max_length=50, blank=True, default=""
+        _("Requester Display Name"), max_length=50, blank=True, default=""
     )
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    last_archive_time = models.DateTimeField("最近归档时间", blank=True, null=True)
-    sys_time = models.DateTimeField("系统时间修改", auto_now=True)
+    create_time = models.DateTimeField(_("Created At"), auto_now_add=True)
+    last_archive_time = models.DateTimeField(
+        _("Last Archive Time"), blank=True, null=True
+    )
+    sys_time = models.DateTimeField(_("System Updated At"), auto_now=True)
 
     class Meta:
         managed = True
         db_table = "archive_config"
-        verbose_name = "归档配置表"
-        verbose_name_plural = "归档配置表"
+        verbose_name = _("Archive Configuration")
+        verbose_name_plural = _("Archive Configuration")
 
 
 class ArchiveLog(models.Model):
@@ -879,30 +946,34 @@ class ArchiveLog(models.Model):
     """
 
     archive = models.ForeignKey(ArchiveConfig, on_delete=models.CASCADE)
-    cmd = models.CharField("归档命令", max_length=2000)
-    condition = models.CharField("归档条件，where条件", max_length=1000)
+    cmd = models.CharField(_("Archive Command"), max_length=2000)
+    condition = models.CharField(_("Archive Condition (WHERE clause)"), max_length=1000)
     mode = models.CharField(
-        "归档模式",
+        _("Archive Mode"),
         max_length=10,
-        choices=(("file", "文件"), ("dest", "其他实例"), ("purge", "直接删除")),
+        choices=(
+            ("file", _("File")),
+            ("dest", _("Another Instance")),
+            ("purge", _("Delete Directly")),
+        ),
     )
-    no_delete = models.BooleanField("是否保留源数据")
-    sleep = models.IntegerField("归档limit行记录后的休眠秒数", default=0)
-    select_cnt = models.IntegerField("查询数量")
-    insert_cnt = models.IntegerField("插入数量")
-    delete_cnt = models.IntegerField("删除数量")
-    statistics = models.TextField("归档统计日志")
-    success = models.BooleanField("是否归档成功")
-    error_info = models.TextField("错误信息")
-    start_time = models.DateTimeField("开始时间")
-    end_time = models.DateTimeField("结束时间")
-    sys_time = models.DateTimeField("系统时间修改", auto_now=True)
+    no_delete = models.BooleanField(_("Keep Source Data"))
+    sleep = models.IntegerField(_("Sleep Seconds After Each Archive Batch"), default=0)
+    select_cnt = models.IntegerField(_("Selected Rows"))
+    insert_cnt = models.IntegerField(_("Inserted Rows"))
+    delete_cnt = models.IntegerField(_("Deleted Rows"))
+    statistics = models.TextField(_("Archive Statistics Log"))
+    success = models.BooleanField(_("Archived Successfully"))
+    error_info = models.TextField(_("Error Message"))
+    start_time = models.DateTimeField(_("Start Time"))
+    end_time = models.DateTimeField(_("Finished At"))
+    sys_time = models.DateTimeField(_("System Updated At"), auto_now=True)
 
     class Meta:
         managed = True
         db_table = "archive_log"
-        verbose_name = "归档日志表"
-        verbose_name_plural = "归档日志表"
+        verbose_name = _("Archive Log")
+        verbose_name_plural = _("Archive Log")
 
 
 class Config(models.Model):
@@ -910,15 +981,17 @@ class Config(models.Model):
     配置信息表
     """
 
-    item = models.CharField("配置项", max_length=100, unique=True)
-    value = fields.EncryptedCharField(verbose_name="配置项值", max_length=500)
-    description = models.CharField("描述", max_length=200, default="", blank=True)
+    item = models.CharField(_("Config Item"), max_length=100, unique=True)
+    value = fields.EncryptedCharField(verbose_name=_("Config Value"), max_length=500)
+    description = models.CharField(
+        _("Description"), max_length=200, default="", blank=True
+    )
 
     class Meta:
         managed = True
         db_table = "sql_config"
-        verbose_name = "系统配置"
-        verbose_name_plural = "系统配置"
+        verbose_name = _("System Configuration")
+        verbose_name_plural = _("System Configuration")
 
 
 # 云服务认证信息配置
@@ -955,8 +1028,8 @@ class CloudAccessKey(models.Model):
     class Meta:
         managed = True
         db_table = "cloud_access_key"
-        verbose_name = "云服务认证信息配置"
-        verbose_name_plural = "云服务认证信息配置"
+        verbose_name = _("Cloud Access Credentials")
+        verbose_name_plural = _("Cloud Access Credentials")
 
 
 class AliyunRdsConfig(models.Model):
@@ -965,11 +1038,15 @@ class AliyunRdsConfig(models.Model):
     """
 
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
-    rds_dbinstanceid = models.CharField("对应阿里云RDS实例ID", max_length=100)
-    ak = models.ForeignKey(
-        CloudAccessKey, verbose_name="RDS实例对应的AK配置", on_delete=models.CASCADE
+    rds_dbinstanceid = models.CharField(
+        _("Alibaba Cloud RDS Instance ID"), max_length=100
     )
-    is_enable = models.BooleanField("是否启用", default=False)
+    ak = models.ForeignKey(
+        CloudAccessKey,
+        verbose_name=_("AK Configuration for the RDS Instance"),
+        on_delete=models.CASCADE,
+    )
+    is_enable = models.BooleanField(_("Enabled"), default=False)
 
     def __int__(self):
         return self.rds_dbinstanceid
@@ -977,8 +1054,8 @@ class AliyunRdsConfig(models.Model):
     class Meta:
         managed = True
         db_table = "aliyun_rds_config"
-        verbose_name = "阿里云rds配置"
-        verbose_name_plural = "阿里云rds配置"
+        verbose_name = _("Alibaba Cloud RDS Configuration")
+        verbose_name_plural = _("Alibaba Cloud RDS Configuration")
 
 
 class Permission(models.Model):
@@ -989,62 +1066,68 @@ class Permission(models.Model):
     class Meta:
         managed = True
         permissions = (
-            ("menu_dashboard", "菜单 Dashboard"),
-            ("menu_sqlcheck", "菜单 SQL审核"),
-            ("menu_sqlworkflow", "菜单 SQL上线"),
-            ("menu_sqlanalyze", "菜单 SQL分析"),
-            ("menu_query", "菜单 SQL查询"),
-            ("menu_sqlquery", "菜单 在线查询"),
-            ("menu_queryapplylist", "菜单 权限管理"),
-            ("menu_sqloptimize", "菜单 SQL优化"),
-            ("menu_sqladvisor", "菜单 优化工具"),
-            ("menu_slowquery", "菜单 慢查日志"),
-            ("menu_instance", "菜单 实例管理"),
-            ("menu_instance_list", "菜单 实例列表"),
-            ("menu_dbdiagnostic", "菜单 会话管理"),
-            ("menu_database", "菜单 数据库管理"),
-            ("menu_instance_account", "菜单 实例账号管理"),
-            ("menu_param", "菜单 参数配置"),
-            ("menu_param_compare", "菜单 参数对比"),
-            ("menu_data_dictionary", "菜单 数据字典"),
-            ("menu_tools", "菜单 工具插件"),
-            ("menu_archive", "菜单 数据归档"),
-            ("menu_my2sql", "菜单 My2SQL"),
-            ("menu_schemasync", "菜单 SchemaSync"),
-            ("menu_system", "菜单 系统管理"),
-            ("menu_document", "菜单 相关文档"),
-            ("menu_openapi", "菜单 OpenAPI"),
-            ("sql_submit", "提交SQL上线工单"),
-            ("sql_review", "审核SQL上线工单"),
-            ("sql_execute_for_resource_group", "执行SQL上线工单(资源组粒度)"),
-            ("sql_execute", "执行SQL上线工单(仅自己提交的)"),
-            ("sql_analyze", "执行SQL分析"),
-            ("optimize_sqladvisor", "执行SQLAdvisor"),
-            ("optimize_sqltuning", "执行SQLTuning"),
-            ("optimize_soar", "执行SOAR"),
-            ("query_applypriv", "申请查询权限"),
-            ("query_mgtpriv", "管理查询权限"),
-            ("query_review", "审核查询权限"),
-            ("query_submit", "提交SQL查询"),
-            ("query_all_instances", "可查询所有实例"),
-            ("query_resource_group_instance", "可查询所在资源组内的所有实例"),
-            ("process_view", "查看会话"),
-            ("process_kill", "终止会话"),
-            ("tablespace_view", "查看表空间"),
-            ("trx_view", "查看事务信息"),
-            ("trxandlocks_view", "查看锁信息"),
-            ("instance_account_manage", "管理实例账号"),
-            ("param_view", "查看实例参数列表"),
-            ("param_edit", "修改实例参数"),
-            ("data_dictionary_export", "导出数据字典"),
-            ("archive_apply", "提交归档申请"),
-            ("archive_review", "审核归档申请"),
-            ("archive_mgt", "管理归档申请"),
-            ("audit_user", "审计权限"),
-            ("query_download", "在线查询下载权限"),
-            ("offline_download", "离线下载权限"),
-            ("menu_sqlexportworkflow", "菜单 数据导出"),
-            ("sqlexport_submit", "提交数据导出"),
+            ("menu_dashboard", _("Dashboard Menu")),
+            ("menu_sqlcheck", _("SQL Review Menu")),
+            ("menu_sqlworkflow", _("SQL Deployment Menu")),
+            ("menu_sqlanalyze", _("SQL Analysis Menu")),
+            ("menu_query", _("SQL Query Menu")),
+            ("menu_sqlquery", _("Online Query Menu")),
+            ("menu_queryapplylist", _("Privilege Management Menu")),
+            ("menu_sqloptimize", _("SQL Optimization Menu")),
+            ("menu_sqladvisor", _("Optimization Tools Menu")),
+            ("menu_slowquery", _("Slow Query Log Menu")),
+            ("menu_instance", _("Instance Management Menu")),
+            ("menu_instance_list", _("Instance List Menu")),
+            ("menu_dbdiagnostic", _("Session Management Menu")),
+            ("menu_database", _("Database Management Menu")),
+            ("menu_instance_account", _("Instance Account Management Menu")),
+            ("menu_param", _("Parameter Configuration Menu")),
+            ("menu_param_compare", _("Parameter Comparison Menu")),
+            ("menu_data_dictionary", _("Data Dictionary Menu")),
+            ("menu_tools", _("Tools & Plugins Menu")),
+            ("menu_archive", _("Data Archive Menu")),
+            ("menu_my2sql", _("My2SQL Menu")),
+            ("menu_schemasync", _("SchemaSync Menu")),
+            ("menu_system", _("System Management Menu")),
+            ("menu_document", _("Documentation Menu")),
+            ("menu_openapi", _("OpenAPI Menu")),
+            ("sql_submit", _("Submit SQL Deployment Request")),
+            ("sql_review", _("Review SQL Deployment Request")),
+            (
+                "sql_execute_for_resource_group",
+                _("Execute SQL Deployment Request (Resource Group Scope)"),
+            ),
+            ("sql_execute", _("Execute SQL Deployment Request (Own Requests Only)")),
+            ("sql_analyze", _("Run SQL Analysis")),
+            ("optimize_sqladvisor", _("Run SQLAdvisor")),
+            ("optimize_sqltuning", _("Run SQLTuning")),
+            ("optimize_soar", _("Run SOAR")),
+            ("query_applypriv", _("Submit Query Privilege Request")),
+            ("query_mgtpriv", _("Manage Query Privileges")),
+            ("query_review", _("Review Query Privilege Request")),
+            ("query_submit", _("Submit SQL Query")),
+            ("query_all_instances", _("Can Query All Instances")),
+            (
+                "query_resource_group_instance",
+                _("Can Query All Instances in the Resource Group"),
+            ),
+            ("process_view", _("View Sessions")),
+            ("process_kill", _("Kill Sessions")),
+            ("tablespace_view", _("View Tablespace")),
+            ("trx_view", _("View Transactions")),
+            ("trxandlocks_view", _("View Locks")),
+            ("instance_account_manage", _("Manage Instance Accounts")),
+            ("param_view", _("View Instance Parameters")),
+            ("param_edit", _("Modify Instance Parameters")),
+            ("data_dictionary_export", _("Export Data Dictionary")),
+            ("archive_apply", _("Submit Archive Request")),
+            ("archive_review", _("Review Archive Request")),
+            ("archive_mgt", _("Manage Archive Requests")),
+            ("audit_user", _("Audit Permission")),
+            ("query_download", _("Online Query Download Permission")),
+            ("offline_download", _("Offline Download Permission")),
+            ("menu_sqlexportworkflow", _("Data Export Menu")),
+            ("sqlexport_submit", _("Submit Data Export")),
         )
 
 
@@ -1065,8 +1148,8 @@ class SlowQuery(models.Model):
     class Meta:
         managed = False
         db_table = "mysql_slow_query_review"
-        verbose_name = "慢日志统计"
-        verbose_name_plural = "慢日志统计"
+        verbose_name = _("Slow Query Statistics")
+        verbose_name_plural = _("Slow Query Statistics")
 
 
 class SlowQueryHistory(models.Model):
@@ -1318,8 +1401,8 @@ class SlowQueryHistory(models.Model):
         indexes = [
             models.Index(fields=["hostname_max", "ts_min"]),
         ]
-        verbose_name = "慢日志明细"
-        verbose_name_plural = "慢日志明细"
+        verbose_name = _("Slow Query Details")
+        verbose_name_plural = _("Slow Query Details")
 
 
 class RedisSlowQuery(models.Model):
@@ -1336,8 +1419,8 @@ class RedisSlowQuery(models.Model):
     class Meta:
         managed = False
         db_table = "redis_slow_query_review"
-        verbose_name = "Redis慢日志统计"
-        verbose_name_plural = "Redis慢日志统计"
+        verbose_name = _("Redis Slow Query Statistics")
+        verbose_name_plural = _("Redis Slow Query Statistics")
 
 
 class RedisSlowQueryHistory(models.Model):
@@ -1374,8 +1457,8 @@ class RedisSlowQueryHistory(models.Model):
         indexes = [
             models.Index(fields=["hostname", "ts_min"]),
         ]
-        verbose_name = "Redis慢日志明细"
-        verbose_name_plural = "Redis慢日志明细"
+        verbose_name = _("Redis Slow Query Details")
+        verbose_name_plural = _("Redis Slow Query Details")
 
 
 class AuditEntry(models.Model):
@@ -1383,18 +1466,18 @@ class AuditEntry(models.Model):
     登录审计日志
     """
 
-    user_id = models.IntegerField("用户ID")
-    user_name = models.CharField("用户名称", max_length=30, null=True)
-    user_display = models.CharField("用户中文名", max_length=50, null=True)
-    action = models.CharField("动作", max_length=255)
-    extra_info = models.TextField("额外的信息", null=True)
-    action_time = models.DateTimeField("操作时间", auto_now_add=True)
+    user_id = models.IntegerField(_("User ID"))
+    user_name = models.CharField(_("User Name"), max_length=30, null=True)
+    user_display = models.CharField(_("User Display Name"), max_length=50, null=True)
+    action = models.CharField(_("Action"), max_length=255)
+    extra_info = models.TextField(_("Extra Info"), null=True)
+    action_time = models.DateTimeField(_("Action Time"), auto_now_add=True)
 
     class Meta:
         managed = True
         db_table = "audit_log"
-        verbose_name = "审计日志"
-        verbose_name_plural = "审计日志"
+        verbose_name = _("Audit Log")
+        verbose_name_plural = _("Audit Log")
 
     def __unicode__(self):
         return "{0} - {1} - {2} - {3} - {4}".format(

@@ -1,0 +1,3992 @@
+# Archery Chinese Simplified translations
+# Copyright (C) 2024
+# This file is distributed under the same license as the Archery package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Archery 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-20 16:51+0800\n"
+"PO-Revision-Date: 2024-01-07 12:00+0000\n"
+"Last-Translator: Diego <diego@archery.local>\n"
+"Language-Team: Chinese Simplified\n"
+"Language: zh-hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# Base template / Navigation
+#: common/templates/base.html:10
+msgid "Archery-SQL Review Platform"
+msgstr "Archery-SQL审核平台"
+
+#: common/templates/base.html:811
+msgid "Hello"
+msgstr "你好"
+
+#: common/templates/base.html:834
+msgid "System Info"
+msgstr "系统信息"
+
+#: common/templates/base.html:837
+msgid "Admin Panel"
+msgstr "管理后台"
+
+#: common/templates/base.html:840 common/templates/base.html:1059
+msgid "Two-Factor Auth"
+msgstr "两步验证"
+
+#: common/templates/base.html:841
+msgid "Change Password"
+msgstr "修改密码"
+
+#: common/templates/base.html:842
+msgid "Logout"
+msgstr "退出"
+
+# Menu items
+#: common/templates/base.html:860
+msgid "Dashboard"
+msgstr "仪表盘"
+
+#: common/templates/base.html:865
+msgid "SQL Review"
+msgstr "SQL审核"
+
+#: common/templates/base.html:869 common/templates/config.html:161
+msgid "SQL Deployment"
+msgstr "SQL上线"
+
+#: common/templates/base.html:874
+msgid "SQL Analysis"
+msgstr "SQL分析"
+
+#: common/templates/base.html:883
+msgid "SQL Query"
+msgstr "SQL查询"
+
+#: common/templates/base.html:887
+msgid "Online Query"
+msgstr "在线查询"
+
+#: common/templates/base.html:892
+msgid "Data Export"
+msgstr "数据导出"
+
+#: common/templates/base.html:897
+msgid "Data Dictionary"
+msgstr "数据字典"
+
+#: common/templates/base.html:902
+msgid "Permission Management"
+msgstr "权限管理"
+
+#: common/templates/base.html:912
+msgid "SQL Optimization"
+msgstr "SQL优化"
+
+#: common/templates/base.html:916
+msgid "Optimization Tools"
+msgstr "优化工具"
+
+#: common/templates/base.html:921
+msgid "Slow Query Log"
+msgstr "慢查日志"
+
+#: common/templates/base.html:930
+msgid "Instance Management"
+msgstr "实例管理"
+
+#: common/templates/base.html:934
+msgid "Instance List"
+msgstr "实例列表"
+
+#: common/templates/base.html:939
+msgid "Session Management"
+msgstr "会话管理"
+
+#: common/templates/base.html:944
+msgid "Database Management"
+msgstr "数据库管理"
+
+#: common/templates/base.html:950
+msgid "Account Management"
+msgstr "账号管理"
+
+#: common/templates/base.html:955
+msgid "Parameter Configuration"
+msgstr "参数配置"
+
+#: common/templates/base.html:960
+msgid "Parameter Comparison"
+msgstr "参数对比"
+
+#: common/templates/base.html:969
+msgid "Tools & Plugins"
+msgstr "工具插件"
+
+#: common/templates/base.html:992
+msgid "System Management"
+msgstr "系统管理"
+
+#: common/templates/base.html:995 common/templates/config.html:62
+msgid "Configuration"
+msgstr "配置项管理"
+
+#: common/templates/base.html:998
+msgid "Resource Groups"
+msgstr "资源组管理"
+
+#: common/templates/base.html:1001
+msgid "Other Settings"
+msgstr "其他配置管理"
+
+#: common/templates/base.html:1004
+msgid "User Management"
+msgstr "用户管理"
+
+#: common/templates/base.html:1007
+msgid "Permission Groups"
+msgstr "权限组管理"
+
+#: common/templates/base.html:1010
+msgid "All Backend Data"
+msgstr "全部后台数据"
+
+#: common/templates/base.html:1021
+msgid "System Audit"
+msgstr "系统审计"
+
+#: common/templates/base.html:1024
+msgid "General Audit"
+msgstr "通用审计"
+
+#: common/templates/base.html:1027
+msgid "SQL Deployment Audit"
+msgstr "SQL上线审计"
+
+#: common/templates/base.html:1030
+msgid "Query Audit"
+msgstr "查询审计"
+
+#: common/templates/base.html:1037
+msgid "Documentation"
+msgstr "相关文档"
+
+#: common/templates/base.html:1074
+msgid "SMS"
+msgstr "短信"
+
+#: common/templates/base.html:1092 common/templates/login.html:88
+msgid "Close"
+msgstr "关闭"
+
+#: common/templates/base.html:1105
+msgid "Verify Current Password"
+msgstr "验证当前用户密码"
+
+#: common/templates/base.html:1109
+msgid "Enter password to verify"
+msgstr "输入密码验证"
+
+#: common/templates/base.html:1110 common/templates/login.html:112
+msgid "Confirm Password"
+msgstr "密码确认"
+
+#: common/templates/base.html:1114 common/templates/dashboard.html:221
+#: common/templates/login.html:119
+msgid "Cancel"
+msgstr "取消"
+
+#: common/templates/base.html:1115
+msgid "Confirm"
+msgstr "确认"
+
+#: common/templates/base.html:1128 common/templates/base.html:1324
+msgid "Scan to Bind"
+msgstr "扫码绑定"
+
+#: common/templates/base.html:1133
+msgid "Use Google Authenticator to scan"
+msgstr "使用Google身份验证器扫码"
+
+#: common/templates/base.html:1137
+msgid "Enter phone number to bind"
+msgstr "输入要绑定的手机号码"
+
+#: common/templates/base.html:1141
+msgid "Enter 6-digit verification code"
+msgstr "输入6位验证码完成绑定"
+
+#: common/templates/base.html:1147
+msgid "Get Verification Code"
+msgstr "获取验证码"
+
+#: common/templates/base.html:1148
+msgid "Bind"
+msgstr "绑定"
+
+# Two-factor authentication
+#: common/templates/base.html:1250
+#, fuzzy
+#| msgid "Two-Factor Verification"
+msgid "Two-factor authentication enabled"
+msgstr "两步验证"
+
+#: common/templates/base.html:1278
+#, fuzzy
+#| msgid "Connection successful"
+msgid "Verification successful"
+msgstr "连接成功"
+
+#: common/templates/base.html:1329
+msgid "Bind Phone Number"
+msgstr "绑定手机号"
+
+#: common/templates/base.html:1340
+#, fuzzy
+#| msgid "Enter 6-digit verification code"
+msgid "Enter verification code"
+msgstr "输入6位验证码完成绑定"
+
+#: common/templates/base.html:1361
+#| msgid "Please enter your display name"
+msgid "Please enter your password"
+msgstr "请输入密码"
+
+#: common/templates/base.html:1371
+#| msgid "Configuration"
+msgid "Configuration saved"
+msgstr "配置已保存"
+
+#: common/templates/base.html:1399
+#| msgid "Please enter your display name"
+msgid "Please enter your phone number"
+msgstr "请输入手机号码"
+
+#: common/templates/base.html:1407
+msgid "Verification code sent and valid for 5 minutes"
+msgstr ""
+
+#: common/templates/base.html:1414
+msgid "Enabled"
+msgstr "启用"
+
+#: common/templates/base.html:1415
+msgid "Disabled"
+msgstr "禁用"
+
+#: common/templates/config.html:9
+msgid "Select Action"
+msgstr "选择操作"
+
+#: common/templates/config.html:13
+msgid "Configuration Item"
+msgstr "配置项"
+
+#: common/templates/config.html:18
+msgid "Please select a configuration item:"
+msgstr "请选择配置项:"
+
+#: common/templates/config.html:19
+msgid "System Settings"
+msgstr "系统设置"
+
+#: common/templates/config.html:20
+msgid "Workflow Approval Configuration"
+msgstr "工单审核流配置"
+
+#: common/templates/config.html:25
+msgid "Workflow Type"
+msgstr "工单类型"
+
+msgid "Workflow Name"
+msgstr "工单名称"
+
+msgid "Full Workflow Name"
+msgstr "完整工单名称"
+
+msgid "Type"
+msgstr "类型"
+
+msgid "Initiator"
+msgstr "发起人"
+
+msgid "Workflow Status"
+msgstr "工单状态"
+
+msgid "Backup"
+msgstr "备份"
+
+msgid "Start Time"
+msgstr "开始时间"
+
+msgid "Target Instance"
+msgstr "目标实例"
+
+msgid "Database"
+msgstr "数据库"
+
+msgid "Actions"
+msgstr "操作"
+
+#: common/templates/config.html:41
+msgid "Group"
+msgstr "组"
+
+#: common/templates/config.html:63
+msgid ""
+"Note 1: backup database information is only used to fetch rollback "
+"statements. Keep it aligned with the audit tool configuration. Changes here "
+"do not modify the audit tool configuration."
+msgstr ""
+"注1：备份库的信息仅用于平台获取回滚语句，需要和审核工具自身的配置保持一致，此"
+"处配置变更不会修改审核工具自身的配置"
+
+#: common/templates/config.html:75
+msgid "goInception address"
+msgstr "goInception地址"
+
+#: common/templates/config.html:77
+msgid "Test Connection"
+msgstr "测试连接"
+
+#: common/templates/config.html:87
+msgid "goInception port"
+msgstr "goInception端口"
+
+#: common/templates/config.html:98
+msgid "goInception user (optional when authentication is disabled)"
+msgstr "goInception用户（未启用认证可不填）"
+
+#: common/templates/config.html:109
+msgid "goInception password (optional when authentication is disabled)"
+msgstr "goInception密码（未启用认证可不填）"
+
+#: common/templates/config.html:121
+msgid "Backup database address"
+msgstr "备份库地址"
+
+#: common/templates/config.html:132
+msgid "Backup database port"
+msgstr "备份库端口"
+
+#: common/templates/config.html:143
+msgid "Backup database user"
+msgstr "备份库用户"
+
+#: common/templates/config.html:154
+msgid "Backup database password"
+msgstr "备份库用户密码"
+
+#: common/templates/config.html:159
+msgid "Feature Configuration"
+msgstr "功能模块配置"
+
+#: common/templates/config.html:172
+msgid "Statements matching this regex will be blocked from submission"
+msgstr "正则条件，匹配的语句会禁止提交"
+
+#: common/templates/config.html:183
+msgid ""
+"Auto-reject level: 1 rejects warnings, 2 or blank rejects errors only, and "
+"other values disable auto-reject"
+msgstr "自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回"
+
+#: common/templates/config.html:196
+msgid "Enable backup option (disabled by default, backup required)"
+msgstr "是否开启备份选项(默认关闭, 强制要求备份)"
+
+#: common/templates/config.html:211
+msgid "Enable automatic SQL deployment approval"
+msgstr "是否开启SQL上线自动审批"
+
+# Dashboard page
+#: common/templates/dashboard.html:17 common/templates/dashboard.html:157
+msgid "SQL Deployment Orders"
+msgstr "SQL上线工单"
+
+#: common/templates/dashboard.html:23 common/templates/dashboard.html:45
+#: common/templates/dashboard.html:67 common/templates/dashboard.html:89
+msgid "More"
+msgstr "更多"
+
+#: common/templates/dashboard.html:39
+msgid "SQL Query Orders"
+msgstr "SQL查询工单"
+
+#: common/templates/dashboard.html:61
+msgid "Active Users"
+msgstr "有效平台用户"
+
+#: common/templates/dashboard.html:83
+msgid "Instance Count"
+msgstr "实例数量"
+
+#: common/templates/dashboard.html:101
+msgid "Database Instance Type Statistics"
+msgstr "数据库实例类型统计"
+
+# Dashboard chart translations
+#: common/templates/dashboard.html:123
+msgid "Statistics time range"
+msgstr "统计时间范围"
+
+#: common/templates/dashboard.html:133
+msgid "SQL Query Statistics"
+msgstr "SQL查询统计"
+
+#: common/templates/dashboard.html:141
+msgid "SQL Deployment Volume"
+msgstr "SQL上线数量"
+
+#: common/templates/dashboard.html:149
+msgid "SQL Deployment Users"
+msgstr "SQL上线用户"
+
+#: common/templates/dashboard.html:165
+#, fuzzy
+#| msgid "24h Slow Query by DB/User"
+msgid "24h Slow Query by DB"
+msgstr "24h慢查询db/user维度统计"
+
+#: common/templates/dashboard.html:175
+#, fuzzy
+#| msgid "SQL Deployment Audit"
+msgid "SQL Deployment Statistics"
+msgstr "SQL上线审计"
+
+#: common/templates/dashboard.html:183
+msgid "DB Result Rows"
+msgstr "DB检索行数"
+
+#: common/templates/dashboard.html:191
+msgid "SQL Query Users"
+msgstr "SQL查询用户"
+
+#: common/templates/dashboard.html:199
+msgid "SQL Deployment Type"
+msgstr "SQL上线工单类型"
+
+#: common/templates/dashboard.html:206
+msgid "24h Slow Query by DB/User"
+msgstr "24h慢查询db/user维度统计"
+
+#: common/templates/dashboard.html:219
+msgid "All Data"
+msgstr "全部数据"
+
+#: common/templates/dashboard.html:220
+msgid "Apply"
+msgstr "应用"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Instance"
+msgstr "实例"
+
+msgid "Submit SQL"
+msgstr "提交SQL"
+
+msgid "Submit Export Request"
+msgstr "提交导出工单"
+
+msgid "Workflow Log"
+msgstr "工单日志"
+
+#: common/templates/dashboard.html:222
+msgid "Start"
+msgstr "开始"
+
+#: common/templates/dashboard.html:223
+msgid "End"
+msgstr "结束"
+
+#: common/templates/dashboard.html:224
+msgid "Custom"
+msgstr "自定义"
+
+#: common/templates/dashboard.html:225
+msgid "Last 7 Days"
+msgstr "最近7天"
+
+#: common/templates/dashboard.html:226
+msgid "Last 30 Days"
+msgstr "最近30天"
+
+#: common/templates/dashboard.html:227
+msgid "Last 365 Days"
+msgstr "最近365天"
+
+#: common/templates/dashboard.html:228
+msgid "This Month"
+msgstr "本月"
+
+#: common/templates/dashboard.html:229
+msgid "This Year"
+msgstr "本年"
+
+#: common/templates/dashboard.html:230
+msgid "Last Month"
+msgstr "上月"
+
+#: common/templates/dashboard.html:231
+msgid "Last Year"
+msgstr "去年"
+
+msgid "Today"
+msgstr "今日"
+
+msgid "Yesterday"
+msgstr "昨日"
+
+#: common/templates/dashboard.html:262
+msgid "Sun"
+msgstr ""
+
+#: common/templates/dashboard.html:262
+msgid "Mon"
+msgstr ""
+
+#: common/templates/dashboard.html:262
+msgid "Tue"
+msgstr ""
+
+#: common/templates/dashboard.html:262
+msgid "Wed"
+msgstr ""
+
+#: common/templates/dashboard.html:262
+msgid "Thu"
+msgstr ""
+
+#: common/templates/dashboard.html:262
+msgid "Fri"
+msgstr ""
+
+#: common/templates/dashboard.html:262
+#, fuzzy
+#| msgid "Start"
+msgid "Sat"
+msgstr "开始"
+
+#: common/templates/dashboard.html:263
+msgid "January"
+msgstr ""
+
+#: common/templates/dashboard.html:263
+msgid "February"
+msgstr ""
+
+#: common/templates/dashboard.html:263
+#, fuzzy
+#| msgid "Search"
+msgid "March"
+msgstr "搜索"
+
+#: common/templates/dashboard.html:263
+msgid "April"
+msgstr ""
+
+msgid "May"
+msgstr "五月"
+
+#: common/templates/dashboard.html:263
+msgid "June"
+msgstr ""
+
+#: common/templates/dashboard.html:263
+msgid "July"
+msgstr ""
+
+#: common/templates/dashboard.html:263
+msgid "August"
+msgstr ""
+
+#: common/templates/dashboard.html:263
+msgid "September"
+msgstr ""
+
+#: common/templates/dashboard.html:263
+msgid "October"
+msgstr ""
+
+#: common/templates/dashboard.html:263
+#, fuzzy
+#| msgid "Phone Number"
+msgid "November"
+msgstr "手机号码"
+
+#: common/templates/dashboard.html:263
+msgid "December"
+msgstr ""
+
+# Login page
+#: common/templates/login.html:5 common/templates/login.html:47
+msgid "Login To Archery"
+msgstr "登录 Archery"
+
+#: common/templates/login.html:52
+msgid "Login with DingTalk"
+msgstr "以钉钉登录"
+
+#: common/templates/login.html:60
+msgid "CAS Login"
+msgstr "CAS认证登录"
+
+#: common/templates/login.html:65
+msgid "Show traditional login"
+msgstr "显示传统登录"
+
+#: common/templates/login.html:77 common/templates/login.html:120
+msgid "Register"
+msgstr "注册用户"
+
+#: common/templates/login.html:90
+msgid "Create Account"
+msgstr "注册账号"
+
+#: common/templates/login.html:95
+msgid "Username"
+msgstr "用户名"
+
+#: common/templates/login.html:99
+msgid "Display Name"
+msgstr "中文名"
+
+#: common/templates/login.html:103
+msgid "Email"
+msgstr "邮箱"
+
+#: common/templates/login.html:107
+msgid "Password"
+msgstr "密码"
+
+#: common/templates/login.html:134
+msgid "Notice"
+msgstr "提示"
+
+#: common/templates/login.html:138
+msgid "OK"
+msgstr "确定"
+
+#: common/templates/login.html:174
+msgid "Registration successful! Please login."
+msgstr "注册成功, 请输入密码登录!"
+
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:7
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:221
+msgid "The install worked successfully! Congratulations!"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:207
+#, python-format
+msgid ""
+"View <a href=\"https://docs.djangoproject.com/en/%(version)s/releases/\" "
+"target=\"_blank\" rel=\"noopener\">release notes</a> for Django %(version)s"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:222
+#, python-format
+msgid ""
+"You are seeing this page because <a href=\"https://docs.djangoproject.com/en/"
+"%(version)s/ref/settings/#debug\" target=\"_blank\" "
+"rel=\"noopener\">DEBUG=True</a> is in your settings file and you have not "
+"configured any URLs."
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:230
+#, fuzzy
+#| msgid "Menu Documentation"
+msgid "Django Documentation"
+msgstr "相关文档"
+
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:231
+msgid "Topics, references, &amp; how-to’s"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:239
+msgid "Tutorial: A Polling App"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:240
+msgid "Get started with Django"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:248
+msgid "Django Community"
+msgstr ""
+
+#: venv/lib/python3.9/site-packages/django/views/templates/default_urlconf.html:249
+msgid "Connect, get help, or contribute"
+msgstr ""
+
+msgid "Submit Rollback Request"
+msgstr "提交回滚请求"
+
+msgid "Terminate Session"
+msgstr "终止会话"
+
+msgid "Top Tablespace"
+msgstr "Top表空间"
+
+msgid "Transaction Information"
+msgstr "事务信息"
+
+msgid "Lock Information"
+msgstr "锁信息"
+
+msgid "Request URL"
+msgstr "需求链接"
+
+msgid "Backup Selection"
+msgstr "是否选择备份"
+
+msgid "Please select whether backup is needed"
+msgstr "请选择是否需要备份"
+
+msgid "Please choose whether to back up"
+msgstr "请选择是否要备份"
+
+msgid "Approval Workflow"
+msgstr "审批流程"
+
+msgid "Please configure the approval workflow!"
+msgstr "请配置审批流程！"
+
+msgid "Validate SQL"
+msgstr "SQL检测"
+
+msgid "Slow Query Details"
+msgstr "慢查询明细"
+
+msgid "SQL Optimization Tool"
+msgstr "SQL优化工具"
+
+msgid "View Introduction"
+msgstr "查看介绍"
+
+msgid "Get Optimization Advice"
+msgstr "获取优化建议"
+
+msgid "Optimization Advice"
+msgstr "优化建议"
+
+msgid "Analysis Options"
+msgstr "解析选项"
+
+msgid "Please select an instance:"
+msgstr "请选择实例："
+
+msgid "Please select a database:"
+msgstr "请选择数据库："
+
+msgid "Please select an optimization method:"
+msgstr "请选择优化方式："
+
+msgid "Whether to view the tuning process"
+msgstr "是否查看优化过程"
+
+msgid "Whether to view the tuning process:"
+msgstr "是否查看优化过程："
+
+msgid "Show system parameters"
+msgstr "显示系统参数"
+
+msgid "Show execution plan"
+msgstr "显示执行计划"
+
+msgid "Show related object statistics (tables and indexes)"
+msgstr "显示相关对象统计信息（表和索引）"
+
+msgid "Show PROFILE tracing information (real SQL execution, use with caution)"
+msgstr "显示 PROFILE 跟踪信息（真实执行 SQL，谨慎使用）"
+
+msgid "Start Analysis"
+msgstr "开始分析"
+
+msgid "SQL List"
+msgstr "SQL列表"
+
+msgid "Analysis Report"
+msgstr "分析报告"
+
+msgid "Create Database"
+msgstr "创建数据库"
+
+msgid "Basic Information"
+msgstr "基本信息"
+
+msgid "View Article"
+msgstr "查看文章"
+
+msgid "System Parameter"
+msgstr "系统参数"
+
+msgid "Optimizer Switch"
+msgstr "优化器开关"
+
+msgid "SQL Plan"
+msgstr "SQL执行计划"
+
+msgid "Optimizer Rewrite SQL"
+msgstr "优化器改写SQL"
+
+msgid "Object Statistics"
+msgstr "对象统计信息"
+
+msgid "Status & Profiling"
+msgstr "状态与分析"
+
+msgid "Session Status (Different)"
+msgstr "会话状态（差异）"
+
+msgid "SQL Profiling (Detail)"
+msgstr "SQL分析（明细）"
+
+msgid "SQL Profiling (Summary)"
+msgstr "SQL分析（汇总）"
+
+msgid "Execute Time"
+msgstr "执行时间"
+
+msgid "Operation Options"
+msgstr "操作选项"
+
+msgid "Save to file (asynchronous)"
+msgstr "保存到文件（异步）"
+
+msgid "Analysis Mode:"
+msgstr "分析模式："
+
+msgid "Rollback mode (-work-type rollback)"
+msgstr "回滚模式（-work-type rollback）"
+
+msgid "Ignore primary key for insert (-ignore-primaryKey-forInsert)"
+msgstr "插入时忽略主键（-ignore-primaryKey-forInsert）"
+
+msgid "Full columns (-full-columns)"
+msgstr "完整列（-full-columns）"
+
+msgid "Do not add DB prefix (-do-not-add-prifixDb)"
+msgstr "不添加数据库前缀（-do-not-add-prifixDb）"
+
+msgid "File per table (-file-per-table)"
+msgstr "按表拆分文件（-file-per-table）"
+
+msgid "Add extra info (-add-extraInfo)"
+msgstr "附加额外信息（-add-extraInfo）"
+
+msgid "Get SQL"
+msgstr "获取SQL"
+
+msgid "Rollback"
+msgstr "回滚"
+
+msgid "SQL"
+msgstr "SQL"
+
+msgid "Size:"
+msgstr "大小："
+
+msgid "Please select source instance:"
+msgstr "请选择源实例："
+
+msgid "Please select source database:"
+msgstr "请选择源数据库："
+
+msgid "Please select target instance:"
+msgstr "请选择目标实例："
+
+msgid "Please select target database:"
+msgstr "请选择目标数据库："
+
+msgid "DIFF Options"
+msgstr "DIFF选项"
+
+msgid "Schema Compare"
+msgstr "Schema对比"
+
+msgid "SQL Statement"
+msgstr "SQL语句"
+
+msgid ""
+"This page only shows the single-database comparison result. The generated "
+"SQL file will be saved to the project's downloads directory."
+msgstr "页面仅展示单库对比结果，生成的SQL文件会保存到项目downloads目录"
+
+msgid ""
+"Please wait patiently for the comparison result. You can get the generated "
+"SQL file in the corresponding directory."
+msgstr "请耐心等待对比结果，可在对应目录获取生成的SQL文件"
+
+msgid "DIFF Log"
+msgstr "DIFF日志"
+
+msgid "Patch SQL"
+msgstr "PATCH SQL"
+
+msgid "Revert SQL"
+msgstr "REVERT SQL"
+
+msgid "SQL/MyBatis3 Mapper XML file"
+msgstr "SQL/MyBatis3 Mapper XML 文件"
+
+msgid "The file size exceeds 5 MB. Please choose another file."
+msgstr "文件大小超过5MB，请重新选择。"
+
+msgid "SQL Content"
+msgstr "SQL内容"
+
+msgid "View"
+msgstr "查看"
+
+msgid "Please parse the SQL/MyBatis3 Mapper XML file first"
+msgstr "请先解析SQL/MyBatis3 Mapper XML文件"
+
+msgid "SOAR analysis submitted successfully. Please wait for the results!"
+msgstr "SOAR分析已提交成功，请等待结果！"
+
+msgid ""
+"SOAR analysis submitted. Without an instance and database selected, "
+"execution plans and index suggestions will not be produced. Please wait for "
+"the results!"
+msgstr ""
+"SOAR分析已提交，未选择实例和数据库将不会生成执行计划和索引建议，请等待结果！"
+
+msgid "Validate Export"
+msgstr "导出校验"
+
+msgid "Submit Export"
+msgstr "导出提交"
+
+msgid "Submit to Another Instance"
+msgstr "上线其他实例"
+
+msgid "View Submission"
+msgstr "查看提交信息"
+
+msgid "Workflow Details"
+msgstr "工单详情"
+
+msgid "Expand All"
+msgstr "展开全部"
+
+msgid "Collapse All"
+msgstr "折叠全部"
+
+msgid "Operation Information"
+msgstr "操作信息"
+
+msgid "Please enter the review remark / termination reason"
+msgstr "请填写审核备注/终止原因"
+
+msgid "Change Executable Time"
+msgstr "可执行时间变更"
+
+msgid "Execute Now"
+msgstr "立即执行"
+
+msgid "Manually Completed"
+msgstr "已手动完成"
+
+msgid "Schedule Execution"
+msgstr "定时执行"
+
+msgid "Change Execution Time"
+msgstr "执行时间变更"
+
+msgid "Terminate Workflow"
+msgstr "终止流程"
+
+msgid "Download File"
+msgstr "下载文件"
+
+msgid "View Rollback SQL"
+msgstr "查看回滚SQL"
+
+msgid "Download Rollback SQL"
+msgstr "下载回滚SQL"
+
+msgid "Edit Again"
+msgstr "重新修改"
+
+msgid "Schedule SQL Execution"
+msgstr "定时执行SQL"
+
+msgid "Please select an execution time"
+msgstr "请选择执行时间"
+
+msgid "Pause"
+msgstr "暂停"
+
+msgid "Resume"
+msgstr "恢复"
+
+msgid "Terminate"
+msgstr "终止"
+
+msgid "Execution Progress"
+msgstr "执行进度"
+
+msgid "Validation succeeded"
+msgstr "校验成功"
+
+msgid "No matching results"
+msgstr "无匹配结果"
+
+msgid "Query failed"
+msgstr "查询失败"
+
+msgid "Request failed: "
+msgstr "请求失败："
+
+msgid "This instance is not in the current resource group"
+msgstr "该实例不在当前资源组"
+
+msgid "Please enter the workflow name!"
+msgstr "请输入上线单名称！"
+
+msgid ""
+"Please enter the workflow name, e.g. XX project member feature table creation"
+msgstr "请输入上线单名称，如:XX项目会员功能建表"
+
+msgid "Please provide the request URL to record workflow demand information!"
+msgstr "请提供需求链接，记录工单需求信息！"
+
+msgid "Please enter the request URL"
+msgstr "请输入需求链接"
+
+msgid "Select Group"
+msgstr "请选择组"
+
+msgid "Search your group"
+msgstr "搜索您所在的组"
+
+msgid "Search instances in your group"
+msgstr "搜索您所在组中的实例"
+
+msgid "Please select a group!"
+msgstr "请选择组！"
+
+msgid "Select Instance"
+msgstr "请选择实例"
+
+msgid "Please select an instance!"
+msgstr "请选择实例！"
+
+msgid "Select Database"
+msgstr "请选择数据库"
+
+msgid "Database Name"
+msgstr "数据库名称"
+
+msgid "Please enter the database name"
+msgstr "请输入数据库名称"
+
+msgid "Select Database Owner"
+msgstr "请选择数据库负责人"
+
+msgid "Please enter a remark"
+msgstr "请输入备注"
+
+msgid "Create"
+msgstr "创建"
+
+msgid "Character Set"
+msgstr "字符集"
+
+msgid "Collation"
+msgstr "排序规则"
+
+msgid "Grantees"
+msgstr "授权账号"
+
+msgid "Search the database you want to submit"
+msgstr "搜索要提交的数据库"
+
+msgid "Please select a database!"
+msgstr "请选择数据库！"
+
+msgid "Please select an executable time range"
+msgstr "请选择可执行时间范围"
+
+msgid "Checking..."
+msgstr "检测中..."
+
+msgid "Submitting..."
+msgstr "提交中..."
+
+msgid "Format"
+msgstr "美化"
+
+msgid "Validation Result"
+msgstr "校验结果"
+
+msgid "Only SQL files up to 10 MB are supported"
+msgstr "仅支持10MB以内的SQL文件"
+
+msgid "Confirm Submission"
+msgstr "提交确认"
+
+msgid "Please submit SQL here, ending with a semicolon."
+msgstr "请在此提交SQL，请以分号结尾。"
+
+msgid ""
+"Only DML and DDL statements are supported; use SQL Query for SELECT "
+"statements."
+msgstr "仅支持DML和DDL语句，查询语句请使用SQL查询功能。"
+
+msgid "The executable time range should not be shorter than"
+msgstr "可执行时间范围不应该短于"
+
+msgid " minutes"
+msgstr "分钟"
+
+msgid "The submitted SQL still has"
+msgstr "提交的SQL经检测仍存在"
+
+msgid "warning(s) and"
+msgstr "个警告信息和"
+
+msgid "error(s). Please check carefully according to platform standards!"
+msgstr "个错误信息，请按照平台规范仔细检查！"
+
+msgid "Table Metadata"
+msgstr "表元数据展示"
+
+msgid "Table Information"
+msgstr "表信息"
+
+msgid "Engine"
+msgstr "引擎"
+
+msgid "Row Format"
+msgstr "行格式"
+
+msgid "Table Rows"
+msgstr "表行数"
+
+msgid "Average Row Length"
+msgstr "平均行长度"
+
+msgid "Max Row Length"
+msgstr "最大行长度"
+
+msgid "Data Length (K)"
+msgstr "数据长度（K）"
+
+msgid "Index Length (K)"
+msgstr "索引长度（K）"
+
+msgid "Total Data Size (K)"
+msgstr "数据总大小（K）"
+
+msgid "Free Space"
+msgstr "碎片大小"
+
+msgid "Auto Increment"
+msgstr "当前自增值"
+
+msgid "Table Collation"
+msgstr "表的校验码"
+
+msgid "Create Time"
+msgstr "创建时间"
+
+msgid "Update Time"
+msgstr "更新时间"
+
+msgid "Check Time"
+msgstr "检查时间"
+
+msgid "Table Comment"
+msgstr "表说明"
+
+msgid "Column Information"
+msgstr "列信息"
+
+msgid "Index Information"
+msgstr "索引信息"
+
+msgid "Create Table SQL"
+msgstr "建表语句"
+
+msgid "Object Type"
+msgstr "对象类型"
+
+msgid "Trigger"
+msgstr "触发器"
+
+msgid "Stored Procedure"
+msgstr "存储过程"
+
+msgid "Function"
+msgstr "函数"
+
+msgid "Event"
+msgstr "定时任务"
+
+msgid "Export"
+msgstr "导出"
+
+msgid "Select Export Format"
+msgstr "请选择导出数据格式"
+
+msgid "Please select an export format!"
+msgstr "请选择导出数据格式！"
+
+msgid "Scan/Affected Rows"
+msgstr "扫描/影响行数"
+
+msgid "Review Status"
+msgstr "审核状态"
+
+msgid "Review Message"
+msgstr "审核信息"
+
+msgid "Process Status"
+msgstr "进程状态"
+
+msgid "Command Type"
+msgstr "command类型"
+
+msgid "Are you sure you want to terminate the selected session?"
+msgstr "确定要终止所选会话吗？"
+
+msgid "All"
+msgstr "全部"
+
+msgid "From"
+msgstr "开始"
+
+msgid "To"
+msgstr "结束"
+
+msgid "Clear"
+msgstr "清空"
+
+msgid "Jan"
+msgstr "一月"
+
+msgid "Feb"
+msgstr "二月"
+
+msgid "Mar"
+msgstr "三月"
+
+msgid "Apr"
+msgstr "四月"
+
+msgid "Jun"
+msgstr "六月"
+
+msgid "Jul"
+msgstr "七月"
+
+msgid "Aug"
+msgstr "八月"
+
+msgid "Sep"
+msgstr "九月"
+
+msgid "Oct"
+msgstr "十月"
+
+msgid "Nov"
+msgstr "十一月"
+
+msgid "Dec"
+msgstr "十二月"
+
+msgid "Average Per Row (B)"
+msgstr "每行平均(B)"
+
+msgid "Backup SQL"
+msgstr "备份SQL"
+
+msgid "Backup Time"
+msgstr "备份耗时"
+
+msgid "Capped Collection"
+msgstr "固定集合"
+
+msgid "ClickHouse"
+msgstr "ClickHouse"
+
+msgid "Collection Name"
+msgstr "集合名"
+
+msgid ""
+"Comment lines are supported. You can choose a specific statement to execute. "
+"By default, the first statement is executed."
+msgstr "支持注释行。您可以选择执行特定语句，默认执行第一条语句。"
+
+msgid "Compressed Data Space (MB)"
+msgstr "压缩后的数据空间(MB)"
+
+msgid "Compression Ratio"
+msgstr "压缩率"
+
+msgid "Create Table"
+msgstr "建表语句"
+
+msgid "Current Stage"
+msgstr "当前阶段"
+
+msgid "Current Status"
+msgstr "当前状态"
+
+msgid "Data Space (Compressed)"
+msgstr "数据空间(压缩后)"
+
+msgid "Data Space (MB)"
+msgstr "数据空间(MB)"
+
+msgid "Data Space (Uncompressed)"
+msgstr "数据空间(未压缩)"
+
+msgid "Data loading failed!"
+msgstr "数据加载失败！"
+
+msgid "Do Not Backup SQL"
+msgstr "不备份SQL"
+
+msgid "Doris"
+msgstr "Doris"
+
+msgid "Download error: "
+msgstr "下载错误："
+
+msgid "Downloading..."
+msgstr "下载中..."
+
+msgid "Error"
+msgstr "错误"
+
+msgid "Extra Info"
+msgstr "附加信息"
+
+msgid "Error: {msg}"
+msgstr "错误：{msg}"
+
+msgid "Executable Time Range"
+msgstr "可执行时间范围"
+
+msgid "Execution Statement"
+msgstr "执行语句"
+
+msgid "Export Workflow Name"
+msgstr "导出工单名称"
+
+msgid "File size exceeds 10 MB, please select again."
+msgstr "文件大小超过10M，请重新选择。"
+
+msgid "Free Ratio (%)"
+msgstr "碎片率(%)"
+
+msgid "Free Space (MB)"
+msgstr "碎片空间(MB)"
+
+msgid "Full Execution Statement"
+msgstr "完整执行语句"
+
+msgid "Full INFO"
+msgstr "完整INFO"
+
+msgid "Full Rollback Statement"
+msgstr "完整回滚语句"
+
+msgid "Full SQL Content"
+msgstr "完整SQL内容"
+
+msgid "ID"
+msgstr "编号"
+
+msgid "Host"
+msgstr "主机"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "User"
+msgstr "用户"
+
+msgid "SQL ID"
+msgstr "SQL编号"
+
+msgid "DB Name"
+msgstr "数据库名"
+
+msgid "Table Name"
+msgstr "表名"
+
+msgid "Percent"
+msgstr "占比"
+
+msgid "SQL SHA1"
+msgstr "SQL SHA1"
+
+msgid "Remaining Time"
+msgstr "剩余时间"
+
+msgid "Information"
+msgstr "信息"
+
+msgid "trx_started"
+msgstr "事务开始时间"
+
+msgid "trx_idle_time"
+msgstr "空闲时间"
+
+msgid "trx_state"
+msgstr "事务状态"
+
+msgid "user"
+msgstr "用户"
+
+msgid "host"
+msgstr "主机"
+
+msgid "db"
+msgstr "数据库"
+
+msgid "trx_mysql_thread_id"
+msgstr "MySQL线程ID"
+
+msgid "trx_operation_state"
+msgstr "操作状态"
+
+msgid "trx_tables_locked"
+msgstr "锁定表数"
+
+msgid "trx_rows_locked"
+msgstr "锁定行数"
+
+msgid "trx_rows_modified"
+msgstr "修改行数"
+
+msgid "trx_is_read_only"
+msgstr "是否只读"
+
+msgid "trx_isolation_level"
+msgstr "隔离级别"
+
+msgid "thread_time"
+msgstr "线程时间"
+
+msgid "info"
+msgstr "信息"
+
+msgid "USERNAME"
+msgstr "用户名"
+
+msgid "OBJECT_OWNER"
+msgstr "对象所有者"
+
+msgid "OBJECT_ID"
+msgstr "对象ID"
+
+msgid "OBJECT_NAME"
+msgstr "对象名"
+
+msgid "LOCKED_MODE"
+msgstr "锁定模式"
+
+msgid "RELATED_SID"
+msgstr "关联SID"
+
+msgid "RELATED_SERIAL#"
+msgstr "关联序列号"
+
+msgid "MACHINE"
+msgstr "主机"
+
+msgid "RELATED_SQL"
+msgstr "关联SQL"
+
+msgid "RELATED_SQL_FULL"
+msgstr "完整关联SQL"
+
+msgid "RELATED_SQL_EXEC_START"
+msgstr "关联SQL开始时间"
+
+msgid "Index Count"
+msgstr "索引数"
+
+msgid "Index Space"
+msgstr "索引空间"
+
+msgid "Index Space (MB)"
+msgstr "索引空间(MB)"
+
+msgid "Information is incomplete, unable to perform one-click query!"
+msgstr "信息填写不完整，无法进行一键查询！"
+
+msgid "Invalid command!"
+msgstr "命令错误！"
+
+msgid "Key Operations"
+msgstr "键操作"
+
+msgid "Mongo native commands are supported, for example:"
+msgstr "支持mongo原生命令，例如："
+
+msgid "Mongo native queries are supported, for example:"
+msgstr "支持mongo原生命令，例如："
+
+msgid "MongoDB"
+msgstr "MongoDB"
+
+msgid "MySQL"
+msgstr "MySQL"
+
+msgid "Operation Message"
+msgstr "操作信息"
+
+msgid "Operation succeeded! Please refresh later to get the latest status."
+msgstr "操作成功！请稍后刷新获取最新状态"
+
+msgid "Oracle"
+msgstr "Oracle"
+
+msgid "Other Information"
+msgstr "其他信息"
+
+msgid "Pass"
+msgstr "通过"
+
+msgid "PgSQL"
+msgstr "PgSQL"
+
+msgid "Please confirm that manual execution has finished."
+msgstr "请确认是否已经手工执行结束？"
+
+msgid "Please confirm whether to execute immediately."
+msgstr "请确认是否立即执行？"
+
+msgid ""
+"Please confirm whether to terminate immediately? After termination, you need "
+"to manually clean up triggers and related intermediate tables!"
+msgstr "请确认是否立即终止？终止后需要手动清理触发器以及相关中间表！"
+
+msgid "Please enter the export workflow name!"
+msgstr "请输入导出工单名称！"
+
+msgid ""
+"Please enter the export workflow name, e.g. XX project member data export"
+msgstr "请输入导出工单名称，如:XX项目会员数据导出"
+
+msgid "Please enter the scheduled execution time"
+msgstr "请填写定时执行时间"
+
+msgid "Please enter the termination reason"
+msgstr "请填写终止原因"
+
+msgid "Please select a process to terminate first"
+msgstr "请先选择要终止进程"
+
+msgid "Preparing download..."
+msgstr "准备下载..."
+
+msgid ""
+"Query returned {ActualRows} rows, exceeding the threshold {maxExportRows}"
+msgstr "查询返回{ActualRows}行，超过阈值{maxExportRows}"
+
+msgid ""
+"Query returned {ActualRows} rows. Click the Submit Export button to request "
+"an export."
+msgstr "查询返回{ActualRows}行，点击导出提交按钮申请导出"
+
+msgid "Redis"
+msgstr "Redis"
+
+msgid "Review/Execution Message"
+msgstr "审核/执行信息"
+
+msgid "Review/Execution Status"
+msgstr "审核/执行状态"
+
+msgid "Rollback Statement"
+msgstr "回滚语句"
+
+msgid "Rows"
+msgstr "行数"
+
+msgid "Running Lock ID"
+msgstr "运行的锁id"
+
+msgid "Running Table Info"
+msgstr "运行的表信息"
+
+msgid "Running Transaction ID"
+msgstr "运行的事务id"
+
+msgid "Running Transaction SQL"
+msgstr "运行事务的sql"
+
+msgid "Running Transaction State"
+msgstr "运行事务的状态"
+
+msgid "Running Transaction Thread ID"
+msgstr "运行的事务线程id"
+
+msgid "Running Transaction Time"
+msgstr "运行事务的时间"
+
+msgid "Running Transaction Wait Start Time"
+msgstr "运行事务的等待开始时间"
+
+msgid "Server connection failed"
+msgstr "服务器连接失败"
+
+msgid "Storage Engine"
+msgstr "存储引擎"
+
+msgid "TDengine"
+msgstr "TDengine"
+
+msgid "Tablespace Name"
+msgstr "表空间名"
+
+msgid "Tablespace Type"
+msgstr "表空间类型"
+
+msgid ""
+"The query row limit follows privilege management and uses the minimum limit "
+"of the tables involved."
+msgstr "查询行数限制遵循权限管理，并使用所涉及表的最小限制。"
+
+msgid ""
+"This action will interact with AI, collecting database type, table "
+"structure, and input box information to generate SQL and place it in the "
+"statement box below"
+msgstr ""
+"该操作会与 AI 交互，收集数据库类型、表结构和输入框信息，以生成 SQL 并填入下方"
+"语句框中"
+
+msgid ""
+"This workflow has no backup selected and will not back up data "
+"automatically. Are you sure you want to execute it now?"
+msgstr "该工单未选择备份，将不会自动备份数据，请确认是否立即执行？"
+
+msgid "Total Space"
+msgstr "总空间"
+
+msgid "Total Space (MB)"
+msgstr "总空间(MB)"
+
+msgid "Uncompressed Data Space (MB)"
+msgstr "未压缩的数据空间(MB)"
+
+msgid "Unknown response format"
+msgstr "未知的响应格式"
+
+msgid "Unlimited"
+msgstr "无限制"
+
+msgid "Usage (%)"
+msgstr "使用率(%)"
+
+msgid "Used Space (MB)"
+msgstr "已使用空间(MB)"
+
+msgid "View Progress"
+msgstr "查看进度"
+
+msgid "Waiting Lock ID"
+msgstr "等待的锁id"
+
+msgid "Waiting State"
+msgstr "等待的状态"
+
+msgid "Waiting Table Info"
+msgstr "等待的表信息"
+
+msgid "Waiting Transaction ID"
+msgstr "等待事务ID"
+
+msgid "Waiting Transaction SQL"
+msgstr "等待事务的sql"
+
+msgid "Waiting Transaction Start Time"
+msgstr "等待事务开始时间"
+
+msgid "Waiting Transaction Thread ID"
+msgstr "等待事务线程ID"
+
+msgid "Waiting Transaction Wait Start Time"
+msgstr "等待事务等待开始时间"
+
+msgid "Warning"
+msgstr "警告"
+
+msgid "Comment"
+msgstr "注释"
+
+msgid "Database Table Structure Documentation"
+msgstr "数据库表结构说明文档"
+
+msgid "Generated at"
+msgstr "生成时间"
+
+msgid "Please select a database type:"
+msgstr "请选择数据库类型:"
+
+msgid "Please select the source instance:"
+msgstr "请选择源实例:"
+
+msgid "Please select the target instance:"
+msgstr "请选择目标实例:"
+
+msgid "Please select the source instance and the target instance!"
+msgstr "请选择源实例和目标实例！"
+
+msgid "Show differences only"
+msgstr "仅显示差异项"
+
+msgid "Comparison Results"
+msgstr "对比结果"
+
+msgid "Matching Parameters"
+msgstr "一致参数"
+
+msgid "Different Parameters"
+msgstr "差异参数"
+
+msgid "Total Parameters"
+msgstr "总参数数"
+
+msgid "No description available"
+msgstr "暂无描述"
+
+msgid "Parameter Name"
+msgstr "参数名"
+
+msgid "Source Instance Value"
+msgstr "源实例参数值"
+
+msgid "Target Instance Value"
+msgstr "目标实例参数值"
+
+msgid "Difference Type"
+msgstr "差异类型"
+
+msgid "Default Value"
+msgstr "默认参数值"
+
+msgid "Parameter Description"
+msgstr "参数描述"
+
+msgid "Editable Parameters"
+msgstr "可修改参数"
+
+msgid "Change History"
+msgstr "修改历史"
+
+msgid "Add Parameter"
+msgstr "添加参数"
+
+msgid "Editable"
+msgstr "允许修改"
+
+msgid "Yes"
+msgstr "是"
+
+msgid "No"
+msgstr "否"
+
+msgid "Please select an instance"
+msgstr "请选择实例"
+
+msgid "Parameter value cannot be empty"
+msgstr "参数值不能为空"
+
+msgid "Runtime Value"
+msgstr "运行参数值"
+
+msgid "Edit Parameter Value"
+msgstr "修改参数值"
+
+msgid "Instance Name"
+msgstr "实例名称"
+
+msgid "Editable Value"
+msgstr "可修改参数值"
+
+msgid "Matching"
+msgstr "一致"
+
+msgid "Values differ"
+msgstr "值不同"
+
+msgid "Only exists in source instance"
+msgstr "仅源实例存在"
+
+msgid "Only exists in target instance"
+msgstr "仅目标实例存在"
+
+msgid "The source instance and the target instance cannot be the same!"
+msgstr "源实例和目标实例不能相同！"
+
+msgid "Total {{ count }} tables"
+msgstr "共 {{ count }} 个表"
+
+msgid ""
+"Please enter SQL here, ending with a semicolon. Only DML and DDL statements "
+"are supported; use SQL Query for SELECT statements."
+msgstr ""
+"请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。"
+
+msgid "Offline Export Format"
+msgstr "离线导出数据格式"
+
+msgid "Confirming..."
+msgstr "确认中..."
+
+# Language names
+msgid "English"
+msgstr "English"
+
+msgid "Spanish"
+msgstr "Español"
+
+msgid "Chinese Simplified"
+msgstr "简体中文"
+
+msgid "Login"
+msgstr "登录"
+
+msgid "SQL Review Platform"
+msgstr "SQL审核查询平台"
+
+msgid "OpenAPI"
+msgstr "OpenAPI"
+
+msgid "TOTP"
+msgstr "TOTP"
+
+msgid "Other"
+msgstr "其他"
+
+msgid "Operation Log"
+msgstr "操作日志"
+
+msgid "Operator"
+msgstr "操作人"
+
+msgid "Operation Time"
+msgstr "操作时间"
+
+msgid "Operation Info"
+msgstr "操作信息"
+
+msgid "The workflow name cannot exceed 50 characters!"
+msgstr "上线单名称/工单名称不能超过50个字符！"
+
+msgid "The export workflow name cannot exceed 50 characters!"
+msgstr "导出工单名称不能超过50个字符！"
+
+msgid "Counting rows..."
+msgstr "行数统计中..."
+
+msgid "Edit / Record Database Info"
+msgstr "编辑/录入数据库信息"
+
+msgid ""
+"Consists of letters, numbers, underscores and hyphens; starts with a "
+"letter, ends with a letter or number, max 64 characters"
+msgstr ""
+"由字母、数字、下划线、中划线组成，字母开头，字母或数字结尾，最长64个字符"
+
+msgid "Owner"
+msgstr "负责人"
+
+msgid "Remark"
+msgstr "备注"
+
+msgid "Instance Type"
+msgstr "实例类型"
+
+msgid "Database Type"
+msgstr "数据库类型"
+
+msgid "Tag Filter"
+msgstr "标签筛选"
+
+msgid "Add Instance"
+msgstr "添加实例"
+
+msgid "Clean Binlog Logs"
+msgstr "清理Binlog日志"
+
+msgid "Warning: all binlogs before the selected one will be deleted!"
+msgstr "提示：该binlog前的所有binlog都会被删除！"
+
+msgid "Clean"
+msgstr "清理"
+
+msgid "Clean Binlog"
+msgstr "Binlog清理"
+
+msgid "Test"
+msgstr "测试"
+
+msgid "Editable Values"
+msgstr "可修改参数值"
+
+msgid "Description"
+msgstr "参数描述"
+
+msgid "Please configure this parameter in the parameter template first!"
+msgstr "请先在参数模板中配置该参数！"
+
+msgid "Value Before Change"
+msgstr "变更前的参数值"
+
+msgid "Value After Change"
+msgstr "变更后的参数值"
+
+msgid "Modifier"
+msgstr "修改人"
+
+msgid "Change Time"
+msgstr "修改时间"
+
+msgid "Action Options"
+msgstr "操作选项"
+
+msgid "Select Database Type:"
+msgstr "请选择数据库类型:"
+
+msgid "Select Source Instance:"
+msgstr "请选择源实例:"
+
+msgid "Select Target Instance:"
+msgstr "请选择目标实例:"
+
+msgid "Show only differences"
+msgstr "仅显示差异项"
+
+msgid "Start Comparison"
+msgstr "开始对比"
+
+msgid "Validating SQL syntax and counting result rows, please wait..."
+msgstr "正在校验SQL语法并统计结果行数，请稍候..."
+
+msgid "Please select an execution time range"
+msgstr "请选择可执行时间范围"
+
+msgid "Submitting workflow..."
+msgstr "工单提交中..."
+
+msgid "Secondary validation is running in the background, please wait..."
+msgstr "后台二次校验，请稍候..."
+
+msgid "Validation failed"
+msgstr "校验失败"
+
+msgid "Initiated Time"
+msgstr "发起时间"
+
+msgid "Operations"
+msgstr "操作"
+
+msgid "Submit Export Workflow"
+msgstr "提交导出工单"
+
+msgid "All Instances"
+msgstr "所有实例"
+
+msgid "Enable Status"
+msgstr "启用状态"
+
+msgid "Apply for Archive"
+msgstr "申请归档"
+
+msgid "Add Configuration"
+msgstr "添加配置"
+
+msgid "Apply for Data Archive"
+msgstr "申请数据归档"
+
+msgid "Brief description of the archive"
+msgstr "归档的简要描述"
+
+msgid "Please select group:"
+msgstr "请选择组:"
+
+msgid "Please select instance:"
+msgstr "请选择实例:"
+
+msgid "Please select database:"
+msgstr "请选择数据库:"
+
+msgid "Please select table to archive:"
+msgstr "请选择要归档的表:"
+
+msgid "Please select archive mode:"
+msgstr "请选择归档模式:"
+
+msgid "Archive to file"
+msgstr "归档到文件"
+
+msgid "Archive to another instance"
+msgstr "归档到另一个实例"
+
+msgid "Delete directly"
+msgstr "直接删除"
+
+msgid "Keep source data after archiving:"
+msgstr "归档后是否保留源数据:"
+
+msgid "Keep source data after archiving"
+msgstr "归档后保留源数据"
+
+msgid "Keep"
+msgstr "保留"
+
+msgid "Please select destination instance:"
+msgstr "请选择目标实例:"
+
+msgid "Please select destination database:"
+msgstr "请选择目标数据库:"
+
+msgid "Please select corresponding database:"
+msgstr "请选择对应数据库:"
+
+msgid "Please select destination table:"
+msgstr "请选择目标表:"
+
+msgid "Enter archive condition (WHERE clause of SQL statement)"
+msgstr "输入归档条件（SQL语句的WHERE子句）"
+
+msgid "Sleep seconds after archiving 10000 rows"
+msgstr "归档10000行后暂停秒数"
+
+msgid "Approval Process:"
+msgstr "审批流程："
+
+msgid ""
+"Note: Source and destination table structures must be consistent, "
+"otherwise archiving will fail"
+msgstr "注意：源和目标表结构必须一致，否则归档将失败"
+
+msgid "Submit Application"
+msgstr "提交申请"
+
+msgid "Feishu App ID"
+msgstr "飞书应用AppID"
+
+msgid "Feishu AppSecret"
+msgstr "飞书AppSecret"
+
+msgid "Generic Webhook URL"
+msgstr "通用Webhook地址"
+
+msgid "Generic webhook URL, called on every status change of each workflow"
+msgstr "通用webhook地址，每个工单的每个状态转变均会调用"
+
+msgid "SMS Service"
+msgstr "短信服务"
+
+msgid "SMS Service Provider"
+msgstr "短信服务提供商"
+
+msgid "SMS Provider"
+msgstr "短信服务商"
+
+msgid "Aliyun Access Key ID, used to identify User"
+msgstr "阿里云访问密钥ID，用于标识用户"
+
+msgid "Aliyun Access Key Secret, used to verify User identity"
+msgstr "阿里云访问密钥，用于验证用户身份"
+
+msgid "SMS signature, must be approved status"
+msgstr "短信签名，需为审核通过状态"
+
+msgid "SMS template code, must be approved status"
+msgstr "短信模板Code，需为审核通过状态"
+
+msgid "Variable name in SMS template, e.g.: code"
+msgstr "短信模板中的变量名，如：code"
+
+msgid "Used to identify API caller identity"
+msgstr "用于标识API调用者的身份"
+
+msgid "Key used for encrypting signature and server-side verification"
+msgstr "用于加密签名字符串和服务器端验证签名的密钥"
+
+msgid "SMS template ID, must be approved status"
+msgstr "短信模板ID，需为审核通过状态"
+
+msgid "SMS Application ID"
+msgstr "短信应用ID"
+
+msgid "Login button display name, e.g. Login With KeyCloak"
+msgstr "登录按钮显示名称，如 Login With KeyCloak"
+
+msgid ""
+"Note 1: If OPENAI_API_KEY is not configured, related features will not be "
+"enabled"
+msgstr "注1：若无OPENAI_API_KEY配置，则不开启相关功能"
+
+msgid ""
+"Note 2: DEFAULT_CHAT_MODEL defaults to gpt-3.5-turbo, "
+"DEFAULT_QUERY_TEMPLATE defaults to system-defined template"
+msgstr ""
+"注2：DEFAULT_CHAT_MODEL默认配置为gpt-3.5-turbo，DEFAULT_QUERY_TEMPLATE默认"
+"为系统定义模板"
+
+msgid ""
+"Default Django template for generating SQL statements, empty template "
+"will cause generation to fail, requires db_type/table_schema/user_input"
+msgstr ""
+"默认生成SQL语句的Django模板，空模板会导致生成失败，需要db_type/"
+"table_schema/user_input"
+
+msgid "Other Configuration"
+msgstr "其他配置"
+
+msgid "System homepage path, default is SQL workflow page: sqlworkflow"
+msgstr "系统首页路径，默认SQL工单页面：sqlworkflow"
+
+msgid "my2sql call path, e.g. /opt/archery/src/plugins/my2sql"
+msgstr "my2sql调用路径，如 /opt/archery/src/plugins/my2sql"
+
+msgid "Permission groups automatically assigned to new users on first login"
+msgstr "新用户首次登录自动关联权限组"
+
+msgid "Resource groups automatically assigned to new users on first login"
+msgstr "新用户首次登录自动关联资源组"
+
+msgid "API User Whitelist"
+msgstr "API用户白名单"
+
+msgid "Account lockout time after failed login (seconds)"
+msgstr "账户登录失败锁定时间（秒）"
+
+msgid "Number of failed login attempts before account lockout"
+msgstr "账户登录失败几次锁账户"
+
+msgid "Enable user registration"
+msgstr "是否开启注册功能"
+
+msgid "Enable watermark"
+msgstr "是否开启水印功能"
+
+msgid "Enforce 2FA on login"
+msgstr "登录是否强制使用2FA"
+
+msgid "Enable announcements"
+msgstr "是否开启公告"
+
+msgid "Announcement content"
+msgstr "公告内容"
+
+msgid ""
+"Append this content to website title and login page, useful for "
+"distinguishing multiple Archery instances"
+msgstr "在网站标题及登录页面追加此内容，用于区分多个Archery实例"
+
+msgid "Rules:"
+msgstr "规则："
+
+msgid ""
+"Selecting multiple permission groups creates multi-level approval, "
+"flowing in selection order, all users in a group can approve"
+msgstr ""
+"选择多个权限组即审批流程为多级审核，按选择顺序流转，每组内所有用户均可审批"
+
+msgid "Current Approval Process:"
+msgstr "当前审批流程："
+
+msgid "Apply for Database Query Permission"
+msgstr "申请数据库查询权限"
+
+msgid "Brief description of permission usage"
+msgstr "权限使用的简要描述"
+
+msgid "Permission level:"
+msgstr "权限级别："
+
+msgid "Please select table:"
+msgstr "请选择表："
+
+msgid "Please select authorization period:"
+msgstr "请选择授权期限："
+
+msgid "One day"
+msgstr "一天"
+
+msgid "One week"
+msgstr "一周"
+
+msgid "One month"
+msgstr "一个月"
+
+msgid "Long term (one year)"
+msgstr "长期（一年）"
+
+msgid "Please select query row limit:"
+msgstr "请选择查询行数限制："
+
+msgid ""
+"Note: After permission approval, you can perform online queries. Please "
+"wait patiently."
+msgstr "注意：权限审批通过后，即可进行在线查询，请耐心等待。"
+
+msgid "{0} items selected"
+msgstr "已选中{0}项"
+
+msgid "Table list:"
+msgstr "表列表："
+
+msgid "Database list:"
+msgstr "数据库列表："
+
+msgid "Permission Level"
+msgstr "权限级别"
+
+msgid "Result Set"
+msgstr "结果集"
+
+msgid "Valid Until"
+msgstr "有效期至"
+
+msgid "Valid Time"
+msgstr "有效时间"
+
+msgid "Applicant"
+msgstr "申请人"
+
+msgid "Application Time"
+msgstr "申请时间"
+
+msgid "Information incomplete or approval process not configured"
+msgstr "信息不完整或审批流程未配置"
+
+msgid "Please select permission type"
+msgstr "请选择权限类型"
+
+msgid "Parse Threads:"
+msgstr "解析线程："
+
+msgid "Default 4"
+msgstr "默认4"
+
+msgid "Analysis Threads:"
+msgstr "分析线程："
+
+msgid "Analysis Range Control:"
+msgstr "分析范围控制："
+
+msgid "Page line count, default 30"
+msgstr "每页行数，默认30"
+
+msgid "Start file:"
+msgstr "起始文件："
+
+msgid "Start position (optional)"
+msgstr "起始位置（可选）"
+
+msgid "End file (optional):"
+msgstr "终止文件（可选）："
+
+msgid "End position (optional)"
+msgstr "终止位置（可选）"
+
+msgid "Start time (not recommended)"
+msgstr "起始时间（不推荐）"
+
+msgid "End time (optional)"
+msgstr "终止时间（可选）"
+
+msgid "Parse Range Control:"
+msgstr "解析范围控制："
+
+msgid "Parse row count per page, default 30"
+msgstr "解析每页行数，默认30"
+
+msgid "Start parse file:"
+msgstr "起始解析文件："
+
+msgid "Start parse position (optional)"
+msgstr "起始解析位置（可选）"
+
+msgid "End parse file (optional):"
+msgstr "终止解析文件（可选）："
+
+msgid "End parse position (optional)"
+msgstr "终止解析位置（可选）"
+
+msgid "Start parse time (not recommended)"
+msgstr "起始解析时间（不推荐）"
+
+msgid "End parse time (optional)"
+msgstr "终止解析时间（可选）"
+
+msgid "Object Filter:"
+msgstr "对象过滤："
+
+msgid "Database filter (optional):"
+msgstr "数据库过滤（可选）："
+
+msgid "Table filter (optional):"
+msgstr "表过滤（可选）："
+
+msgid "Type filter (optional):"
+msgstr "类型过滤（可选）："
+
+msgid "SQL Statements"
+msgstr "SQL语句"
+
+msgid ""
+"Frontend display count is controlled by parse range parameter. If 'Save "
+"to file' is checked, complete SQL file will be asynchronously saved to "
+"downloads directory. Notification will be sent to operator after "
+"execution ends (if message notification is enabled)."
+msgstr ""
+"前端展示数量由解析范围参数控制。如果勾选了'保存到文件'，完整的SQL文件将被"
+"异步保存到下载目录。执行结束后会通知操作人（如果开启了消息通知功能）。"
+
+msgid "Full SQL"
+msgstr "完整SQL"
+
+msgid "Please select instance and start parse file!"
+msgstr "请选择实例和起始解析文件！"
+
+msgid "Please select an instance and start file!"
+msgstr "请选择实例和起始文件！"
+
+msgid "Full Extra Info"
+msgstr "完整额外信息"
+
+msgid "Query Time"
+msgstr "查询时间"
+
+msgid "Statement"
+msgstr "语句"
+
+msgid "Full Statement"
+msgstr "完整语句"
+
+msgid "Rows Returned"
+msgstr "返回行数"
+
+msgid "Duration (seconds)"
+msgstr "耗时（秒）"
+
+msgid "Change Approval Process:"
+msgstr "变更审批流程："
+
+msgid "Please select approver permission group"
+msgstr "请选择审批权限组"
+
+msgid "Approver"
+msgstr "审批人"
+
+msgid "Approver:"
+msgstr "审批人："
+
+msgid "Change"
+msgstr "变更"
+
+msgid "Archive Mode"
+msgstr "归档模式"
+
+msgid "Source Data"
+msgstr "源数据"
+
+msgid "Sleep (seconds)"
+msgstr "暂停（秒）"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "Statistics Time Range:"
+msgstr "统计时间范围："
+
+msgid "Query Count"
+msgstr "查询数量"
+
+msgid "24h Slow Query by Database"
+msgstr "24h慢查询db维度统计"
+
+msgid "Finished"
+msgstr "已完成"
+
+msgid "Auto Review Failed"
+msgstr "自动审核不通过"
+
+msgid "Aborted"
+msgstr "人工终止流程"
+
+msgid "Exception"
+msgstr "执行有异常"
+
+msgid "Review Passed"
+msgstr "审核通过"
+
+msgid "Queuing"
+msgstr "排队中"
+
+msgid "Executing"
+msgstr "执行中"
+
+msgid "Waiting for Review"
+msgstr "待审核"
+
+msgid "Scheduled"
+msgstr "定时执行"
+
+msgid "Unknown"
+msgstr "未知"
+
+msgid "DDL"
+msgstr "DDL"
+
+msgid "DML"
+msgstr "DML"
+
+# Model fields, admin, const, form translations
+msgid "2FA Configuration"
+msgstr "2FA配置"
+
+msgid "2FA Configurations"
+msgstr "2FA配置"
+
+msgid "Account"
+msgstr "账号"
+
+msgid "Action"
+msgstr "动作"
+
+msgid "Active"
+msgstr "激活"
+
+msgid "Active Status"
+msgstr "激活状态"
+
+msgid "Aliyun RDS Configuration"
+msgstr "阿里云rds配置"
+
+msgid "Aliyun RDS Configurations"
+msgstr "阿里云rds配置"
+
+msgid "Aliyun RDS Instance ID"
+msgstr "对应阿里云RDS实例ID"
+
+msgid "Amount"
+msgstr "金额"
+
+msgid "Applicant Display Name"
+msgstr "申请人中文名"
+
+msgid "Application Remark"
+msgstr "申请备注"
+
+msgid "Application Title"
+msgstr "申请标题"
+
+msgid "Application Type"
+msgstr "申请类型"
+
+msgid "Apply Query Privilege"
+msgstr "申请查询权限"
+
+msgid "Approval Flow Configuration"
+msgstr "审批流程配置"
+
+msgid "Approval Flow Configurations"
+msgstr "审批流程配置"
+
+msgid "Approval Group List"
+msgstr "审批权限组列表"
+
+msgid "Approval Type"
+msgstr "审批类型"
+
+msgid "Approve"
+msgstr "审核通过"
+
+msgid "Approved"
+msgstr "审核通过"
+
+msgid "Archive Command"
+msgstr "归档命令"
+
+msgid "Archive Condition (WHERE clause)"
+msgstr "归档条件，where条件"
+
+msgid "Archive Configuration"
+msgstr "归档配置表"
+
+msgid "Archive Configuration Title"
+msgstr "归档配置说明"
+
+msgid "Archive Configurations"
+msgstr "归档配置表"
+
+msgid "Archive Enabled"
+msgstr "是否启用归档"
+
+msgid "Archive Log"
+msgstr "归档日志表"
+
+msgid "Archive Logs"
+msgstr "归档日志表"
+
+msgid "Archive Statistics Log"
+msgstr "归档统计日志"
+
+msgid "Archive Successful"
+msgstr "是否归档成功"
+
+msgid "Audit Log"
+msgstr "审计日志"
+
+msgid "Audit Logs"
+msgstr "审计日志"
+
+msgid "Audit Main ID"
+msgstr "审核主表id"
+
+msgid "Audit Permission"
+msgstr "审计权限"
+
+msgid "Auth Type"
+msgstr "认证类型"
+
+msgid "Authentication"
+msgstr "认证信息"
+
+msgid "Backup Enabled"
+msgstr "是否备份"
+
+msgid "Bank Card"
+msgstr "银行卡"
+
+msgid "Cancelled"
+msgstr "审核取消"
+
+msgid "Cannot retrieve associated workflow"
+msgstr "无法获取到关联工单"
+
+msgid "Charset"
+msgstr "字符集"
+
+msgid "Cloud Access Key Configuration"
+msgstr "云服务认证信息配置"
+
+msgid "Cloud Access Key Configurations"
+msgstr "云服务认证信息配置"
+
+msgid "Cluster"
+msgstr "集群"
+
+msgid "Column Comment"
+msgstr "字段描述"
+
+msgid "Column ID"
+msgstr "字段id"
+
+msgid "Column Name"
+msgstr "字段名"
+
+msgid "Config Item"
+msgstr "配置项"
+
+msgid "Config Value"
+msgstr "配置项值"
+
+msgid "Connection Info"
+msgstr "连接信息"
+
+msgid "Connection Tunnel"
+msgstr "连接隧道"
+
+msgid "Created Time"
+msgstr "创建时间"
+
+msgid "Current Approval Group"
+msgstr "当前审批权限组"
+
+msgid "Data Archive Application"
+msgstr "数据归档申请"
+
+msgid "Data Masking Column Configuration"
+msgstr "脱敏字段配置"
+
+msgid "Data Masking Column Configurations"
+msgstr "脱敏字段配置"
+
+msgid "Data Masking Rule Configuration"
+msgstr "脱敏规则配置"
+
+msgid "Data Masking Rule Configurations"
+msgstr "脱敏规则配置"
+
+msgid "Database Display Regex"
+msgstr "显示的数据库列表正则"
+
+msgid "Database Hide Regex"
+msgstr "隐藏的数据库列表正则"
+
+msgid "Delete Count"
+msgstr "删除数量"
+
+msgid "Demand URL"
+msgstr "需求链接"
+
+msgid "Destination Database"
+msgstr "目标数据库"
+
+msgid "Destination Table"
+msgstr "目标表"
+
+msgid "DingTalk User ID"
+msgstr "钉钉UserID"
+
+msgid "DingTalk Webhook URL"
+msgstr "钉钉webhook地址"
+
+msgid "Direct Delete"
+msgstr "直接删除"
+
+msgid "Edit Instance Parameters"
+msgstr "修改实例参数"
+
+msgid "End Time"
+msgstr "结束时间"
+
+msgid "Error Info"
+msgstr "错误信息"
+
+msgid "Execute SOAR"
+msgstr "执行SOAR"
+
+msgid "Execute SQL Analysis"
+msgstr "执行SQL分析"
+
+msgid "Execute SQL Workflow (Own Only)"
+msgstr "执行SQL上线工单(仅自己提交的)"
+
+msgid "Execute SQL Workflow (Resource Group)"
+msgstr "执行SQL上线工单(资源组粒度)"
+
+msgid "Execute SQLAdvisor"
+msgstr "执行SQLAdvisor"
+
+msgid "Execute SQLTuning"
+msgstr "执行SQLTuning"
+
+msgid "Executed Query"
+msgstr "执行的查询语句"
+
+msgid "Execution Completed"
+msgstr "执行结束"
+
+msgid "Execution End Time"
+msgstr "可执行结束时间"
+
+msgid "Execution Result (JSON)"
+msgstr "执行结果的JSON格式"
+
+msgid "Execution Start Time"
+msgstr "可执行起始时间"
+
+msgid "Execution Time"
+msgstr "执行耗时"
+
+msgid "Export Data Dictionary"
+msgstr "导出数据字典"
+
+msgid "Export Format"
+msgstr "导出格式"
+
+msgid "Failed Login Count"
+msgstr "失败计数"
+
+msgid "Feishu Open ID"
+msgstr "飞书OpenID"
+
+msgid "Feishu Webhook URL"
+msgstr "飞书webhook地址"
+
+msgid "File"
+msgstr "文件"
+
+msgid "Filename"
+msgstr "文件名"
+
+msgid "Google Authenticator"
+msgstr "Google身份验证器"
+
+msgid "Group ID"
+msgstr "组ID"
+
+msgid "Group Name"
+msgstr "组名称"
+
+msgid "Hidden Group"
+msgstr "需要隐藏的组"
+
+msgid "Hit"
+msgstr "命中"
+
+msgid "Hit Masking Rule"
+msgstr "查询是否命中脱敏规则"
+
+msgid "ID Number"
+msgstr "证件号码"
+
+msgid "Inactive"
+msgstr "未激活"
+
+msgid "Initiator Display Name"
+msgstr "发起人中文名"
+
+msgid "Insert Count"
+msgstr "插入数量"
+
+msgid "Instance Account"
+msgstr "实例账号列表"
+
+msgid "Instance Account List"
+msgstr "实例账号列表"
+
+msgid "Instance Configuration"
+msgstr "实例配置"
+
+msgid "Instance Configurations"
+msgstr "实例配置"
+
+msgid "Instance Database"
+msgstr "实例数据库"
+
+msgid "Instance Database List"
+msgstr "实例数据库列表"
+
+msgid "Instance Host"
+msgstr "实例连接"
+
+msgid "Instance Parameter Histories"
+msgstr "实例参数历史"
+
+msgid "Instance Parameter History"
+msgstr "实例参数修改历史"
+
+msgid "Instance Parameter Template"
+msgstr "实例参数模板配置"
+
+msgid "Instance Parameter Templates"
+msgstr "实例参数模板配置"
+
+msgid "Instance Tag"
+msgstr "实例标签"
+
+msgid "Instance Tags"
+msgstr "实例标签"
+
+msgid "Is Deleted"
+msgstr "是否删除"
+
+msgid "Is Favorited"
+msgstr "是否收藏"
+
+msgid "Is Offline Export"
+msgstr "是否为离线导出工单"
+
+msgid "Keep Source Data"
+msgstr "是否保留源数据"
+
+msgid "Kill Sessions"
+msgstr "终止会话"
+
+msgid "Last Archive Time"
+msgstr "最近归档时间"
+
+msgid "Last Failed Login Time"
+msgstr "上次失败登录时间"
+
+msgid "Last Modified"
+msgstr "系统修改时间"
+
+msgid "Level"
+msgstr "层级"
+
+msgid "Manage Archive Applications"
+msgstr "管理归档申请"
+
+msgid "Manage Instance Accounts"
+msgstr "管理实例账号"
+
+msgid "Manage Query Privileges"
+msgstr "管理查询权限"
+
+msgid "Master"
+msgstr "主库"
+
+msgid "Menu Dashboard"
+msgstr "仪表盘"
+
+msgid "Menu Data Archive"
+msgstr "数据归档"
+
+msgid "Menu Data Dictionary"
+msgstr "数据字典"
+
+msgid "Menu Data Export"
+msgstr "数据导出"
+
+msgid "Menu Database Management"
+msgstr "数据库管理"
+
+msgid "Menu Instance Account Management"
+msgstr "实例账号管理"
+
+msgid "Menu Instance List"
+msgstr "实例列表"
+
+msgid "Menu Instance Management"
+msgstr "实例管理"
+
+msgid "Menu My2SQL"
+msgstr "My2SQL"
+
+msgid "Menu Online Query"
+msgstr "在线查询"
+
+msgid "Menu OpenAPI"
+msgstr "OpenAPI"
+
+msgid "Menu Optimization Tools"
+msgstr "优化工具"
+
+msgid "Menu Parameter Configuration"
+msgstr "参数配置"
+
+msgid "Menu Privilege Management"
+msgstr "权限管理"
+
+msgid "Menu SQL Analysis"
+msgstr "SQL分析"
+
+msgid "Menu SQL Optimization"
+msgstr "SQL优化"
+
+msgid "Menu SQL Query"
+msgstr "SQL查询"
+
+msgid "Menu SQL Review"
+msgstr "SQL审核"
+
+msgid "Menu SQL Workflow"
+msgstr "SQL上线"
+
+msgid "Menu SchemaSync"
+msgstr "SchemaSync"
+
+msgid "Menu Session Management"
+msgstr "会话管理"
+
+msgid "Menu Slow Query Log"
+msgstr "慢查日志"
+
+msgid "Menu System Management"
+msgstr "系统管理"
+
+msgid "Menu Tools"
+msgstr "工具插件"
+
+msgid "Modified By"
+msgstr "修改人"
+
+msgid "Modified By Display Name"
+msgstr "修改人中文名"
+
+msgid "Native Execution"
+msgstr "是否原生执行"
+
+msgid "New Value"
+msgstr "修改后参数值"
+
+msgid "Next Approval Group"
+msgstr "下级审批权限组"
+
+msgid "Normal"
+msgstr "正常"
+
+msgid "Not Hit/Unknown"
+msgstr "未命中/未知"
+
+msgid "Offline Download Permission"
+msgstr "离线下载权限"
+
+msgid "Offline Export"
+msgstr "离线导出工单"
+
+msgid "Old Value"
+msgstr "修改前参数值"
+
+msgid "Online Query Download Permission"
+msgstr "在线查询下载权限"
+
+msgid "Operation Type"
+msgstr "操作类型"
+
+msgid "Operation Type Description"
+msgstr "操作类型描述"
+
+msgid "Operator Display Name"
+msgstr "操作人中文名"
+
+msgid "Other Info"
+msgstr "其他信息"
+
+msgid "Other Instance"
+msgstr "其他实例"
+
+msgid "Owner Display Name"
+msgstr "负责人中文名"
+
+msgid "Parameter Modified Time"
+msgstr "参数被修改时间点"
+
+msgid "Parent ID"
+msgstr "父级id"
+
+msgid "Pending Review"
+msgstr "待审核"
+
+msgid "Permissions"
+msgstr "权限信息"
+
+msgid "Personal Info"
+msgstr "个人信息"
+
+msgid "Private Key"
+msgstr "密钥"
+
+msgid "Private Key Password"
+msgstr "密钥密码"
+
+msgid "Private Key Path"
+msgstr "密钥地址"
+
+msgid ""
+"Private key file not found. Please check the clear option for key path "
+"before saving."
+msgstr "秘钥文件不存在，请勾选秘钥路径的清除选项再进行保存"
+
+msgid "Privilege Type"
+msgstr "权限类型"
+
+msgid "Privilege Level"
+msgstr "权限级别"
+
+msgid "Query All Instances"
+msgstr "可查询所有实例"
+
+msgid "Query Log"
+msgstr "查询日志"
+
+msgid "Not Found"
+msgstr "未找到"
+
+msgid "The requested resource was not found on this server."
+msgstr "请求的资源在此服务器上未找到。"
+
+msgid "Query Logs"
+msgstr "查询日志"
+
+msgid "Query Permission Verified"
+msgstr "查询权限是否正常校验"
+
+msgid "Query Privilege Application"
+msgstr "查询权限申请"
+
+msgid "Query Privilege Applications"
+msgstr "查询权限申请"
+
+msgid "Query Privilege Record"
+msgstr "查询权限记录"
+
+msgid "Query Privilege Records"
+msgstr "查询权限记录"
+
+msgid "Query Resource Group Instances"
+msgstr "可查询所在资源组内的所有实例"
+
+msgid "RDS Instance AK Configuration"
+msgstr "RDS实例对应的AK配置"
+
+msgid ""
+"Regex for masking rule (must have groups, hidden groups replaced with "
+"****)"
+msgstr "规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替"
+
+msgid ""
+"Regular expression. Example: ^(test_db|dmp_db|za.*)$. Redis example: ^(0|"
+"4|6|11|12|13)$"
+msgstr ""
+"正则表达式。示例：^(test_db|dmp_db|za.*)$。Redis示例: ^(0|4|6|11|12|13)$"
+
+msgid "Regular expression. Hide takes priority over display."
+msgstr "正则表达式。隐藏大于显示，此规则优先。"
+
+msgid "Reject"
+msgstr "审核不通过"
+
+msgid "Rejected"
+msgstr "审核不通过"
+
+msgid "Related Workflow ID"
+msgstr "关联业务id"
+
+msgid "Resource Group"
+msgstr "资源组"
+
+msgid "Add Group"
+msgstr "添加资源组"
+
+msgid "Associated Objects"
+msgstr "关联对象"
+
+msgid "Result Properly Masked"
+msgstr "查询结果是否正常脱敏"
+
+msgid "Review Archive Application"
+msgstr "审核归档申请"
+
+msgid "Review Content (JSON)"
+msgstr "自动审核内容的JSON格式"
+
+msgid "Review Query Privilege"
+msgstr "审核查询权限"
+
+msgid "Review Remark"
+msgstr "审核备注"
+
+msgid "Review SQL Workflow"
+msgstr "审核SQL上线工单"
+
+msgid "Review Time"
+msgstr "审核时间"
+
+msgid "Reviewer"
+msgstr "审核人"
+
+msgid "Row Limit"
+msgstr "行数限制"
+
+msgid "Rule Description"
+msgstr "规则描述"
+
+msgid "Rule Type"
+msgstr "规则类型"
+
+msgid "Running Mode"
+msgstr "运行模式"
+
+msgid "SMS Verification Code"
+msgstr "短信验证码"
+
+msgid "SQL Review Application"
+msgstr "SQL上线申请"
+
+msgid "SQL Statement for Online Config Change"
+msgstr "在线变更配置执行的SQL语句"
+
+msgid "SQL Workflow"
+msgstr "SQL工单"
+
+msgid "SQL Workflow Content"
+msgstr "SQL工单内容"
+
+msgid "SQL Workflow Contents"
+msgstr "SQL工单内容"
+
+msgid "SQL Workflows"
+msgstr "SQL工单"
+
+msgid "SSL Enabled"
+msgstr "是否启用SSL"
+
+msgid "Schema Name"
+msgstr "字段所在库名"
+
+msgid "Secret Key"
+msgstr "用户密钥"
+
+msgid "Select Count"
+msgstr "查询数量"
+
+msgid "Set Scheduled Execution"
+msgstr "设置定时执行"
+
+msgid "Skipped"
+msgstr "跳过"
+
+msgid "Slave"
+msgstr "从库"
+
+msgid "Sleep Seconds After Archive Limit"
+msgstr "归档limit行后的休眠秒数"
+
+msgid "Slow Query Histories"
+msgstr "慢查询历史"
+
+msgid "Slow Query History"
+msgstr "慢日志明细"
+
+msgid "Slow Query Statistics"
+msgstr "慢日志统计"
+
+msgid "Sort Order"
+msgstr "排序"
+
+msgid "Source Database"
+msgstr "源数据库"
+
+msgid "Source Table"
+msgstr "源表"
+
+msgid "Standalone"
+msgstr "单机"
+
+msgid "Start Execution"
+msgstr "开始执行"
+
+msgid "Statement Alias"
+msgstr "语句标识"
+
+msgid "Submit"
+msgstr "提交"
+
+msgid "Submit Archive Application"
+msgstr "提交归档申请"
+
+msgid "Submit Data Export"
+msgstr "提交数据导出"
+
+msgid "Submit SQL Query"
+msgstr "提交SQL查询"
+
+msgid "Submit SQL Workflow"
+msgstr "提交SQL上线工单"
+
+msgid "System Configuration"
+msgstr "系统配置"
+
+msgid "System Configurations"
+msgstr "系统配置"
+
+msgid "System Modified Time"
+msgstr "系统时间修改"
+
+msgid "System Time"
+msgstr "系统时间"
+
+msgid "Table"
+msgstr "表"
+
+msgid "Tag Code"
+msgstr "标签代码"
+
+msgid "Tag Name"
+msgstr "标签名称"
+
+msgid "Three-segment General Masking Rule"
+msgstr "三段式通用脱敏规则"
+
+msgid ""
+"Three-segment general masking rule: automatically splits by field length "
+"into three parts, masks the middle segment."
+msgstr "三段式通用脱敏规则：根据字段长度自动分成三份，中间段脱敏。"
+
+msgid "Tunnel Configuration"
+msgstr "隧道配置"
+
+msgid "Tunnel Configurations"
+msgstr "隧道配置"
+
+msgid "Tunnel Host"
+msgstr "隧道连接"
+
+msgid "Tunnel Info"
+msgstr "隧道信息"
+
+msgid "Tunnel Name"
+msgstr "隧道名称"
+
+msgid "Updated Time"
+msgstr "更新时间"
+
+msgid "User Display Name"
+msgstr "用户中文名"
+
+msgid "User ID"
+msgstr "用户ID"
+
+msgid "Users"
+msgstr "用户管理"
+
+msgid "Valid values: range [1-65535], value [ON|OFF]"
+msgstr "有效参数值，范围参数[1-65535]，值参数[ON|OFF]"
+
+msgid "Verify Server SSL Certificate"
+msgstr "是否验证服务端SSL证书"
+
+msgid "View Instance Parameters"
+msgstr "查看实例参数列表"
+
+msgid "View Locks"
+msgstr "查看锁信息"
+
+msgid "View Sessions"
+msgstr "查看会话"
+
+msgid "View Tablespace"
+msgstr "查看表空间"
+
+msgid "View Transactions"
+msgstr "查看事务信息"
+
+msgid "WeCom User ID"
+msgstr "企业微信UserID"
+
+msgid "WeCom Webhook URL"
+msgstr "企业微信webhook地址"
+
+msgid "Workflow Audit"
+msgstr "工作流审批列表"
+
+msgid "Workflow Audit Detail"
+msgstr "工作流审批明细"
+
+msgid "Workflow Audit Details"
+msgstr "工作流审批明细"
+
+msgid "Workflow Audit ID"
+msgstr "工单审批id"
+
+msgid "Workflow Audit List"
+msgstr "工作流审批列表"
+
+msgid "Workflow Logs"
+msgstr "工作流日志"
+
+msgid "Workflow Type (0=Unknown, 1=DDL, 2=DML, 3=Offline Export)"
+msgstr "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单"
+
+msgid "workflow_abort"
+msgstr "人工终止流程"
+
+msgid "workflow_autoreviewwrong"
+msgstr "自动审核不通过"
+
+msgid "workflow_exception"
+msgstr "执行有异常"
+
+msgid "workflow_executing"
+msgstr "执行中"
+
+msgid "workflow_finish"
+msgstr "已正常结束"
+
+msgid "workflow_manreviewing"
+msgstr "等待审核人审核"
+
+msgid "workflow_queuing"
+msgstr "排队中"
+
+msgid "workflow_review_pass"
+msgstr "审核通过"
+
+msgid "workflow_timingtask"
+msgstr "定时执行"
+
+# Backend messages (auth, check, workflow, query, notify)
+msgid "Archery email send test"
+msgstr "Archery 邮件发送测试"
+
+msgid "Archery email send test..."
+msgstr "Archery 邮件发送测试..."
+
+msgid ""
+"Archive table: {table}\n"
+"Archive mode: {mode}\n"
+"Archive condition: {condition}\n"
+msgstr ""
+"归档表：{table}\n"
+"归档模式：{mode}\n"
+"归档条件：{condition}\n"
+
+msgid "Audit failed: {error}"
+msgstr "审核失败: {error}"
+
+msgid ""
+"Authorization expires: {auth_ends_at}\n"
+"Result set limit: {limit_num}\n"
+msgstr ""
+"授权截止时间：{auth_ends_at}\n"
+"结果集：{limit_num}\n"
+
+msgid "Cancellation reason cannot be empty"
+msgstr "终止原因不能为空"
+
+msgid "Custom parameter format error, please enter valid JSON format"
+msgstr "自定义参数格式错误，请输入有效的JSON格式"
+
+msgid "Data masking error, please contact the administrator. Error: {}"
+msgstr "数据脱敏异常，请联系管理员，错误信息：{}"
+
+msgid "Data masking error: {}"
+msgstr "数据脱敏异常：{}"
+
+msgid "Database list: {db_list}\n"
+msgstr "数据库清单：{db_list}\n"
+
+msgid ""
+"Database: {db_list}\n"
+"Table list: {table_list}\n"
+msgstr ""
+"数据库：{db_list}\n"
+"表清单：{table_list}\n"
+
+msgid "Execute workflow"
+msgstr "执行工单"
+
+msgid "Failed to create approval workflow, please contact the administrator"
+msgstr "新建审批流失败, 请联系管理员"
+
+msgid "Incorrect username or password, please try again!"
+msgstr "用户名或密码错误，请重新输入！"
+
+msgid "Instance does not exist"
+msgstr "实例不存在"
+
+msgid "Invalid audit_status parameter, {error}"
+msgstr "audit_status 参数错误, {error}"
+
+msgid "Invalid workflow status"
+msgstr "工单状态不正确"
+
+msgid "Invalid workflow type"
+msgstr "工单类型不正确"
+
+msgid ""
+"JSON decode failed. Execution result JSON parsing failed, please contact "
+"the administrator"
+msgstr "执行结果Json解析失败, 请联系管理员"
+
+msgid "Manual execution confirmed complete"
+msgstr "确认手工执行结束"
+
+msgid "Manual workflow"
+msgstr "手工工单"
+
+msgid ""
+"Not within the executable time range. If you need to change the execution "
+"time, please resubmit the workflow!"
+msgstr "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+
+msgid ""
+"OpenAI configuration is missing. Required: [openai_base_url, "
+"openai_api_key, default_chat_model]"
+msgstr ""
+"openai 缺少配置, 必需配置[openai_base_url, openai_api_key, "
+"default_chat_model]"
+
+msgid "Parameter type error: %s"
+msgstr "参数类型错误: %s"
+
+msgid "Please complete the current user's email information first!"
+msgstr "请先完善当前用户邮箱信息！"
+
+msgid "Please enable email notifications first!"
+msgstr "请先开启邮件通知！"
+
+msgid "Please fill in all required fields"
+msgstr "请填写完整"
+
+msgid "Port number must be a positive integer"
+msgstr "端口号只能为正整数"
+
+msgid "Query error, error message: {}"
+msgstr "查询异常报错，错误信息：{}"
+
+msgid "Registration is not enabled, please contact the administrator"
+msgstr "注册未启用,请联系管理员开启"
+
+msgid "Review failed, error: {}"
+msgstr "审核失败, 错误信息: {}"
+
+msgid "Scheduled execution"
+msgstr "定时执行"
+
+msgid "Scheduled execution time: {}"
+msgstr "定时执行时间：{}"
+
+msgid "Service error, please contact the administrator"
+msgstr "服务异常，请联系管理员处理"
+
+msgid "Storage connection test error"
+msgstr "存储连接测试异常"
+
+msgid "Storage connection test failed"
+msgstr "存储连接测试失败"
+
+msgid ""
+"Submitted at: {create_time}\n"
+"Submitted by: {engineer}\n"
+"Group: {group_name}\n"
+"Target instance: {instance}\n"
+"Database: {db_name}\n"
+"Approval workflow: {review_info}\n"
+"Workflow name: {workflow_name}\n"
+"Workflow URL: {url}\n"
+"Workflow details preview: {preview}"
+msgstr ""
+"发起时间/发起人/组/目标实例/数据库/审批流程/工单名称/工单地址/工单详情预览"
+
+msgid ""
+"Submitted at: {create_time}\n"
+"Submitted by: {workflow_from}\n"
+"Group: {group_name}\n"
+"Target instance: {instance}\n"
+"Database: {db_name}\n"
+"Approval workflow: {review_info}\n"
+"Current approver: {current_node}\n"
+"Workflow name: {workflow_title}\n"
+"Workflow URL: {workflow_url}\n"
+"Workflow details preview: {workflow_content}"
+msgstr ""
+"发起时间/发起人/组/目标实例/数据库/审批流程/当前审批/工单名称/工单地址/工"
+"单详情预览"
+
+msgid ""
+"Submitted at: {create_time}\n"
+"Submitted by: {workflow_from}\n"
+"Group: {group_name}\n"
+"Target instance: {instance}\n"
+"Database: {db_name}\n"
+"Approval workflow: {review_info}\n"
+"Workflow name: {workflow_title}\n"
+"Workflow URL: {workflow_url}\n"
+"Workflow details preview: {workflow_content}\n"
+msgstr ""
+"发起时间/发起人/组/目标实例/数据库/审批流程/工单名称/工单地址/工单详情预"
+"览\n"
+
+msgid ""
+"Submitted at: {create_time}\n"
+"Submitted by: {workflow_from}\n"
+"Group: {group_name}\n"
+"Target instance: {instance}\n"
+"Database: {db_name}\n"
+"Workflow name: {workflow_title}\n"
+"Workflow URL: {workflow_url}\n"
+"Abort reason: {remark}"
+msgstr "发起时间/发起人/组/目标实例/数据库/工单名称/工单地址/终止原因"
+
+msgid ""
+"Submitted at: {create_time}\n"
+"Target instance: {instance}\n"
+"Database: {db_name}\n"
+"Workflow name: {workflow_title}\n"
+"Workflow URL: {workflow_url}\n"
+"Rejection reason: {remark}\n"
+"Note: This workflow was rejected, please revise according to the "
+"rejection reason!"
+msgstr "发起时间/目标实例/数据库/工单名称/工单地址/驳回原因/提醒"
+
+msgid ""
+"Submitted by: {engineer}\n"
+"Change group: {group_name}\n"
+"Change instance: {instance}\n"
+"Change database: {db_name}\n"
+"Workflow name: {workflow_name}\n"
+"Workflow URL: {url}\n"
+"Workflow preview: {preview}"
+msgstr "发起人/变更组/变更实例/变更数据库/工单名称/工单地址/工单预览"
+
+msgid "Submitted parameters may be empty"
+msgstr "页面提交参数可能为空"
+
+msgid "The parsed SQL files are in the {file_path} directory, please check"
+msgstr "解析的SQL文件在{file_path}目录下，请前往查看"
+
+msgid "The privilege to be modified does not exist"
+msgstr "待操作权限不存在"
+
+msgid "The two passwords do not match"
+msgstr "两次输入密码不一致"
+
+msgid "Time cannot be earlier than the current time"
+msgstr "时间不能小于当前时间"
+
+msgid "Time cannot be empty"
+msgstr "时间不能为空"
+
+msgid ""
+"Too many failed login attempts, account is locked! Please wait about %d "
+"seconds before trying again"
+msgstr "登录失败超过限制，该账号已被锁定！请等候大约%d秒再试"
+
+msgid ""
+"Unable to connect to goInception backup database\n"
+"%s"
+msgstr "无法连接goInception备份库"
+
+msgid ""
+"Unable to connect to goInception\n"
+"%s"
+msgstr "无法连接goInception"
+
+msgid ""
+"Unable to connect to instance,\n"
+"%s"
+msgstr "无法连接实例"
+
+msgid ""
+"Unable to verify query statement permissions, please contact the "
+"administrator. Error: {msg}"
+msgstr "无法校验查询语句权限，请联系管理员，错误信息：{msg}"
+
+msgid "User has no valid permissions!"
+msgstr "用户无任何有效权限！"
+
+msgid "Username already exists"
+msgstr "用户名已存在"
+
+msgid "Username and password cannot be empty"
+msgstr "用户名和密码不能为空"
+
+msgid "Workflow does not exist"
+msgstr "工单不存在"
+
+msgid "Workflow execution queued"
+msgstr "工单执行排队中"
+
+msgid "WorkflowAudit or workflow must be provided"
+msgstr "需要提供 WorkflowAudit 或 workflow"
+
+msgid ""
+"You already have full permission for database {db_name} on instance "
+"{instance_name}, cannot apply again"
+msgstr "你已拥有{instance_name}实例{db_name}库的全部权限，不能重复申请"
+
+msgid ""
+"You already have permission for database {db_name} on instance "
+"{instance_name}, cannot apply again"
+msgstr "你已拥有{instance_name}实例{db_name}库权限，不能重复申请"
+
+msgid ""
+"You already have query permission for table {db_name}.{tb_name} on "
+"instance {instance_name}, cannot apply again"
+msgstr ""
+"你已拥有{instance_name}实例{db_name}.{tb_name}表的查询权限，不能重复申请"
+
+msgid "You do not have permission to operate on this workflow!"
+msgstr "你无权操作当前工单！"
+
+msgid ""
+"You do not have query permission for database {db_name}! Please apply in "
+"Query Privileges Management first"
+msgstr "你无{db_name}数据库的查询权限！请先到查询权限管理进行申请"
+
+msgid ""
+"You do not have query permission for table {schema}.{name}! Please apply "
+"in Query Privileges Management first"
+msgstr "你无{schema}.{name}表的查询权限！请先到查询权限管理进行申请"
+
+msgid "Your group is not associated with this instance"
+msgstr "你所在组未关联该实例"
+
+msgid "Your group is not associated with this instance!"
+msgstr "你所在组未关联该实例！"
+
+msgid "[Archery] My2SQL execution completed"
+msgstr "[Archery 通知]My2SQL执行结束"
+
+msgid "[Archery] My2SQL execution failed"
+msgstr "[Archery 通知]My2SQL执行失败"
+
+msgid "[Archery] New DDL statement executed #{audit_id}"
+msgstr "[Archery]有新的DDL语句执行完成#{audit_id}"
+
+msgid "[{workflow_type}] New workflow application #{audit_id}"
+msgstr "[{workflow_type}]新的工单申请#{audit_id}"
+
+msgid "[{workflow_type}] Workflow aborted by submitter #{audit_id}"
+msgstr "[{workflow_type}]提交人主动终止工单#{audit_id}"
+
+msgid "[{workflow_type}] Workflow approved #{audit_id}"
+msgstr "[{workflow_type}]工单审核通过#{audit_id}"
+
+msgid "[{workflow_type}] Workflow rejected #{audit_id}"
+msgstr "[{workflow_type}]工单被驳回#{audit_id}"
+
+msgid "[{workflow_type}] Workflow {status} #{audit_id}"
+msgstr "[{workflow_type}]工单{status}#{audit_id}"
+
+msgid "max_export_rows must be an integer"
+msgstr "max_export_rows 必须是整数"
+
+msgid "query_desc or db_type is missing"
+msgstr "query_desc or db_type不存在"
+
+msgid "workflow_id parameter is empty."
+msgstr "workflow_id参数为空."
+
+msgid "Workflow Todo List"
+msgstr "待办列表"
+
+msgid "Query Privilege Request"
+msgstr "查询权限申请"
+
+msgid "SQL Deployment Request"
+msgstr "SQL上线申请"
+
+msgid "Data Archive Request"
+msgstr "数据归档申请"
+
+msgid "Review Confirmation"
+msgstr "审核确认"
+
+msgid "Please enter the review remark"
+msgstr "请输入审核备注"
+
+msgid "Request Title"
+msgstr "申请标题"
+
+msgid "Request Type"
+msgstr "申请类型"
+
+msgid "Requester"
+msgstr "申请人"
+
+msgid "Request Time"
+msgstr "申请时间"
+
+msgid "Enabled Status"
+msgstr "启用状态"
+
+msgid "Apply Archive"
+msgstr "申请归档"
+
+msgid "Add Config"
+msgstr "添加配置"
+
+msgid "Apply Data Archive"
+msgstr "申请数据归档"
+
+msgid "Describe the archive request briefly"
+msgstr "对归档进行简单描述"
+
+msgid "Select Group:"
+msgstr "请选择组:"
+
+msgid "Select Instance:"
+msgstr "请选择实例:"
+
+msgid "Select Source Database:"
+msgstr "请选择源数据库:"
+
+msgid "Select Database:"
+msgstr "请选择数据库:"
+
+msgid "Select table to archive:"
+msgstr "请选择需要归档的表:"
+
+msgid "Select archive mode:"
+msgstr "请选择归档模式:"
+
+msgid "Keep source data after archive:"
+msgstr "归档后是否保留源数据:"
+
+msgid "Keep source data after archive"
+msgstr "归档后是否保留源数据"
+
+msgid "Select target instance:"
+msgstr "请选择目标实例:"
+
+msgid "Select target database:"
+msgstr "请选择目标数据库:"
+
+msgid "Select target table:"
+msgstr "请选择目标表:"
+
+msgid "Enter archive condition, this is the SQL WHERE clause"
+msgstr "请输入归档条件，就是SQL语句的WHERE条件"
+
+msgid "Workflow"
+msgstr "审批流程"
+
+msgid ""
+"Hint: source and target tables must have the same structure, otherwise "
+"archiving will fail"
+msgstr "提示：源表和目标表结构必须保持一致，否则将会归档失败"
+
+msgid "Submit Request"
+msgstr "提交申请"
+
+msgid "Common Queries"
+msgstr "常用查询"
+
+msgid "AI query description"
+msgstr "AI 查询描述"
+
+msgid "Generate SQL"
+msgstr "生成SQL"
+
+msgid "Locate instance by table name (e.g. orders)"
+msgstr "按表名定位实例（如 orders）"
+
+msgid "Searching..."
+msgstr "查询中..."
+
+msgid "Search the database you want to query"
+msgstr "搜索您要查询的数据库"
+
+msgid "Search the table you want to query"
+msgstr "搜索您要查询的表"
+
+msgid "Select Schema:"
+msgstr "请选择模式:"
+
+msgid "View Table Structure"
+msgstr "查看表结构"
+
+msgid "View Table Structure:"
+msgstr "查看表结构:"
+
+msgid "Returned rows:"
+msgstr "返回行数:"
+
+msgid "Explain"
+msgstr "执行计划"
+
+msgid "Query Results"
+msgstr "查询结果"
+
+msgid "One-click Query"
+msgstr "一键查询"
+
+msgid "Returned Rows"
+msgstr "返回行数"
+
+msgid "Elapsed Time (seconds)"
+msgstr "耗时(秒)"
+
+msgid "Please enter a SQL alias"
+msgstr "请输入语句别名！"
+
+msgid "Please enter a file name"
+msgstr "请输入文件名："
+
+msgid "Non-JSON format, unable to format!"
+msgstr "非json格式，无法格式化！"
+
+msgid "Please select a database"
+msgstr "请选择数据库！"
+
+msgid "Please select table structure"
+msgstr "请选择表结构！"
+
+msgid "Please enter a query description"
+msgstr "请输入查询描述！"
+
+msgid "SQL content cannot be empty"
+msgstr "SQL内容不能为空！"
+
+msgid "Please select a privilege type"
+msgstr "请选择权限类别"
+
+msgid "Information is incomplete or the approval process is not configured"
+msgstr "信息填写不完整，或者未配置审批流程"
+
+msgid "Selected {0} items"
+msgstr "已选中{0}项"
+
+msgid "Apply Permission"
+msgstr "权限申请"
+
+msgid "Apply Database Query Privilege"
+msgstr "申请数据库查询权限"
+
+msgid "Favorite SQL"
+msgstr "收藏语句"
+
+msgid "Favorite"
+msgstr "收藏"
+
+msgid "Starred"
+msgstr "已收藏"
+
+msgid "Unstarred"
+msgstr "未收藏"
+
+msgid "Query History"
+msgstr "查询历史"
+
+msgid "Execution Result"
+msgstr "执行结果"
+
+msgid "Redis Help"
+msgstr "Redis帮助文档"
+
+msgid "Masking Time"
+msgstr "脱敏时间"
+
+msgid "No approval required"
+msgstr "无需审批"
+
+msgid "String Operations"
+msgstr "字符串操作"
+
+msgid "Hash Operations"
+msgstr "哈希操作"
+
+msgid "Set Operations"
+msgstr "集合操作"
+
+msgid "Sorted Set Operations"
+msgstr "有序集合操作"
+
+msgid "Help:"
+msgstr "帮助："
+
+msgid "Target Database"
+msgstr "目标数据库"
+
+msgid "Target Table"
+msgstr "目标表"
+
+msgid "Archive Conditions"
+msgstr "归档条件"
+
+msgid "exists key checks whether key exists. Returns 1 if it exists, otherwise 0."
+msgstr "exists key 检查 key 是否存在。存在返回 1，否则返回 0。"
+
+msgid "keys pattern finds all keys matching the given pattern and is usually used to search keys."
+msgstr "keys pattern 查找匹配指定模式的所有 key，通常用于搜索 key。"
+
+msgid "expire key seconds sets a timeout for key in seconds. The system deletes it automatically when it expires."
+msgstr "expire key seconds 为 key 设置秒级超时时间，到期后自动删除。"
+
+msgid "ttl key returns the remaining lifetime of key in seconds. Returns -2 if key does not exist and -1 if it exists without an expiry."
+msgstr "ttl key 返回 key 剩余生存时间（秒）。key 不存在返回 -2，不设置过期时间返回 -1。"
+
+msgid "pttl key works like ttl but returns the remaining lifetime in milliseconds."
+msgstr "pttl key 类似 ttl，但返回毫秒级剩余时间。"
+
+msgid "move key db moves key to the specified database."
+msgstr "move key db 将 key 移动到指定数据库。"
+
+msgid "type key returns the stored value type: none (missing), string, list, set, zset, or hash."
+msgstr "type key 返回 key 存储的值类型：none（不存在）、string、list、set、zset 或 hash。"
+
+msgid "get key returns the value of key. Returns nil if key does not exist and an error if the value is not a string."
+msgstr "get key 返回 key 的值。key 不存在返回 nil，值不是字符串时返回错误。"
+
+msgid "mget key [key...] returns one or more values by key. Missing keys return nil."
+msgstr "mget key [key...] 根据 key 返回一个或多个值。缺失的 key 返回 nil。"
+
+msgid "strlen key returns the string length stored at key. Returns 0 if key does not exist and an error if the value is not a string."
+msgstr "strlen key 返回 key 中字符串长度。key 不存在返回 0，值不是字符串时返回错误。"
+
+msgid "append key value appends a value to the end of key, creating it if needed, and returns the new string length."
+msgstr "append key value 将 value 追加到 key 末尾；如有需要会先创建 key，并返回新的字符串长度。"
+
+msgid "set key value [ex seconds] [px milliseconds] [nx|xx] sets a value for key. ex and px set expiry in different units. nx only works when the key does not exist and xx only works when it does."
+msgstr "set key value [ex seconds] [px milliseconds] [nx|xx] 为 key 设置值。ex 和 px 分别设置不同单位的过期时间。nx 仅在 key 不存在时生效，xx 仅在 key 存在时生效。"
+
+msgid "setex key seconds value sets a key value with a lifetime in seconds."
+msgstr "setex key seconds value 为 key 设置值并指定秒级存活时间。"
+
+msgid "setnx key value sets a key value only when the key does not already exist."
+msgstr "setnx key value 仅在 key 不存在时设置值。"
+
+msgid "mset key value [key value...] atomically sets one or more key-value pairs. It succeeds or fails as a unit."
+msgstr "mset key value [key value...] 原子地设置一个或多个键值对。要么全部成功，要么全部失败。"
+
+msgid "msetnx key value [key value...] is like mset, but all keys must be missing or the operation fails."
+msgstr "msetnx key value [key value...] 类似 mset，但所有 key 都必须不存在，否则操作失败。"
+
+msgid "hgetall key returns all field values in the hash."
+msgstr "hgetall key 返回 hash 中所有字段和值。"
+
+msgid "hexists key field checks whether a field exists in the hash. Returns 1 if yes, otherwise 0."
+msgstr "hexists key field 检查 hash 中是否存在字段。存在返回 1，否则返回 0。"
+
+msgid "hget key field returns the value of a field in the hash."
+msgstr "hget key field 返回 hash 中某个字段的值。"
+
+msgid "hmget key field[field...] returns multiple field values from the hash."
+msgstr "hmget key field[field...] 返回 hash 中多个字段的值。"
+
+msgid "hkeys key returns all fields in the hash."
+msgstr "hkeys key 返回 hash 中所有字段。"
+
+msgid "hvals key returns all values in the hash."
+msgstr "hvals key 返回 hash 中所有值。"
+
+msgid "hdel key field[field...] deletes fields from the hash."
+msgstr "hdel key field[field...] 删除 hash 中的字段。"
+
+msgid "hset key field value sets a field-value pair in the hash."
+msgstr "hset key field value 在 hash 中设置字段和值。"
+
+msgid "hsetnx key field value works like hset, but only when the field does not already exist."
+msgstr "hsetnx key field value 类似 hset，但仅在字段不存在时生效。"
+
+msgid "smembers key lists all members of the set."
+msgstr "smembers key 列出 set 中所有成员。"
+
+msgid "scard key returns the number of elements in the set."
+msgstr "scard key 返回 set 中元素数量。"
+
+msgid "sdiff key[key...] returns the set difference."
+msgstr "sdiff key[key...] 返回集合差集。"
+
+msgid "sunion key[key...] returns the union of sets."
+msgstr "sunion key[key...] 返回集合并集。"
+
+msgid "spop key removes and returns a random element from the set."
+msgstr "spop key 删除并返回 set 中的一个随机元素。"
+
+msgid "sismember key member checks whether a member exists in the set."
+msgstr "sismember key member 检查 member 是否存在于 set 中。"
+
+msgid "sadd key member[member...] adds one or more members to the set."
+msgstr "sadd key member[member...] 向 set 中添加一个或多个成员。"
+
+msgid "smove source destination member moves a member between sets."
+msgstr "smove source destination member 将 member 从一个 set 移动到另一个 set。"
+
+msgid "srem key member[member] removes one or more members from the set."
+msgstr "srem key member[member] 从 set 中删除一个或多个成员。"
+
+msgid "zrange key start stop [WITHSCORES] returns members in the specified index range."
+msgstr "zrange key start stop [WITHSCORES] 返回指定索引范围内的成员。"
+
+msgid "zrangebyscore key min max [WITHSCORES] [LIMIT] returns members in the specified score range."
+msgstr "zrangebyscore key min max [WITHSCORES] [LIMIT] 返回指定分数范围内的成员。"
+
+msgid "zscore key member returns the score of a member in a sorted set."
+msgstr "zscore key member 返回有序集合中 member 的分数。"
+
+msgid "zcard key returns the number of members in a sorted set."
+msgstr "zcard key 返回有序集合中的成员数量。"
+
+msgid "zcount key min max counts members within the given score range."
+msgstr "zcount key min max 统计给定分数范围内的成员数量。"
+
+msgid "zrank key member returns the index of a member in a sorted set."
+msgstr "zrank key member 返回有序集合中 member 的索引。"

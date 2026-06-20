@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.utils.translation import gettext_lazy as _
 
 # Register your models here.
 from django.forms import PasswordInput
@@ -54,9 +55,9 @@ class UsersAdmin(UserAdmin):
     ordering = ("id",)
     # 编辑页显示内容
     fieldsets = (
-        ("认证信息", {"fields": ("username", "password")}),
+        (_("Authentication"), {"fields": ("username", "password")}),
         (
-            "个人信息",
+            _("Profile"),
             {
                 "fields": (
                     "display",
@@ -68,7 +69,7 @@ class UsersAdmin(UserAdmin):
             },
         ),
         (
-            "权限信息",
+            _("Permissions"),
             {
                 "fields": (
                     "is_superuser",
@@ -79,14 +80,14 @@ class UsersAdmin(UserAdmin):
                 )
             },
         ),
-        ("资源组", {"fields": ("resource_group",)}),
-        ("其他信息", {"fields": ("date_joined", "failed_login_count")}),
+        (_("Resource Group"), {"fields": ("resource_group",)}),
+        (_("Other Information"), {"fields": ("date_joined", "failed_login_count")}),
     )
     # 添加页显示内容
     add_fieldsets = (
-        ("认证信息", {"fields": ("username", "password1", "password2")}),
+        (_("Authentication"), {"fields": ("username", "password1", "password2")}),
         (
-            "个人信息",
+            _("Profile"),
             {
                 "fields": (
                     "display",
@@ -98,7 +99,7 @@ class UsersAdmin(UserAdmin):
             },
         ),
         (
-            "权限信息",
+            _("Permissions"),
             {
                 "fields": (
                     "is_superuser",
@@ -109,7 +110,7 @@ class UsersAdmin(UserAdmin):
                 )
             },
         ),
-        ("资源组", {"fields": ("resource_group",)}),
+        (_("Resource Group"), {"fields": ("resource_group",)}),
     )
     filter_horizontal = ("groups", "user_permissions", "resource_group")
     list_filter = ("is_staff", "is_superuser", "is_active", "groups", "resource_group")
@@ -225,9 +226,9 @@ class TunnelAdmin(admin.ModelAdmin):
     ordering = ("id",)
     # 添加页显示内容
     add_fieldsets = (
-        ("隧道信息", {"fields": ("tunnel_name", "host", "port")}),
+        (_("Tunnel Information"), {"fields": ("tunnel_name", "host", "port")}),
         (
-            "连接信息",
+            _("Connection Information"),
             {"fields": ("user", "password", "pkey_path", "pkey_password", "pkey")},
         ),
     )

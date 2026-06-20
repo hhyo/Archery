@@ -8,6 +8,7 @@ from datetime import timedelta
 import environ
 import requests
 import logging
+from django.utils.translation import gettext_lazy as _
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -146,6 +147,7 @@ INSTALLED_APPS = (
 
 MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -180,10 +182,15 @@ WSGI_APPLICATION = "archery.wsgi.application"
 
 # Internationalization
 LANGUAGE_CODE = "zh-hans"
+LANGUAGES = (
+    ("zh-hans", _("Simplified Chinese")),
+    ("en", _("English")),
+)
 
 TIME_ZONE = "Asia/Shanghai"
 
 USE_I18N = True
+LOCALE_PATHS = [os.path.join(BASE_DIR, "locale")]
 
 USE_TZ = False
 

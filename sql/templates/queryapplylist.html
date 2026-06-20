@@ -1,15 +1,16 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="btn-group">
         <a type="button" class="btn btn-default" href="/queryuserprivileges/">
             <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-            <span aria-hidden="true"></span>权限管理</a>
+            <span aria-hidden="true"></span>{% trans "Permission Management" %}</a>
         <button id="btn_add" type="button" class="btn btn-default"
                 data-toggle="modal" data-target="#apply">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-            <span aria-hidden="true"></span>权限申请
+            <span aria-hidden="true"></span>{% trans "Apply Permission" %}
         </button>
     </div>
     <!-- 申请列表的表格-->
@@ -25,16 +26,16 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">申请数据库查询权限</h4>
+                    <h4 class="modal-title" id="myModalLabel">{% trans "Apply Database Query Privilege" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <input type="text" autocomplete="off" class="form-control" id="title" placeholder="简单说明权限用途">
+                        <input type="text" autocomplete="off" class="form-control" id="title" placeholder="{% trans 'Briefly describe the privilege usage' %}">
                     </div>
                     <div class="form-group">
                         <select id="group_name" name="group_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                title="请选择组:"
+                                title="{% trans 'Select Group:' %}"
                                 data-live-search="true" required>
                             {% for group in group_list %}
                                 <option value="{{ group.group_name }}">{{ group.group_name }}</option>
@@ -44,7 +45,7 @@
                     <div class="form-group">
                         <select id="instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                title="请选择实例:"
+                                title="{% trans 'Select Instance:' %}"
                                 data-live-search="true" required>
                             // TODO 使用models中的choices 渲染
                             {% for name, engine in engines.items %}
@@ -54,19 +55,19 @@
                     </div>
                     <div class="form-group">
                         <select id="priv_type" name="db_name" data-live-search="true"
-                                title="权限级别:"
+                                title="{% trans 'Privilege Level:' %}"
                                 class="form-control selectpicker show-tick bs-select-hidden">
                         </select>
                     </div>
                     <div id="db_name_div" class="form-group">
                         <select id="db_name" name="db_name" data-live-search="true"
-                                title="请选择数据库:"
+                                title="{% trans 'Select Database:' %}"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
                         </select>
                     </div>
                     <div id="db_name_multiple_div" class="form-group" style="display: none">
                         <select id="db_name_multiple" name="db_name" data-live-search="true" multiple="multiple"
-                                title="请选择数据库:" required
+                                title="{% trans 'Select Database:' %}" required
                                 class="form-control selectpicker show-tick bs-select-hidden ">
                         </select>
                     </div>
@@ -75,23 +76,23 @@
                         <select id="table_name" name="table_name"
                                 class="form-control selectpicker show-tick bs-select-hidden" data-live-search="true"
                                 multiple='multiple' data-max-options="999"
-                                title="请选择表:" required>
+                                title="{% trans 'Select Table:' %}" required>
                         </select>
                     </div>
                     <div class="form-group">
-                        <select id="valid_date" name="valid_date"
-                                title="请选择授权时间:"
+                    <select id="valid_date" name="valid_date"
+                                title="{% trans 'Select Authorization Period:' %}"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="day">一天</option>
-                            <option value="week">一周</option>
-                            <option value="month">一月</option>
-                            <option value="year">长期(一年)</option>
+                            <option value="day">{% trans "One Day" %}</option>
+                            <option value="week">{% trans "One Week" %}</option>
+                            <option value="month">{% trans "One Month" %}</option>
+                            <option value="year">{% trans "Long Term (One Year)" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <input id="limit_num" list="limits" type="number"
                                class="form-control "
-                               placeholder="请选择查询限制行数:">
+                               placeholder="{% trans 'Select query row limit:' %}">
                         <datalist id="limits">
                             <option value=100>100</option>
                             <option value=500>500</option>
@@ -100,13 +101,13 @@
                     </div>
                     <!--审批流程-->
                     <div id="div-workflow_auditors" class="form-group" style="display: none">
-                        <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors"></b></p>
+                        <p class="bg-primary">&nbsp&nbsp&nbsp{% trans "Workflow" %}：<b id="workflow_auditors"></b></p>
                     </div>
-                    <p class="text-info">提示：权限审核通过后即可进行在线查询，请耐心等待。</p>
+                    <p class="text-info">{% trans "Hint: after approval, online query will be available. Please wait patiently." %}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-success" onclick="applyforprivileges()">提交申请</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-success" onclick="applyforprivileges()">{% trans "Submit Request" %}</button>
                 </div>
             </div>
         </div>
@@ -118,7 +119,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">工单日志</h4>
+                    <h4 class="modal-title text-danger">{% trans "Workflow Log" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
@@ -200,12 +201,12 @@
         //选择控件初始化
         $("#table_name").selectpicker({
             actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-            countSelectedText: "已选中{0}项",
+            countSelectedText: gettext("Selected {0} items"),
             selectedTextFormat: "count > 5"
         });
         $("#db_name_multiple").selectpicker({
             actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-            countSelectedText: "已选中{0}项",
+            countSelectedText: gettext("Selected {0} items"),
             selectedTextFormat: "count > 5"
         });
 
@@ -237,7 +238,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: true,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -275,7 +276,7 @@
                     }
                 },
                 columns: [{
-                    title: '工单名称',
+                    title: gettext('Workflow Name'),
                     field: 'title',
                     formatter: function (value, row, index) {
                         var span = document.createElement('span');
@@ -289,10 +290,10 @@
                         return span.outerHTML;
                     }
                 }, {
-                    title: '实例',
+                    title: gettext('Instance'),
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: gettext('Database'),
                     field: 'db_list',
                     formatter: function (value, row, index) {
                         if (value.length > 30) {
@@ -303,7 +304,7 @@
                         }
                     }
                 }, {
-                    title: '权限级别',
+                    title: gettext('Privilege Level'),
                     field: 'priv_type',
                     formatter: function (value, row, index) {
                         if (String(value) === '1') {
@@ -313,31 +314,31 @@
                         }
                     }
                 }, {
-                    title: '结果集',
+                    title: gettext('Result Set'),
                     field: 'limit_num'
                 }, {
-                    title: '有效时间',
+                    title: gettext('Valid Time'),
                     field: 'valid_date'
                 }, {
-                    title: '工单状态',
+                    title: gettext('Workflow Status'),
                     field: 'status',
                     formatter: function (value, row, index) {
                         return workflow_status_formatter(value)
                     }
                 }, {
-                    title: '申请人',
+                    title: gettext('Requester'),
                     field: 'user_display'
                 }, {
-                    title: '申请时间',
+                    title: gettext('Request Time'),
                     field: 'create_time'
                 }, {
-                    title: '组',
+                    title: gettext('Group'),
                     field: 'group_name'
                 }, {
-                    title: '操作',
+                    title: gettext('Action'),
                     field: 'operation',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.apply_id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.apply_id + "\"\n" + "onclick=\"getLog(this)\" >" + gettext('Operation Log') + "\n" + "</button>"
                     }
                 }],
                 onLoadSuccess: function () {
@@ -375,7 +376,7 @@
                     } else {
                         $('#priv_type').append("<option value=\"1\" selected=\"selected\">DATABASE</option>");
                     }
-                    $('#priv_type').prepend("<option value=\"is-empty\" disabled=\"\">权限级别:</option>");
+                    $('#priv_type').prepend("<option value=\"is-empty\" disabled=\"\">"+gettext('Privilege Level')+":</option>");
                     $('#priv_type').selectpicker('render');
                     $('#priv_type').selectpicker('refresh');
                     $('#priv_type').selectpicker().trigger("change")
@@ -481,19 +482,19 @@
                     if (title && group_name && workflow_auditors && instance_name && db_name_multiple && valid_date && limit_num) {
                         return true
                     } else {
-                        alert("信息填写不完整，或者未配置审批流程");
+                        alert(gettext("Information is incomplete or the approval process is not configured"));
                         return false
                     }
                 } else if (priv_type === '2') {
                     if (title && group_name && workflow_auditors && instance_name && db_name && table_name && valid_date && limit_num) {
                         return true
                     } else {
-                        alert("信息填写不完整，或者未配置审批流程");
+                        alert(gettext("Information is incomplete or the approval process is not configured"));
                         return false
                     }
                 }
             } else if (priv_type == null) {
-                alert("请选择权限类别");
+                alert(gettext("Please select a privilege type"));
                 return false
             }
         }
@@ -607,19 +608,19 @@
                         showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
                         cardView: false,                    //是否显示详细视图
                         detailView: false,                  //是否显示父子表
-                        locale: 'zh-CN',                    //本地化
+                        locale: window.getBootstrapTableLocale(),                    //本地化
                         data: data.rows,
                         columns: [{
-                            title: '操作',
+                            title: gettext('Action'),
                             field: 'operation_type_desc'
                         }, {
-                            title: '操作人',
+                            title: gettext('Operator'),
                             field: 'operator_display'
                         }, {
-                            title: '操作时间',
+                            title: gettext('Operation Time'),
                             field: 'operation_time'
                         }, {
-                            title: '操作信息',
+                            title: gettext('Operation Info'),
                             field: 'operation_info'
                         }],
                         onLoadSuccess: function () {
