@@ -1,12 +1,13 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
-            <select id="navStatus" class="form-control selectpicker">
-                <option value="" selected="selected">动作</option>
+            <select id="navStatus" class="form-control selectpicker" style="display:none;">
+                <option value="" selected="selected">{% trans "Action" %}</option>
                     {% for action_type in action_types %}
-                    <option value={{ action_type }}>{{ action_type }}</option>
+                    <option value="{{ action_type }}">{{ action_type }}</option>
                     {% endfor %}
             </select>
         </div>
@@ -39,11 +40,25 @@
             let start = moment().subtract(6, 'days');
             let end = moment();
 
+            const actionLabelMap = {
+                '登入': gettext('Sign in'),
+                '登出': gettext('Sign out'),
+                '登入失败': gettext('Login failed')
+            };
+
+            $('#navStatus option').each(function () {
+                const value = $(this).val();
+                if (actionLabelMap[value]) {
+                    $(this).text(actionLabelMap[value]);
+                }
+            });
+            $('#navStatus').selectpicker('refresh');
+
             function cb(start, end) {
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html(gettext('All Data'));
                 }
             }
 
@@ -55,23 +70,23 @@
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
                     // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十月", "十一月", "十二月"],
+                    applyLabel: gettext("Apply"),
+                    cancelLabel: gettext("Cancel"),
+                    fromLabel: gettext("Start"),
+                    toLabel: gettext("End"),
+                    customRangeLabel: gettext("Custom"),
+                    daysOfWeek: [gettext("Su"), gettext("Mo"), gettext("Tu"), gettext("We"), gettext("Th"), gettext("Fr"), gettext("Sa")],
+                    monthNames: [gettext("January"), gettext("February"), gettext("March"), gettext("April"), gettext("May"), gettext("June"), gettext("July"), gettext("August"), gettext("September"), gettext("October"), gettext("November"), gettext("December")],
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [null, null],
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    [gettext("All")]: [null, null],
+                    [gettext("Today")]: [moment().startOf('day'), moment()],
+                    [gettext("Yesterday")]: [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    [gettext("Last 7 Days")]: [moment().subtract('days', 6), moment()],
+                    [gettext("Last 30 Days")]: [moment().subtract('days', 29), moment()],
+                    [gettext("This Month")]: [moment().startOf("month"), moment().endOf("month")],
+                    [gettext("Last Month")]: [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 grouplist()
@@ -113,7 +128,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: true,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -158,20 +173,20 @@
                     return html.join('');
                 },
                 columns: [{
-                    title: '用户',
+                    title: gettext('User'),
                     field: 'user_name',
                     formatter: function (value, row, index) {
                         return "<a target=\"_blank\" href=\"/admin/sql/users/" + row.user_id + "/change/\">" + value + "</a>"
                     }
                 },{
-                    title: '中文名',
+                    title: gettext('Display Name'),
                     field: 'user_display'
                 },{
-                    title: '动作',
+                    title: gettext('Action'),
                     field: 'action'
                 
                 },{
-                    title: '额外信息',
+                    title: gettext('Extra Info'),
                     field: 'extra_info',
                     formatter: function (value, row, index) {
                         var _info=row.extra_info
@@ -185,11 +200,11 @@
                         }
                     }
                 },{
-                    title: '完整额外信息',
+                    title: gettext('Full Extra Info'),
                     field: 'extra_info',
                     visible: false
                 },{
-                    title: '操作时间',
+                    title: gettext('Operation Time'),
                     field: 'action_time'
                 }],
                 onLoadSuccess: function () {

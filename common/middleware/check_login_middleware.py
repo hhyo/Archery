@@ -30,6 +30,7 @@ class CheckLoginMiddleware(MiddlewareMixin):
             # 以下是不用跳转到login页面的url白名单
             if (
                 request.path not in IGNORE_URL
+                and not request.path.startswith("/i18n/")
                 and re.match(IGNORE_URL_RE, request.path) is None
                 and not (
                     re.match(r"/user/qrcode/\w+", request.path)

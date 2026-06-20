@@ -1,28 +1,29 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="sqladvisor-toolbar" class="btn-group right" style="display:none;">
-        <button id=sqladvisor class="btn btn-default" style="" type="button">获取优化建议</button>
+        <button id=sqladvisor class="btn btn-default" style="" type="button">{% trans "Get Optimization Advice" %}</button>
     </div>
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
         <li id="slowsql_tab" class="active">
-            <a href="#slowsql" role="tab" data-toggle="tab">慢日志统计</a>
+            <a href="#slowsql" role="tab" data-toggle="tab">{% trans "Slow Query Statistics" %}</a>
         </li>
         <li id="slowsqlinfo_tab">
-            <a href="#slowsqlinfo" role="tab" data-toggle="tab">慢日志明细</a>
+            <a href="#slowsqlinfo" role="tab" data-toggle="tab">{% trans "Slow Query Details" %}</a>
         </li>
         <div class="form-inline pull-right">
             <div class="form-group">
                 <select id=instance_name class="form-control selectpicker" name="instances"
-                        title="请选择实例:"
+                        title="{% trans 'Please select an instance:' %}"
                         data-live-search="true">
                 </select>
             </div>
             <div class="form-group">
                 <select id=db_name class="form-control selectpicker" name="db_name_list"
-                        title="请选择数据库:"
+                        title="{% trans 'Please select a database:' %}"
                         data-live-search="true">
                 </select>
             </div>
@@ -77,23 +78,22 @@
                 locale: {
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
-                    // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    applyLabel: gettext("Apply"),
+                    cancelLabel: gettext("Cancel"),
+                    fromLabel: gettext("Start"),
+                    toLabel: gettext("End"),
+                    customRangeLabel: gettext("Custom"),
+                    daysOfWeek: [gettext("Su"), gettext("Mo"), gettext("Tu"), gettext("We"), gettext("Th"), gettext("Fr"), gettext("Sa")],
+                    monthNames: [gettext("January"), gettext("February"), gettext("March"), gettext("April"), gettext("May"), gettext("June"), gettext("July"), gettext("August"), gettext("September"), gettext("October"), gettext("November"), gettext("December")],
                     firstDay: 1
                 },
                 ranges: {
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    [gettext("Today")]: [moment().startOf('day'), moment()],
+                    [gettext("Yesterday")]: [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    [gettext("Last 7 Days")]: [moment().subtract('days', 6), moment()],
+                    [gettext("Last 30 Days")]: [moment().subtract('days', 29), moment()],
+                    [gettext("This Month")]: [moment().startOf("month"), moment().endOf("month")],
+                    [gettext("Last Month")]: [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 sessionStorage.removeItem('SQLId');
@@ -163,7 +163,7 @@
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#db_name").append(name);
                         }
-                        $("#db_name").prepend("<option value=\"\" selected=\"selected\">全部数据库</option>");
+                        $("#db_name").prepend("<option value=\"\" selected=\"selected\">" + gettext('All Databases') + "</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                     } else {
@@ -279,7 +279,7 @@
                     sessionStorage.setItem('advisor_instance_name', advisor_instance_name);
                     location.href = '/slowquery_advisor/';
                 } else {
-                    alert("请先选择需要优化的sql")
+                alert(gettext("Please select the SQL to optimize first"))
                 }
             });
         });
@@ -295,11 +295,11 @@
                 var is_redis = db_type === 'redis';
                 var sortName = is_redis ? "TotalExecutionCounts" : "MySQLTotalExecutionCounts";
                 var columns = is_redis ? [{
-                        title: '日志统计时间',
+                        title: gettext('Log Statistics Time'),
                         field: 'CreateTime',
                         sortable:true
                     }, {
-                        title: '命令模板',
+                        title: gettext('Command Template'),
                         field: 'SQLText',
                         cellStyle:
                             function formatTableUnit(value, row, index) {
@@ -320,35 +320,35 @@
                             }
                         }
                     }, {
-                        title: '完整命令',
+                        title: gettext('Full Command'),
                         field: 'SQLText',
                         visible: false
                     }, {
-                        title: '执行总次数',
+                        title: gettext('Total Count'),
                         field: 'TotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '执行总时长(秒)',
+                        title: gettext('Total Duration (seconds)'),
                         field: 'TotalExecutionTimes',
                         sortable:true
                     }, {
-                        title: '平均执行时长(微秒)',
+                        title: gettext('Average Duration (microseconds)'),
                         field: 'QueryTimeAvg',
                         sortable:true
                     }, {
-                        title: '95%耗时(微秒)',
+                        title: gettext('95th Percentile Duration (microseconds)'),
                         field: 'DurationPct95',
                         sortable:true
                     }] : [{
-                        title: '日志统计时间',
+                        title: gettext('Log Statistics Time'),
                         field: 'CreateTime',
                         sortable:true
                     }, {
-                        title: '数据库名',
+                        title: gettext('Database'),
                         field: 'DBName',
                         sortable:true
                     }, {
-                        title: 'SQL语句',
+                        title: gettext('SQL Statement'),
                         field: 'SQLText',
                         cellStyle:
                             function formatTableUnit(value, row, index) {
@@ -369,35 +369,35 @@
                             }
                         }
                     }, {
-                        title: '完整SQL语句',
+                        title: gettext('Full SQL Statement'),
                         field: 'SQLText',
                         visible: false
                     }, {
-                        title: '执行总次数',
+                        title: gettext('Total Count'),
                         field: 'MySQLTotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '执行总时长(秒)',
+                        title: gettext('Total Duration (seconds)'),
                         field: 'MySQLTotalExecutionTimes',
                         sortable:true
                     }, {
-                        title: '平均执行时长(秒)',
+                        title: gettext('Average Duration (seconds)'),
                         field: 'QueryTimeAvg',
                         sortable:true
                     }, {
-                        title: '扫描总行数',
+                        title: gettext('Total Scanned Rows'),
                         field: 'ParseTotalRowCounts',
                         sortable:true
                     }, {
-                        title: '返回总行数',
+                        title: gettext('Total Returned Rows'),
                         field: 'ReturnTotalRowCounts',
                         sortable:true
                     }, {
-                        title: '平均扫描行数',
+                        title: gettext('Average Scanned Rows'),
                         field: 'ParseRowAvg',
                         sortable:true
                     }, {
-                        title: '平均返回行数',
+                        title: gettext('Average Returned Rows'),
                         field: 'ReturnRowAvg',
                         sortable:true
                     }];
@@ -491,7 +491,7 @@
                         return html.join('');
                     },
                     columns: columns,
-                    locale: 'zh-CN',
+                    locale: window.getBootstrapTableLocale(),
                     onLoadError: onLoadErrorCallback,
                     onSearch: function(e) {
                     },
@@ -501,7 +501,7 @@
                     }
                 });
             } else {
-                alert('请选择实例')
+                alert(gettext('Please select an instance'))
             }
         }
 
@@ -518,15 +518,15 @@
             if (instance_name) {
                 var sortName = is_redis ? "TotalExecutionCounts" : "ParseRowCounts";
                 var columns = is_redis ? [{
-                        title: '执行开始时间',
+                        title: gettext('Execution Start Time'),
                         field: 'ExecutionStartTime',
                         sortable:true
                     }, {
-                        title: 'Redis节点',
+                        title: gettext('Redis Node'),
                         field: 'HostName',
                         sortable:true
                     }, {
-                        title: '命令',
+                        title: gettext('Command'),
                         field: 'SQLText',
                         formatter: function (value, row, index) {
                             if (value.length > 100) {
@@ -537,19 +537,19 @@
                             }
                         }
                     }, {
-                        title: '完整命令',
+                        title: gettext('Full Command'),
                         field: 'SQLText',
                         visible: false
                     }, {
-                        title: '执行次数',
+                        title: gettext('Execution Count'),
                         field: 'TotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '95%耗时(微秒)',
+                        title: gettext('95th Percentile Duration (microseconds)'),
                         field: 'QueryTimePct95',
                         sortable:true
                     }, {
-                        title: '总耗时(秒)',
+                        title: gettext('Total Duration (seconds)'),
                         field: 'QueryTimes',
                         sortable:true
                     }] : [{
@@ -557,19 +557,19 @@
                         field: 'checkbox',
                         checkbox: true
                     }, {
-                        title: '执行开始时间',
+                        title: gettext('Execution Start Time'),
                         field: 'ExecutionStartTime',
                         sortable:true
                     }, {
-                        title: '数据库名',
+                        title: gettext('Database'),
                         field: 'DBName',
                         sortable:true
                     }, {
-                        title: '用户名',
+                        title: gettext('User'),
                         field: 'HostAddress',
                         sortable:true
                     }, {
-                        title: 'SQL语句',
+                        title: gettext('SQL Statement'),
                         field: 'SQLText',
                         formatter: function (value, row, index) {
                             if (value.length > 100) {
@@ -580,31 +580,31 @@
                             }
                         }
                     }, {
-                        title: '完整SQL语句',
+                        title: gettext('Full SQL Statement'),
                         field: 'SQLText',
                         visible: false
                     }, {
-                        title: '执行总次数',
+                        title: gettext('Total Count'),
                         field: 'TotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '执行时长(95%)',
+                        title: gettext('Execution Duration (95%)'),
                         field: 'QueryTimePct95',
                         sortable:true
                     }, {
-                        title: '执行总时长(秒)',
+                        title: gettext('Total Duration (seconds)'),
                         field: 'QueryTimes',
                         sortable:true
                     }, {
-                        title: '锁定总时长(秒)',
+                        title: gettext('Total Lock Duration (seconds)'),
                         field: 'LockTimes',
                         sortable:true
                     }, {
-                        title: '解析总行数',
+                        title: gettext('Total Parsed Rows'),
                         field: 'ParseRowCounts',
                         sortable:true
                     }, {
-                        title: '返回总行数',
+                        title: gettext('Total Returned Rows'),
                         field: 'ReturnRowCounts',
                         sortable:true
                     }];
@@ -680,7 +680,7 @@
                     columns: columns,
                     singleSelect: !is_redis,
                     toolbar: is_redis ? undefined : "#sqladvisor-toolbar",
-                    locale: 'zh-CN',
+                    locale: window.getBootstrapTableLocale(),
                     onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
                         queryParams(e)
@@ -691,9 +691,8 @@
                     }
                 });
             } else {
-                alert("请选择实例")
+                alert(gettext('Please select an instance'))
             }
         }
     </script>
 {% endblock %}
-

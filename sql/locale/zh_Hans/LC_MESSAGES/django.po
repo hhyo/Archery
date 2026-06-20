@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 # 更改翻译文件后务必使用 python manage.py compilemessages 编译翻译文件
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-14 19:34+0800\n"
+"POT-Creation-Date: 2026-06-20 16:51+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,37 +18,1105 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: .\sql\models.py:111
-msgid "workflow_finish"
-msgstr "已正常结束"
+#: sql/templates/archive.html:11
+msgid "All Instances"
+msgstr ""
 
-#: .\sql\models.py:112
-msgid "workflow_abort"
+#: sql/templates/archive.html:19
+msgid "Enabled Status"
+msgstr ""
+
+#: sql/templates/archive.html:20
+msgid "Enabled"
+msgstr ""
+
+#: sql/templates/archive.html:21
+msgid "Disabled"
+msgstr ""
+
+#: sql/templates/archive.html:28
+msgid "Apply Archive"
+msgstr ""
+
+#: sql/templates/archive.html:36
+msgid "Add Config"
+msgstr ""
+
+#: sql/templates/archive.html:55
+msgid "Apply Data Archive"
+msgstr ""
+
+#: sql/templates/archive.html:60
+msgid "Describe the archive request briefly"
+msgstr ""
+
+#: sql/templates/archive.html:65 sql/templates/queryapplylist.html:38
+msgid "Select Group:"
+msgstr ""
+
+#: sql/templates/archive.html:75
+msgid "Select Source Instance:"
+msgstr ""
+
+#: sql/templates/archive.html:76 sql/templates/queryapplylist.html:48
+#: sql/templates/sqlquery.html:100 sql/templates/sqlquery.html:101
+msgid "Select Instance:"
+msgstr ""
+
+#: sql/templates/archive.html:82
+msgid "Select Source Database:"
+msgstr ""
+
+#: sql/templates/archive.html:83 sql/templates/queryapplylist.html:64
+#: sql/templates/queryapplylist.html:70 sql/templates/sqlquery.html:111
+#: sql/templates/sqlquery.html:112
+msgid "Select Database:"
+msgstr ""
+
+#: sql/templates/archive.html:90 sql/templates/archive.html:91
+#: sql/templates/archive.html:92
+msgid "Select table to archive:"
+msgstr ""
+
+#: sql/templates/archive.html:98 sql/templates/archive.html:99
+#: sql/templates/archive.html:100
+msgid "Select archive mode:"
+msgstr ""
+
+#: sql/templates/archive.html:101
+msgid "Archive to file"
+msgstr ""
+
+#: sql/templates/archive.html:102
+msgid "Archive to another instance"
+msgstr ""
+
+#: sql/templates/archive.html:103
+msgid "Delete directly"
+msgstr ""
+
+#: sql/templates/archive.html:110 sql/templates/archive.html:111
+msgid "Keep source data after archive:"
+msgstr ""
+
+#: sql/templates/archive.html:112
+msgid "Keep source data after archive"
+msgstr ""
+
+#: sql/templates/archive.html:113
+msgid "Keep"
+msgstr ""
+
+#: sql/templates/archive.html:114
+msgid "Delete"
+msgstr ""
+
+#: sql/templates/archive.html:122 sql/templates/archive.html:123
+msgid "Select target instance:"
+msgstr ""
+
+#: sql/templates/archive.html:129 sql/templates/archive.html:130
+msgid "Select target database:"
+msgstr ""
+
+#: sql/templates/archive.html:137 sql/templates/archive.html:138
+#: sql/templates/archive.html:139
+msgid "Select target table:"
+msgstr ""
+
+#: sql/templates/archive.html:145
+msgid "Enter archive condition, this is the SQL WHERE clause"
+msgstr ""
+
+#: sql/templates/archive.html:149
+msgid "Sleep seconds after archiving 10000 rows"
+msgstr ""
+
+#: sql/templates/archive.html:153 sql/templates/queryapplylist.html:104
+#, fuzzy
+#| msgid "workflow_abort"
+msgid "Workflow"
 msgstr "人工终止流程"
 
-#: .\sql\models.py:113
-msgid "workflow_manreviewing"
-msgstr "等待审核人审核"
+#: sql/templates/archive.html:155
+msgid ""
+"Hint: source and target tables must have the same structure, otherwise "
+"archiving will fail"
+msgstr ""
 
-#: .\sql\models.py:114
-msgid "workflow_review_pass"
-msgstr "审核通过"
+#: sql/templates/archive.html:158 sql/templates/database.html:85
+#: sql/templates/dbdiagnostic.html:88 sql/templates/detail.html:296
+#: sql/templates/detail.html:358 sql/templates/instance.html:65
+#: sql/templates/queryuserprivileges.html:54
+#: sql/templates/queryuserprivileges.html:74 sql/templates/sqlquery.html:41
+#: sql/templates/sqlsubmit.html:154
+msgid "Cancel"
+msgstr ""
 
-#: .\sql\models.py:115
-msgid "workflow_timingtask"
-msgstr "定时执行"
+#: sql/templates/archive.html:159 sql/templates/queryapplylist.html:110
+msgid "Submit Request"
+msgstr ""
 
-msgid "workflow_queuing"
-msgstr "排队中"
+#: sql/templates/archive.html:171 sql/templates/audit_sqlworkflow.html:53
+#: sql/templates/queryapplylist.html:122
+#: sql/templates/sqlexportworkflow.html:63 sql/templates/sqlworkflow.html:60
+#, fuzzy
+#| msgid "workflow_abort"
+msgid "Workflow Log"
+msgstr "人工终止流程"
 
-#: .\sql\models.py:116
-msgid "workflow_executing"
-msgstr "执行中"
+#: sql/templates/audit.html:8
+msgid "Action"
+msgstr ""
 
-#: .\sql\models.py:117
-msgid "workflow_autoreviewwrong"
-msgstr "自动审核不通过"
+#: sql/templates/audit_sqlworkflow.html:9
+#: sql/templates/sqlexportworkflow.html:9 sql/templates/sqlworkflow.html:9
+msgid "Status"
+msgstr ""
 
-#: .\sql\models.py:118
-msgid "workflow_exception"
-msgstr "执行有异常"
+#: sql/templates/audit_sqlworkflow.html:18
+#: sql/templates/sqlexportsubmit.html:78
+#: sql/templates/sqlexportworkflow.html:18 sql/templates/sqlsubmit.html:56
+#: sql/templates/sqlworkflow.html:18
+msgid "Instance"
+msgstr ""
+
+#: sql/templates/audit_sqlworkflow.html:27 sql/templates/detail.html:62
+#: sql/templates/sqlexportsubmit.html:66
+#: sql/templates/sqlexportworkflow.html:27 sql/templates/sqlsubmit.html:44
+#: sql/templates/sqlworkflow.html:27
+msgid "Group"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:12 sql/templates/dbdiagnostic.html:26
+#: sql/templates/sqlexportsubmit.html:79 sql/templates/sqlsubmit.html:57
+msgid "Select Instance"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:23 sql/templates/sqlexportsubmit.html:91
+#: sql/templates/sqlexportsubmit.html:93 sql/templates/sqlsubmit.html:69
+#: sql/templates/sqlsubmit.html:71
+msgid "Select Database"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:30
+msgid "Object Type"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:31
+msgid "Table"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:32
+msgid "View"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:33
+msgid "Trigger"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:34
+msgid "Stored Procedure"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:35
+msgid "Function"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:36
+msgid "Event"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:43
+msgid "Export"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:63
+msgid "Table Metadata"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:67 sql/templates/data_dictionary.html:151
+msgid "Table Information"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:74 sql/templates/data_dictionary.html:158
+msgid "Table Name"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:76
+msgid "Engine"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:78
+msgid "Row Format"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:80 sql/templates/data_dictionary.html:160
+msgid "Table Rows"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:84
+msgid "Average Row Length"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:86
+msgid "Max Row Length"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:88 sql/templates/data_dictionary.html:164
+msgid "Data Length (K)"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:90 sql/templates/data_dictionary.html:166
+msgid "Index Length (K)"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:94 sql/templates/data_dictionary.html:170
+msgid "Total Data Size (K)"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:96 sql/templates/data_dictionary.html:172
+msgid "Free Space"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:98 sql/templates/data_dictionary.html:182
+msgid "Auto Increment"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:100
+msgid "Table Collation"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:104
+#: sql/templates/data_dictionary.html:176
+msgid "Create Time"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:106
+#: sql/templates/data_dictionary.html:178
+msgid "Update Time"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:108
+msgid "Check Time"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:110
+#: sql/templates/data_dictionary.html:184
+msgid "Table Comment"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:119
+#: sql/templates/data_dictionary.html:193
+msgid "Column Information"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:129
+#: sql/templates/data_dictionary.html:203
+msgid "Index Information"
+msgstr ""
+
+#: sql/templates/data_dictionary.html:139
+msgid "Create Table SQL"
+msgstr ""
+
+#: sql/templates/database.html:19 sql/templates/queryuserprivileges.html:15
+#: sql/templates/sqlanalyze.html:26 sql/templates/sqlquery.html:9
+#: sql/templates/sqlquery.html:10 sql/templates/sqlquery.html:18
+#: sql/templates/sqlquery.html:19 sql/templates/workflow.html:11
+msgid "All"
+msgstr ""
+
+#: sql/templates/database.html:20
+msgid "Recorded"
+msgstr ""
+
+#: sql/templates/database.html:27 sql/templates/database.html:45
+msgid "Create Database"
+msgstr ""
+
+#: sql/templates/database.html:50
+msgid "Database Name"
+msgstr ""
+
+#: sql/templates/database.html:54
+msgid "Please enter the database name"
+msgstr ""
+
+#: sql/templates/database.html:56
+msgid ""
+"Consists of letters, numbers, underscores and hyphens; starts with a letter, "
+"ends with a letter or number, max 64 characters"
+msgstr ""
+
+#: sql/templates/database.html:62
+msgid "Owner"
+msgstr ""
+
+#: sql/templates/database.html:67 sql/templates/database.html:68
+msgid "Select Database Owner"
+msgstr ""
+
+#: sql/templates/database.html:76
+msgid "Remark"
+msgstr ""
+
+#: sql/templates/database.html:80
+msgid "Please enter a remark"
+msgstr ""
+
+#: sql/templates/database.html:86
+msgid "Create"
+msgstr ""
+
+#: sql/templates/database.html:99
+msgid "Edit / Record Database Info"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:7
+msgid "Terminate Session"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:12
+msgid "Process Status"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:15
+msgid "Top Tablespace"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:18
+msgid "Transaction Information"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:21
+msgid "Lock Information"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:28
+msgid "MySQL"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:29
+msgid "MongoDB"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:30
+msgid "Oracle"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:31
+msgid "Redis"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:32
+msgid "PgSQL"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:33
+msgid "Doris"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:34
+msgid "TDengine"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:35
+msgid "ClickHouse"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:39
+msgid "Command Type"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:81
+msgid "Are you sure you want to terminate the selected session?"
+msgstr ""
+
+#: sql/templates/dbdiagnostic.html:89 sql/templates/detail.html:312
+msgid "Terminate"
+msgstr ""
+
+#: sql/templates/detail.html:14
+msgid "Submit to Another Instance"
+msgstr ""
+
+#: sql/templates/detail.html:18
+msgid "View Submission"
+msgstr ""
+
+#: sql/templates/detail.html:26 sql/templates/sqlexportsubmit.html:110
+#: sql/templates/sqlexportsubmit.html:113 sql/templates/sqlsubmit.html:100
+#: sql/templates/sqlsubmit.html:103
+msgid "Approval Workflow"
+msgstr ""
+
+#: sql/templates/detail.html:31
+msgid "Other Information"
+msgstr ""
+
+#: sql/templates/detail.html:38
+msgid "Requester"
+msgstr ""
+
+#: sql/templates/detail.html:41
+msgid "Target Instance"
+msgstr ""
+
+#: sql/templates/detail.html:44 sql/templates/sqlexportsubmit.html:89
+#: sql/templates/sqlsubmit.html:67
+msgid "Database"
+msgstr ""
+
+#: sql/templates/detail.html:47
+msgid "Request Time"
+msgstr ""
+
+#: sql/templates/detail.html:50
+msgid "Executable Time Range"
+msgstr ""
+
+#: sql/templates/detail.html:53
+msgid "End Time"
+msgstr ""
+
+#: sql/templates/detail.html:56
+msgid "Backup"
+msgstr ""
+
+#: sql/templates/detail.html:59
+msgid "Current Status"
+msgstr ""
+
+#: sql/templates/detail.html:65
+msgid "Type"
+msgstr ""
+
+#: sql/templates/detail.html:87
+msgid "Unlimited"
+msgstr ""
+
+#: sql/templates/detail.html:95
+msgid "Yes"
+msgstr ""
+
+#: sql/templates/detail.html:97
+msgid "No"
+msgstr ""
+
+#: sql/templates/detail.html:123
+msgid "Workflow Details"
+msgstr ""
+
+#: sql/templates/detail.html:126
+msgid "Workflow Logs"
+msgstr ""
+
+#: sql/templates/detail.html:135
+msgid "Expand All"
+msgstr ""
+
+#: sql/templates/detail.html:146
+msgid "Operation Information"
+msgstr ""
+
+#: sql/templates/detail.html:172
+msgid "Review Remark"
+msgstr ""
+
+#: sql/templates/detail.html:173
+msgid "Please enter the review remark / termination reason"
+msgstr ""
+
+#: sql/templates/detail.html:183 sql/templates/detail.html:342
+msgid "Change Executable Time"
+msgstr ""
+
+#: sql/templates/detail.html:192 sql/templates/workflow.html:41
+msgid "Approve"
+msgstr ""
+
+#: sql/templates/detail.html:202
+msgid "Execute Now"
+msgstr ""
+
+#: sql/templates/detail.html:210
+msgid "Manually Completed"
+msgstr ""
+
+#: sql/templates/detail.html:217
+msgid "Schedule Execution"
+msgstr ""
+
+#: sql/templates/detail.html:219
+msgid "Change Execution Time"
+msgstr ""
+
+#: sql/templates/detail.html:228
+msgid "Terminate Workflow"
+msgstr ""
+
+#: sql/templates/detail.html:233
+msgid "Downloading..."
+msgstr ""
+
+#: sql/templates/detail.html:235
+msgid "Download File"
+msgstr ""
+
+#: sql/templates/detail.html:246
+msgid "View Rollback SQL"
+msgstr ""
+
+#: sql/templates/detail.html:253
+msgid "Download Rollback SQL"
+msgstr ""
+
+#: sql/templates/detail.html:265 sql/templates/detail.html:269
+msgid "Edit Again"
+msgstr ""
+
+#: sql/templates/detail.html:282
+msgid "Schedule SQL Execution"
+msgstr ""
+
+#: sql/templates/detail.html:290
+msgid "Please select an execution time"
+msgstr ""
+
+#: sql/templates/detail.html:299 sql/templates/detail.html:361
+#: sql/templates/sqlsubmit.html:147 sql/templates/sqlsubmit.html:155
+msgid "Confirm Submission"
+msgstr ""
+
+#: sql/templates/detail.html:310
+msgid "Pause"
+msgstr ""
+
+#: sql/templates/detail.html:311
+msgid "Resume"
+msgstr ""
+
+#: sql/templates/detail.html:320
+msgid "Execution Progress"
+msgstr ""
+
+#: sql/templates/detail.html:351 sql/templates/sqlexportsubmit.html:102
+#: sql/templates/sqlsubmit.html:92
+msgid "Please select an executable time range"
+msgstr ""
+
+#: sql/templates/group.html:11
+msgid "Add Group"
+msgstr ""
+
+#: sql/templates/instance.html:9
+msgid "Instance Type"
+msgstr ""
+
+#: sql/templates/instance.html:16
+msgid "Database Type"
+msgstr ""
+
+#: sql/templates/instance.html:24
+msgid "Tag Filter"
+msgstr ""
+
+#: sql/templates/instance.html:34
+msgid "Add Instance"
+msgstr ""
+
+#: sql/templates/instance.html:51
+msgid "Clean Binlog Logs"
+msgstr ""
+
+#: sql/templates/instance.html:62
+msgid "Warning: all binlogs before the selected one will be deleted!"
+msgstr ""
+
+#: sql/templates/instance.html:66
+msgid "Clean"
+msgstr ""
+
+#: sql/templates/legacy_login_form.html:3
+msgid "Username"
+msgstr ""
+
+#: sql/templates/legacy_login_form.html:8
+msgid "Password"
+msgstr ""
+
+#: sql/templates/legacy_login_form.html:14
+msgid "Login"
+msgstr ""
+
+#: sql/templates/queryapplylist.html:9
+msgid "Permission Management"
+msgstr ""
+
+#: sql/templates/queryapplylist.html:13
+msgid "Apply Permission"
+msgstr ""
+
+#: sql/templates/queryapplylist.html:29
+msgid "Apply Database Query Privilege"
+msgstr ""
+
+#: sql/templates/queryapplylist.html:33
+msgid "Briefly describe the privilege usage"
+msgstr ""
+
+#: sql/templates/queryapplylist.html:58
+msgid "Privilege Level:"
+msgstr ""
+
+#: sql/templates/queryapplylist.html:79
+msgid "Select Table:"
+msgstr ""
+
+#: sql/templates/queryapplylist.html:84
+msgid "Select Authorization Period:"
+msgstr ""
+
+#: sql/templates/queryapplylist.html:95
+msgid "Select query row limit:"
+msgstr ""
+
+#: sql/templates/queryapplylist.html:106
+msgid ""
+"Hint: after approval, online query will be available. Please wait patiently."
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:6
+msgid "Request List"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:7
+msgid "Privilege Management"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:39
+msgid "Privilege Change"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:43
+msgid "Please enter the result limit"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:45
+msgid "Used to limit the number of rows displayed in online query results"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:49
+msgid "Please select an expiry date"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:50
+msgid "The privilege will be revoked automatically after it expires"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:55
+msgid "Confirm changes"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:67
+msgid "Information"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:71
+msgid ""
+"After deletion, the user will no longer be able to query data. Confirm "
+"deletion?"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:75
+msgid "Confirm deletion"
+msgstr ""
+
+#: sql/templates/queryuserprivileges.html:173
+msgid "Delete privilege"
+msgstr ""
+
+#: sql/templates/rollback.html:7
+msgid "Submit Rollback Request"
+msgstr ""
+
+#: sql/templates/sqlanalyze.html:9
+msgid "Analysis Options"
+msgstr ""
+
+#: sql/templates/sqlanalyze.html:18 sql/templates/sqlanalyze.html:19
+msgid "Please select an instance:"
+msgstr ""
+
+#: sql/templates/sqlanalyze.html:24 sql/templates/sqlanalyze.html:25
+msgid "Please select a database:"
+msgstr ""
+
+#: sql/templates/sqlanalyze.html:30
+msgid "Start Analysis"
+msgstr ""
+
+#: sql/templates/sqlanalyze.html:39
+msgid "SQL List"
+msgstr ""
+
+#: sql/templates/sqlanalyze.html:57
+msgid "Analysis Report"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:9
+msgid "Data Export"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:22
+msgid "Counting rows..."
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:23
+msgid "Validating SQL syntax and counting result rows, please wait..."
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:25
+msgid "Close"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:34 sql/templates/sqlsubmit.html:19
+msgid "SQL Content"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:35 sql/templates/sqlsubmit.html:20
+msgid "SQL content cannot be empty"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:36 sql/templates/sqlsubmit.html:21
+msgid "Please submit SQL here, ending with a semicolon."
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:46
+msgid "Export Workflow Name"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:46
+msgid "Please enter the export workflow name!"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:47
+msgid ""
+"Please enter the export workflow name, e.g. XX project member data export"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:53
+msgid "Offline Export Format"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:53
+msgid "Please select an export format!"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:54
+msgid "Select Export Format"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:55 sql/templates/sqlexportsubmit.html:68
+#: sql/templates/sqlsubmit.html:46
+msgid "Search your group"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:66 sql/templates/sqlsubmit.html:44
+msgid "Please select a group!"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:67 sql/templates/sqlsubmit.html:45
+msgid "Select Group"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:78 sql/templates/sqlsubmit.html:56
+msgid "Please select an instance!"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:80 sql/templates/sqlquery.html:99
+#: sql/templates/sqlsubmit.html:58
+msgid "Search instances in your group"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:89 sql/templates/sqlsubmit.html:67
+msgid "Please select a database!"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:90 sql/templates/sqlsubmit.html:68
+msgid "Search the database you want to submit"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:111 sql/templates/sqlsubmit.html:101
+msgid "Please configure the approval workflow!"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:117 sql/templates/sqlquery.html:144
+#: sql/templates/sqlsubmit.html:107
+msgid "Format"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:118 sql/templates/sqlsubmit.html:108
+msgid "Checking..."
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:119
+msgid "Validate Export"
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:121 sql/templates/sqlsubmit.html:111
+msgid "Submitting..."
+msgstr ""
+
+#: sql/templates/sqlexportsubmit.html:123
+msgid "Submit Export"
+msgstr ""
+
+#: sql/templates/sqlexportworkflow.html:45 sql/templates/sqlquery.html:66
+msgid "Submit Export Request"
+msgstr ""
+
+#: sql/templates/sqlquery.html:11
+msgid "Starred"
+msgstr ""
+
+#: sql/templates/sqlquery.html:12
+msgid "Unstarred"
+msgstr ""
+
+#: sql/templates/sqlquery.html:33
+msgid "Favorite SQL"
+msgstr ""
+
+#: sql/templates/sqlquery.html:38
+msgid "Please enter a SQL alias"
+msgstr ""
+
+#: sql/templates/sqlquery.html:42
+msgid "Favorite"
+msgstr ""
+
+#: sql/templates/sqlquery.html:51 sql/templates/sqlquery.html:146
+msgid "SQL Query"
+msgstr ""
+
+#: sql/templates/sqlquery.html:54
+msgid "Search"
+msgstr ""
+
+#: sql/templates/sqlquery.html:55
+msgid "Common Queries"
+msgstr ""
+
+#: sql/templates/sqlquery.html:71
+msgid "AI query description"
+msgstr ""
+
+#: sql/templates/sqlquery.html:72
+msgid "Generate SQL"
+msgstr ""
+
+#: sql/templates/sqlquery.html:73
+msgid ""
+"This action will interact with AI, collecting database type, table "
+"structure, and input box information to generate SQL and place it in the "
+"statement box below"
+msgstr ""
+
+#: sql/templates/sqlquery.html:89
+msgid "Locate instance by table name (e.g. orders)"
+msgstr ""
+
+#: sql/templates/sqlquery.html:91
+msgid "Searching..."
+msgstr ""
+
+#: sql/templates/sqlquery.html:110
+msgid "Search the database you want to query"
+msgstr ""
+
+#: sql/templates/sqlquery.html:119 sql/templates/sqlquery.html:120
+msgid "Select Schema:"
+msgstr ""
+
+#: sql/templates/sqlquery.html:126
+msgid "Search the table you want to query"
+msgstr ""
+
+#: sql/templates/sqlquery.html:127
+msgid "View Table Structure"
+msgstr ""
+
+#: sql/templates/sqlquery.html:128 sql/templates/sqlquery.html:129
+msgid "View Table Structure:"
+msgstr ""
+
+#: sql/templates/sqlquery.html:135 sql/templates/sqlquery.html:136
+msgid "Returned rows:"
+msgstr ""
+
+#: sql/templates/sqlquery.html:145
+msgid "Explain"
+msgstr ""
+
+#: sql/templates/sqlquery.html:149
+msgid ""
+"Comment lines are supported. You can choose a specific statement to execute. "
+"By default, the first statement is executed."
+msgstr ""
+
+#: sql/templates/sqlquery.html:150
+msgid ""
+"The query row limit follows privilege management and uses the minimum limit "
+"of the tables involved."
+msgstr ""
+
+#: sql/templates/sqlquery.html:151
+msgid "Mongo native queries are supported, for example:"
+msgstr ""
+
+#: sql/templates/sqlquery.html:161
+msgid "Query Results"
+msgstr ""
+
+#: sql/templates/sqlquery.html:169
+msgid "Query History"
+msgstr ""
+
+#: sql/templates/sqlquery.html:185
+msgid "Key Operations"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:9
+msgid "SQL Deployment"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:31
+msgid "Workflow Name"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:31
+msgid "Please enter the workflow name!"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:32
+msgid ""
+"Please enter the workflow name, e.g. XX project member feature table creation"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:38
+msgid "Request URL"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:38
+msgid "Please provide the request URL to record workflow demand information!"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:39
+msgid "Please enter the request URL"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:78
+msgid "Backup Selection"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:79
+msgid "Please select whether backup is needed"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:80
+msgid "Please choose whether to back up"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:81
+msgid "Backup SQL"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:82
+msgid "Do Not Backup SQL"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:109
+msgid "Validate SQL"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:113 sql/templates/sqlworkflow.html:44
+msgid "Submit SQL"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:118
+msgid "Mongo native commands are supported, for example:"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:128
+msgid "Validation Result"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:150
+msgid "The submitted SQL still has"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:150
+msgid "warning(s) and"
+msgstr ""
+
+#: sql/templates/sqlsubmit.html:151
+msgid "error(s). Please check carefully according to platform standards!"
+msgstr ""
+
+#: sql/templates/workflow.html:5
+msgid "Workflow Todo List"
+msgstr ""
+
+#: sql/templates/workflow.html:12
+msgid "Query Privilege Request"
+msgstr ""
+
+#: sql/templates/workflow.html:13
+msgid "SQL Deployment Request"
+msgstr ""
+
+#: sql/templates/workflow.html:14
+msgid "Data Archive Request"
+msgstr ""
+
+#: sql/templates/workflow.html:30
+msgid "Review Confirmation"
+msgstr ""
+
+#: sql/templates/workflow.html:35
+msgid "Please enter the review remark"
+msgstr ""
+
+#: sql/templates/workflow.html:40
+msgid "Reject"
+msgstr ""
+
+#: sql/templates/workflow_display.html:5
+msgid "No approval required"
+msgstr ""
+
+#~ msgid "workflow_finish"
+#~ msgstr "已正常结束"
+
+#~ msgid "workflow_manreviewing"
+#~ msgstr "等待审核人审核"
+
+#~ msgid "workflow_review_pass"
+#~ msgstr "审核通过"
+
+#~ msgid "workflow_timingtask"
+#~ msgstr "定时执行"
+
+#~ msgid "workflow_queuing"
+#~ msgstr "排队中"
+
+#~ msgid "workflow_executing"
+#~ msgstr "执行中"
+
+#~ msgid "workflow_autoreviewwrong"
+#~ msgstr "自动审核不通过"
+
+#~ msgid "workflow_exception"
+#~ msgstr "执行有异常"

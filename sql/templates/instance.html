@@ -1,18 +1,19 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="type" class="form-control selectpicker">
-                <option value="" selected="selected">实例类型</option>
+                <option value="" selected="selected">{% trans "Instance Type" %}</option>
                 <option value="master">MASTER</option>
                 <option value="slave">SLAVE</option>
             </select>
         </div>
         <div class="form-group">
             <select id="db_type" class="form-control selectpicker">
-                <option value="" selected="selected">数据库类型</option>
+                <option value="" selected="selected">{% trans "Database Type" %}</option>
                 {% for name, engine in engines.items %}
                     <option value="{{ name }}">{{ engine.name }}</option>
                 {%  endfor %}
@@ -20,7 +21,7 @@
         </div>
         <div class="form-group">
             <select id="tags" class="form-control selectpicker" data-live-search="true"
-                    multiple data-selected-text-format="count > 2" data-none-selected-text="标签筛选">
+                    multiple data-selected-text-format="count > 2" data-none-selected-text="{% trans 'Tag Filter' %}">
                 {% for tag in tags %}
                     <option value="{{ tag.id }}">{{ tag.tag_name }}</option>
                 {% endfor %}
@@ -30,7 +31,7 @@
             <button id="btn_add_master" type="button" class="btn btn-default"
                     onclick="window.open('/admin/sql/instance/add/')">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加实例
+                {% trans "Add Instance" %}
             </button>
         </div>
     </div>
@@ -47,7 +48,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">清理Binlog日志</h4>
+                    <h4 class="modal-title" id="myModalLabel">{% trans "Clean Binlog Logs" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -58,11 +59,11 @@
                                 class="form-control selectpicker show-tick bs-select-hidden ">
                         </select>
                     </div>
-                    <p class="text-danger">提示：该binlog前的所有binlog都会被删除！</p>
+                    <p class="text-danger">{% trans "Warning: all binlogs before the selected one will be deleted!" %}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" id="cleanLogBtn">清理</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-danger" id="cleanLogBtn">{% trans "Clean" %}</button>
                 </div>
             </div>
         </div>
@@ -106,7 +107,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -125,43 +126,43 @@
                     },
                 columns: [
                     {
-                        title: 'ID',
+                        title: gettext('ID'),
                         field: 'id',
                         sortable: true
                     }, {
-                        title: '实例名称',
+                        title: gettext('Instance Name'),
                         field: 'instance_name',
                         sortable: true,
                         formatter: function (value, row, index) {
                             return "<a target=\"_blank\" href=\"/admin/sql/instance/" + row.id + "/change/\">" + value + "</a>"
                         }
                     }, {
-                        title: '实例类型',
+                        title: gettext('Instance Type'),
                         field: 'type'
                     }, {
-                        title: '数据库类型',
+                        title: gettext('Database Type'),
                         field: 'db_type',
                         sortable: true
                     }, {
-                        title: 'HOST',
+                        title: gettext('Host'),
                         field: 'host',
                         sortable: true
                     }, {
-                        title: 'PORT',
+                        title: gettext('Port'),
                         field: 'port'
                     }, {
-                        title: 'USER',
+                        title: gettext('User'),
                         field: 'user'
                     }, {
-                        title: '操作',
+                        title: gettext('Actions'),
                         field: '',
                         formatter: function (value, row, index) {
                             var btn_del_binLog = '';
                             var btn_user_manger = '';
                             if (row.db_type === 'mysql') {
-                                btn_del_binLog = "<button class=\"btn btn-danger btn-xs\" instance_id=\"" + row.id + "\" + instance_name=\"" + row.instance_name + "\"+ onclick=\"del_binLog(this)" + "\">Binlog清理</button>\n"
+                                btn_del_binLog = "<button class=\"btn btn-danger btn-xs\" instance_id=\"" + row.id + "\" + instance_name=\"" + row.instance_name + "\"+ onclick=\"del_binLog(this)" + "\">" + gettext('Clean Binlog') + "</button>\n"
                             }
-                            var btn_test = "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">测试</button>\n";
+                            var btn_test = "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">" + gettext('Test') + "</button>\n";
                             return btn_user_manger + btn_del_binLog + btn_test
                         }
                     }],
@@ -189,7 +190,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('连接成功')
+                        alert(gettext('Connection successful'))
                     } else {
                         alert(data.msg);
                     }
@@ -220,7 +221,7 @@
                             var _html = "<option value='" + result[i]['Log_name'] + "'>" + result[i]['Log_name'] + " Size:" + result[i]['File_size'] + "</option>";
                             $("#binlog").append(_html);
                         }
-                        $("#binlog").prepend('<option value="is-empty" disabled="" selected="selected">请选择Binlog:</option>');
+                        $("#binlog").prepend('<option value="is-empty" disabled="" selected="selected">' + gettext('Please select a Binlog:') + '</option>');
                         $('#binlog').selectpicker('render');
                         $('#binlog').selectpicker('refresh');
                     } else {

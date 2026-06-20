@@ -5,6 +5,7 @@ from django.conf import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("i18n/", include("django.conf.urls.i18n")),
     path("api/", include(("sql_api.urls", "sql_api"), namespace="sql_api")),
     path("", include(("sql.urls", "sql"), namespace="sql")),
 ]
