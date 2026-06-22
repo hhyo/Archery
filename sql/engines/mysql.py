@@ -6,6 +6,7 @@ import MySQLdb.cursors
 import MySQLdb.converters
 import pymysql
 import re
+import regex as safe_regex
 from enum import Enum
 
 import schemaobject
@@ -14,6 +15,7 @@ from MySQLdb.constants import FIELD_TYPE
 from schemaobject.connection import build_database_url
 
 from sql.engines.goinception import GoInceptionEngine
+from sql.utils.extract_tables import extract_tables
 from sql.utils.sql_utils import get_syntax_type, remove_comments
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
@@ -21,6 +23,31 @@ from sql.utils.data_masking import data_masking
 from common.config import SysConfig
 
 logger = logging.getLogger("default")
+
+CRITICAL_DDL_REGEX_MAX_LENGTH = 2048
+CRITICAL_DDL_REGEX_TIMEOUT = 0.1
+
+MYSQL_PRIVILEGE_TABLES = {
+    "user",
+    "db",
+    "tables_priv",
+    "columns_priv",
+    "procs_priv",
+    "proxies_priv",
+    "global_grants",
+    "default_roles",
+    "role_edges",
+    "password_history",
+}
+INFORMATION_SCHEMA_PRIVILEGE_TABLES = {
+    "user_privileges",
+    "schema_privileges",
+    "table_privileges",
+    "column_privileges",
+    "applicable_roles",
+    "enabled_roles",
+    "administrable_role_authorizations",
+}
 
 # https://github.com/mysql/mysql-connector-python/blob/master/lib/mysql/connector/constants.py#L168
 column_types_map = {
@@ -71,10 +98,234 @@ class MysqlEngine(EngineBase):
     _server_fork_type = None
     _server_info = None
 
+    GLOBAL_PRIVILEGES = {
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "FILE",
+        "CREATE",
+        "ALTER",
+        "INDEX",
+        "DROP",
+        "CREATE TEMPORARY TABLES",
+        "SHOW VIEW",
+        "CREATE ROUTINE",
+        "ALTER ROUTINE",
+        "EXECUTE",
+        "CREATE VIEW",
+        "EVENT",
+        "TRIGGER",
+        "GRANT",
+        "SUPER",
+        "PROCESS",
+        "RELOAD",
+        "SHUTDOWN",
+        "SHOW DATABASES",
+        "LOCK TABLES",
+        "REFERENCES",
+        "REPLICATION CLIENT",
+        "REPLICATION SLAVE",
+        "CREATE USER",
+    }
+    DB_PRIVILEGES = {
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "CREATE",
+        "ALTER",
+        "INDEX",
+        "DROP",
+        "CREATE TEMPORARY TABLES",
+        "SHOW VIEW",
+        "CREATE ROUTINE",
+        "ALTER ROUTINE",
+        "EXECUTE",
+        "CREATE VIEW",
+        "EVENT",
+        "TRIGGER",
+        "GRANT",
+        "LOCK TABLES",
+        "REFERENCES",
+    }
+    TABLE_PRIVILEGES = {
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "CREATE",
+        "ALTER",
+        "INDEX",
+        "DROP",
+        "SHOW VIEW",
+        "CREATE VIEW",
+        "TRIGGER",
+        "GRANT",
+        "REFERENCES",
+    }
+    COLUMN_PRIVILEGES = {"SELECT", "INSERT", "UPDATE", "REFERENCES"}
+    VARIABLE_NAME_RE = re.compile(r"^[A-Za-z0-9_]+$")
+
     def __init__(self, instance=None):
         super().__init__(instance=instance)
         self.config = SysConfig()
         self.inc_engine = GoInceptionEngine()
+
+    @staticmethod
+    def _error_result(message, full_sql=""):
+        result = ResultSet(full_sql=full_sql)
+        result.error = message
+        return result
+
+    @staticmethod
+    def _quote_identifier(identifier):
+        if identifier is None:
+            raise ValueError("标识符不能为空")
+        identifier = str(identifier)
+        if identifier == "" or "\x00" in identifier:
+            raise ValueError("标识符不合法")
+        return f"`{identifier.replace('`', '``')}`"
+
+    @staticmethod
+    def _quote_literal(value):
+        if value is None:
+            raise ValueError("参数值不能为空")
+        value = str(value)
+        if "\x00" in value:
+            raise ValueError("参数值不合法")
+        return f"'{pymysql.escape_string(value)}'"
+
+    @staticmethod
+    def _quote_account_part(value):
+        if value is None:
+            raise ValueError("账号信息不能为空")
+        value = str(value)
+        if "\x00" in value:
+            raise ValueError("账号信息不合法")
+        return f"`{value.replace('`', '``')}`"
+
+    @classmethod
+    def _format_user_host(cls, user, host):
+        return f"{cls._quote_account_part(user)}@{cls._quote_account_part(host)}"
+
+    @classmethod
+    def _parse_account_part(cls, account, start):
+        length = len(account)
+        while start < length and account[start].isspace():
+            start += 1
+        if start >= length:
+            raise ValueError("账号格式不合法")
+
+        quote = account[start] if account[start] in ("`", "'", '"') else None
+        if not quote:
+            end = start
+            while end < length and account[end] != "@":
+                end += 1
+            value = account[start:end].strip()
+            if not value:
+                raise ValueError("账号格式不合法")
+            return value, end
+
+        start += 1
+        chars = []
+        while start < length:
+            ch = account[start]
+            if ch == "\\" and quote in ("'", '"') and start + 1 < length:
+                chars.append(account[start + 1])
+                start += 2
+                continue
+            if ch == quote:
+                if quote == "`" and start + 1 < length and account[start + 1] == "`":
+                    chars.append("`")
+                    start += 2
+                    continue
+                if (
+                    quote in ("'", '"')
+                    and start + 1 < length
+                    and account[start + 1] == quote
+                ):
+                    chars.append(quote)
+                    start += 2
+                    continue
+                return "".join(chars), start + 1
+            chars.append(ch)
+            start += 1
+        raise ValueError("账号格式不合法")
+
+    @classmethod
+    def _parse_user_host(cls, user_host):
+        if user_host is None:
+            raise ValueError("账号格式不合法")
+        user_host = str(user_host).strip()
+        user, pos = cls._parse_account_part(user_host, 0)
+        while pos < len(user_host) and user_host[pos].isspace():
+            pos += 1
+        if pos >= len(user_host) or user_host[pos] != "@":
+            raise ValueError("账号格式不合法")
+        host, pos = cls._parse_account_part(user_host, pos + 1)
+        if user_host[pos:].strip():
+            raise ValueError("账号格式不合法")
+        return user, host
+
+    @classmethod
+    def _normalize_user_host(cls, user_host):
+        user, host = cls._parse_user_host(user_host)
+        return cls._format_user_host(user, host)
+
+    @staticmethod
+    def _coerce_int(value, name, minimum=None):
+        if isinstance(value, bool):
+            raise ValueError(f"{name}不合法")
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise ValueError(f"{name}不合法")
+        if minimum is not None and value < minimum:
+            raise ValueError(f"{name}不合法")
+        return value
+
+    @classmethod
+    def _validate_thread_ids(cls, thread_ids):
+        if not isinstance(thread_ids, (list, tuple)):
+            raise ValueError("线程ID不合法")
+        safe_ids = []
+        for thread_id in thread_ids:
+            if isinstance(thread_id, bool) or not isinstance(thread_id, int):
+                raise ValueError("线程ID不合法")
+            safe_ids.append(thread_id)
+        return safe_ids
+
+    @classmethod
+    def _normalize_privileges(cls, privs, allowed_privs):
+        normalized = []
+        for priv in privs or []:
+            priv = str(priv).upper()
+            if priv not in allowed_privs:
+                raise ValueError("权限项不合法")
+            normalized.append("GRANT OPTION" if priv == "GRANT" else priv)
+        if not normalized:
+            raise ValueError("权限项不能为空")
+        return normalized
+
+    @staticmethod
+    def _as_list(value):
+        if value is None:
+            return []
+        if isinstance(value, (list, tuple)):
+            return list(value)
+        return [value]
+
+    @staticmethod
+    def _compile_safe_regex(pattern):
+        if not pattern:
+            return None
+        if len(pattern) > CRITICAL_DDL_REGEX_MAX_LENGTH:
+            raise ValueError("critical_ddl_regex长度超过2048，已拒绝执行")
+        try:
+            return safe_regex.compile(pattern)
+        except safe_regex.error as e:
+            raise ValueError(f"critical_ddl_regex配置不合法：{e}")
 
     def get_connection(self, db_name=None):
         # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
@@ -183,7 +434,11 @@ class MysqlEngine(EngineBase):
 
     def kill_connection(self, thread_id):
         """终止数据库连接"""
-        self.query(sql=f"kill {thread_id}")
+        try:
+            thread_id = self._coerce_int(thread_id, "线程ID", minimum=0)
+        except ValueError as e:
+            return self._error_result(str(e))
+        return self.query(sql="kill %s", parameters=(thread_id,))
 
     # 禁止查询的数据库
     forbidden_databases = [
@@ -432,7 +687,9 @@ class MysqlEngine(EngineBase):
             "column_list": _meta.column_list,
             "rows": _meta.rows[0] if _meta.rows else [],
         }
-        _create = self.query(db_name, f"SHOW CREATE PROCEDURE `{proc_name}`;")
+        _create = self.query(
+            db_name, f"SHOW CREATE PROCEDURE {self._quote_identifier(proc_name)};"
+        )
         create_sql = _create.rows
         return {"meta_data": meta_data, "create_sql": create_sql}
 
@@ -476,7 +733,9 @@ class MysqlEngine(EngineBase):
             "column_list": _meta.column_list,
             "rows": _meta.rows[0] if _meta.rows else [],
         }
-        _create = self.query(db_name, f"SHOW CREATE FUNCTION `{func_name}`;")
+        _create = self.query(
+            db_name, f"SHOW CREATE FUNCTION {self._quote_identifier(func_name)};"
+        )
         create_sql = _create.rows
         return {"meta_data": meta_data, "create_sql": create_sql}
 
@@ -536,7 +795,9 @@ class MysqlEngine(EngineBase):
             "column_list": _meta.column_list,
             "rows": _meta.rows[0] if _meta.rows else [],
         }
-        _create = self.query(db_name, f"SHOW CREATE EVENT `{event_name}`;")
+        _create = self.query(
+            db_name, f"SHOW CREATE EVENT {self._quote_identifier(event_name)};"
+        )
         create_sql = _create.rows
         return {"meta_data": meta_data, "create_sql": create_sql}
 
@@ -563,11 +824,17 @@ class MysqlEngine(EngineBase):
             ]
             _meta["ENGINE_KEYS"] = engine_keys
             _meta["TABLE_INFO"] = tb
-            sql_cols = f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
-                            WHERE TABLE_SCHEMA='{tb['TABLE_SCHEMA']}' AND TABLE_NAME='{tb['TABLE_NAME']}'
+            sql_cols = """SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_SCHEMA=%(table_schema)s AND TABLE_NAME=%(table_name)s
                             ORDER BY TABLE_SCHEMA,TABLE_NAME,ORDINAL_POSITION;"""
             _meta["COLUMNS"] = self.query(
-                sql=sql_cols, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
+                sql=sql_cols,
+                cursorclass=MySQLdb.cursors.DictCursor,
+                close_conn=False,
+                parameters={
+                    "table_schema": tb["TABLE_SCHEMA"],
+                    "table_name": tb["TABLE_NAME"],
+                },
             ).rows
             table_metas.append(_meta)
         return table_metas
@@ -611,22 +878,23 @@ class MysqlEngine(EngineBase):
     def get_instance_users_summary(self):
         """实例账号管理功能，获取实例所有账号信息"""
         server_version = self.server_version
-        sql_get_user_with_account_locked = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host,account_locked from mysql.user;"
-        sql_get_user_without_account_locked = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host from mysql.user;"
+        sql_get_user_without_account_locked = "select user, host from mysql.user;"
         # MySQL 5.7.6版本, mariadb 10.4.2  起支持ACCOUNT LOCK
-        if (
-            self.server_fork_type == MysqlForkType.MYSQL and server_version >= (5, 7, 6)
-        ) or (
-            self.server_fork_type == MysqlForkType.MARIADB
-            and self.server_version >= (10, 4, 2)
+        if self.server_fork_type == MysqlForkType.MYSQL and server_version >= (5, 7, 6):
+            support_account_lock = True
+            sql_get_user = "select user, host, account_locked from mysql.user;"
+        elif self.server_fork_type == MysqlForkType.MARIADB and self.server_version >= (
+            10,
+            4,
+            2,
         ):
             support_account_lock = True
-            sql_get_user = sql_get_user_with_account_locked
+            sql_get_user = "SELECT user, host, JSON_EXTRACT(priv, '$.account_locked') AS account_locked FROM mysql.global_priv;"
         else:
             support_account_lock = False
             sql_get_user = sql_get_user_without_account_locked
         query_result = self.query("mysql", sql_get_user)
-        if query_result.error and sql_get_user == sql_get_user_with_account_locked:
+        if query_result.error and "account_locked" in sql_get_user:
             # 查询出错了, fallback 到不带 lock 信息的 sql
             query_result = self.query("mysql", sql_get_user_without_account_locked)
         if not query_result.error:
@@ -634,19 +902,19 @@ class MysqlEngine(EngineBase):
             # 获取用户权限信息
             rows = []
             for db_user in db_users:
-                user_host = db_user[0]
+                user_host = self._format_user_host(db_user[0], db_user[1])
                 user_priv = self.query(
                     "mysql", "show grants for {};".format(user_host), close_conn=False
                 ).rows
                 row = {
                     "user_host": user_host,
-                    "user": db_user[1],
-                    "host": db_user[2],
+                    "user": db_user[0],
+                    "host": db_user[1],
                     "privileges": user_priv,
                     "saved": False,
                     "is_locked": (
-                        db_user[3]
-                        if support_account_lock and len(db_user) == 4
+                        db_user[2]
+                        if support_account_lock and len(db_user) == 3
                         else None
                     ),
                 }
@@ -656,52 +924,149 @@ class MysqlEngine(EngineBase):
 
     def create_instance_user(self, **kwargs):
         """实例账号管理功能，创建实例账号"""
-        # escape
-        user = self.escape_string(kwargs.get("user", ""))
-        host = self.escape_string(kwargs.get("host", ""))
-        password1 = self.escape_string(kwargs.get("password1", ""))
+        user = kwargs.get("user", "")
+        host = kwargs.get("host", "")
+        password1 = kwargs.get("password1", "")
         remark = kwargs.get("remark", "")
         # 在一个事务内执行
         hosts = host.split("|")
         create_user_cmd = ""
         accounts = []
-        for host in hosts:
-            create_user_cmd += (
-                f"create user '{user}'@'{host}' identified by '{password1}';"
-            )
-            accounts.append(
-                {
-                    "instance": self.instance,
-                    "user": user,
-                    "host": host,
-                    "password": password1,
-                    "remark": remark,
-                }
-            )
+        try:
+            password_literal = self._quote_literal(password1)
+            for host in hosts:
+                account = self._format_user_host(user, host)
+                create_user_cmd += (
+                    f"create user {account} identified by {password_literal};"
+                )
+                accounts.append(
+                    {
+                        "instance": self.instance,
+                        "user": user,
+                        "host": host,
+                        "password": password1,
+                        "remark": remark,
+                    }
+                )
+        except ValueError as e:
+            return self._error_result(str(e))
+        if not accounts:
+            return self._error_result("账号信息不能为空")
         exec_result = self.execute(db_name="mysql", sql=create_user_cmd)
         exec_result.rows = accounts
         return exec_result
 
+    def grant_instance_user(
+        self,
+        user_host,
+        op_type,
+        priv_type,
+        privs,
+        db_names=None,
+        tb_names=None,
+        col_names=None,
+    ):
+        """实例账号管理功能，授予/回收账号权限"""
+        try:
+            user_host = self._normalize_user_host(user_host)
+            op_type = self._coerce_int(op_type, "操作类型")
+            priv_type = self._coerce_int(priv_type, "权限类型")
+            if op_type == 0:
+                action, target = "GRANT", "TO"
+            elif op_type == 1:
+                action, target = "REVOKE", "FROM"
+            else:
+                raise ValueError("操作类型不合法")
+
+            grant_sql = ""
+            if priv_type == 0:
+                grant_privs = self._normalize_privileges(
+                    privs.get("global_privs", []), self.GLOBAL_PRIVILEGES
+                )
+                grant_sql = (
+                    f"{action} {','.join(grant_privs)} ON *.* {target} {user_host};"
+                )
+            elif priv_type == 1:
+                grant_privs = self._normalize_privileges(
+                    privs.get("db_privs", []), self.DB_PRIVILEGES
+                )
+                for db_name in self._as_list(db_names):
+                    grant_sql += (
+                        f"{action} {','.join(grant_privs)} ON "
+                        f"{self._quote_identifier(db_name)}.* {target} {user_host};"
+                    )
+            elif priv_type == 2:
+                grant_privs = self._normalize_privileges(
+                    privs.get("tb_privs", []), self.TABLE_PRIVILEGES
+                )
+                quoted_db = self._quote_identifier(self._as_list(db_names)[0])
+                for tb_name in self._as_list(tb_names):
+                    grant_sql += (
+                        f"{action} {','.join(grant_privs)} ON "
+                        f"{quoted_db}.{self._quote_identifier(tb_name)} {target} {user_host};"
+                    )
+            elif priv_type == 3:
+                grant_privs = self._normalize_privileges(
+                    privs.get("col_privs", []), self.COLUMN_PRIVILEGES
+                )
+                quoted_db = self._quote_identifier(self._as_list(db_names)[0])
+                quoted_tb = self._quote_identifier(self._as_list(tb_names)[0])
+                quoted_cols = ",".join(
+                    self._quote_identifier(col_name)
+                    for col_name in self._as_list(col_names)
+                )
+                if not quoted_cols:
+                    raise ValueError("列名不能为空")
+                for priv in grant_privs:
+                    grant_sql += (
+                        f"{action} {priv}({quoted_cols}) ON "
+                        f"{quoted_db}.{quoted_tb} {target} {user_host};"
+                    )
+            else:
+                raise ValueError("权限类型不合法")
+        except (AttributeError, IndexError, ValueError) as e:
+            return self._error_result(str(e))
+
+        if not grant_sql:
+            return self._error_result("授权语句不能为空")
+        return self.execute(db_name="mysql", sql=grant_sql)
+
+    def set_instance_user_lock(self, user_host, is_locked):
+        """实例账号管理功能，锁定/解锁账号"""
+        try:
+            user_host = self._normalize_user_host(user_host)
+        except ValueError as e:
+            return self._error_result(str(e))
+        if is_locked == "N":
+            lock_sql = f"ALTER USER {user_host} ACCOUNT LOCK;"
+        elif is_locked == "Y":
+            lock_sql = f"ALTER USER {user_host} ACCOUNT UNLOCK;"
+        else:
+            return self._error_result("锁定状态不合法")
+        return self.execute(db_name="mysql", sql=lock_sql)
+
     def drop_instance_user(self, user_host: str, **kwarg):
         """实例账号管理功能，删除实例账号"""
-        # escape
-        user_host = self.escape_string(user_host)
+        try:
+            user_host = self._normalize_user_host(user_host)
+        except ValueError as e:
+            return self._error_result(str(e))
         return self.execute(db_name="mysql", sql=f"DROP USER {user_host};")
 
     def reset_instance_user_pwd(self, user_host: str, reset_pwd: str, **kwargs):
         """实例账号管理功能，重置实例账号密码"""
-        # escape
-        user_host = self.escape_string(user_host)
-        reset_pwd = self.escape_string(reset_pwd)
+        try:
+            user_host = self._normalize_user_host(user_host)
+            reset_pwd = self._quote_literal(reset_pwd)
+        except ValueError as e:
+            return self._error_result(str(e))
         return self.execute(
-            db_name="mysql", sql=f"ALTER USER {user_host} IDENTIFIED BY '{reset_pwd}';"
+            db_name="mysql", sql=f"ALTER USER {user_host} IDENTIFIED BY {reset_pwd};"
         )
 
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
-        db_name = self.escape_string(db_name)
-        tb_name = self.escape_string(tb_name)
-        sql = f"""SELECT
+        sql = """SELECT
             COLUMN_NAME,
             COLUMN_TYPE,
             CHARACTER_SET_NAME,
@@ -712,13 +1077,13 @@ class MysqlEngine(EngineBase):
         FROM
             information_schema.COLUMNS
         WHERE
-            TABLE_SCHEMA = '{db_name}'
-                AND TABLE_NAME = '{tb_name}'
+            TABLE_SCHEMA = %(db_name)s
+                AND TABLE_NAME = %(tb_name)s
         ORDER BY ORDINAL_POSITION;"""
         result = self.query(
             db_name=db_name,
             sql=sql,
-            parameters=({"db_name": db_name, "tb_name": tb_name}),
+            parameters={"db_name": db_name, "tb_name": tb_name},
         )
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
@@ -726,8 +1091,7 @@ class MysqlEngine(EngineBase):
 
     def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet 类似查询"""
-        tb_name = self.escape_string(tb_name)
-        sql = f"show create table `{tb_name}`;"
+        sql = f"show create table {self._quote_identifier(tb_name)};"
         result = self.query(db_name=db_name, sql=sql)
         return result
 
@@ -800,6 +1164,69 @@ class MysqlEngine(EngineBase):
                 self.close()
         return result_set
 
+    @staticmethod
+    def _normalize_identifier(value):
+        if value is None:
+            return ""
+        value = str(value).strip()
+        if len(value) >= 2 and value[0] in ("`", "'", '"') and value[-1] == value[0]:
+            value = value[1:-1]
+        return value.replace("``", "`").lower()
+
+    @classmethod
+    def _sql_references_forbidden_privilege_object(cls, db_name, sql):
+        sql_lower = sql.lower()
+        for schema, tables in (
+            ("mysql", MYSQL_PRIVILEGE_TABLES),
+            ("information_schema", INFORMATION_SCHEMA_PRIVILEGE_TABLES),
+        ):
+            table_pattern = "|".join(re.escape(table) for table in sorted(tables))
+            if re.search(
+                rf"(?<![\w`])`?{schema}`?\s*\.\s*`?(?:{table_pattern})`?(?![\w`])",
+                sql_lower,
+            ):
+                return True
+
+        try:
+            table_refs = extract_tables(sql)
+        except Exception:
+            table_refs = ()
+
+        current_db = cls._normalize_identifier(db_name)
+        current_tables = None
+        if current_db == "mysql":
+            current_tables = MYSQL_PRIVILEGE_TABLES
+        elif current_db == "information_schema":
+            current_tables = INFORMATION_SCHEMA_PRIVILEGE_TABLES
+        if current_tables:
+            table_pattern = "|".join(
+                re.escape(table) for table in sorted(current_tables)
+            )
+            if re.search(
+                rf"\b(from|join|update|into|table)\s+`?(?:{table_pattern})`?(?![\w`])",
+                sql_lower,
+            ):
+                return True
+
+        for table_ref in table_refs:
+            schema = cls._normalize_identifier(table_ref.schema) or current_db
+            name = cls._normalize_identifier(table_ref.name)
+            if schema == "mysql" and name in MYSQL_PRIVILEGE_TABLES:
+                return True
+            if (
+                schema == "information_schema"
+                and name in INFORMATION_SCHEMA_PRIVILEGE_TABLES
+            ):
+                return True
+        return False
+
+    @staticmethod
+    def _sql_is_forbidden_account_statement(sql):
+        return bool(
+            re.match(r"^\s*show\s+grants\b", sql, re.I)
+            or re.match(r"^\s*show\s+create\s+user\b", sql, re.I)
+        )
+
     def query_check(self, db_name=None, sql=""):
         # 查询语句的检查、注释去除、切分
         result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
@@ -817,24 +1244,18 @@ class MysqlEngine(EngineBase):
         if "*" in sql:
             result["has_star"] = True
             result["msg"] = "SQL语句中含有 * "
+        if self._sql_is_forbidden_account_statement(
+            sql
+        ) or self._sql_references_forbidden_privilege_object(db_name, sql):
+            result["bad_query"] = True
+            result["msg"] = "您无权查看该表"
+            return result
         # select语句先使用Explain判断语法是否正确
         if re.match(r"^select", sql, re.I):
             explain_result = self.query(db_name=db_name, sql=f"explain {sql}")
             if explain_result.error:
                 result["bad_query"] = True
                 result["msg"] = explain_result.error
-        # 不应该查看mysql.user表
-        if re.match(
-            ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
-            sql.lower().replace("\n", ""),
-        ) or (
-            db_name == "mysql"
-            and re.match(
-                ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
-            )
-        ):
-            result["bad_query"] = True
-            result["msg"] = "您无权查看该表"
 
         return result
 
@@ -905,7 +1326,17 @@ class MysqlEngine(EngineBase):
         # 禁用/高危语句检查
         critical_ddl_regex = self.config.get("critical_ddl_regex", "")
         ddl_dml_separation = self.config.get("ddl_dml_separation", False)
-        p = re.compile(critical_ddl_regex)
+        try:
+            p = self._compile_safe_regex(critical_ddl_regex)
+        except ValueError as e:
+            check_result.error_count += len(check_result.rows) or 1
+            for row in check_result.rows:
+                row.stagestatus = "驳回高危SQL"
+                row.errlevel = 2
+                row.errormessage = str(e)
+            if not check_result.rows:
+                check_result.error = str(e)
+            return check_result
         # 获取语句类型：DDL或者DML
         ddl_dml_flag = ""
         for row in check_result.rows:
@@ -921,7 +1352,30 @@ class MysqlEngine(EngineBase):
                 row.errlevel = 2
                 row.errormessage = "仅支持DML和DDL语句，查询语句请使用SQL查询功能！"
             # 高危语句
-            elif critical_ddl_regex and p.match(statement.strip().lower()):
+            elif critical_ddl_regex and p:
+                try:
+                    critical_match = p.match(
+                        statement.strip().lower(),
+                        timeout=CRITICAL_DDL_REGEX_TIMEOUT,
+                    )
+                except TimeoutError:
+                    check_result.error_count += 1
+                    row.stagestatus = "驳回高危SQL"
+                    row.errlevel = 2
+                    row.errormessage = (
+                        "critical_ddl_regex匹配超时，已拒绝执行以避免ReDoS"
+                    )
+                    continue
+                if not critical_match:
+                    if ddl_dml_separation and syntax_type in ("DDL", "DML"):
+                        if ddl_dml_flag == "":
+                            ddl_dml_flag = syntax_type
+                        elif ddl_dml_flag != syntax_type:
+                            check_result.error_count += 1
+                            row.stagestatus = "驳回不支持语句"
+                            row.errlevel = 2
+                            row.errormessage = "DDL语句和DML语句不能同时执行！"
+                    continue
                 check_result.error_count += 1
                 row.stagestatus = "驳回高危SQL"
                 row.errlevel = 2
@@ -988,20 +1442,20 @@ class MysqlEngine(EngineBase):
     def get_variables(self, variables=None):
         """获取实例参数"""
         if variables:
-            variables = (
-                "','".join(variables)
-                if isinstance(variables, list)
-                else "','".join(list(variables))
-            )
-            sql = f"""show global variables where variable_name in ('{variables}');"""
+            variables = self._as_list(variables)
+            placeholders = ",".join(["%s"] * len(variables))
+            sql = f"show global variables where variable_name in ({placeholders});"
+            return self.query(sql=sql, parameters=tuple(variables))
         else:
             sql = "show global variables;"
         return self.query(sql=sql)
 
     def set_variable(self, variable_name, variable_value):
         """修改实例参数值"""
-        sql = f"""set global {variable_name}={variable_value};"""
-        return self.query(sql=sql)
+        if not variable_name or not self.VARIABLE_NAME_RE.match(str(variable_name)):
+            return self._error_result("参数名称不合法")
+        sql = f"set global {variable_name}=%s;"
+        return self.query(sql=sql, parameters=(variable_value,))
 
     def osc_control(self, **kwargs):
         """控制osc执行，获取进度、终止、暂停、恢复等
@@ -1016,29 +1470,38 @@ class MysqlEngine(EngineBase):
         **kwargs,
     ):
         """获取连接信息"""
-        # escape
-        command_type = self.escape_string(command_type)
         if not command_type:
             command_type = "Query"
         if command_type == "All":
             sql = base_sql + ";"
+            parameters = None
         elif command_type == "Not Sleep":
-            sql = "{} where command<>'Sleep';".format(base_sql)
+            sql = "{} where command<>%s;".format(base_sql)
+            parameters = ("Sleep",)
         else:
-            sql = "{} where command= '{}';".format(base_sql, command_type)
+            sql = "{} where command=%s;".format(base_sql)
+            parameters = (command_type,)
 
-        return self.query("information_schema", sql)
+        return self.query("information_schema", sql, parameters=parameters)
 
     def get_kill_command(self, thread_ids, thread_ids_check=True):
         """由传入的线程列表生成kill命令"""
         # 校验传参
         if thread_ids_check:
-            if [i for i in thread_ids if not isinstance(i, int)]:
+            try:
+                thread_ids = self._validate_thread_ids(thread_ids)
+            except ValueError:
                 return None
-        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
-            ",".join(str(tid) for tid in thread_ids)
+        if not thread_ids:
+            return ""
+        placeholders = ",".join(["%s"] * len(thread_ids))
+        sql = (
+            "select concat('kill ', id, ';') from information_schema.processlist "
+            f"where id in ({placeholders});"
         )
-        all_kill_sql = self.query("information_schema", sql)
+        all_kill_sql = self.query(
+            "information_schema", sql, parameters=tuple(thread_ids)
+        )
         kill_sql = ""
         for row in all_kill_sql.rows:
             kill_sql = kill_sql + row[0]
@@ -1049,12 +1512,20 @@ class MysqlEngine(EngineBase):
         """kill线程"""
         # 校验传参
         if thread_ids_check:
-            if [i for i in thread_ids if not isinstance(i, int)]:
+            try:
+                thread_ids = self._validate_thread_ids(thread_ids)
+            except ValueError:
                 return ResultSet(full_sql="")
-        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
-            ",".join(str(tid) for tid in thread_ids)
+        if not thread_ids:
+            return ResultSet(full_sql="")
+        placeholders = ",".join(["%s"] * len(thread_ids))
+        sql = (
+            "select concat('kill ', id, ';') from information_schema.processlist "
+            f"where id in ({placeholders});"
         )
-        all_kill_sql = self.query("information_schema", sql)
+        all_kill_sql = self.query(
+            "information_schema", sql, parameters=tuple(thread_ids)
+        )
         kill_sql = ""
         for row in all_kill_sql.rows:
             kill_sql = kill_sql + row[0]
@@ -1062,12 +1533,17 @@ class MysqlEngine(EngineBase):
 
     def tablespace(self, offset=0, row_count=14, schema_search=""):
         """获取表空间信息"""
+        try:
+            offset = self._coerce_int(offset, "offset", minimum=0)
+            row_count = self._coerce_int(row_count, "row_count", minimum=0)
+        except ValueError as e:
+            return self._error_result(str(e))
         search_condition = ""
+        parameters = []
         if schema_search:
-            search_escaped = self.escape_string(schema_search)
-            search_condition = " AND (table_schema LIKE '%{keyword}%' OR table_name LIKE '%{keyword}%')".format(
-                keyword=search_escaped
-            )
+            search_condition = " AND (table_schema LIKE %s OR table_name LIKE %s)"
+            search_keyword = f"%{schema_search}%"
+            parameters.extend([search_keyword, search_keyword])
         sql = """
         SELECT
           table_schema AS table_schema,
@@ -1082,24 +1558,27 @@ class MysqlEngine(EngineBase):
         FROM information_schema.tables 
         WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys'){search_condition}
           ORDER BY total_size DESC 
-        LIMIT {},{};""".format(offset, row_count, search_condition=search_condition)
-        return self.query("information_schema", sql)
+        LIMIT %s,%s;""".format(search_condition=search_condition)
+        parameters.extend([offset, row_count])
+        return self.query("information_schema", sql, parameters=tuple(parameters))
 
     def tablespace_count(self, schema_search=""):
         """获取表空间数量"""
         search_condition = ""
+        parameters = []
         if schema_search:
-            search_escaped = self.escape_string(schema_search)
-            search_condition = " AND (table_schema LIKE '%{keyword}%' OR table_name LIKE '%{keyword}%')".format(
-                keyword=search_escaped
-            )
+            search_condition = " AND (table_schema LIKE %s OR table_name LIKE %s)"
+            search_keyword = f"%{schema_search}%"
+            parameters.extend([search_keyword, search_keyword])
         sql = """
         SELECT count(*)
         FROM information_schema.tables 
         WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys'){search_condition}""".format(
             search_condition=search_condition
         )
-        return self.query("information_schema", sql)
+        return self.query(
+            "information_schema", sql, parameters=tuple(parameters) or None
+        )
 
     def trxandlocks(self):
         """获取锁等待信息"""

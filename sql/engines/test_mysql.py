@@ -1,11 +1,13 @@
+import json
 from datetime import datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import patch, Mock, ANY
 
 import MySQLdb
-from django.test import SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase
 
 from common.config import SysConfig
+from sql import instance_account
 from sql.engines import ResultSet, ReviewSet
 from sql.engines.models import ReviewResult
 from sql.engines.mysql import MysqlEngine, MysqlForkType
@@ -652,13 +654,23 @@ class TestMysql(SimpleTestCase):
         _connect.return_value.get_server_info.return_value = "5.7.20-16log"
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.get_variables(variables=["binlog_format"])
-        _query.assert_called()
+        _query.assert_called_once_with(
+            sql="show global variables where variable_name in (%s);",
+            parameters=("binlog_format",),
+        )
 
     @patch.object(MysqlEngine, "query")
     def test_set_variable(self, _query):
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.set_variable("binlog_format", "ROW")
-        _query.assert_called_once_with(sql="set global binlog_format=ROW;")
+        _query.assert_called_once_with(
+            sql="set global binlog_format=%s;", parameters=("ROW",)
+        )
+
+        _query.reset_mock()
+        result = new_engine.set_variable("binlog_format;drop user u", "ROW")
+        self.assertEqual(result.error, "参数名称不合法")
+        _query.assert_not_called()
 
     @patch("sql.engines.mysql.GoInceptionEngine")
     def test_osc_go_inception(self, _inception_engine):
@@ -680,7 +692,7 @@ class TestMysql(SimpleTestCase):
     def test_kill_connection(self, _query):
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.kill_connection(100)
-        _query.assert_called_once_with(sql="kill 100")
+        _query.assert_called_once_with(sql="kill %s", parameters=(100,))
 
     @patch("MySQLdb.connect")
     @patch.object(MysqlEngine, "query")
@@ -790,7 +802,7 @@ class TestMysql(SimpleTestCase):
         self.assertEqual(user_summary.error, "query error")
 
         result_with_lock = ResultSet()
-        result_with_lock.rows = [("'root'@'localhost'", "root", "localhost", "N")]
+        result_with_lock.rows = [("root", "localhost", "N")]
         _query.return_value = result_with_lock
         _connect.return_value.get_server_info.return_value = "5.7.20-16log"
         self.assertTupleEqual(new_engine.server_version, (5, 7, 20))
@@ -801,10 +813,10 @@ class TestMysql(SimpleTestCase):
                 {
                     "host": "localhost",
                     "is_locked": "N",
-                    "privileges": [("'root'@'localhost'", "root", "localhost", "N")],
+                    "privileges": [("root", "localhost", "N")],
                     "saved": False,
                     "user": "root",
-                    "user_host": "'root'@'localhost'",
+                    "user_host": "`root`@`localhost`",
                 }
             ],
         )
@@ -813,7 +825,7 @@ class TestMysql(SimpleTestCase):
     @patch.object(MysqlEngine, "query")
     def test_get_instance_users_summary_without_lock(self, _query, _connect):
         result_without_lock = ResultSet()
-        result_without_lock.rows = [("'root'@'localhost'", "root", "localhost")]
+        result_without_lock.rows = [("root", "localhost")]
         _query.return_value = result_without_lock
         mysql_engine = MysqlEngine(instance=self.ins1)
         _connect.return_value.get_server_info.return_value = "5.7.5-16log"
@@ -825,10 +837,10 @@ class TestMysql(SimpleTestCase):
                 {
                     "host": "localhost",
                     "is_locked": None,
-                    "privileges": [("'root'@'localhost'", "root", "localhost")],
+                    "privileges": [("root", "localhost")],
                     "saved": False,
                     "user": "root",
-                    "user_host": "'root'@'localhost'",
+                    "user_host": "`root`@`localhost`",
                 }
             ],
         )
@@ -997,6 +1009,16 @@ class TestMysql(SimpleTestCase):
         self.assertTrue(forbidden["bad_query"])
         self.assertEqual(forbidden["msg"], "您无权查看该表")
 
+        forbidden = engine.query_check(
+            db_name="information_schema", sql="select * from user_privileges"
+        )
+        self.assertTrue(forbidden["bad_query"])
+        self.assertEqual(forbidden["msg"], "您无权查看该表")
+
+        forbidden = engine.query_check(sql="show grants for `u`@`%`")
+        self.assertTrue(forbidden["bad_query"])
+        self.assertEqual(forbidden["msg"], "您无权查看该表")
+
     @patch("sql.engines.mysql.GoInceptionEngine")
     def test_execute_check_inception_error_and_ddl_dml_separation(self, inception):
         check_error = ReviewSet()
@@ -1025,6 +1047,43 @@ class TestMysql(SimpleTestCase):
 
         self.assertEqual(result.error_count, 1)
         self.assertEqual(result.rows[1].errormessage, "DDL语句和DML语句不能同时执行！")
+
+    @patch("sql.engines.mysql.GoInceptionEngine")
+    def test_execute_check_rejects_critical_regex_timeout(self, inception):
+        rows = [ReviewResult(id=1, sql="update user set id=1")]
+        inception.return_value.execute_check.return_value = ReviewSet(rows=rows)
+        engine = MysqlEngine(instance=self.ins1)
+        config = {"critical_ddl_regex": "(a+)+$", "ddl_dml_separation": False}
+        engine.config.get = Mock(
+            side_effect=lambda key, default=None: config.get(key, default)
+        )
+
+        with patch.object(engine, "_compile_safe_regex") as compile_safe_regex:
+            compiled = Mock()
+            compiled.match.side_effect = TimeoutError()
+            compile_safe_regex.return_value = compiled
+            result = engine.execute_check(db_name="archery", sql="update user set id=1")
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(
+            result.rows[0].errormessage,
+            "critical_ddl_regex匹配超时，已拒绝执行以避免ReDoS",
+        )
+
+    @patch("sql.engines.mysql.GoInceptionEngine")
+    def test_execute_check_rejects_invalid_critical_regex(self, inception):
+        rows = [ReviewResult(id=1, sql="update user set id=1")]
+        inception.return_value.execute_check.return_value = ReviewSet(rows=rows)
+        engine = MysqlEngine(instance=self.ins1)
+        config = {"critical_ddl_regex": "[", "ddl_dml_separation": False}
+        engine.config.get = Mock(
+            side_effect=lambda key, default=None: config.get(key, default)
+        )
+
+        result = engine.execute_check(db_name="archery", sql="update user set id=1")
+
+        self.assertEqual(result.error_count, 1)
+        self.assertIn("critical_ddl_regex配置不合法", result.rows[0].errormessage)
 
     @patch.object(MysqlEngine, "query")
     def test_execute_workflow_read_only(self, query):
@@ -1062,8 +1121,10 @@ class TestMysql(SimpleTestCase):
         engine.processlist("")
         engine.processlist("Query'")
 
-        self.assertIn("command= 'Query';", query.call_args_list[0].args[1])
-        self.assertIn("Query\\'", query.call_args_list[1].args[1])
+        self.assertIn("command=%s;", query.call_args_list[0].args[1])
+        self.assertEqual(query.call_args_list[0].kwargs["parameters"], ("Query",))
+        self.assertIn("command=%s;", query.call_args_list[1].args[1])
+        self.assertEqual(query.call_args_list[1].kwargs["parameters"], ("Query'",))
 
     @patch.object(MysqlEngine, "query")
     def test_get_kill_command_and_kill_reject_invalid_ids(self, query):
@@ -1083,8 +1144,15 @@ class TestMysql(SimpleTestCase):
         engine.tablespace(schema_search="app_'")
         engine.tablespace_count(schema_search="app_'")
 
-        self.assertIn("app_\\'", query.call_args_list[0].args[1])
-        self.assertIn("app_\\'", query.call_args_list[1].args[1])
+        self.assertIn("table_schema LIKE %s", query.call_args_list[0].args[1])
+        self.assertEqual(
+            query.call_args_list[0].kwargs["parameters"],
+            ("%app_'%", "%app_'%", 0, 14),
+        )
+        self.assertIn("table_schema LIKE %s", query.call_args_list[1].args[1])
+        self.assertEqual(
+            query.call_args_list[1].kwargs["parameters"], ("%app_'%", "%app_'%")
+        )
 
     @patch.object(MysqlEngine, "query")
     def test_trxandlocks_uses_performance_schema_for_mysql_8(self, query):
@@ -1102,7 +1170,7 @@ class TestMysql(SimpleTestCase):
         connect.return_value.get_server_info.return_value = "8.0.0"
         failed = ResultSet()
         failed.error = "unknown column account_locked"
-        fallback = ResultSet(rows=[("`u`@`%`", "u", "%")])
+        fallback = ResultSet(rows=[("u", "%")])
         grants = ResultSet(rows=[("grant usage",)])
         query.side_effect = [failed, fallback, grants]
         engine = MysqlEngine(instance=self.ins1)
@@ -1123,6 +1191,11 @@ class TestMysql(SimpleTestCase):
         self.assertEqual(execute.call_args_list[0].kwargs["sql"], "DROP USER `u`@`%`;")
         self.assertIn("new\\'pwd", execute.call_args_list[1].kwargs["sql"])
 
+        execute.reset_mock()
+        result = engine.drop_instance_user("`u`@`%`;DROP USER `x`@`%`")
+        self.assertEqual(result.error, "账号格式不合法")
+        execute.assert_not_called()
+
     @patch.object(MysqlEngine, "execute")
     def test_create_instance_user_multiple_hosts(self, execute):
         execute.return_value = ResultSet()
@@ -1136,5 +1209,134 @@ class TestMysql(SimpleTestCase):
         )
 
         self.assertEqual([row["host"] for row in result.rows], ["%", "localhost"])
-        self.assertIn("'some_user'@'%'", execute.call_args.kwargs["sql"])
-        self.assertIn("'some_user'@'localhost'", execute.call_args.kwargs["sql"])
+        self.assertIn("`some_user`@`%`", execute.call_args.kwargs["sql"])
+        self.assertIn("`some_user`@`localhost`", execute.call_args.kwargs["sql"])
+
+    @patch.object(MysqlEngine, "execute")
+    def test_instance_user_privilege_sql_is_validated_and_quoted(self, execute):
+        execute.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=0,
+            priv_type=1,
+            privs={"db_privs": ["SELECT", "GRANT"]},
+            db_names=["app`db"],
+        )
+
+        self.assertIsNone(result.error)
+        self.assertEqual(
+            execute.call_args.kwargs["sql"],
+            "GRANT SELECT,GRANT OPTION ON `app``db`.* TO `u`@`%`;",
+        )
+
+        execute.reset_mock()
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=0,
+            priv_type=1,
+            privs={"db_privs": ["SELECT;DROP USER"]},
+            db_names=["app"],
+        )
+
+        self.assertEqual(result.error, "权限项不合法")
+        execute.assert_not_called()
+
+    @patch.object(MysqlEngine, "execute")
+    def test_instance_user_lock_rejects_injected_user_host(self, execute):
+        execute.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+
+        result = engine.set_instance_user_lock("`u`@`%`", "N")
+
+        self.assertIsNone(result.error)
+        self.assertEqual(
+            execute.call_args.kwargs["sql"], "ALTER USER `u`@`%` ACCOUNT LOCK;"
+        )
+
+        execute.reset_mock()
+        result = engine.set_instance_user_lock("`u`@`%`;DROP USER `x`@`%`", "N")
+
+        self.assertEqual(result.error, "账号格式不合法")
+        execute.assert_not_called()
+
+    @patch("sql.instance_account.get_engine")
+    @patch("sql.instance_account.user_instances")
+    def test_mysql_grant_view_delegates_to_engine_safe_method(
+        self, user_instances, get_engine
+    ):
+        request = RequestFactory().post(
+            "/instance/user/grant/",
+            data={
+                "instance_id": "1",
+                "user_host": "`u`@`%`",
+                "op_type": "0",
+                "priv_type": "1",
+                "privs": json.dumps(
+                    {
+                        "global_privs": [],
+                        "db_privs": ["SELECT"],
+                        "tb_privs": [],
+                        "col_privs": [],
+                    }
+                ),
+                "db_name[]": ["app"],
+            },
+        )
+        request.user = Mock()
+        request.user.has_perms.return_value = True
+        instance = Instance(id=1, db_type="mysql")
+        user_instances.return_value.get.return_value = instance
+        engine = Mock()
+        engine.grant_instance_user.return_value = ResultSet(
+            full_sql="GRANT SELECT ON `app`.* TO `u`@`%`;"
+        )
+        get_engine.return_value = engine
+
+        response = instance_account.grant(request)
+        data = json.loads(response.content)
+
+        self.assertEqual(data["status"], 0)
+        self.assertEqual(data["data"], "GRANT SELECT ON `app`.* TO `u`@`%`;")
+        engine.grant_instance_user.assert_called_once_with(
+            user_host="`u`@`%`",
+            op_type="0",
+            priv_type="1",
+            privs={
+                "global_privs": [],
+                "db_privs": ["SELECT"],
+                "tb_privs": [],
+                "col_privs": [],
+            },
+            db_names=["app"],
+            tb_names=None,
+            col_names=[],
+        )
+        engine.execute.assert_not_called()
+
+    @patch("sql.instance_account.get_engine")
+    @patch("sql.instance_account.user_instances")
+    def test_mysql_lock_view_delegates_to_engine_safe_method(
+        self, user_instances, get_engine
+    ):
+        request = RequestFactory().post(
+            "/instance/user/lock/",
+            data={"instance_id": "1", "user_host": "`u`@`%`", "is_locked": "N"},
+        )
+        request.user = Mock()
+        request.user.has_perms.return_value = True
+        instance = Instance(id=1, db_type="mysql")
+        user_instances.return_value.get.return_value = instance
+        engine = Mock()
+        engine.set_instance_user_lock.return_value = ResultSet()
+        get_engine.return_value = engine
+
+        response = instance_account.lock(request)
+        data = json.loads(response.content)
+
+        self.assertEqual(data["status"], 0)
+        engine.set_instance_user_lock.assert_called_once_with(
+            user_host="`u`@`%`", is_locked="N"
+        )
+        engine.execute.assert_not_called()

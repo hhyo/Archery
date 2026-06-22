@@ -54,3 +54,4 @@ openpyxl==3.1.5
 parameterized
 pymemcache==4.0.0
 taos-ws-py==0.6.9
+regex==2026.5.9
