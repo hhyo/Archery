@@ -1488,6 +1488,37 @@
             if (current_tb_name && tb_name_list.indexOf(current_tb_name) === -1) {
                 tb_name_list.push(current_tb_name);
             }
+
+            // 关系型数据库选择表后，自动在编辑器第一行插入 SELECT 查询语句
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            var relationalDbs = ['MySQL', 'MsSQL', 'PgSQL', 'Oracle', 'ClickHouse', 'Doris'];
+            if (current_tb_name && relationalDbs.indexOf(optgroup) !== -1) {
+                var autoSelectSql = '';
+                if (optgroup === 'Oracle') {
+                    autoSelectSql = 'SELECT * FROM ' + current_tb_name + ' WHERE ROWNUM <= 100;';
+                } else if (optgroup === 'MsSQL') {
+                    autoSelectSql = 'SELECT TOP 100 * FROM ' + current_tb_name + ';';
+                } else {
+                    // MySQL, PgSQL, ClickHouse, Doris
+                    autoSelectSql = 'SELECT * FROM ' + current_tb_name + ' LIMIT 100;';
+                }
+                var currentContent = editor.getValue();
+                var lines = currentContent.split('\n');
+                // 判断第一行是否为之前自动生成的 SELECT 语句，如果是则替换，否则插入
+                var autoSelectPattern = /^SELECT\s+(TOP\s+\d+\s+)?\*\s+FROM\s+\S+(\s+WHERE\s+ROWNUM\s*<=\s*\d+)?(\s+LIMIT\s+\d+)?;$/i;
+                if (lines.length > 0 && autoSelectPattern.test(lines[0].trim())) {
+                    lines[0] = autoSelectSql;
+                    editor.setValue(lines.join('\n'));
+                } else if (currentContent.trim()) {
+                    editor.setValue(autoSelectSql + '\n' + currentContent);
+                } else {
+                    editor.setValue(autoSelectSql + '\n');
+                }
+                // 将光标移动到第一行末尾
+                editor.moveCursorTo(0, autoSelectSql.length);
+                editor.clearSelection();
+            }
+
             $.ajax({
                 type: "post",
                 url: "/api/v1/sqlquery/describetable/",
