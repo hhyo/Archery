@@ -1340,3 +1340,541 @@ class TestMysql(SimpleTestCase):
             user_host="`u`@`%`", is_locked="N"
         )
         engine.execute.assert_not_called()
+
+    # ------------------------------------------------------------------ #
+    #  _quote_identifier / _quote_literal / _quote_account_part 错误分支   #
+    # ------------------------------------------------------------------ #
+    def test_quote_identifier_errors(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._quote_identifier(None)
+        with self.assertRaises(ValueError):
+            MysqlEngine._quote_identifier("")
+        with self.assertRaises(ValueError):
+            MysqlEngine._quote_identifier("ab\x00cd")
+
+    def test_quote_literal_errors(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._quote_literal(None)
+        with self.assertRaises(ValueError):
+            MysqlEngine._quote_literal("ab\x00cd")
+
+    def test_quote_account_part_errors(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._quote_account_part(None)
+        with self.assertRaises(ValueError):
+            MysqlEngine._quote_account_part("ab\x00cd")
+
+    # ------------------------------------------------------------------ #
+    #  _parse_account_part 各种引号/转义/边界                               #
+    # ------------------------------------------------------------------ #
+    def test_parse_account_part_unquoted(self):
+        value, pos = MysqlEngine._parse_account_part("user@host", 0)
+        self.assertEqual(value, "user")
+        self.assertEqual(pos, 4)
+
+    def test_parse_account_part_leading_space(self):
+        value, pos = MysqlEngine._parse_account_part("  user@host", 0)
+        self.assertEqual(value, "user")
+
+    def test_parse_account_part_empty_after_space(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._parse_account_part("   ", 0)
+
+    def test_parse_account_part_unquoted_empty_value(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._parse_account_part("@host", 0)
+
+    def test_parse_account_part_backtick_escaped(self):
+        # `us``er` -> user with embedded backtick
+        value, pos = MysqlEngine._parse_account_part("`us``er`@host", 0)
+        self.assertEqual(value, "us`er")
+
+    def test_parse_account_part_single_quoted(self):
+        value, pos = MysqlEngine._parse_account_part("'user'@host", 0)
+        self.assertEqual(value, "user")
+
+    def test_parse_account_part_single_quoted_escaped_backslash(self):
+        # 'us\'er' -> us'er (backslash escape for single-quoted)
+        value, pos = MysqlEngine._parse_account_part("'us\\'er'@host", 0)
+        self.assertEqual(value, "us'er")
+
+    def test_parse_account_part_single_quoted_doubled(self):
+        # 'us''er' -> us'er (doubled quote escape)
+        value, pos = MysqlEngine._parse_account_part("'us''er'@host", 0)
+        self.assertEqual(value, "us'er")
+
+    def test_parse_account_part_double_quoted(self):
+        value, pos = MysqlEngine._parse_account_part('"user"@host', 0)
+        self.assertEqual(value, "user")
+
+    def test_parse_account_part_double_quoted_escaped_backslash(self):
+        value, pos = MysqlEngine._parse_account_part('"us\\"er"@host', 0)
+        self.assertEqual(value, 'us"er')
+
+    def test_parse_account_part_double_quoted_doubled(self):
+        value, pos = MysqlEngine._parse_account_part('"us""er"@host', 0)
+        self.assertEqual(value, 'us"er')
+
+    def test_parse_account_part_unterminated_quote(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._parse_account_part("'user", 0)
+
+    # ------------------------------------------------------------------ #
+    #  _parse_user_host 边界                                              #
+    # ------------------------------------------------------------------ #
+    def test_parse_user_host_none(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._parse_user_host(None)
+
+    def test_parse_user_host_no_at(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._parse_user_host("user_only")
+
+    def test_parse_user_host_trailing_garbage(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._parse_user_host("`u`@`%` extra")
+
+    # ------------------------------------------------------------------ #
+    #  _coerce_int 错误分支                                               #
+    # ------------------------------------------------------------------ #
+    def test_coerce_int_bool_rejected(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._coerce_int(True, "test")
+
+    def test_coerce_int_non_numeric(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._coerce_int("abc", "test")
+
+    def test_coerce_int_below_minimum(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._coerce_int(-1, "test", minimum=0)
+
+    # ------------------------------------------------------------------ #
+    #  _validate_thread_ids 错误分支                                       #
+    # ------------------------------------------------------------------ #
+    def test_validate_thread_ids_not_list(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._validate_thread_ids("not_a_list")
+
+    def test_validate_thread_ids_bool_element(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._validate_thread_ids([True])
+
+    def test_validate_thread_ids_string_element(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._validate_thread_ids([1, "2"])
+
+    # ------------------------------------------------------------------ #
+    #  _normalize_privileges                                              #
+    # ------------------------------------------------------------------ #
+    def test_normalize_privileges_empty(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._normalize_privileges([], MysqlEngine.GLOBAL_PRIVILEGES)
+
+    def test_normalize_privileges_none(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._normalize_privileges(None, MysqlEngine.GLOBAL_PRIVILEGES)
+
+    # ------------------------------------------------------------------ #
+    #  _as_list 边界                                                      #
+    # ------------------------------------------------------------------ #
+    def test_as_list_none(self):
+        self.assertEqual(MysqlEngine._as_list(None), [])
+
+    def test_as_list_single_value(self):
+        self.assertEqual(MysqlEngine._as_list("single"), ["single"])
+
+    # ------------------------------------------------------------------ #
+    #  _compile_safe_regex                                                #
+    # ------------------------------------------------------------------ #
+    def test_compile_safe_regex_too_long(self):
+        with self.assertRaises(ValueError):
+            MysqlEngine._compile_safe_regex("a" * 2049)
+
+    # ------------------------------------------------------------------ #
+    #  escape_string                                                      #
+    # ------------------------------------------------------------------ #
+    def test_escape_string(self):
+        engine = MysqlEngine(instance=self.ins1)
+        self.assertEqual(engine.escape_string("it's"), "it\\'s")
+
+    # ------------------------------------------------------------------ #
+    #  kill_connection ValueError path                                     #
+    # ------------------------------------------------------------------ #
+    def test_kill_connection_invalid_thread_id(self):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.kill_connection("abc")
+        self.assertIsNotNone(result.error)
+
+    # ------------------------------------------------------------------ #
+    #  get_bind_users                                                     #
+    # ------------------------------------------------------------------ #
+    @patch.object(MysqlEngine, "query")
+    def test_get_bind_users(self, query):
+        query.return_value = ResultSet(rows=[("'u'@'%'", "some_db")])
+        engine = MysqlEngine(instance=self.ins1)
+        rows = engine.get_bind_users("some_db")
+        self.assertEqual(rows, [("'u'@'%'", "some_db")])
+
+    # ------------------------------------------------------------------ #
+    #  get_instance_users_summary — MariaDB lock SQL branch               #
+    # ------------------------------------------------------------------ #
+    @patch("MySQLdb.connect")
+    @patch.object(MysqlEngine, "query")
+    def test_get_instance_users_summary_mariadb_lock(self, query, connect):
+        connect.return_value.get_server_info.return_value = "10.4.2-MariaDB"
+        result = ResultSet(rows=[("root", "localhost", "Y")])
+        grants = ResultSet(rows=[("GRANT ALL",)])
+        query.side_effect = [result, grants]
+        engine = MysqlEngine(instance=self.ins1)
+
+        summary = engine.get_instance_users_summary()
+
+        self.assertEqual(summary.rows[0]["is_locked"], "Y")
+        self.assertEqual(summary.rows[0]["user"], "root")
+        # 确认使用了 MariaDB 的 global_priv SQL
+        self.assertIn("global_priv", query.call_args_list[0].args[1])
+
+    # ------------------------------------------------------------------ #
+    #  create_instance_user — ValueError + empty accounts                  #
+    # ------------------------------------------------------------------ #
+    @patch.object(MysqlEngine, "execute")
+    def test_create_instance_user_null_byte_password(self, execute):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.create_instance_user(
+            user="u", host="%", password1="pass\x00word", remark=""
+        )
+        self.assertIsNotNone(result.error)
+        execute.assert_not_called()
+
+    @patch.object(MysqlEngine, "execute")
+    def test_create_instance_user_null_byte_user(self, execute):
+        """覆盖 create_instance_user 的 ValueError catch (line 952-953)"""
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.create_instance_user(
+            user="u\x00x", host="%", password1="pwd", remark=""
+        )
+        self.assertIsNotNone(result.error)
+        execute.assert_not_called()
+
+    def test_parse_user_host_with_space_before_at(self):
+        """覆盖 _parse_user_host line 264 — 引号括起的 user 后面有空格再到 @"""
+        user, host = MysqlEngine._parse_user_host("`user` @`host`")
+        self.assertEqual(user, "user")
+        self.assertEqual(host, "host")
+
+    def test_reset_instance_user_pwd_null_byte(self):
+        """覆盖 reset_instance_user_pwd ValueError catch (lines 1062-1063)"""
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.reset_instance_user_pwd("`u`@`%`", "pwd\x00bad")
+        self.assertIsNotNone(result.error)
+
+    @patch.object(MysqlEngine, "execute")
+    def test_grant_instance_user_db_no_db_names(self, execute):
+        """覆盖 grant_instance_user 空 grant_sql 路径 (line 1032)"""
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=0,
+            priv_type=1,
+            privs={"db_privs": ["SELECT"]},
+            db_names=None,
+        )
+        self.assertEqual(result.error, "授权语句不能为空")
+        execute.assert_not_called()
+
+    # ------------------------------------------------------------------ #
+    #  grant_instance_user — global (priv_type=0)                          #
+    # ------------------------------------------------------------------ #
+    @patch.object(MysqlEngine, "execute")
+    def test_grant_instance_user_global_privileges(self, execute):
+        execute.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=0,
+            priv_type=0,
+            privs={"global_privs": ["SELECT", "INSERT"]},
+        )
+        self.assertIsNone(result.error)
+        self.assertIn("ON *.*", execute.call_args.kwargs["sql"])
+        self.assertIn("TO", execute.call_args.kwargs["sql"])
+
+    # ------------------------------------------------------------------ #
+    #  grant_instance_user — revoke (op_type=1)                            #
+    # ------------------------------------------------------------------ #
+    @patch.object(MysqlEngine, "execute")
+    def test_grant_instance_user_revoke(self, execute):
+        execute.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=1,
+            priv_type=0,
+            privs={"global_privs": ["SELECT"]},
+        )
+        self.assertIsNone(result.error)
+        self.assertIn("REVOKE", execute.call_args.kwargs["sql"])
+        self.assertIn("FROM", execute.call_args.kwargs["sql"])
+
+    # ------------------------------------------------------------------ #
+    #  grant_instance_user — invalid op_type                               #
+    # ------------------------------------------------------------------ #
+    def test_grant_instance_user_invalid_op_type(self):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=99,
+            priv_type=0,
+            privs={"global_privs": ["SELECT"]},
+        )
+        self.assertEqual(result.error, "操作类型不合法")
+
+    # ------------------------------------------------------------------ #
+    #  grant_instance_user — table (priv_type=2)                           #
+    # ------------------------------------------------------------------ #
+    @patch.object(MysqlEngine, "execute")
+    def test_grant_instance_user_table_privileges(self, execute):
+        execute.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=0,
+            priv_type=2,
+            privs={"tb_privs": ["SELECT"]},
+            db_names=["mydb"],
+            tb_names=["t1", "t2"],
+        )
+        self.assertIsNone(result.error)
+        sql = execute.call_args.kwargs["sql"]
+        self.assertIn("`mydb`.`t1`", sql)
+        self.assertIn("`mydb`.`t2`", sql)
+
+    # ------------------------------------------------------------------ #
+    #  grant_instance_user — column (priv_type=3)                          #
+    # ------------------------------------------------------------------ #
+    @patch.object(MysqlEngine, "execute")
+    def test_grant_instance_user_column_privileges(self, execute):
+        execute.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=0,
+            priv_type=3,
+            privs={"col_privs": ["SELECT", "UPDATE"]},
+            db_names=["mydb"],
+            tb_names=["t1"],
+            col_names=["col1", "col2"],
+        )
+        self.assertIsNone(result.error)
+        sql = execute.call_args.kwargs["sql"]
+        self.assertIn("SELECT(`col1`,`col2`)", sql)
+        self.assertIn("UPDATE(`col1`,`col2`)", sql)
+
+    # ------------------------------------------------------------------ #
+    #  grant_instance_user — column with no col_names                      #
+    # ------------------------------------------------------------------ #
+    def test_grant_instance_user_column_empty_cols(self):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=0,
+            priv_type=3,
+            privs={"col_privs": ["SELECT"]},
+            db_names=["mydb"],
+            tb_names=["t1"],
+            col_names=None,
+        )
+        self.assertEqual(result.error, "列名不能为空")
+
+    # ------------------------------------------------------------------ #
+    #  grant_instance_user — invalid priv_type                             #
+    # ------------------------------------------------------------------ #
+    def test_grant_instance_user_invalid_priv_type(self):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.grant_instance_user(
+            user_host="`u`@`%`",
+            op_type=0,
+            priv_type=99,
+            privs={"global_privs": ["SELECT"]},
+        )
+        self.assertEqual(result.error, "权限类型不合法")
+
+    # ------------------------------------------------------------------ #
+    #  set_instance_user_lock — unlock + invalid status                    #
+    # ------------------------------------------------------------------ #
+    @patch.object(MysqlEngine, "execute")
+    def test_set_instance_user_lock_unlock(self, execute):
+        execute.return_value = ResultSet()
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.set_instance_user_lock("`u`@`%`", "Y")
+        self.assertIsNone(result.error)
+        self.assertIn("ACCOUNT UNLOCK", execute.call_args.kwargs["sql"])
+
+    def test_set_instance_user_lock_invalid_status(self):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.set_instance_user_lock("`u`@`%`", "X")
+        self.assertEqual(result.error, "锁定状态不合法")
+
+    # ------------------------------------------------------------------ #
+    #  query — MariaDB max_statement_time branch                           #
+    # ------------------------------------------------------------------ #
+    @patch("MySQLdb.connect")
+    def test_query_mariadb_max_statement_time(self, connect):
+        cursor = Mock()
+        cursor.execute.return_value = 0
+        cursor.fetchall.return_value = []
+        cursor.description = None
+        connect.return_value.cursor.return_value = cursor
+        connect.return_value.get_server_info.return_value = "10.5.0-MariaDB"
+        engine = MysqlEngine(instance=self.ins1)
+
+        engine.query(sql="select 1")
+
+        # 第一个 execute 应该是 max_statement_time (MariaDB)
+        first_call_sql = cursor.execute.call_args_list[0].args[0]
+        self.assertIn("max_statement_time", first_call_sql)
+
+    # ------------------------------------------------------------------ #
+    #  _normalize_identifier                                               #
+    # ------------------------------------------------------------------ #
+    def test_normalize_identifier(self):
+        self.assertEqual(MysqlEngine._normalize_identifier(None), "")
+        self.assertEqual(MysqlEngine._normalize_identifier("`MyDB`"), "mydb")
+        self.assertEqual(MysqlEngine._normalize_identifier("'MyDB'"), "mydb")
+        self.assertEqual(MysqlEngine._normalize_identifier('"MyDB"'), "mydb")
+        self.assertEqual(MysqlEngine._normalize_identifier("plain"), "plain")
+        self.assertEqual(MysqlEngine._normalize_identifier("`my``db`"), "my`db")
+
+    # ------------------------------------------------------------------ #
+    #  _sql_references_forbidden_privilege_object — extract_tables 异常     #
+    # ------------------------------------------------------------------ #
+    @patch("sql.engines.mysql.extract_tables", side_effect=Exception("parse error"))
+    def test_sql_references_forbidden_extract_tables_error(self, _extract):
+        result = MysqlEngine._sql_references_forbidden_privilege_object(
+            "some_db", "select 1 from normal_table"
+        )
+        self.assertFalse(result)
+
+    def test_sql_references_forbidden_mysql_schema_via_regex(self):
+        result = MysqlEngine._sql_references_forbidden_privilege_object(
+            "some_db", "select * from mysql.user"
+        )
+        self.assertTrue(result)
+
+    def test_sql_references_forbidden_info_schema_via_regex(self):
+        result = MysqlEngine._sql_references_forbidden_privilege_object(
+            "some_db", "select * from information_schema.user_privileges"
+        )
+        self.assertTrue(result)
+
+    def test_sql_references_forbidden_via_extract_tables(self):
+        # 使用子查询方式，extract_tables 可以解析出 mysql.global_grants
+        result = MysqlEngine._sql_references_forbidden_privilege_object(
+            "some_db", "select * from (select * from mysql.global_grants) t"
+        )
+        self.assertTrue(result)
+
+    def test_sql_references_forbidden_info_schema_via_extract_tables(self):
+        result = MysqlEngine._sql_references_forbidden_privilege_object(
+            "some_db",
+            "select * from (select * from information_schema.user_privileges) t",
+        )
+        self.assertTrue(result)
+
+    # ------------------------------------------------------------------ #
+    #  _sql_is_forbidden_account_statement                                 #
+    # ------------------------------------------------------------------ #
+    def test_sql_is_forbidden_show_create_user(self):
+        self.assertTrue(
+            MysqlEngine._sql_is_forbidden_account_statement("SHOW CREATE USER `u`@`%`")
+        )
+        self.assertFalse(MysqlEngine._sql_is_forbidden_account_statement("SELECT 1"))
+
+    # ------------------------------------------------------------------ #
+    #  execute_check — invalid regex with empty rows                       #
+    # ------------------------------------------------------------------ #
+    @patch("sql.engines.mysql.GoInceptionEngine")
+    def test_execute_check_invalid_regex_empty_rows(self, inception):
+        inception.return_value.execute_check.return_value = ReviewSet(rows=[])
+        engine = MysqlEngine(instance=self.ins1)
+        config = {"critical_ddl_regex": "[", "ddl_dml_separation": False}
+        engine.config.get = Mock(
+            side_effect=lambda key, default=None: config.get(key, default)
+        )
+
+        result = engine.execute_check(db_name="archery", sql="update user set id=1")
+
+        self.assertIn("critical_ddl_regex配置不合法", result.error)
+
+    # ------------------------------------------------------------------ #
+    #  execute_check — DDL/DML separation with critical_ddl_regex (no match) #
+    # ------------------------------------------------------------------ #
+    @patch("sql.engines.mysql.GoInceptionEngine")
+    def test_execute_check_ddl_dml_separation_with_critical_regex(self, inception):
+        rows = [
+            ReviewResult(id=1, sql="create table t(id int)"),
+            ReviewResult(id=2, sql="insert into t values(1)"),
+        ]
+        inception.return_value.execute_check.return_value = ReviewSet(rows=rows)
+        engine = MysqlEngine(instance=self.ins1)
+        # critical_ddl_regex 有值但不匹配任何语句，同时开启 ddl_dml_separation
+        config = {"critical_ddl_regex": "^drop database", "ddl_dml_separation": True}
+        engine.config.get = Mock(
+            side_effect=lambda key, default=None: config.get(key, default)
+        )
+
+        result = engine.execute_check(
+            db_name="archery",
+            sql="create table t(id int);insert into t values(1);",
+        )
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[1].errormessage, "DDL语句和DML语句不能同时执行！")
+
+    # ------------------------------------------------------------------ #
+    #  get_kill_command / kill — empty thread_ids                           #
+    # ------------------------------------------------------------------ #
+    @patch.object(MysqlEngine, "query")
+    def test_get_kill_command_empty_ids(self, query):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.get_kill_command([], thread_ids_check=False)
+        self.assertEqual(result, "")
+        query.assert_not_called()
+
+    @patch.object(MysqlEngine, "query")
+    def test_kill_empty_ids(self, query):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.kill([], thread_ids_check=False)
+        self.assertIsInstance(result, ResultSet)
+        query.assert_not_called()
+
+    # ------------------------------------------------------------------ #
+    #  tablespace — invalid offset/row_count                               #
+    # ------------------------------------------------------------------ #
+    def test_tablespace_invalid_offset(self):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.tablespace(offset="abc")
+        self.assertIsNotNone(result.error)
+
+    def test_tablespace_negative_row_count(self):
+        engine = MysqlEngine(instance=self.ins1)
+        result = engine.tablespace(row_count=-1)
+        self.assertIsNotNone(result.error)
+
+    # ------------------------------------------------------------------ #
+    #  close                                                               #
+    # ------------------------------------------------------------------ #
+    def test_close_with_conn(self):
+        engine = MysqlEngine(instance=self.ins1)
+        mock_conn = Mock()
+        engine.conn = mock_conn
+        engine.close()
+        mock_conn.close.assert_called_once()
+        self.assertIsNone(engine.conn)
+
+    def test_close_without_conn(self):
+        engine = MysqlEngine(instance=self.ins1)
+        engine.conn = None
+        engine.close()  # should not raise
+        self.assertIsNone(engine.conn)
