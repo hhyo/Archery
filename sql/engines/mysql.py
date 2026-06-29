@@ -35,6 +35,7 @@ MYSQL_PRIVILEGE_TABLES = {
     "procs_priv",
     "proxies_priv",
     "global_grants",
+    "global_priv",
     "default_roles",
     "role_edges",
     "password_history",
@@ -889,7 +890,7 @@ class MysqlEngine(EngineBase):
             2,
         ):
             support_account_lock = True
-            sql_get_user = "SELECT user, host, JSON_EXTRACT(priv, '$.account_locked') AS account_locked FROM mysql.global_priv;"
+            sql_get_user = "SELECT user, host, IF(JSON_EXTRACT(priv, '$.account_locked') = 'true', 'Y', 'N') AS account_locked FROM mysql.global_priv;"
         else:
             support_account_lock = False
             sql_get_user = sql_get_user_without_account_locked
