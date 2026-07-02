@@ -1159,6 +1159,7 @@ class TestMysql(SimpleTestCase):
         query.return_value = ResultSet()
         engine = MysqlEngine(instance=self.ins1)
         engine._server_version = (8, 0, 1)
+        engine._server_info = "MySQL 8.0.1"
 
         engine.trxandlocks()
 
