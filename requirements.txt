@@ -17,7 +17,7 @@ pyodbc==5.*
 gunicorn==22.0.0
 pyecharts==2.0.4
 aliyun-python-sdk-rds==2.1.1
-cx-Oracle==8.3.0
+oracledb==4.0.1
 supervisor==4.1.0
 phoenixdb==1.2.1
 django-mirage-field==1.4.0

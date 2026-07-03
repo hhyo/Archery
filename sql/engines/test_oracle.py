@@ -46,8 +46,8 @@ class TestOracle(TestCase):
         SqlWorkflow.objects.all().delete()
         SqlWorkflowContent.objects.all().delete()
 
-    @patch("cx_Oracle.makedsn")
-    @patch("cx_Oracle.connect")
+    @patch("oracledb.makedsn")
+    @patch("oracledb.connect")
     def test_get_connection(self, _connect, _makedsn):
         # 填写 sid 测试
         new_engine = OracleEngine(self.ins)
@@ -74,7 +74,7 @@ class TestOracle(TestCase):
         with self.assertRaises(ValueError):
             new_engine.get_connection()
 
-    @patch("cx_Oracle.connect")
+    @patch("oracledb.connect")
     def test_engine_base_info(self, _conn):
         new_engine = OracleEngine(instance=self.ins)
         self.assertEqual(new_engine.name, "Oracle")
@@ -82,9 +82,9 @@ class TestOracle(TestCase):
         _conn.return_value.version = "12.1.0.2.0"
         self.assertTupleEqual(new_engine.server_version, ("12", "1", "0"))
 
-    @patch("cx_Oracle.connect.cursor.execute")
-    @patch("cx_Oracle.connect.cursor")
-    @patch("cx_Oracle.connect")
+    @patch("oracledb.connect.cursor.execute")
+    @patch("oracledb.connect.cursor")
+    @patch("oracledb.connect")
     def test_query(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchmany.return_value = [(1,)]
         new_engine = OracleEngine(instance=self.ins)
@@ -94,9 +94,9 @@ class TestOracle(TestCase):
         self.assertIsInstance(query_result, ResultSet)
         self.assertListEqual(query_result.rows, [(1,)])
 
-    @patch("cx_Oracle.connect.cursor.execute")
-    @patch("cx_Oracle.connect.cursor")
-    @patch("cx_Oracle.connect")
+    @patch("oracledb.connect.cursor.execute")
+    @patch("oracledb.connect.cursor")
+    @patch("oracledb.connect")
     def test_query_not_limit(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
         new_engine = OracleEngine(instance=self.ins)
@@ -368,9 +368,9 @@ end;"""
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
-    @patch("cx_Oracle.connect.cursor.execute")
-    @patch("cx_Oracle.connect.cursor")
-    @patch("cx_Oracle.connect")
+    @patch("oracledb.connect.cursor.execute")
+    @patch("oracledb.connect.cursor")
+    @patch("oracledb.connect")
     def test_execute_workflow_success(self, _conn, _cursor, _execute):
         sql = "update user set id=1"
         review_row = ReviewResult(
@@ -420,9 +420,9 @@ end;"""
             execute_result.rows[0].__dict__.keys(), execute_row.__dict__.keys()
         )
 
-    @patch("cx_Oracle.connect.cursor.execute")
-    @patch("cx_Oracle.connect.cursor")
-    @patch("cx_Oracle.connect", return_value=RuntimeError)
+    @patch("oracledb.connect.cursor.execute")
+    @patch("oracledb.connect.cursor")
+    @patch("oracledb.connect", return_value=RuntimeError)
     def test_execute_workflow_exception(self, _conn, _cursor, _execute):
         sql = "update user set id=1"
         row = ReviewResult(
@@ -462,9 +462,9 @@ end;"""
                 execute_result.rows[0].__dict__.keys(), row.__dict__.keys()
             )
 
-    @patch("cx_Oracle.connect.cursor.execute")
-    @patch("cx_Oracle.connect.cursor")
-    @patch("cx_Oracle.connect")
+    @patch("oracledb.connect.cursor.execute")
+    @patch("oracledb.connect.cursor")
+    @patch("oracledb.connect")
     def test_execute(self, _connect, _cursor, _execute):
         new_engine = OracleEngine(instance=self.ins)
         sql = "update abc set count=1 where id=1;"
@@ -492,9 +492,9 @@ end;"""
         )
 
     @patch("sql.engines.oracle.OracleEngine.query")
-    @patch("cx_Oracle.connect.cursor.execute")
-    @patch("cx_Oracle.connect.cursor")
-    @patch("cx_Oracle.connect")
+    @patch("oracledb.connect.cursor.execute")
+    @patch("oracledb.connect.cursor")
+    @patch("oracledb.connect")
     def test_kill_session(self, _query, _connect, _cursor, _execute):
         new_engine = OracleEngine(instance=self.ins)
         _query.return_value.rows = (

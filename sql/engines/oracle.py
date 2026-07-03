@@ -16,7 +16,7 @@ from sql.utils.sql_utils import (
     get_exec_sqlitem_list,
 )
 from . import EngineBase
-import cx_Oracle
+import oracledb
 from .models import ResultSet, ReviewSet, ReviewResult
 from sql.utils.data_masking import simple_column_mask
 
@@ -36,16 +36,16 @@ class OracleEngine(EngineBase):
         if self.conn:
             return self.conn
         if self.sid:
-            dsn = cx_Oracle.makedsn(self.host, self.port, self.sid)
-            self.conn = cx_Oracle.connect(
-                self.user, self.password, dsn=dsn, encoding="UTF-8", nencoding="UTF-8"
+            dsn = oracledb.makedsn(self.host, self.port, self.sid)
+            self.conn = oracledb.connect(
+                self.user, self.password, dsn=dsn
             )
         elif self.service_name:
-            dsn = cx_Oracle.makedsn(
+            dsn = oracledb.makedsn(
                 self.host, self.port, service_name=self.service_name
             )
-            self.conn = cx_Oracle.connect(
-                self.user, self.password, dsn=dsn, encoding="UTF-8", nencoding="UTF-8"
+            self.conn = oracledb.connect(
+                self.user, self.password, dsn=dsn
             )
         else:
             raise ValueError("sid 和 dsn 均未填写, 请联系管理页补充该实例配置.")

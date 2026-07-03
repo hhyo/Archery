@@ -13,7 +13,7 @@ RUN apt-get update \
     && apt-get install -yq --no-install-recommends nginx mariadb-client \
     && source venv4archery/bin/activate \
     && pip install --no-cache-dir "setuptools<82" wheel \
-    && pip install --no-build-isolation --no-cache-dir "cx-Oracle==8.3.0" \
+    && pip install --no-cache-dir "oracledb==4.0.1" \
     && pip install --no-cache-dir -r /opt/archery/requirements.txt \
     && cp -f /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && cp -f /opt/archery/src/docker/supervisord.conf /etc/ \
