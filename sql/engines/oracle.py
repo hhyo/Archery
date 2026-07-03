@@ -695,9 +695,9 @@ class OracleEngine(EngineBase):
                 sql = f"select PLAN_TABLE_OUTPUT from table(dbms_xplan.display)"
             cursor.execute(sql, parameters or [])
             fields = cursor.description
-            if any(x[1] == cx_Oracle.CLOB for x in fields):
+            if any(x[1] == oracledb.CLOB for x in fields):
                 rows = [
-                    tuple([(c.read() if type(c) == cx_Oracle.LOB else c) for c in r])
+                    tuple([(c.read() if type(c) == oracledb.LOB else c) for c in r])
                     for r in cursor
                 ]
                 if int(limit_num) > 0:
@@ -1430,9 +1430,9 @@ class OracleEngine(EngineBase):
             )
             cursor.execute(get_task_sql, {"task_name": task_name})
             fields = cursor.description
-            if any(x[1] == cx_Oracle.CLOB for x in fields):
+            if any(x[1] == oracledb.CLOB for x in fields):
                 rows = [
-                    tuple([(c.read() if type(c) == cx_Oracle.LOB else c) for c in r])
+                    tuple([(c.read() if type(c) == oracledb.LOB else c) for c in r])
                     for r in cursor
                 ]
             else:
