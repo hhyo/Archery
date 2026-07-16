@@ -1,21 +1,22 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="query-log-toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="filter-star" class="form-control selectpicker"
-                    title="全部">
-                <option value="" selected="selected">全部</option>
-                <option value="true">已收藏</option>
-                <option value="false">未收藏</option>
+                    title="{% trans 'All' %}">
+                <option value="" selected="selected">{% trans 'All' %}</option>
+                <option value="true">{% trans 'Starred' %}</option>
+                <option value="false">{% trans 'Unstarred' %}</option>
             </select>
         </div>
         <div class="form-group">
             <select id="filter-alias" class="form-control selectpicker"
                     data-live-search="true"
-                    title="全部">
-                <option value="" selected="selected">全部</option>
+                    title="{% trans 'All' %}">
+                <option value="" selected="selected">{% trans 'All' %}</option>
                 {% for sql in favorites %}
                     <option value={{ sql.id }}>{{ sql.alias }}</option>
                 {% endfor %}
@@ -29,16 +30,16 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">收藏语句</h4>
+                    <h4 class="modal-title text-danger">{% trans "Favorite SQL" %}</h4>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="query_log_id">
                     <input id="alias" name="alias" type='text' autocomplete="off" class="form-control"
-                           placeholder="请输入语句别名"/>
+                           placeholder="{% trans 'Please enter a SQL alias' %}"/>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button type="button" id="btn-star" class="btn btn-danger" onclick="star()">收藏</button>
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" id="btn-star" class="btn btn-danger" onclick="star()">{% trans "Favorite" %}</button>
                 </div>
             </div>
         </div>
@@ -47,11 +48,11 @@
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading form-inline">
-                    SQL查询
+                    {% trans "SQL Query" %}
                     <select id="favorites" name="favorites"
                             class="form-control selectpicker"
-                            data-live-search="true" data-live-search-placeholder="搜索"
-                            title="常用查询"
+                            data-live-search="true" data-live-search-placeholder="{% trans 'Search' %}"
+                            title="{% trans 'Common Queries' %}"
                             required>
                         {% for sql in favorites %}
                             <option value={{ sql.id }}>{{ sql.alias }}</option>
@@ -62,14 +63,14 @@
                             {% if can_offline_download == 1 %}
                                 <button id="btn-exportsubmit" type="button" class="btn btn-default">
                                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                                    提交导出工单
+                                    {% trans "Submit Export Request" %}
                                 </button>
                             {% endif %}
                         {% endif %}
                     </div>
-                    <textarea id="generateDesc" class="form-control" style="display: none;width: 70%;" placeholder="AI 查询描述" rows=1></textarea>
-                    <input id="btn-generatesql" type="button" class="btn btn-info" style="display: none" value="生成SQL"/>
-                    <button id="btn-openaiTooltip" type="button" class="btn" style="display: none" data-toggle="tooltip" title="仅此操作会与 AI 交互, 收集数据库类型、表结构以及输入框信息, 交给 AI 生成 SQL 并置于下面的语句框中" >
+                    <textarea id="generateDesc" class="form-control" style="display: none;width: 70%;" placeholder="{% trans 'AI query description' %}" rows=1></textarea>
+                    <input id="btn-generatesql" type="button" class="btn btn-info" style="display: none" value="{% trans 'Generate SQL' %}"/>
+                    <button id="btn-openaiTooltip" type="button" class="btn" style="display: none" data-toggle="tooltip" title="{% trans 'This action will interact with AI, collecting database type, table structure, and input box information to generate SQL and place it in the statement box below' %}" >
                         <span class="fa fa-question-circle" />
                     </button>
                 </div>
@@ -85,9 +86,9 @@
                         <div class="col-md-3 column">
                             <div class="form-group" id="div-table-locator">
                                 <input id="table-locator-input" type="text" class="form-control"
-                                       placeholder="按表名定位实例（如 orders）" autocomplete="off"/>
+                                placeholder="{% trans 'Locate instance by table name (e.g. orders)' %}" autocomplete="off"/>
                                 <div id="table-locator-loading" style="display:none">
-                                    <small class="text-muted">查询中...</small>
+                                    <small class="text-muted">{% trans "Searching..." %}</small>
                                 </div>
                                 <ul id="table-locator-results" class="list-unstyled"
                                     style="max-height:160px;overflow-y:auto;margin-top:4px;"></ul>
@@ -95,9 +96,9 @@
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例"
-                                        title="请选择实例:"
-                                        data-placeholder="请选择实例:" required>
+                                        data-live-search="true" data-live-search-placeholder="{% trans 'Search instances in your group' %}"
+                                        title="{% trans 'Select Instance:' %}"
+                                        data-placeholder="{% trans 'Select Instance:' %}" required>
                                 {% for name,engine in engines.items %}
                                     <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
                                 {% endfor %}
@@ -106,48 +107,48 @@
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true" data-live-search-placeholder="搜索您要查询的数据库"
-                                        title="请选择数据库:"
-                                        data-placeholder="请选择数据库:" required>
+                                        data-live-search="true" data-live-search-placeholder="{% trans 'Search the database you want to query' %}"
+                                        title="{% trans 'Select Database:' %}"
+                                        data-placeholder="{% trans 'Select Database:' %}" required>
                                 </select>
                             </div>
                             <div id="div-schema_name" class="form-group" style="display: none">
                                 <select id="schema_name" name="schema_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true"
-                                        title="请选择模式:"
-                                        data-placeholder="请选择模式:" required>
+                                        title="{% trans 'Select Schema:' %}"
+                                        data-placeholder="{% trans 'Select Schema:' %}" required>
                                 </select>
                             </div>
                             <div id="div-table_name" class="form-group">
                                 <select id="table_name" name="table_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true" data-live-search-placeholder="搜索您要查询的表"
-                                        data-name="查看表结构"
-                                        title="查看表结构:"
-                                        data-placeholder="查看表结构:" required>
+                                        data-live-search="true" data-live-search-placeholder="{% trans 'Search the table you want to query' %}"
+                                        data-name="{% trans 'View Table Structure' %}"
+                                        title="{% trans 'View Table Structure:' %}"
+                                        data-placeholder="{% trans 'View Table Structure:' %}" required>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <select id="limit_num" name="limit_num"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-placeholder="返回行数:" required>
-                                    <option value="is-empty" disabled="">返回行数:</option>
+                                        data-placeholder="{% trans 'Returned rows:' %}" required>
+                                    <option value="is-empty" disabled="">{% trans 'Returned rows:' %}</option>
                                     <option value=100 selected="selected">100</option>
                                     <option value=500>500</option>
                                     <option value=1000>1000</option>
-                                    <option value=0>max(最大限制行数)</option>
+                                    <option value=0>{% trans "max (maximum row limit)" %}</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
-                                <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
-                                <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
+                                <input id="btn-format" type="button" class="btn btn-info" value="{% trans 'Format' %}"/>
+                                <input id="btn-explain" type="button" class="btn btn-warning" value="{% trans 'Explain' %}"/>
+                                <input id="btn-sqlquery" type="button" class="btn btn-success" value="{% trans 'SQL Query' %}"/>
                             </div>
                             <div class="text-info">
-                                <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
-                                <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
-                                <li id="mongo-hint-info" style="display:none">支持mongo原生查询语句，例如：<code>db.users.find({ age: { $eq: 25 } });</code></li>
+                                <li>{% trans 'Comment lines are supported. You can choose a specific statement to execute. By default, the first statement is executed.' %}</li>
+                                <li>{% trans 'The query row limit follows privilege management and uses the minimum limit of the tables involved.' %}</li>
+                                <li id="mongo-hint-info" style="display:none">{% trans 'Mongo native queries are supported, for example:' %} <code>db.users.find({ age: { $eq: 25 } });</code></li>
                             </div>
                         </div>
                     </form>
@@ -157,7 +158,7 @@
         <div class="col-md-12 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    查询结果 <span style="color: red">
+                    {% trans "Query Results" %} <span style="color: red">
                         <small id="seconds_behind_master"></small>
                     </span>
                 </div>
@@ -165,7 +166,7 @@
                     <!-- Nav tabs -->
                     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
                         <li class="active" id="sqllog_tab">
-                            <a href="#sql_log_result" role="tab" data-toggle="tab">查询历史</a>
+                            <a href="#sql_log_result" role="tab" data-toggle="tab">{% trans "Query History" %}</a>
                         </li>
                         <button class="btn btn-default btn-sm pull-right" onclick="tab_remove()">
                             <span class="glyphicon glyphicon-minus"></span>
@@ -181,15 +182,15 @@
                             <div class="col-sm-12">
                                 <div class="radio i-checks">
                                     <label> <input type="radio" value="key" name="operate" checked
-                                                   onclick="show(this)"> <i> Key操作 </i></label>
+                                                   onclick="show(this)"> <i> {% trans 'Key Operations' %} </i></label>
                                     <label> <input type="radio" value="string" name="operate"
-                                                   onclick="show(this)"> <i> String </i></label>
+                                                   onclick="show(this)"> <i> {% trans "String Operations" %} </i></label>
                                     <label> <input type="radio" value="hash" name="operate"
-                                                   onclick="show(this)"> <i> Hash </i></label>
+                                                   onclick="show(this)"> <i> {% trans "Hash Operations" %} </i></label>
                                     <label> <input type="radio" value="set" name="operate"
-                                                   onclick="show(this)"> <i> Set </i></label>
+                                                   onclick="show(this)"> <i> {% trans "Set Operations" %} </i></label>
                                     <label> <input type="radio" value="zset" name="operate"
-                                                   onclick="show(this)"> <i> Zset </i></label>
+                                                   onclick="show(this)"> <i> {% trans "Sorted Set Operations" %} </i></label>
                                 </div>
 
                                 <div id="keyHelp" class="alert alert-info" style="display: block">
@@ -249,7 +250,7 @@
                                     <button class="close" data-dismiss="alert">
                                         <i class="ace-icon fa fa-times"></i>
                                     </button>
-                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i class="ace-icon fa fa-hand-o-right"> {% trans "Help Document:" %}</i></br>
                                     <i> 1、zrange key start stop [WITHSCORES] 通过索引区间返回有序集合指定区间内的成员</i></br>
                                     <i> 2、zrangebyscore key min max [WITHSCORES] [LIMIT] 通过分数返回有序集合指定区间内的成员</i></br>
                                     <i> 3、zscore key member 返回有序集中，成员的分数值</i></br>
@@ -286,6 +287,59 @@
 
     <!-- 查询历史  -->
     <script>
+        $('#keyHelp').html(
+            '<i> 1. ' + gettext('exists key checks whether key exists. Returns 1 if it exists, otherwise 0.') + '</i></br>' +
+            '<i> 2. ' + gettext('keys pattern finds all keys matching the given pattern and is usually used to search keys.') + '</i></br>' +
+            '<i> 3. ' + gettext('expire key seconds sets a timeout for key in seconds. The system deletes it automatically when it expires.') + '</i></br>' +
+            '<i> 4. ' + gettext('ttl key returns the remaining lifetime of key in seconds. Returns -2 if key does not exist and -1 if it exists without an expiry.') + '</i></br>' +
+            '<i> 5. ' + gettext('pttl key works like ttl but returns the remaining lifetime in milliseconds.') + '</i></br>' +
+            '<i> 6. ' + gettext('move key db moves key to the specified database.') + '</i></br>' +
+            '<i> 7. ' + gettext('type key returns the stored value type: none (missing), string, list, set, zset, or hash.') + '</i>'
+        );
+        $('#stringHelp').html(
+            '<i> 1. ' + gettext('get key returns the value of key. Returns nil if key does not exist and an error if the value is not a string.') + '</i></br>' +
+            '<i> 2. ' + gettext('mget key [key...] returns one or more values by key. Missing keys return nil.') + '</i></br>' +
+            '<i> 3. ' + gettext('strlen key returns the string length stored at key. Returns 0 if key does not exist and an error if the value is not a string.') + '</i></br>' +
+            '<i> 4. ' + gettext('append key value appends a value to the end of key, creating it if needed, and returns the new string length.') + '</i></br>' +
+            '<i> 5. ' + gettext('set key value [ex seconds] [px milliseconds] [nx|xx] sets a value for key. ex and px set expiry in different units. nx only works when the key does not exist and xx only works when it does.') + '</i></br>' +
+            '<i> 6. ' + gettext('setex key seconds value sets a key value with a lifetime in seconds.') + '</i></br>' +
+            '<i> 7. ' + gettext('setnx key value sets a key value only when the key does not already exist.') + '</i></br>' +
+            '<i> 8. ' + gettext('mset key value [key value...] atomically sets one or more key-value pairs. It succeeds or fails as a unit.') + '</i></br>' +
+            '<i> 9. ' + gettext('msetnx key value [key value...] is like mset, but all keys must be missing or the operation fails.') + '</i>'
+        );
+        $('#hashHelp').html(
+            '<i> 1. ' + gettext('hgetall key returns all field values in the hash.') + '</i></br>' +
+            '<i> 2. ' + gettext('hexists key field checks whether a field exists in the hash. Returns 1 if yes, otherwise 0.') + '</i></br>' +
+            '<i> 3. ' + gettext('hget key field returns the value of a field in the hash.') + '</i></br>' +
+            '<i> 4. ' + gettext('hmget key field[field...] returns multiple field values from the hash.') + '</i></br>' +
+            '<i> 5. ' + gettext('hkeys key returns all fields in the hash.') + '</i></br>' +
+            '<i> 6. ' + gettext('hvals key returns all values in the hash.') + '</i></br>' +
+            '<i> 7. ' + gettext('hdel key field[field...] deletes fields from the hash.') + '</i></br>' +
+            '<i> 8. ' + gettext('hset key field value sets a field-value pair in the hash.') + '</i></br>' +
+            '<i> 9. ' + gettext('hsetnx key field value works like hset, but only when the field does not already exist.') + '</i>'
+        );
+        $('#setHelp').html(
+            '<i> 1. ' + gettext('smembers key lists all members of the set.') + '</i></br>' +
+            '<i> 2. ' + gettext('scard key returns the number of elements in the set.') + '</i></br>' +
+            '<i> 3. ' + gettext('sdiff key[key...] returns the set difference.') + '</i></br>' +
+            '<i> 4. ' + gettext('sunion key[key...] returns the union of sets.') + '</i></br>' +
+            '<i> 5. ' + gettext('spop key removes and returns a random element from the set.') + '</i></br>' +
+            '<i> 6. ' + gettext('sismember key member checks whether a member exists in the set.') + '</i></br>' +
+            '<i> 7. ' + gettext('sadd key member[member...] adds one or more members to the set.') + '</i></br>' +
+            '<i> 8. ' + gettext('smove source destination member moves a member between sets.') + '</i></br>' +
+            '<i> 9. ' + gettext('srem key member[member] removes one or more members from the set.') + '</i>'
+        );
+        $('#zsetHelp').html(
+            '<button class="close" data-dismiss="alert"><i class="ace-icon fa fa-times"></i></button>' +
+            '<i class="ace-icon fa fa-hand-o-right"> ' + gettext("Help:") + '</i></br>' +
+            '<i> 1. ' + gettext('zrange key start stop [WITHSCORES] returns members in the specified index range.') + '</i></br>' +
+            '<i> 2. ' + gettext('zrangebyscore key min max [WITHSCORES] [LIMIT] returns members in the specified score range.') + '</i></br>' +
+            '<i> 3. ' + gettext('zscore key member returns the score of a member in a sorted set.') + '</i></br>' +
+            '<i> 4. ' + gettext('zcard key returns the number of members in a sorted set.') + '</i></br>' +
+            '<i> 5. ' + gettext('zcount key min max counts members within the given score range.') + '</i></br>' +
+            '<i> 6. ' + gettext('zrank key member returns the index of a member in a sorted set.') + '</i></br>'
+        );
+
         //获取查询列表
         function get_querylog(query_log_id) {
             var showExport = {{can_download}}===1
@@ -320,7 +374,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: true,                   //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 toolbar: "#query-log-toolbar",      //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //获取查询列表请求服务数据时所传参数
@@ -356,7 +410,7 @@
                     return html.join('');
                 },
                 columns: [{
-                    title: '操作',
+                    title: gettext('Action'),
                     field: '',
                     formatter: function (value, row, index) {
                         if (row.favorite) {
@@ -364,24 +418,24 @@
                         } else {
                             var btn_favorite = "<button type=\"button\" class=\"btn btn-xs\" data-toggle=\"modal\" data-target=\"#favorite\" onclick=\"star(" + row.id + ")" + "\"><span class=\"fa fa-star-o\"></span></button>\n";
                         }
-                        let btn_re_query = "<button type=\"button\" class=\"btn btn-xs\"  data-toggle=\"tooltip\" title=\"一键查询\" onclick=\"re_query(" + row.id + ")" + "\"><span class=\"fa fa-search\"></span></button>";
+                        let btn_re_query = "<button type=\"button\" class=\"btn btn-xs\"  data-toggle=\"tooltip\" title=\"" + gettext('One-click Query') + "\" onclick=\"re_query(" + row.id + ")" + "\"><span class=\"fa fa-search\"></span></button>";
                         return btn_favorite + btn_re_query
                     }
 
                 }, {
-                    title: '用户',
+                    title: gettext('User'),
                     field: 'user_display'
                 }, {
-                    title: '实例',
+                    title: gettext('Instance'),
                     field: 'instance_name'
                 }, {
-                    title: '数据库',
+                    title: gettext('Database'),
                     field: 'db_name'
                 }, {
-                    title: '查询时间',
+                    title: gettext('Query Time'),
                     field: 'create_time'
                 }, {
-                    title: '语句',
+                    title: gettext('Statement'),
                     field: 'sqllog',
                     formatter: function (value, row, index) {
                         var _sql=row.sqllog
@@ -393,14 +447,14 @@
                         }
                     }
                 }, {
-                    title: '完整语句',
+                    title: gettext('Full Statement'),
                     field: 'sqllog',
                     visible: false // 默认不显示
                 }, {
-                    title: '返回行数',
+                    title: gettext('Returned Rows'),
                     field: 'effect_row'
                 }, {
-                    title: '耗时(秒)',
+                    title: gettext('Elapsed Time (seconds)'),
                     field: 'cost_time'
                 }],
                 onLoadSuccess: function () {
@@ -466,7 +520,7 @@
                     }
                 });
             } else {
-                alert('请输入语句别名！')
+                alert(gettext('Please enter a SQL alias'))
             }
         }
 
@@ -519,7 +573,7 @@
                 $('input[type=button]').prop('disabled', true);
                 sqlquery()
             } else {
-                alert("信息不完整，无法一键查询！")
+                alert(gettext("Information is incomplete, unable to perform one-click query!"))
             }
             sessionStorage.removeItem('re_query');
         }
@@ -560,7 +614,7 @@
             href_a.setAttribute("href", "#redis_help");
             href_a.setAttribute("role", "tab");
             href_a.setAttribute("data-toggle", "tab");
-            href_a.innerHTML = "Redis帮助文档"; //链接显示文本（相当于标签标题）
+            href_a.innerHTML = gettext("Redis Help"); //链接显示文本（相当于标签标题）
             li.appendChild(href_a);//将a添加到li
 
             $("#nav-tabs").prepend(li);//li添加到ul
@@ -590,7 +644,7 @@
             if (tab_title) {
                 href_a.innerHTML = tab_title; //链接显示文本（相当于标签标题）
             } else {
-                href_a.innerHTML = "执行结果" + (Number(tab_number) + 1); //链接显示文本（相当于标签标题）
+                href_a.innerHTML = gettext("Execution Result") + (Number(tab_number) + 1); //链接显示文本（相当于标签标题）
 
             }
             li.appendChild(href_a);//将a添加到li
@@ -612,10 +666,10 @@
             var div =
                 "<div id=\"sqlquery_result" + tab_number + "\" role=\"tabpanel\" class=\"tab-pane fade table-responsive\">\n" +
                 "    <div id=\"query_time" + tab_number + "\" class=\"navbar-text\" >\n" +
-                "        <small>查询时间 : <strong id=\"time" + tab_number + "\"> sec </strong></small>\n" +
+                "        <small>" + gettext("Query Time") + " : <strong id=\"time" + tab_number + "\"> sec </strong></small>\n" +
                 "    </div>\n" +
                 "    <div id=\"mask_time" + tab_number + "\" class=\"navbar-text\" >\n" +
-                "        <small>脱敏时间 : <strong id=\"masking_time" + tab_number + "\"> sec </strong></small>\n" +
+                "        <small>" + gettext("Masking Time") + " : <strong id=\"masking_time" + tab_number + "\"> sec </strong></small>\n" +
                 "    </div>\n" +
                 "    <table id=\"query_result" + tab_number + "\" data-toggle=\"table\" class=\"table table-condensed\"\n" +
                 "           style=\"table-layout:inherit;white-space:pre;overflow:hidden;text-overflow:ellipsis;\"></table>\n" +
@@ -662,13 +716,13 @@
                 sqlContent = select_sqlContent
             }
             if (!instance_name) {
-                alert("请选择实例！");
+                alert(gettext("Please select an instance"));
                 return result = false;
             } else if (!db_name) {
-                alert("请选择数据库！");
+                alert(gettext("Please select a database"));
                 return result = false;
             } else if (!sqlContent) {
-                alert("SQL内容不能为空！");
+                alert(gettext("SQL content cannot be empty"));
                 return result = false;
             }
             return result;
@@ -684,13 +738,13 @@
                 var query_desc = $("#generateDesc").val()
 
                 if (!instance_name) {
-                    alert("请选择实例！")
+                    alert(gettext("Please select an instance"))
                 } else if (!db_name) {
-                    alert("请选择数据库！")
+                    alert(gettext("Please select a database"))
                 } else if (optgroup !== 'Redis' && !tb_name){
-                    alert("请选择表结构！")
+                    alert(gettext("Please select table structure"))
                 } else if (!query_desc) {
-                    alert("请输入查询描述！")
+                    alert(gettext("Please enter a query description"))
                 } else {
                     check = true
                 }
@@ -758,7 +812,7 @@
             //获取当前的标签页
             var active_li_id = sessionStorage.getItem('active_li_id');
             var active_li_title = sessionStorage.getItem('active_li_title');
-            if (active_li_title.match(/^执行结果\d$/)){
+            if (active_li_title.match(/^Execution Result\d$/)){
                 //当前激活的执行结果页
                 var n = active_li_id.split("execute_result_tab")[1];
                 //填入sql
@@ -820,7 +874,7 @@
                     }
                 }
                 // 执行结果页默认不新增
-                else if (active_li_title.match(/^执行结果\d$/)) {
+                else if (active_li_title.match(/^Execution Result\d$/)) {
                     n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
@@ -873,7 +927,7 @@
                                 escape: false,
                                 data: result['rows'],
                                 columns: [{
-                                    title: 'Create Table',
+                            title: gettext('Create Table'),
                                     field: 1,
                                     formatter: function (value, row, index) {
                                         let sql = window.sqlFormatter.format(value);
@@ -890,7 +944,7 @@
                                     },
                                 }
                                 ],
-                                locale: 'zh-CN'
+                                locale: window.getBootstrapTableLocale()
                             }
                         );
                     } else {
@@ -912,7 +966,7 @@
                             exportOptions: {
                                 //ignoreColumn: [0],  //忽略某些列的索引数组
                                 fileName: function () {
-                                var userInput = prompt('请输入文件名：');  // 弹出对话框让用户输入文件名
+                                var userInput = prompt(gettext('Please enter a file name'));  // 弹出对话框让用户输入文件名
                                 return userInput || 'export_result';  // 若用户未输入文件名，则使用默认文件名
                                 },
                                 onFileSave: function (e) {
@@ -956,7 +1010,7 @@
                                                     rs = JSON.stringify(rs, null, 2)
                                                 }
                                             } catch (e) {
-                                                html.push('<strong>' + "非json格式，无法格式化！" + '</strong>');
+                                                html.push('<strong>' + gettext('Non-JSON format, unable to format!') + '</strong>');
                                                 return false;
                                             }
                                         }
@@ -974,7 +1028,7 @@
                                 var tdHasDetail=$(`#${query_result_id} tr[data-has-detail-view="true"] .detail-icon`).parent('td');
                                 tdHasDetail.css('white-space', 'nowrap');
                             },
-                            locale: 'zh-CN',
+                            locale: window.getBootstrapTableLocale(),
                             onExportSaved: function (e) {
                                 var tabs = $("#nav-tabs li")
                                 for(let i=0;i<tabs.length;i++){
@@ -1020,7 +1074,7 @@
 
             } else {
                 //查询报错失败信息
-                if (active_li_title.match(/^执行结果\d$/)) {
+                if (active_li_title.match(/^Execution Result\d$/)) {
                     n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
@@ -1030,11 +1084,11 @@
                     escape: false,
                     columns: [{
                         field: 'error',
-                        title: 'Error',
+                        title: gettext('Error'),
                         formatter: function (value, row, index) {
                             //staus为2的时候，增加申请链接
                             if (data.status === 2) {
-                                return value + "<a href=\"/queryapplylist/\">" + "（提交申请）" + "</a>"
+                                return value + "<a href=\"/queryapplylist/\">" + "(" + gettext("Submit Request") + ")" + "</a>"
                             } else {
                                 return value
                             }
@@ -1538,7 +1592,7 @@
             sessionStorage.setItem('tab_num', 0);
             //设置当前激活的标签id
             sessionStorage.setItem('active_li_id', 'sqllog_tab');
-            sessionStorage.setItem('active_li_title', '查询历史');
+            sessionStorage.setItem('active_li_title', gettext('Query History'));
 
             //读取上次保存的sqlContent
             let sqlContent = window.sessionStorage.getItem('sqlContent');
@@ -1667,15 +1721,15 @@
                             $ul.append($li);
                         });
                     } else if (data.status === 0) {
-                        $ul.append($('<li>').addClass('text-muted').text('无匹配结果'));
+                        $ul.append($('<li>').addClass('text-muted').text(gettext('No matching results')));
                     } else {
-                        $ul.append($('<li>').addClass('text-danger').text(data.msg || '查询失败'));
+                        $ul.append($('<li>').addClass('text-danger').text(data.msg || gettext('Query failed')));
                     }
                 },
                 error: function (xhr, status) {
                     if (status !== 'abort') {
                         $('#table-locator-results').append(
-                            $('<li>').addClass('text-danger').text('请求失败：' + status)
+                            $('<li>').addClass('text-danger').text(gettext('Request failed: ') + status)
                         );
                     }
                 }
@@ -1697,8 +1751,8 @@
                 $li.append(
                     $('<small>').addClass('text-warning locator-warning')
                                 .css('margin-left', '6px')
-                                .text('该实例不在当前资源组')
-                );
+                                .text(gettext('This instance is not in the current resource group'))
+                                );
                 return;
             }
 
@@ -1770,4 +1824,3 @@
         });
     </script>
 {% endblock %}
-

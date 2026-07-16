@@ -1,17 +1,18 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <ul class="breadcrumb">
-        <li><a href="/queryapplylist/">申请列表</a></li>
-        <li class="active">权限管理</li>
+        <li><a href="/queryapplylist/">{% trans "Request List" %}</a></li>
+        <li class="active">{% trans "Privilege Management" %}</li>
     </ul>
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="bootstrap-select">
-        <div class="form-group">
-            <select id=user_display class="form-control selectpicker show-tick bs-select-hidden "
-                    name="user_display_list"
-                    data-live-search="true">
-                <option value="all" selected="selected">全部</option>
+                <div class="form-group">
+                    <select id=user_display class="form-control selectpicker show-tick bs-select-hidden "
+                            name="user_display_list"
+                            data-live-search="true">
+                <option value="all" selected="selected">{% trans "All" %}</option>
                 {% if user.is_superuser %}
                     {% for user in user_list %}
                         <option value="{{ user.user_display }}">{{ user.user_display }}</option>
@@ -35,23 +36,23 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">权限变更</h4>
+                    <h4 class="modal-title" id="myModalLabel">{% trans "Privilege Change" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><span class="text-danger">*</span> 请输入结果限制</label>
+                        <label><span class="text-danger">*</span> {% trans "Please enter the result limit" %}</label>
                         <input type="text" class="form-control" id="limit_num"
-                               placeholder="用于限制在线查询结果的显示行数">
+                               placeholder="{% trans 'Used to limit the number of rows displayed in online query results' %}">
                     </div>
                     <div class="form-group">
                         <input hidden id="privilege_id">
-                        <label><span class="text-danger">*</span> 请选择有效期</label>
-                        <input type="date" class="form-control" id="valid_date" placeholder="过期后权限自动回收">
+                        <label><span class="text-danger">*</span> {% trans "Please select an expiry date" %}</label>
+                        <input type="date" class="form-control" id="valid_date" placeholder="{% trans 'The privilege will be revoked automatically after it expires' %}">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" onclick="modifyqueryprivileges(2)">确定修改</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-danger" onclick="modifyqueryprivileges(2)">{% trans "Confirm changes" %}</button>
                 </div>
             </div>
         </div>
@@ -63,15 +64,15 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">提示信息</h4>
+                    <h4 class="modal-title text-danger">{% trans "Information" %}</h4>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="privilege_id">
-                    <p>删除后用户将无法查询数据，确定删除吗？</p>
+                    <p>{% trans "After deletion, the user will no longer be able to query data. Confirm deletion?" %}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button type="button" onclick="modifyqueryprivileges(1)" class="btn btn-danger">确定删除</button>
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" onclick="modifyqueryprivileges(1)" class="btn btn-danger">{% trans "Confirm deletion" %}</button>
                 </div>
             </div>
         </div>
@@ -116,7 +117,7 @@
                     ignoreColumn: [0, -1],  //忽略某些列的索引数组
                     fileName: 'userprivileges'  //文件名称设置
                 },
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -130,16 +131,16 @@
                         }
                     },
                 columns: [{
-                    title: '用户',
+                    title: gettext('User'),
                     field: 'user_display'
                 }, {
-                    title: '实例',
+                    title: gettext('Instance'),
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: gettext('Database'),
                     field: 'db_name'
                 }, {
-                    title: '权限级别',
+                    title: gettext('Privilege Level'),
                     field: 'priv_type',
                     formatter: function (value, row, index) {
                         if (String(value) === '1') {
@@ -149,16 +150,16 @@
                         }
                     }
                 }, {
-                    title: '表',
+                    title: gettext('Table'),
                     field: 'table_name'
                 }, {
-                    title: '结果集',
+                    title: gettext('Result Set'),
                     field: 'limit_num'
                 }, {
-                    title: '有效时间',
+                    title: gettext('Valid Time'),
                     field: 'valid_date'
                 }, {
-                    title: '操作',
+                    title: gettext('Action'),
                     field: 'privilege_id',
                     formatter: function (value, row, index) {
                         {% if perms.sql.query_mgtpriv %}
@@ -169,7 +170,7 @@
                                 "<button class=\"btn btn-danger btn-xs\" privilege_id=\"" + row.privilege_id + "\"\n" +
                                 "limit_num=\"" + row.limit_num + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
-                                "data-toggle=\"modal\" data-target=\"#deleted_privileges\">删除权限\n" + "</button>"
+                                "data-toggle=\"modal\" data-target=\"#deleted_privileges\">{% trans 'Delete privilege' %}\n" + "</button>"
                         {% endif %}
                     }
                 }],

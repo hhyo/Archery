@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
@@ -7,7 +8,7 @@
             <button id="btn_add" type="button" class="btn btn-default"
                     onclick="window.open('/admin/sql/resourcegroup/add/')">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加组
+                {% trans "Add Group" %}
             </button>
         </div>
     </div>
@@ -55,7 +56,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -68,19 +69,19 @@
                         }
                     },
                 columns: [{
-                    title: 'ID',
+                    title: gettext('ID'),
                     field: 'group_id'
                 }, {
-                    title: '组名称',
+                    title: gettext('Group Name'),
                     field: 'group_name',
                     formatter: function (value, row, index) {
                         return "<a target=\"_blank\" href=\"/admin/sql/resourcegroup/" + row.group_id + "/change/\">" + value + "</a>"
                     }
                 }, {
-                    title: '关联对象',
+                    title: gettext('Associated Objects'),
                     field: '',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.location.href='/grouprelations/" + row.group_id + "/'\">管理</button>\n"
+                        return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.location.href='/grouprelations/" + row.group_id + "/'\">" + gettext('Manage') + "</button>\n"
                     }
                 }],
                 onLoadSuccess: function () {

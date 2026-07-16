@@ -5,7 +5,6 @@ import traceback
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
@@ -31,7 +30,8 @@ from sql.utils.sql_review import (
 )
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
-from .models import SqlWorkflow, WorkflowAudit
+from django.utils.translation import gettext as _
+from .models import SqlWorkflow
 
 logger = logging.getLogger("default")
 
@@ -160,8 +160,7 @@ def detail_content(request):
                 ReviewResult(
                     id=1,
                     sql=workflow_detail.sqlworkflowcontent.sql_content,
-                    errormessage="Json decode failed."
-                    "执行结果Json解析失败, 请联系管理员",
+                    errormessage=_("JSON decode failed. Execution result JSON parsing failed, please contact the administrator"),  # 执行结果Json解析失败, 请联系管理员
                 )
             ]
             rows = review_result.json()
@@ -171,8 +170,7 @@ def detail_content(request):
                     id=1,
                     sql=workflow_detail.sqlworkflowcontent.sql_content,
                     # 迫于无法单元测试这里加上英文报错信息
-                    errormessage="Json decode failed."
-                    "执行结果Json解析失败, 请联系管理员",
+                    errormessage=_("JSON decode failed. Execution result JSON parsing failed, please contact the administrator"),  # 执行结果Json解析失败, 请联系管理员
                 )
             ]
             rows = review_result.json()
@@ -212,12 +210,12 @@ def alter_run_date(request):
     run_date_start = request.POST.get("run_date_start")
     run_date_end = request.POST.get("run_date_end")
     if workflow_id == 0:
-        context = {"errMsg": "workflow_id参数为空."}
+        context = {"errMsg": _("workflow_id parameter is empty.")}  # workflow_id参数为空.
         return render(request, "error.html", context)
 
     user = request.user
     if Audit.can_review(user, workflow_id, 2) is False:
-        context = {"errMsg": "你无权操作当前工单！"}
+        context = {"errMsg": _("You do not have permission to operate on this workflow!")}  # 你无权操作当前工单！
         return render(request, "error.html", context)
 
     try:
@@ -244,12 +242,12 @@ def passed(request):
     workflow_id = int(request.POST.get("workflow_id", 0))
     audit_remark = request.POST.get("audit_remark", "")
     if workflow_id == 0:
-        context = {"errMsg": "workflow_id参数为空."}
+        context = {"errMsg": _("workflow_id parameter is empty.")}  # workflow_id参数为空.
         return render(request, "error.html", context)
     try:
         sql_workflow = SqlWorkflow.objects.get(id=workflow_id)
     except SqlWorkflow.DoesNotExist:
-        return render(request, "error.html", {"errMsg": "工单不存在"})
+        return render(request, "error.html", {"errMsg": _("Workflow does not exist")})  # 工单不存在
 
     sys_config = SysConfig()
     auditor = get_auditor(workflow=sql_workflow, sys_config=sys_config)
@@ -261,7 +259,7 @@ def passed(request):
             )
         except AuditException as e:
             return render(
-                request, "error.html", {"errMsg": f"审核失败, 错误信息: {str(e)}"}
+                request, "error.html", {"errMsg": _("Review failed, error: {}").format(str(e))}  # 审核失败, 错误信息: {}
             )
         if auditor.audit.current_status == WorkflowStatus.PASSED:
             # 审批流全部走完了, 把工单标记为审核通过
@@ -300,16 +298,16 @@ def execute(request):
         raise PermissionDenied
     workflow_id = int(request.POST.get("workflow_id", 0))
     if workflow_id == 0:
-        context = {"errMsg": "workflow_id参数为空."}
+        context = {"errMsg": _("workflow_id parameter is empty.")}  # workflow_id参数为空.
         return render(request, "error.html", context)
 
     if can_execute(request.user, workflow_id) is False:
-        context = {"errMsg": "你无权操作当前工单！"}
+        context = {"errMsg": _("You do not have permission to operate on this workflow!")}  # 你无权操作当前工单！
         return render(request, "error.html", context)
 
     if on_correct_time_period(workflow_id) is False:
         context = {
-            "errMsg": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+            "errMsg": _("Not within the executable time range. If you need to change the execution time, please resubmit the workflow!")  # 不在可执行时间范围内，如果需要修改执行时间请重新提交工单!
         }
         return render(request, "error.html", context)
     # 获取审核信息
@@ -340,8 +338,8 @@ def execute(request):
         Audit.add_log(
             audit_id=audit_id,
             operation_type=5,
-            operation_type_desc="执行工单",
-            operation_info="工单执行排队中",
+            operation_type_desc=_("Execute workflow"),  # 执行工单
+            operation_info=_("Workflow execution queued"),  # 工单执行排队中
             operator=request.user.username,
             operator_display=request.user.display,
         )
@@ -358,8 +356,8 @@ def execute(request):
         Audit.add_log(
             audit_id=audit_id,
             operation_type=6,
-            operation_type_desc="手工工单",
-            operation_info="确认手工执行结束",
+            operation_type_desc=_("Manual workflow"),  # 手工工单
+            operation_info=_("Manual execution confirmed complete"),  # 确认手工执行结束
             operator=request.user.username,
             operator_display=request.user.display,
         )
@@ -390,15 +388,15 @@ def timing_task(request):
     workflow_id = request.POST.get("workflow_id")
     run_date = request.POST.get("run_date")
     if run_date is None or workflow_id is None:
-        context = {"errMsg": "时间不能为空"}
+        context = {"errMsg": _("Time cannot be empty")}  # 时间不能为空
         return render(request, "error.html", context)
     elif run_date < datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
-        context = {"errMsg": "时间不能小于当前时间"}
+        context = {"errMsg": _("Time cannot be earlier than the current time")}  # 时间不能小于当前时间
         return render(request, "error.html", context)
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
 
     if can_timingtask(request.user, workflow_id) is False:
-        context = {"errMsg": "你无权操作当前工单！"}
+        context = {"errMsg": _("You do not have permission to operate on this workflow!")}  # 你无权操作当前工单！
         return render(request, "error.html", context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
@@ -406,7 +404,7 @@ def timing_task(request):
 
     if on_correct_time_period(workflow_id, run_date) is False:
         context = {
-            "errMsg": "不在可执行时间范围内，如果需要修改执    行时间请重新提交工单!"
+            "errMsg": _("Not within the executable time range. If you need to change the execution time, please resubmit the workflow!")  # 不在可执行时间范围内，如果需要修改执行时间请重新提交工单!
         }
         return render(request, "error.html", context)
 
@@ -426,8 +424,8 @@ def timing_task(request):
             Audit.add_log(
                 audit_id=audit_id,
                 operation_type=4,
-                operation_type_desc="定时执行",
-                operation_info="定时执行时间：{}".format(run_date),
+                operation_type_desc=_("Scheduled execution"),  # 定时执行
+                operation_info=_("Scheduled execution time: {}").format(run_date),  # 定时执行时间：{}
                 operator=request.user.username,
                 operator_display=request.user.display,
             )
@@ -446,17 +444,17 @@ def cancel(request):
     """
     workflow_id = int(request.POST.get("workflow_id", 0))
     if workflow_id == 0:
-        context = {"errMsg": "workflow_id参数为空."}
+        context = {"errMsg": _("workflow_id parameter is empty.")}  # workflow_id参数为空.
         return render(request, "error.html", context)
     sql_workflow = SqlWorkflow.objects.get(id=workflow_id)
     audit_remark = request.POST.get("cancel_remark")
     if audit_remark is None:
-        context = {"errMsg": "终止原因不能为空"}
+        context = {"errMsg": _("Cancellation reason cannot be empty")}  # 终止原因不能为空
         return render(request, "error.html", context)
 
     user = request.user
     if can_cancel(request.user, workflow_id) is False:
-        context = {"errMsg": "你无权操作当前工单！"}
+        context = {"errMsg": _("You do not have permission to operate on this workflow!")}  # 你无权操作当前工单！
         return render(request, "error.html", context)
 
     # 使用事务保持数据一致性
@@ -503,7 +501,7 @@ def get_workflow_status(request):
     """
     workflow_id = request.POST["workflow_id"]
     if workflow_id == "" or workflow_id is None:
-        context = {"status": -1, "msg": "workflow_id参数为空.", "data": ""}
+        context = {"status": -1, "msg": _("workflow_id parameter is empty."), "data": ""}  # workflow_id参数为空.
         return HttpResponse(json.dumps(context), content_type="application/json")
 
     workflow_id = int(workflow_id)

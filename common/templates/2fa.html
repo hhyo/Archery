@@ -86,7 +86,9 @@
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
 <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
 <script src="{% static 'bootstrap-select/js/bootstrap-select.min.js' %}"></script>
+{% if request.LANGUAGE_CODE == 'zh-hans' %}
 <script src="{% static 'bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
+{% endif %}
 <script src="{% static 'dist/js/utils.js' %}"></script>
 </body>
 <!-- 解决CSRF-->

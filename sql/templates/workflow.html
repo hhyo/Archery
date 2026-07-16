@@ -1,16 +1,17 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <h4 style="display: inline;">待办列表<span>{{ workflow_detail.workflow_name }}</span></h4>
+    <h4 style="display: inline;">{% trans "Workflow Todo List" %}<span>{{ workflow_detail.workflow_name }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <hr>
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="bootstrap-select">
         <select id="workflow_type" class="form-control dropdown-menu-right selectpicker ">
-            <option value="0" selected="selected">全部</option>
-            <option value="1">查询权限申请</option>
-            <option value="2">SQL上线申请</option>
-            <option value="3">数据归档申请</option>
+            <option value="0" selected="selected">{% trans "All" %}</option>
+            <option value="1">{% trans "Query Privilege Request" %}</option>
+            <option value="2">{% trans "SQL Deployment Request" %}</option>
+            <option value="3">{% trans "Data Archive Request" %}</option>
         </select>
     </div>
     <!-- 审核列表的表格-->
@@ -26,18 +27,18 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">审核确认</h4>
+                    <h4 class="modal-title text-danger">{% trans "Review Confirmation" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <input type="hidden" id="audit_id">
-                        <textarea id="audit_remark" class="form-control" placeholder="请输入审核备注" rows=4
+                        <textarea id="audit_remark" class="form-control" placeholder="{% trans 'Please enter the review remark' %}" rows=4
                                   required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" id="reject" onclick="audit(0)" class="btn btn-danger">拒绝</button>
-                    <button type="button" id="pass" onclick="audit(1)" class="btn btn-success">审核通过</button>
+                    <button type="button" id="reject" onclick="audit(0)" class="btn btn-danger">{% trans "Reject" %}</button>
+                    <button type="button" id="pass" onclick="audit(1)" class="btn btn-success">{% trans "Approve" %}</button>
                 </div>
             </div>
         </div>
@@ -46,6 +47,7 @@
 
 {% block js %}
     <script>
+        const tableLocale = window.getBootstrapTableLocale();
         //获取申请列表
         function get_auditlist() {
             //采取异步请求
@@ -74,7 +76,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: tableLocale,                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -88,40 +90,40 @@
                         }
                     },
                 columns: [{
-                    title: '申请标题',
+                    title: gettext('Request Title'),
                     field: 'workflow_title',
                     formatter: function (value, row, index) {
                         return "<a href='/workflow/" + row.audit_id + "/'>" + value + "</a>";
                     }
                 }, {
-                    title: '组',
+                    title: gettext('Group'),
                     field: 'group_name'
                 }, {
-                    title: '申请类型',
+                    title: gettext('Request Type'),
                     field: 'workflow_type',
                     formatter: function (value, row, index) {
                         return workflow_type_formatter(value)
                     }
                 }, {
-                    title: '申请人',
+                    title: gettext('Requester'),
                     field: 'create_user_display'
                 }, {
-                    title: '申请时间',
+                    title: gettext('Request Time'),
                     field: 'create_time'
                 }, {
-                    title: '审核状态',
+                    title: gettext('Review Status'),
                     field: 'current_status',
                     formatter: function (value, row, index) {
                         return workflow_status_formatter(value)
                     }
                 }, {
-                    title: '操作',
+                    title: gettext('Action'),
                     field: 'id',
                     formatter: function (value, row, index) {
                         // 当前审核人
                         return "<button class=\"btn btn-default btn-xs\" " +
                             "onclick=\"javascrtpt:window.location.href='/workflow/" + row.audit_id + "/'\">" +
-                            "审核</button>\n"
+                            gettext("Review") + "</button>\n"
 
                     }
                 }],
@@ -152,7 +154,7 @@
             var audit_status = auditstatus;
 
             if (audit_status == 0 && audit_remark == '') {
-                alert('请填写审核备注')
+                alert(gettext('Please enter the review remark'))
             }
             else {
                 $('button[type=button]').addClass('disabled');

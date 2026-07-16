@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
@@ -8,7 +9,7 @@
                 <div class="form-group">
                     <select id="instance_name" class="form-control selectpicker "
                             name="instance_name"
-                            title="请选择实例"
+                            title="{% trans 'Select Instance' %}"
                             data-live-search="true">
                         <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                         <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
@@ -19,27 +20,27 @@
                 <div class="form-group">
                     <select id="db_name" class="form-control selectpicker "
                             name="db_name"
-                            title="请选择数据库"
+                            title="{% trans 'Select Database' %}"
                             data-live-search="true">
                     </select>
                 </div>
                 <div class="form-group">
                     <select id="obj_type" class="form-control selectpicker"
                             name="obj_type"
-                            title="对象类型">
-                        <option value="table" selected>表</option>
-                        <option value="view">视图</option>
-                        <option value="trigger">触发器</option>
-                        <option value="procedure">存储过程</option>
-                        <option value="function">函数</option>
-                        <option value="event">定时任务</option>
+                            title="{% trans 'Object Type' %}">
+                        <option value="table" selected>{% trans "Table" %}</option>
+                        <option value="view">{% trans "View" %}</option>
+                        <option value="trigger">{% trans "Trigger" %}</option>
+                        <option value="procedure">{% trans "Stored Procedure" %}</option>
+                        <option value="function">{% trans "Function" %}</option>
+                        <option value="event">{% trans "Event" %}</option>
                     </select>
                 </div>
                 {% if perms.sql.data_dictionary_export %}
                     <div class="form-group">
                         <button id="btn_export_dict" type="submit" disabled="disabled" class="btn btn-default">
                             <span class="glyphicon glyphicon-export" aria-hidden="true"></span>
-                            导出
+                            {% trans "Export" %}
                         </button>
                     </div>
                 {% endif %}
@@ -59,54 +60,54 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal"><span
                             aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                    <h4 class="modal-title">表元数据展示</h4>
+                    <h4 class="modal-title">{% trans "Table Metadata" %}</h4>
                 </div>
                 <div class="modal-body" id="modal-body-mysql" >
                     <div class="panel panel-default">
-                        <div class="panel-heading">表信息</div>
+                        <div class="panel-heading">{% trans "Table Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                     <tr>
-                                        <th>表名</th>
+                                        <th>{% trans "Table Name" %}</th>
                                         <td id="table_name"></td>
-                                        <th>引擎</th>
+                                        <th>{% trans "Engine" %}</th>
                                         <td id="engine"></td>
-                                        <th>行格式</th>
+                                        <th>{% trans "Row Format" %}</th>
                                         <td id="row_format"></td>
-                                        <th>表行数</th>
+                                        <th>{% trans "Table Rows" %}</th>
                                         <td id="table_rows"></td>
                                     </tr>
                                     <tr>
-                                        <th>平均行长度</th>
+                                        <th>{% trans "Average Row Length" %}</th>
                                         <td id="avg_row_length"></td>
-                                        <th>最大行长度</th>
+                                        <th>{% trans "Max Row Length" %}</th>
                                         <td id="max_data_length"></td>
-                                        <th>数据长度（K）</th>
+                                        <th>{% trans "Data Length (K)" %}</th>
                                         <td id="data_length"></td>
-                                        <th>索引长度（K）</th>
+                                        <th>{% trans "Index Length (K)" %}</th>
                                         <td id="index_length"></td>
                                     </tr>
                                     <tr>
-                                        <th>数据总大小（K）</th>
+                                        <th>{% trans "Total Data Size (K)" %}</th>
                                         <td id="data_total"></td>
-                                        <th>碎片大小</th>
+                                        <th>{% trans "Free Space" %}</th>
                                         <td id="data_free"></td>
-                                        <th>当前自增值</th>
+                                        <th>{% trans "Auto Increment" %}</th>
                                         <td id="auto_increment"></td>
-                                        <th>表的校验码</th>
+                                        <th>{% trans "Table Collation" %}</th>
                                         <td id="table_collation"></td>
                                     </tr>
                                     <tr>
-                                        <th>创建时间</th>
+                                        <th>{% trans "Create Time" %}</th>
                                         <td id="create_time"></td>
-                                        <th>更新时间</th>
+                                        <th>{% trans "Update Time" %}</th>
                                         <td id="update_time"></td>
-                                        <th>检查时间</th>
+                                        <th>{% trans "Check Time" %}</th>
                                         <td id="check_time"></td>
-                                        <th>表说明</th>
+                                        <th>{% trans "Table Comment" %}</th>
                                         <td id="table_comment"></td>
                                     </tr>
                                     </tbody>
@@ -115,7 +116,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">列信息</div>
+                        <div class="panel-heading">{% trans "Column Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="field-list-mysql" data-toggle="table" class="table table-striped table-hover"
@@ -125,7 +126,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-heading">{% trans "Index Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="index-list-mysql" data-toggle="table" class="table table-striped table-hover"
@@ -135,7 +136,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">建表语句</div>
+                        <div class="panel-heading">{% trans "Create Table SQL" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="create-table-sql" data-toggle="table" class="table table-striped table-hover"
@@ -147,40 +148,40 @@
                 </div> <!--modal-body-->
                 <div class="modal-body" id="modal-body-mssql" >
                     <div class="panel panel-default">
-                        <div class="panel-heading">表信息</div>
+                        <div class="panel-heading">{% trans "Table Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                     <tr>
-                                        <th>表名</th>
+                                        <th>{% trans "Table Name" %}</th>
                                         <td id="table_name"></td>
-                                        <th>表行数</th>
+                                        <th>{% trans "Table Rows" %}</th>
                                         <td id="table_rows"></td>
                                     </tr>
                                     <tr>
-                                        <th>数据长度（K）</th>
+                                        <th>{% trans "Data Length (K)" %}</th>
                                         <td id="data_length"></td>
-                                        <th>索引长度（K）</th>
+                                        <th>{% trans "Index Length (K)" %}</th>
                                         <td id="index_length"></td>
                                     </tr>
                                     <tr>
-                                        <th>数据总大小（K）</th>
+                                        <th>{% trans "Total Data Size (K)" %}</th>
                                         <td id="data_total"></td>
-                                        <th>碎片大小</th>
+                                        <th>{% trans "Free Space" %}</th>
                                         <td id="data_free"></td>
                                     </tr>
                                     <tr>
-                                        <th>创建时间</th>
+                                        <th>{% trans "Create Time" %}</th>
                                         <td id="create_time"></td>
-                                        <th>更新时间</th>
+                                        <th>{% trans "Update Time" %}</th>
                                         <td id="update_time"></td>
                                     </tr>
                                     <tr>
-                                        <th>当前自增值</th>
+                                        <th>{% trans "Auto Increment" %}</th>
                                         <td id="auto_increment"></td>
-                                        <th>表说明</th>
+                                        <th>{% trans "Table Comment" %}</th>
                                         <td id="table_comment"></td>
                                     </tr>
                                     </tbody>
@@ -189,7 +190,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">列信息</div>
+                        <div class="panel-heading">{% trans "Column Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="field-list-mssql" data-toggle="table" class="table table-striped table-hover"
@@ -199,7 +200,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-heading">{% trans "Index Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="index-list-mssql" data-toggle="table" class="table table-striped table-hover"
@@ -211,40 +212,40 @@
                 </div> <!--modal-body-->
                 <div class="modal-body" id="modal-body-clickhouse" >
                     <div class="panel panel-default">
-                        <div class="panel-heading">表信息</div>
+                        <div class="panel-heading">{% trans "Table Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                     <tr>
-                                        <th>表名</th>
+                                        <th>{% trans "Table Name" %}</th>
                                         <td id="table_name"></td>
-                                        <th>引擎</th>
+                                        <th>{% trans "Engine" %}</th>
                                         <td id="engine"></td>
                                     </tr>
                                     <tr>
-                                        <th>表行数</th>
+                                        <th>{% trans "Table Rows" %}</th>
                                         <td id="table_rows"></td>
-                                        <th>数据大小</th>
+                                        <th>{% trans "Data Length (K)" %}</th>
                                         <td id="data_length"></td>
                                     </tr>
                                     <tr>
-                                        <th>分区键</th>
+                                        <th>{% trans "Partition Key" %}</th>
                                         <td id="partition_key"></td>
-                                        <th>排序键</th>
+                                        <th>{% trans "Sorting Key" %}</th>
                                         <td id="sorting_key"></td>
                                     </tr>
                                     <tr>
-                                        <th>主键</th>
+                                        <th>{% trans "Primary Key" %}</th>
                                         <td id="primary_key"></td>
-                                        <th>采样键</th>
+                                        <th>{% trans "Sampling Key" %}</th>
                                         <td id="sampling_key"></td>
                                     </tr>
                                     <tr>
-                                        <th>创建时间</th>
+                                        <th>{% trans "Create Time" %}</th>
                                         <td id="create_time"></td>
-                                        <th>表说明</th>
+                                        <th>{% trans "Table Comment" %}</th>
                                         <td id="table_comment"></td>
                                     </tr>
                                     </tbody>
@@ -253,7 +254,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">列信息</div>
+                        <div class="panel-heading">{% trans "Column Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="field-list-clickhouse" data-toggle="table" class="table table-striped table-hover"
@@ -263,7 +264,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-heading">{% trans "Index Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="index-list-clickhouse" data-toggle="table" class="table table-striped table-hover"
@@ -273,7 +274,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">建表语句</div>
+                        <div class="panel-heading">{% trans "Create Table SQL" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="create-table-sql-clickhouse" data-toggle="table" class="table table-striped table-hover"
@@ -285,51 +286,51 @@
                 </div> <!--modal-body-->
                 <div class="modal-body" id="modal-body-oracle" >
                     <div class="panel panel-default">
-                        <div class="panel-heading">表信息</div>
+                        <div class="panel-heading">{% trans "Table Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                         <tr>
-                                            <th>表名</th>
+                                            <th>{% trans "Table Name" %}</th>
                                             <td id="TABLE_NAME"></td>
-                                            <th>表类型</th>
+                                            <th>{% trans "Table Type" %}</th>
                                             <td id="TABLE_TYPE"></td>
 
                                         </tr>
                                         <tr>
-                                            <th>段类型</th>
+                                            <th>{% trans "Segment Type" %}</th>
                                             <td id="SEGMENT_TYPE"></td>
-                                            <th>压缩</th>
+                                            <th>{% trans "Compression" %}</th>
                                             <td id="COMPRESSION"></td>
                                         </tr>
                                         <tr></tr>
-                                            <th>表空间</th>
+                                            <th>{% trans "Tablespace" %}</th>
                                             <td id="TABLESPACE_NAME"></td>
-                                            <th>表中的记录数</th>
+                                            <th>{% trans "Row Count" %}</th>
                                             <td id="NUM_ROWS"></td>
                                         </tr>
                                         <tr>
-                                            <th>表中数据所占的数据块数</th>
+                                            <th>{% trans "Data Blocks" %}</th>
                                             <td id="BLOCKS"></td>
-                                            <th>表中的空块数</th>
+                                            <th>{% trans "Empty Blocks" %}</th>
                                             <td id="EMPTY_BLOCKS"></td>
                                         </tr>
                                         <tr>
-                                            <th>数据块中平均的使用空间</th>
+                                            <th>{% trans "Average Space Used" %}</th>
                                             <td id="AVG_SPACE"></td>
-                                            <th>表中行连接和行迁移的数量</th>
+                                            <th>{% trans "Row Chaining and Migration Count" %}</th>
                                             <td id="CHAIN_CNT"></td>
                                         </tr>
                                         <tr>
-                                            <th>每条记录的平均长度</th>
+                                            <th>{% trans "Average Row Length" %}</th>
                                             <td id="AVG_ROW_LEN"></td>
-                                            <th>上次统计信息搜集的时间</th>
+                                            <th>{% trans "Last Analyzed" %}</th>
                                             <td id="LAST_ANALYZED"></td>
                                         </tr>
                                         <tr>
-                                            <th>表注释</th>
+                                            <th>{% trans "Table Comment" %}</th>
                                             <td id="COMMENTS"></td>
 
                                         </tr>
@@ -339,7 +340,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">列信息</div>
+                        <div class="panel-heading">{% trans "Column Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="field-list-oracle" data-toggle="table" class="table table-striped table-hover"
@@ -349,7 +350,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-heading">{% trans "Index Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="index-list-oracle" data-toggle="table" class="table table-striped table-hover"
@@ -361,28 +362,28 @@
                 </div> <!--modal-body-->
                 <div class="modal-body" id="modal-body-view">
                     <div class="panel panel-default">
-                        <div class="panel-heading">视图信息</div>
+                        <div class="panel-heading">{% trans "View Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data_view" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                     <tr>
-                                        <th>视图名</th>
+                                        <th>{% trans "View Name" %}</th>
                                         <td id="view_name"></td>
-                                        <th>定义者</th>
+                                        <th>{% trans "Definer" %}</th>
                                         <td id="view_definer"></td>
                                     </tr>
                                     <tr>
-                                        <th>安全类型</th>
+                                        <th>{% trans "Security Type" %}</th>
                                         <td id="view_security_type"></td>
-                                        <th>检查选项</th>
+                                        <th>{% trans "Check Option" %}</th>
                                         <td id="view_check_option"></td>
                                     </tr>
                                     <tr>
-                                        <th>是否可更新</th>
+                                        <th>{% trans "Updatable" %}</th>
                                         <td id="view_is_updatable"></td>
-                                        <th>字符集</th>
+                                        <th>{% trans "Character Set" %}</th>
                                         <td id="view_character_set_client"></td>
                                     </tr>
                                     </tbody>
@@ -391,7 +392,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">列信息</div>
+                        <div class="panel-heading">{% trans "Column Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="field-list-view" data-toggle="table" class="table table-striped table-hover"
@@ -401,7 +402,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">视图定义 SQL</div>
+                        <div class="panel-heading">{% trans "View Definition SQL" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <pre id="view_definition_sql" style="white-space:pre-wrap;word-break:break-all;"></pre>
@@ -411,32 +412,32 @@
                 </div> <!--modal-body-view-->
                 <div class="modal-body" id="modal-body-trigger">
                     <div class="panel panel-default">
-                        <div class="panel-heading">触发器信息</div>
+                        <div class="panel-heading">{% trans "Trigger Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data_trigger" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                     <tr>
-                                        <th>触发器名</th>
+                                        <th>{% trans "Trigger Name" %}</th>
                                         <td id="trigger_name"></td>
-                                        <th>触发时机</th>
+                                        <th>{% trans "Timing" %}</th>
                                         <td id="trigger_action_timing"></td>
                                     </tr>
                                     <tr>
-                                        <th>事件</th>
+                                        <th>{% trans "Event" %}</th>
                                         <td id="trigger_event_manipulation"></td>
-                                        <th>关联表</th>
+                                        <th>{% trans "Table" %}</th>
                                         <td id="trigger_event_object_table"></td>
                                     </tr>
                                     <tr>
-                                        <th>作用粒度</th>
+                                        <th>{% trans "Orientation" %}</th>
                                         <td id="trigger_action_orientation"></td>
-                                        <th>定义者</th>
+                                        <th>{% trans "Definer" %}</th>
                                         <td id="trigger_definer"></td>
                                     </tr>
                                     <tr>
-                                        <th>创建时间</th>
+                                        <th>{% trans "Create Time" %}</th>
                                         <td id="trigger_created"></td>
                                         <th>SQL Mode</th>
                                         <td id="trigger_sql_mode"></td>
@@ -447,7 +448,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">触发器体 SQL</div>
+                        <div class="panel-heading">{% trans "Trigger Body SQL" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <pre id="trigger_action_statement" style="white-space:pre-wrap;word-break:break-all;"></pre>
@@ -457,34 +458,34 @@
                 </div> <!--modal-body-trigger-->
                 <div class="modal-body" id="modal-body-procedure">
                     <div class="panel panel-default">
-                        <div class="panel-heading">存储过程信息</div>
+                        <div class="panel-heading">{% trans "Stored Procedure Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data_procedure" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                     <tr>
-                                        <th>名称</th>
+                                        <th>{% trans "Name" %}</th>
                                         <td id="proc_routine_name"></td>
-                                        <th>所属数据库</th>
+                                        <th>{% trans "Database" %}</th>
                                         <td id="proc_routine_schema"></td>
                                     </tr>
                                     <tr>
-                                        <th>定义者</th>
+                                        <th>{% trans "Definer" %}</th>
                                         <td id="proc_definer"></td>
-                                        <th>安全类型</th>
+                                        <th>{% trans "Security Type" %}</th>
                                         <td id="proc_security_type"></td>
                                     </tr>
                                     <tr>
-                                        <th>创建时间</th>
+                                        <th>{% trans "Create Time" %}</th>
                                         <td id="proc_created"></td>
-                                        <th>修改时间</th>
+                                        <th>{% trans "Update Time" %}</th>
                                         <td id="proc_last_altered"></td>
                                     </tr>
                                     <tr>
                                         <th>SQL Mode</th>
                                         <td id="proc_sql_mode"></td>
-                                        <th>备注</th>
+                                        <th>{% trans "Remark" %}</th>
                                         <td id="proc_routine_comment"></td>
                                     </tr>
                                     </tbody>
@@ -493,7 +494,7 @@
                         </div>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-heading">创建语句</div>
+                        <div class="panel-heading">{% trans "Create SQL" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <pre id="proc_create_sql" style="white-space:pre-wrap;word-break:break-all;"></pre>
@@ -503,28 +504,28 @@
                 </div> <!--modal-body-procedure-->
                 <div class="modal-body" id="modal-body-function">
                     <div class="panel panel-default">
-                        <div class="panel-heading">函数信息</div>
+                        <div class="panel-heading">{% trans "Function Information" %}</div>
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="meta_data_function" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                     <tbody>
                                     <tr>
-                                        <th>名称</th>
+                                        <th>{% trans "Name" %}</th>
                                         <td id="func_routine_name"></td>
-                                        <th>返回类型</th>
+                                        <th>{% trans "Return Type" %}</th>
                                         <td id="func_return_type"></td>
                                     </tr>
                                     <tr>
-                                        <th>定义者</th>
+                                        <th>{% trans "Definer" %}</th>
                                         <td id="func_definer"></td>
-                                        <th>所属数据库</th>
+                                        <th>{% trans "Database" %}</th>
                                         <td id="func_routine_schema"></td>
                                     </tr>
                                     <tr>
-                                        <th>创建时间</th>
+                                        <th>{% trans "Create Time" %}</th>
                                         <td id="func_created"></td>
-                                        <th>修改时间</th>
+                                        <th>{% trans "Update Time" %}</th>
                                         <td id="func_last_altered"></td>
                                     </tr>
                                     <tr>
@@ -851,7 +852,7 @@
                                         return sql;
                                     }
                                 }],
-                                locale: 'zh-CN'
+                                locale: window.getBootstrapTableLocale()
                             });
                         } else if (inst_db_type === 'clickhouse') {
                             showModalBody('clickhouse');
@@ -868,7 +869,7 @@
                                         return sql;
                                     }
                                 }],
-                                locale: 'zh-CN'
+                                locale: window.getBootstrapTableLocale()
                             });
                         } else if (inst_db_type === 'oracle') {
                             showModalBody('oracle');
@@ -907,7 +908,7 @@
                             pagination: true,
                             pageSize: 30,
                             pageList: [30, 50, 100, 500, 1000],
-                            locale: 'zh-CN'
+                            locale: window.getBootstrapTableLocale()
                         });
                         var columns_index = [];
                         $.each(result['index']['column_list'], function (i, column) {
@@ -929,7 +930,7 @@
                             pagination: true,
                             pageSize: 30,
                             pageList: [30, 50, 100, 500, 1000],
-                            locale: 'zh-CN'
+                            locale: window.getBootstrapTableLocale()
                         });
 
 
@@ -1095,7 +1096,7 @@
                             pagination: true,
                             pageSize: 30,
                             pageList: [30, 50, 100, 500, 1000],
-                            locale: 'zh-CN'
+                            locale: window.getBootstrapTableLocale()
                         });
                         renderSqlToPre('#view_definition_sql', result['view_definition']);
                         $('#showModal').modal('show');

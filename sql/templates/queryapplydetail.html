@@ -1,54 +1,55 @@
 {% extends "base.html" %}
 {% load format_tags %}
+{% load i18n %}
 {% block title %}{{ workflow_detail.title }}-{{ block.super }}{% endblock %}
 {% block content %}
-    <h4 style="display: inline;">工单名称：<span>{{ workflow_detail.title }}</span></h4>
+    <h4 style="display: inline;">{% trans "Workflow Name" %}: <span>{{ workflow_detail.title }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <!--只允许发起人提交其他实例-->
     {% if user.username == workflow_detail.engineer %}
-        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
+        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">{% trans "Submit on Other Instance" %}</a>
     {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sql_content }}"/>
     <hr>
     <h4>
-        审批流
+        {% trans "Approval Workflow" %}
     </h4>
     <h5>
     {% include "workflow_display.html" %}
     <h4>
-        其他信息
+        {% trans "Other Information" %}
     </h4>
     <table data-toggle="table" class="table table-striped table-hover"
            style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         <thead>
         <tr>
             <th>
-                申请人
+                {% trans "Requester" %}
             </th>
             <th>
-                实例
+                {% trans "Instance" %}
             </th>
             <th>
-                权限级别
+                {% trans "Privilege Level" %}
             </th>
             <th>
-                数据库
+                {% trans "Database" %}
             </th>
             <th>
-                结果集
+                {% trans "Result Set" %}
             </th>
             <th>
-                有效时间
+                {% trans "Valid Time" %}
             </th>
             <th>
-                申请时间
+                {% trans "Request Time" %}
             </th>
             <th>
-                当前状态
+                {% trans "Current Status" %}
             </th>
             <th>
-                组
+                {% trans "Group" %}
             </th>
         </tr>
         </thead>
@@ -77,13 +78,13 @@
             </td>
             <td>
                 {% if workflow_detail.status == 0 %}
-                    <b style="color: red">待审核</b>
+                    <b style="color: red">{% trans "Pending Review" %}</b>
                 {% elif workflow_detail.status == 1 %}
-                    <b style="color: green">审核通过</b>
+                    <b style="color: green">{% trans "Approved" %}</b>
                 {% elif workflow_detail.status == 2 %}
-                    <b style="color: red">审核不通过</b>
+                    <b style="color: red">{% trans "Rejected" %}</b>
                 {% elif workflow_detail.status == 3 %}
-                    <b style="color: red">审核取消</b>
+                    <b style="color: red">{% trans "Cancelled" %}</b>
                 {% endif %}
             </td>
             <td>
@@ -95,11 +96,11 @@
     <br>
     <div class="panel panel-default">
         <div class="panel-heading">
-            {% if workflow_detail.priv_type == 1 %}
-                数据库清单
-            {% elif workflow_detail.priv_type == 2 %}
-                表清单
-            {% endif %}
+                {% if workflow_detail.priv_type == 1 %}
+                {% trans "Database List" %}
+                {% elif workflow_detail.priv_type == 2 %}
+                {% trans "Table List" %}
+                {% endif %}
         </div>
         <div class="panel-body">
             {% if workflow_detail.priv_type == 1 %}
@@ -114,9 +115,7 @@
         <table data-toggle="table" class="table table-striped table-hover">
             <thead>
             <tr>
-                <th>
-                    操作信息
-                </th>
+                <th>{% trans "Operation Info" %}</th>
             </tr>
             </thead>
             <tbody>
@@ -131,14 +130,14 @@
     {% endif %}
     {% if workflow_detail.status == 0 %}
         {% if is_can_review %}
-            <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
-                      placeholder="请填写审核备注" rows=3></textarea>
+            <textarea id="remark" name="remark" class="form-control" data-name="{% trans 'Review Remark' %}"
+                      placeholder="{% trans 'Please fill in the review remark' %}" rows=3></textarea>
             <br>
             <form action="/query/privaudit/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="apply_id" value="{{ workflow_detail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="1">
-                <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="审核通过"/>
+                <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="{% trans 'Approve' %}"/>
             </form>
 
             <form id="form-cancel" action="/query/privaudit/" method="post" style="display:inline-block;">
@@ -146,7 +145,7 @@
                 <input type="hidden" name="apply_id" value="{{ workflow_detail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="2">
                 <input type="hidden" id="audit_remark" name="audit_remark" value="">
-                <input type="button" id="btnReject" class="btn btn-default" value="终止流程"/>
+                <input type="button" id="btnReject" class="btn btn-default" value="{% trans 'Terminate Workflow' %}"/>
             </form>
         {% endif %}
     {% endif %}
@@ -174,7 +173,7 @@
                 });
                 formCancel.submit();
             } else {
-                alert('请填写审核备注')
+                alert(gettext('Please fill in the review remark'))
             }
         })
     </script>

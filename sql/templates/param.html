@@ -1,34 +1,35 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
         <li id="param_tab" class="active">
-            <a href="#param_table" role="tab" data-toggle="tab">可修改参数</a>
+            <a href="#param_table" role="tab" data-toggle="tab">{% trans "Editable Parameters" %}</a>
         </li>
         <li id="history_tab">
-            <a href="#history_table" role="tab" data-toggle="tab">修改历史</a>
+            <a href="#history_table" role="tab" data-toggle="tab">{% trans "Change History" %}</a>
         </li>
         <div class="form-inline pull-right">
             <div class="form-group ">
                 <button id="btn_add_param" type="button" class="btn btn-default"
                         onclick="window.open('/admin/sql/paramtemplate/add/')">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    添加参数
+                    {% trans "Add Parameter" %}
                 </button>
             </div>
             <div id="editable-div" style="display: none" class="form-group">
                 <select id=editable class="form-control selectpicker" data-live-search="true">
-                    <option value="is-empty" disabled="">允许修改</option>
-                    <option value="true" selected="selected">是</option>
-                    <option value=''>否</option>
+                    <option value="is-empty" disabled="">{% trans "Editable" %}</option>
+                    <option value="true" selected="selected">{% trans "Yes" %}</option>
+                    <option value=''>{% trans "No" %}</option>
                 </select>
             </div>
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
-                        title="请选择实例"
+                        title="{% trans 'Please select an instance' %}"
                         data-live-search="true">
-                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
+                    <option value="is-empty" disabled="" selected="selected">{% trans "Please select an instance" %}</option>
                 </select>
             </div>
         </div>
@@ -88,7 +89,7 @@
                     detailFormatter: function (index, row) {
                         return row.description
                     },
-                    locale: 'zh-CN',                     //本地化
+                    locale: window.getBootstrapTableLocale(),                     //本地化
                     toolbar: "#process-toolbar",         //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -125,7 +126,7 @@
                         }
                     },
                     columns: [{
-                        title: '参数名',
+                        title: gettext('Parameter Name'),
                         field: 'variable_name',
                         formatter: function (value, row, index) {
                             if (row.id) {
@@ -135,25 +136,25 @@
                             }
                         }
                     }, {
-                        title: '运行参数值',
+                        title: gettext('Runtime Value'),
                         field: 'runtime_value',
                         editable: {
                             type: 'text',
-                            title: '修改参数值',
+                            title: gettext('Edit Parameter Value'),
                             placement: 'bottom',
                             emptytext: '-',
                             validate: function (v) {
-                                if (!v) return '参数值不能为空';
+                                if (!v) return gettext('Parameter value cannot be empty');
                             }
                         }
                     }, {
-                        title: '默认参数值',
+                        title: gettext('Default Value'),
                         field: 'default_value'
                     }, {
-                        title: '可修改参数值',
+                        title: gettext('Editable Value'),
                         field: 'valid_values'
                     }, {
-                        title: '参数描述',
+                        title: gettext('Parameter Description'),
                         field: 'description',
                         visible: false // 默认不显示
                     }],
@@ -201,7 +202,7 @@
                     exportDataType: "all",
                     cardView: false,                    //是否显示详细视图
                     detailView: false,                  //是否显示父子表
-                    locale: 'zh-CN',                    //本地化
+                    locale: window.getBootstrapTableLocale(),                    //本地化
                     toolbar: "#toolbar",                //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -214,10 +215,10 @@
                         }
                     },
                     columns: [{
-                        title: '实例名称',
+                        title: gettext('Instance Name'),
                         field: 'instance__instance_name'
                     }, {
-                        title: '参数名',
+                        title: gettext('Parameter Name'),
                         field: 'variable_name'
                     }, {
                         title: '变更前的参数值',
@@ -327,4 +328,3 @@
 
     </script>
 {% endblock %}
-

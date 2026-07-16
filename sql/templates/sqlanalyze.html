@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    分析选项
+                    {% trans "Analysis Options" %}
                 </div>
                 <div class="panel-body form-inline">
                     <div class="form-group">
@@ -14,19 +15,19 @@
                     <div class="form-group">
                         <select id="instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择实例:"
-                                data-placeholder="请选择实例:" required>
+                                title="{% trans 'Please select an instance:' %}"
+                                data-placeholder="{% trans 'Please select an instance:' %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
-                                title="请选择数据库:"
-                                data-live-search="true" data-placeholder="请选择数据库:" required>
-                            <option value="all">全部</option>
+                                title="{% trans 'Please select a database:' %}"
+                                data-live-search="true" data-placeholder="{% trans 'Please select a database:' %}" required>
+                            <option value="all">{% trans "All" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <input id="btn-analyze" type="button" class="btn btn-warning" value="开始分析"
+                        <input id="btn-analyze" type="button" class="btn btn-warning" value="{% trans 'Start Analysis' %}"
                                onclick="analyze()"/>
                     </div>
                 </div>
@@ -35,7 +36,7 @@
         <div class="col-md-12 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL列表
+                    {% trans "SQL List" %}
                 </div>
                 <div class="panel-body">
                     <div class="table-responsive">
@@ -53,7 +54,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">分析报告</h4>
+                    <h4 class="modal-title text-danger">{% trans "Analysis Report" %}</h4>
                 </div>
                 <div id="reports-body" class="modal-body">
                 </div>
@@ -67,7 +68,9 @@
     {% load static %}
     <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
     <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
+    {% if request.LANGUAGE_CODE == 'zh-hans' %}
     <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
+    {% endif %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script src="{% static 'dist/js/marked.min.js' %}"></script>
@@ -76,10 +79,10 @@
         //初始化上传控件
         $(function init_upload() {
             $("#sql-upload").fileinput({
-                language: 'zh',
+                language: window.getDatetimepickerLanguage(),
                 allowedFileExtensions: ['sql', 'xml'],//接收的文件后缀
                 showCaption: true,//是否显示标题
-                initialCaption: 'SQL/MyBatis3 Mapper XML file',
+                initialCaption: gettext('SQL/MyBatis3 Mapper XML file'),
                 captionClass: "",
                 showUpload: false,     //不显示上传按钮
                 showPreview: false,    // 不显示预览,
@@ -88,7 +91,7 @@
                     loadsql();
                 } else {
                     $('#sql-upload').fileinput('reset');
-                    alert('文件大小超过5M，请重新选择');
+                    alert(gettext('The file size exceeds 5 MB. Please choose another file.'));
                 }
             }).on('fileclear', function (event) {
                 generate();
@@ -164,7 +167,7 @@
                     });
                     return html.join('');
                 },
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -176,10 +179,10 @@
                         }
                     },
                 columns: [{
-                    title: 'SQLID',
+                    title: gettext('SQL ID'),
                     field: 'sql_id'
                 }, {
-                    title: 'SQL内容',
+                    title: gettext('SQL Content'),
                     field: 'sql',
                     formatter: function (value, row, index) {
                         if (value.length > 100) {
@@ -190,7 +193,7 @@
                         }
                     }
                 }, {
-                    title: '完整SQL内容',
+                    title: gettext('Full SQL Content'),
                     field: 'sql',
                     visible: false // 默认不显示
                 }],
@@ -301,7 +304,7 @@
                         });
                         return html.join('');
                     },
-                    locale: 'zh-CN',                    //本地化
+                    locale: window.getBootstrapTableLocale(),                    //本地化
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -315,10 +318,10 @@
                             }
                         },
                     columns: [{
-                        title: 'SQLID',
+                        title: gettext('SQL ID'),
                         field: 'sql_id'
                     }, {
-                        title: 'SQL内容',
+                        title: gettext('SQL Content'),
                         field: 'sql',
                         formatter: function (value, row, index) {
                             if (value.length > 100) {
@@ -329,14 +332,14 @@
                             }
                         }
                     }, {
-                        title: '完整SQL内容',
+                        title: gettext('Full SQL Content'),
                         field: 'sql',
                         visible: false // 默认不显示
                     }, {
-                        title: '分析报告',
+                        title: gettext('Analysis Report'),
                         field: 'operation',
                         formatter: function (value, row, index) {
-                            return "<button class=\"btn btn-info btn-xs\" report=\"" + row.report.replace(/"<>\.*/gm,'<\>才是标准SQL中的不等于运算符') + "\"\n" + "onclick=\"getReport(this)\" >查看\n" + "</button>"
+                            return "<button class=\"btn btn-info btn-xs\" report=\"" + row.report.replace(/"<>\.*/gm,'<\>才是标准SQL中的不等于运算符') + "\"\n" + "onclick=\"getReport(this)\" >" + gettext('View') + "\n" + "</button>"
                         }
                     }],
                     onLoadSuccess: function () {
@@ -355,12 +358,12 @@
                 });
                 // 提示信息
                 if ($('#instance_name').val() && $('#db_name').val()) {
-                    alert('已提交SOAR分析，请耐心等待分析结果!');
+                    alert(gettext('SOAR analysis submitted successfully. Please wait for the results!'));
                 } else {
-                    alert('已提交SOAR分析，未选择实例和数据库将不会输出执行计划和索引建议，请耐心等待分析结果!');
+                    alert(gettext('SOAR analysis submitted. Without an instance and database selected, execution plans and index suggestions will not be produced. Please wait for the results!'));
                 }
             } else {
-                alert('请先解析SQL/MyBatis3 Mapper XML文件');
+                alert(gettext('Please parse the SQL/MyBatis3 Mapper XML file first'));
             }
 
         }
@@ -425,4 +428,3 @@
         })
     </script>
 {% endblock %}
-

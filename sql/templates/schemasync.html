@@ -1,44 +1,45 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    操作选项
+                    {% trans "Operation Options" %}
                 </div>
                 <div class="panel-body">
                     <div class="form-group">
                         <select id="instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择源实例:"
-                                data-placeholder="请选择实例:" required>
+                                title="{% trans 'Please select source instance:' %}"
+                                data-placeholder="{% trans 'Please select source instance:' %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
-                                title="请选择源数据库:"
-                                data-live-search="true" data-placeholder="请选择数据库:" required>
-                            <option value="all">全部</option>
+                                title="{% trans 'Please select source database:' %}"
+                                data-live-search="true" data-placeholder="{% trans 'Please select source database:' %}" required>
+                            <option value="all">{% trans "All" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="target_instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择目标实例:"
-                                data-placeholder="请选择目标实例:" required>
+                                title="{% trans 'Please select target instance:' %}"
+                                data-placeholder="{% trans 'Please select target instance:' %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="target_db_name" name="db_name"
                                 class="form-control selectpicker show-tick bs-select-hidden"
-                                title="请选择目标数据库:"
-                                data-live-search="true" data-placeholder="请选择对应数据库:" required>
-                            <option value="all">全部</option>
+                                title="{% trans 'Please select target database:' %}"
+                                data-live-search="true" data-placeholder="{% trans 'Please select target database:' %}" required>
+                            <option value="all">{% trans "All" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">DIFF选项：</h5>
+                        <h5 class="control-label text-bold">{% trans "DIFF Options" %}</h5>
                         <div class="form-group">
                             <div class="checkbox">
                                 <label>
@@ -55,7 +56,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <input id="btn-SchemaSync" type="button" class="btn btn-danger" value="Schema对比"
+                        <input id="btn-SchemaSync" type="button" class="btn btn-danger" value="{% trans 'Schema Compare' %}"
                                onclick="schemasync()"/>
                     </div>
                 </div>
@@ -64,11 +65,11 @@
         <div class="col-md-9 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL语句
+                    {% trans "SQL Statement" %}
                 </div>
                 <div class="panel-body">
                     <h5 class="control-label text-bold" style="color: red">
-                        <b>页面仅展示单库对比结果，生成的SQL文件会保存到项目downloads目录</b></h5>
+                        <b>{% trans "This page only shows the single-database comparison result. The generated SQL file will be saved to the project's downloads directory." %}</b></h5>
                     <br>
                     <div id="schemadiff-result" style="display:none;" class="row clearfix">
                         <div id="schemadiff-result-col" class="col-md-12"></div>
@@ -138,7 +139,7 @@
                             var name = "<option>" + result[i] + "</option>";
                             $("#db_name").append(name);
                         }
-                        $("#db_name").prepend("<option value=\"all\">全部</option>");
+                        $("#db_name").prepend("<option value=\"all\">" + gettext("All") + "</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                     } else {
@@ -172,7 +173,7 @@
                             var name = "<option>" + result[i] + "</option>";
                             $("#target_db_name").append(name);
                         }
-                        $("#target_db_name").prepend("<option value=\"all\">全部</option>");
+                        $("#target_db_name").prepend("<option value=\"all\">" + gettext("All") + "</option>");
                         $('#target_db_name').selectpicker('render');
                         $('#target_db_name').selectpicker('refresh');
                     } else {
@@ -196,7 +197,7 @@
                 $('#btn-SchemaSync').addClass('disabled');
                 $('#btn-SchemaSync').prop('disabled', true);
                 $("#schemadiff-result").hide();
-                alert('请耐心等待对比结果，可在对应目录获取生成的SQL文件');
+                alert(gettext('Please wait patiently for the comparison result. You can get the generated SQL file in the corresponding directory.'));
                 $.ajax({
                     type: "post",
                     url: "/instance/schemasync/",
@@ -221,7 +222,7 @@
                             var revert_stdout = result['revert_stdout'].replace(/\n/g, '<br>');
                             alertStyle = "alert-success";
                             finalHtml = "<table class='table' width='100%' style='table-layout:fixed;'> " +
-                                "<thead><tr><th>DIFFLOG</th></tr></thead>" +
+                                "<thead><tr><th>" + gettext('DIFF Log') + "</th></tr></thead>" +
                                 "</table>";
                             finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
                                 "<table class='' width='100%' style='table-layout:fixed;'> " +
@@ -229,7 +230,7 @@
                                 "<td>" + diff_stdout + "</td>" +
                                 "</tr> </tbody></table> </div>";
                             finalHtml += "<table class='table' width='100%' style='table-layout:fixed;'> " +
-                                "<thead><tr><th>PATCHSQL</th></tr></thead>" +
+                                "<thead><tr><th>" + gettext('Patch SQL') + "</th></tr></thead>" +
                                 "</table>";
                             finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
                                 "<table class='' width='100%' style='table-layout:fixed;'> " +
@@ -237,7 +238,7 @@
                                 "<td>" + patch_stdout + "</td>" +
                                 "</tr> </tbody></table> </div>";
                             finalHtml += "<table class='table' width='100%' style='table-layout:fixed;'> " +
-                                "<thead><tr><th>REVERTSQL</th></tr></thead>" +
+                                "<thead><tr><th>" + gettext('Revert SQL') + "</th></tr></thead>" +
                                 "</table>";
                             finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
                                 "<table class='' width='100%' style='table-layout:fixed;'> " +
@@ -256,9 +257,8 @@
                     }
                 });
             } else {
-                alert('请选择完整！')
+                alert(gettext('Please complete all required fields!'))
             }
         }
     </script>
 {% endblock %}
-

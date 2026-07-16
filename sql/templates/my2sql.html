@@ -1,19 +1,20 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    操作选项
+                    {% trans "Operation Options" %}
                 </div>
                 <div class="panel-body">
                     <div class="form-group">
-                        <h5 class="control-label text-bold">选择实例：</h5>
+                        <h5 class="control-label text-bold">{% trans "Select Instance:" %}</h5>
                         <div class="form-group">
                             <select id="instance_name" name="instance_name"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    title="请选择实例:"
+                                    title="{% trans 'Please select an instance:' %}"
                                     data-live-search="true" required>
                             </select>
                         </div>
@@ -23,114 +24,114 @@
                             <div class="checkbox">
                                 <label>
                                     <input id="save_sql" type="checkbox">
-                                    是否保存到文件(异步操作)
+                                    {% trans "Save to file (asynchronous)" %}
                                 </label>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">解析模式：</h5>
+                        <h5 class="control-label text-bold">{% trans "Analysis Mode:" %}</h5>
                         <div class="form-group">
                             <div class="checkbox">
                                 <label>
                                     <input id="rollback" type="checkbox">
-                                    -work-type rollback
+                                    {% trans "Rollback mode (-work-type rollback)" %}
                                 </label>
                             </div>
                             <div class="checkbox">
                                 <label>
                                     <input id="ignore_primary_key" type="checkbox">
-                                    -ignore-primaryKey-forInsert
+                                    {% trans "Ignore primary key for insert (-ignore-primaryKey-forInsert)" %}
                                 </label>
                             </div>
                             <div class="checkbox">
                                 <label>
                                     <input id="full_columns" type="checkbox">
-                                    -full-columns
+                                    {% trans "Full columns (-full-columns)" %}
                                 </label>
                             </div>
                             <div class="checkbox">
                                 <label>
                                     <input id="no_db_prefix" type="checkbox">
-                                    -do-not-add-prifixDb
+                                    {% trans "Do not add DB prefix (-do-not-add-prifixDb)" %}
                                 </label>
                             </div>
                             <div class="checkbox">
                                 <label>
                                     <input id="file_per_table" type="checkbox">
-                                    -file-per-table
+                                    {% trans "File per table (-file-per-table)" %}
                                 </label>
                             </div>
                             <div class="checkbox">
                                 <label>
                                     <input id="extra_info" type="checkbox">
-                                    -add-extraInfo
+                                    {% trans "Add extra info (-add-extraInfo)" %}
                                 </label>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                    <h5 class="control-label text-bold">解析线程数：</h5>
+                    <h5 class="control-label text-bold">{% trans "Analysis Threads:" %}</h5>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="threads" placeholder="默认4"
+                            <input type="number" class="form-control" id="threads" placeholder="{% trans 'Default 4' %}"
 
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">解析范围控制：</h5>
+                        <h5 class="control-label text-bold">{% trans "Analysis Range Control:" %}</h5>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="num" placeholder="页面解析行数，默认30"
+                            <input type="number" class="form-control" id="num" placeholder="{% trans 'Page line count, default 30' %}"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
                             <select id="start_file" class="selectpicker form-control"
-                                    title="起始解析文件:"
+                                    title="{% trans 'Start file:' %}"
                                     required>
                             </select>
                         </div>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="start_pos" placeholder="起始解析位置(可选)"
+                            <input type="number" class="form-control" id="start_pos" placeholder="{% trans 'Start position (optional)' %}"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
                             <select id="end_file" class="selectpicker form-control"
-                                    title="终止解析文件(可选):"
+                                    title="{% trans 'End file (optional):' %}"
                                     required>
                             </select>
                         </div>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="end_pos" placeholder="终止解析位置(可选)"
+                            <input type="number" class="form-control" id="end_pos" placeholder="{% trans 'End position (optional)' %}"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
                             <input type="text" class="form-control form_datetime" id="start_time"
-                                   placeholder="起始解析时间(不建议)">
+                                   placeholder="{% trans 'Start time (not recommended)' %}">
                         </div>
                         <div class="form-group">
                             <input type="text" class="form-control form_datetime" id="stop_time"
-                                   placeholder="终止解析时间(可选)">
+                                   placeholder="{% trans 'End time (optional)' %}">
                         </div>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">对象过滤：</h5>
+                        <h5 class="control-label text-bold">{% trans "Object Filters:" %}</h5>
                         <div class="form-group">
                             <select id="only_schemas" class="selectpicker form-control "
                                     data-live-search="true"
-                                    title="数据库过滤(可选):"
+                                    title="{% trans 'Database filter (optional):' %}"
                                     required>
                             </select>
                         </div>
                         <div class="form-group">
                             <select id="only_tables" class="selectpicker form-control "
                                     data-live-search="true"
-                                    title="表过滤(可选):"
+                                    title="{% trans 'Table filter (optional):' %}"
                                     multiple="multiple" required>
                             </select>
                         </div>
                         <select id="sql_type" class="selectpicker form-control "
                                 data-live-search="true"
-                                title="类型过滤(可选):"
+                                title="{% trans 'Type filter (optional):' %}"
                                 multiple="multiple" required>
                             <option value="insert">INSERT</option>
                             <option value="update">UPDATE</option>
@@ -138,8 +139,8 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <button id="my2sql" class="btn btn-danger">获取SQL</button>
-                        <button id="btn-submit-my2sql-workflow" class="btn btn-success disabled" disabled>提交工单</button>
+                        <button id="my2sql" class="btn btn-danger">{% trans "Get SQL" %}</button>
+                        <button id="btn-submit-my2sql-workflow" class="btn btn-success disabled" disabled>{% trans "Submit Request" %}</button>
                     </div>
                 </div>
             </div>
@@ -147,12 +148,11 @@
         <div class="col-md-9 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL语句
+                    {% trans "SQL Statement" %}
                 </div>
                 <div class="panel-body">
                     <h5 class="control-label text-bold" style="color: red">
-                        <b>前端展示数量由解析范围参数控制，如果勾选了保存到文件，则会异步获取完整的SQL文件，
-                            保存到项目downloads目录，在开启消息通知后，执行结束会发送通知给操作人</b>
+                        <b>{% trans "The number of rows shown in the UI is controlled by the analysis range. If save to file is selected, the full SQL file will be fetched asynchronously and saved under the project's downloads directory. After notifications are enabled, a notice will be sent to the operator when execution finishes." %}</b>
                     </h5>
                     <br>
                     <table id="tb-my2sql" data-toggle="table" class="table table-condensed"
@@ -168,11 +168,13 @@
     <link href="{% static 'datetimepicker/css/bootstrap-datetimepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    {% if request.LANGUAGE_CODE == 'zh-hans' %}
     <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.zh-CN.js' %}"></script>
+    {% endif %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
-        $(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii:ss', language: 'zh-CN', autoclose: true});
+        $(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii:ss', language: window.getDatetimepickerLanguage(), autoclose: true});
         var hasGeneratedMy2sqlRows = false;
 
         function getMy2sqlTableData() {
@@ -201,7 +203,7 @@
         }
 
         function buildMy2sqlWorkflowName() {
-            var workflowName = "My2SQL回滚-" + $("#instance_name").val() + "-" + $("#only_schemas").val();
+            var workflowName = "My2SQL " + gettext("Rollback") + "-" + $("#instance_name").val() + "-" + $("#only_schemas").val();
             return workflowName.length >= 50 ? workflowName.substr(0, 49) : workflowName;
         }
 
@@ -285,7 +287,7 @@
                         $("#start_file").empty();
                         $("#end_file").empty();
                         for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i]['Log_name'] + "\">" + result[i]['Log_name'] + '   Size:' + result[i]['File_size'] + "</option>";
+                            var name = "<option value=\"" + result[i]['Log_name'] + "\">" + result[i]['Log_name'] + '   ' + gettext('Size:') + result[i]['File_size'] + "</option>";
                             $("#start_file").append(name);
                             $("#end_file").append(name);
                         }
@@ -335,7 +337,7 @@
                             var name = "<option>" + result[i] + "</option>";
                             $("#only_tables").append(name);
                         }
-                        $("#only_tables").prepend("<option value=\"is-empty\" disabled=\"\">表过滤(可选):</option>");
+                        $("#only_tables").prepend("<option value=\"is-empty\" disabled=\"\">" + gettext("Table filter (optional):") + "</option>");
                         $('#only_tables').selectpicker('render');
                         $('#only_tables').selectpicker('refresh');
                     } else {
@@ -359,7 +361,7 @@
                 return;
             }
             if (rows.length > 2000) {
-                alert('SQL语句超过2000行，不支持提交工单，请使用异步导出文件的方式！');
+                alert(gettext('SQL statements over 2000 lines cannot be submitted as a request. Please use the asynchronous export file method.'));
                 return;
             }
             var sqlContent = $.map(rows, function (row) {
@@ -443,7 +445,7 @@
                                 uniqueId: "id",                     //每一行的唯一标识，一般为主键列
                                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                                 cardView: false,                    //是否显示详细视图
-                                locale: 'zh-CN',                    //本地化
+                                locale: window.getBootstrapTableLocale(),                    //本地化
                                 detailView: true,                   //是否显示父子表
                                 //格式化详情
                                 detailFormatter: function (index, row) {
@@ -466,7 +468,7 @@
                                 },
                                 data: data.data,
                                 columns: [{
-                                    title: 'SQL',
+                                    title: gettext('SQL'),
                                     field: 'sql',
                                     formatter: function (value, row, index) {
                                         if (value.length > 200) {
@@ -477,7 +479,7 @@
                                         }
                                     }
                                 }, {
-                                    title: 'ExtraInfo',
+                                    title: gettext('Extra Info'),
                                     field: 'extra_info',
                                     formatter: function (value, row, index) {
                                         if (!value) {
@@ -489,11 +491,11 @@
                                         return value;
                                     }
                                 }, {
-                                    title: '完整SQL',
+                                    title: gettext('Full SQL'),
                                     field: 'sql',
                                     visible: false // 默认不显示
                                 }, {
-                                    title: '完整ExtraInfo',
+                                    title: gettext('Full Extra Info'),
                                     field: 'extra_info',
                                     visible: false // 默认不显示
                                 }],
@@ -513,7 +515,7 @@
                     }
                 });
             } else {
-                alert("请选择实例和起始解析文件！")
+                alert(gettext("Please select an instance and start file!"))
             }
 
         })

@@ -1,28 +1,28 @@
 {% extends "base.html" %}
-{% load format_tags %}
+{% load format_tags i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    选择操作
+                    {% trans "Select Action" %}
                 </div>
                 <div class="panel-body">
                     <div id="div-config" class="form-group">
-                        <h5 class="control-label text-bold">配置项：</h5>
+                        <h5 class="control-label text-bold">{% trans "Configuration Item" %}:</h5>
                         <div class="form-group">
                             <select id="config" name="confg"
                                     class="selectpicker show-tick form-control bs-select-hidden"
                                     data-name="配置项" data-placeholder="请选择配置项:" required />
-                                <option value="is-empty" disabled="">请选择配置项:</option>
-                                <option value="0" selected="selected">系统设置</option>
-                                <option value="1">工单审核流配置</option>
+                                <option value="is-empty" disabled="">{% trans "Please select a configuration item:" %}</option>
+                                <option value="0" selected="selected">{% trans "System Settings" %}</option>
+                                <option value="1">{% trans "Workflow Approval Configuration" %}</option>
                             </select>
                         </div>
                     </div>
                     <div id="div-workflow" class="form-group" style="display: none">
-                        <h5 class="control-label text-bold">工单类型：</h5>
+                        <h5 class="control-label text-bold">{% trans "Workflow Type" %}:</h5>
                         <div class="form-group">
                             <select id="workflow_type" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
@@ -38,7 +38,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <h5 class="control-label text-bold">组：</h5>
+                        <h5 class="control-label text-bold">{% trans "Group" %}:</h5>
                         <div class="form-group">
                             <select id="group" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
@@ -55,12 +55,12 @@
         <div class="col-md-9 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    操作
+                    {% trans "Actions" %}
                 </div>
                 <div class="panel-body">
                     <div id="div-system-config" class="form-group" style="display: none">
-                        <h4 style="color: darkgrey; display: inline;"><b>goInception配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <h6 style="color:red">注1：备份库的信息仅用于平台获取回滚语句，需要和审核工具自身的配置保持一致，此处配置变更不会修改审核工具自身的配置</h6>
+                        <h4 style="color: darkgrey; display: inline;"><b>goInception {% trans "Configuration" %}</b></h4>&nbsp;&nbsp;&nbsp;
+                        <h6 style="color:red">{% trans "Note 1: backup database information is only used to fetch rollback statements. Keep it aligned with the audit tool configuration. Changes here do not modify the audit tool configuration." %}</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div id="div-go-inception-config">
@@ -72,9 +72,9 @@
                                                id="go_inception_host"
                                                key="go_inception_host"
                                                value="{{ config.go_inception_host }}"
-                                               placeholder="goInception地址" />
+                                               placeholder="{% trans 'goInception address' %}" />
                                     </div>
-                                    <button id='check_goincption' class='btn-sm btn-info'>测试连接</button>&nbsp;
+                                    <button id='check_goincption' class='btn-sm btn-info'>{% trans "Test Connection" %}</button>&nbsp;
                                 </div>
                                 <div class="form-group">
                                     <label for="go_inception_port"
@@ -84,7 +84,7 @@
                                                id="go_inception_port"
                                                key="go_inception_port"
                                                value="{{ config.go_inception_port }}"
-                                               placeholder="goInception端口" />
+                                               placeholder="{% trans 'goInception port' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -95,7 +95,7 @@
                                                id="go_inception_user"
                                                key="go_inception_user"
                                                value="{{ config.go_inception_user }}"
-                                               placeholder="goInception用户（未启用认证可不填）" />
+                                               placeholder="{% trans 'goInception user (optional when authentication is disabled)' %}" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -106,7 +106,7 @@
                                                id="go_inception_password"
                                                key="go_inception_password"
                                                value="{{ config.go_inception_password }}"
-                                               placeholder="goInception密码（未启用认证可不填）" />
+                                               placeholder="{% trans 'goInception password (optional when authentication is disabled)' %}" />
                                     </div>
                                 </div>
                             </div>
@@ -118,7 +118,7 @@
                                            id="inception_remote_backup_host"
                                            key="inception_remote_backup_host"
                                            value="{{ config.inception_remote_backup_host }}"
-                                           placeholder="备份库地址" />
+                                           placeholder="{% trans 'Backup database address' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -129,7 +129,7 @@
                                            id="inception_remote_backup_port"
                                            key="inception_remote_backup_port"
                                            value="{{ config.inception_remote_backup_port }}"
-                                           placeholder="备份库端口" />
+                                           placeholder="{% trans 'Backup database port' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -140,7 +140,7 @@
                                            id="inception_remote_backup_user"
                                            key="inception_remote_backup_user"
                                            value="{{ config.inception_remote_backup_user }}"
-                                           placeholder="备份库用户" />
+                                           placeholder="{% trans 'Backup database user' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -151,14 +151,14 @@
                                            id="inception_remote_backup_password"
                                            key="inception_remote_backup_password"
                                            value="{{ config.inception_remote_backup_password }}"
-                                           placeholder="备份库用户密码" />
+                                           placeholder="{% trans 'Backup database password' %}" />
                                 </div>
                             </div>
                         </div>
                         <br>
-                        <h4 style="color: darkgrey"><b>功能模块配置</b></h4>
+                        <h4 style="color: darkgrey"><b>{% trans "Feature Configuration" %}</b></h4>
                         <hr/>
-                        <h5 style="color: darkgrey"><b>SQL上线</b></h5>
+                        <h5 style="color: darkgrey"><b>{% trans "SQL Deployment" %}</b></h5>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -169,7 +169,7 @@
                                            id="critical_ddl_regex"
                                            key="critical_ddl_regex"
                                            value="{{ config.critical_ddl_regex }}"
-                                           placeholder="正则条件，匹配的语句会禁止提交" />
+                                           placeholder="{% trans 'Statements matching this regex will be blocked from submission' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -180,7 +180,7 @@
                                            id="auto_review_wrong"
                                            key="auto_review_wrong"
                                            value="{{ config.auto_review_wrong }}"
-                                           placeholder="自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回" />
+                                           placeholder="{% trans 'Auto-reject level: 1 rejects warnings, 2 or blank rejects errors only, and other values disable auto-reject' %}" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -193,7 +193,7 @@
                                                    key="enable_backup_switch"
                                                    value="{{ config.enable_backup_switch }}"
                                                    type="checkbox" />
-                                            是否开启备份选项(默认关闭, 强制要求备份)
+                                            {% trans "Enable backup option (disabled by default, backup required)" %}
                                         </label>
                                     </div>
                                 </div>
@@ -208,7 +208,7 @@
                                                    key="auto_review"
                                                    value="{{ config.auto_review }}"
                                                    type="checkbox" />
-                                            是否开启SQL上线自动审批
+                                            {% trans "Enable automatic SQL deployment approval" %}
                                         </label>
                                     </div>
                                 </div>
@@ -1508,11 +1508,11 @@
             // sms_provider参数处理
             function provider_display(provider) {
                 if (provider === 'disabled') {
-                    return '关闭'
+                    return gettext('Off')
                 } else if (provider === 'aliyun') {
-                    return '阿里云'
+                    return gettext('Alibaba Cloud')
                 } else if (provider === 'tencent') {
-                    return '腾讯云'
+                    return gettext('Tencent Cloud')
                 }
             }
             let sms_provider = "{{ config.sms_provider }}";
@@ -1979,4 +1979,3 @@
         })
     </script>
 {% endblock %}
-

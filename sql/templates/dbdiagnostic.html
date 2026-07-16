@@ -1,41 +1,42 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="process-toolbar" class="btn-group right" style="display:none;">
-        <button id="kill_process" class="btn btn-default" type="button">终止会话</button>
+        <button id="kill_process" class="btn btn-default" type="button">{% trans "Terminate Session" %}</button>
     </div>
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
         <li id="process_tab" class="active">
-            <a href="#process" role="tab" data-toggle="tab">进程状态</a>
+            <a href="#process" role="tab" data-toggle="tab">{% trans "Process Status" %}</a>
         </li>
         <li id="space_tab">
-            <a href="#space" role="tab" data-toggle="tab">Top表空间</a>
+            <a href="#space" role="tab" data-toggle="tab">{% trans "Top Tablespace" %}</a>
         </li>
         <li id="trx_tab">
-            <a href="#trx" role="tab" data-toggle="tab">事务信息</a>
+            <a href="#trx" role="tab" data-toggle="tab">{% trans "Transaction Information" %}</a>
         </li>
         <li id="trxandlocks_tab">
-            <a href="#trxandlocks" role="tab" data-toggle="tab">锁信息</a>
+            <a href="#trxandlocks" role="tab" data-toggle="tab">{% trans "Lock Information" %}</a>
         </li>
         <div class="form-inline pull-right">
             <div class="form-group ">
                 <select id="instance_name" class="form-control selectpicker" name="instance_name_list"
-                        title="请选择实例:"
+                        title="{% trans 'Select Instance' %}:"
                         data-live-search="true">
-                        <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
-                        <optgroup id="optgroup-mongo" label="MongoDB"></optgroup>
-                        <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
-                        <optgroup id="optgroup-redis" label="Redis"></optgroup>
-                        <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
-                        <optgroup id="optgroup-doris" label="Doris"></optgroup>
-                        <optgroup id="optgroup-tdengine" label="TDengine"></optgroup>
-                        <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
+                        <optgroup id="optgroup-mysql" label="{% trans 'MySQL' %}"></optgroup>
+                        <optgroup id="optgroup-mongo" label="{% trans 'MongoDB' %}"></optgroup>
+                        <optgroup id="optgroup-oracle" label="{% trans 'Oracle' %}"></optgroup>
+                        <optgroup id="optgroup-redis" label="{% trans 'Redis' %}"></optgroup>
+                        <optgroup id="optgroup-pgsql" label="{% trans 'PgSQL' %}"></optgroup>
+                        <optgroup id="optgroup-doris" label="{% trans 'Doris' %}"></optgroup>
+                        <optgroup id="optgroup-tdengine" label="{% trans 'TDengine' %}"></optgroup>
+                        <optgroup id="optgroup-clickhouse" label="{% trans 'ClickHouse' %}"></optgroup>
                 </select>
             </div>
             <div id="command-div" class="form-group">
-                <select id="command" class="form-control selectpicker" name="command_type" title="command类型">
+                <select id="command" class="form-control selectpicker" name="command_type" title="{% trans 'Command Type' %}">
                     <!--option value="All">All</option>
                     <option value="Query" selected="selected">Query</option>
                     <option value="Not Sleep">Not Sleep</option-->
@@ -77,15 +78,15 @@
                 <div class="modal-header ">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">确定要终止所选会话吗？</h4>
+                    <h4 class="modal-title text-danger">{% trans "Are you sure you want to terminate the selected session?" %}</h4>
                 </div>
                 <div class="modal-body">
                     <input type="text" id="request_params" hidden>
                     <b id="kill_sql"></b>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button type="button" onclick="kill_session()" class="btn btn-danger" data-dismiss="modal">确定终止
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" onclick="kill_session()" class="btn btn-danger" data-dismiss="modal">{% trans "Terminate" %}
                     </button>
                 </div>
             </div>
@@ -171,7 +172,7 @@
                     detailView: true,                  //是否显示父子表
                     //格式化详情
                     detailFormatter: processListDetailFormatCallback,
-                    locale: 'zh-CN',                    //本地化
+                    locale: window.getBootstrapTableLocale(),                    //本地化
                     toolbar: "#process-toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -184,7 +185,7 @@
                     columns: processListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
-                            alert("数据加载失败！" + data.msg);
+                            alert(gettext("Data loading failed!") + data.msg);
                         }
                     },
                     onLoadError: onLoadErrorCallback,
@@ -206,53 +207,53 @@
             [
                 'mysql',
                 [{
-                     title: '数据库',
+                     title: gettext('Database'),
                      field: 'table_schema'
                  }, {
-                     title: '表名',
+                     title: gettext('Table Name'),
                      field: 'table_name'
                  }, {
-                     title: '存储引擎',
+                     title: gettext('Storage Engine'),
                      field: 'engine'
                  }, {
-                     title: '总空间(MB)',
+                     title: gettext('Total Space (MB)'),
                      field: 'total_size'
                  }, {
-                     title: '行数',
+                     title: gettext('Rows'),
                      field: 'table_rows'
                  }, {
-                     title: '数据空间(MB)',
+                     title: gettext('Data Space (MB)'),
                      field: 'data_size'
                  }, {
-                     title: '索引空间(MB)',
+                     title: gettext('Index Space (MB)'),
                      field: 'index_size'
                  }, {
-                     title: '碎片空间(MB)',
+                     title: gettext('Free Space (MB)'),
                      field: 'data_free'
                  }, {
-                     title: '碎片率(%)',
+                     title: gettext('Free Ratio (%)'),
                      field: 'pct_free'
                  }]
             ],
             [
                 'oracle',
                 [{
-                    title: '表空间名',
+                    title: gettext('Tablespace Name'),
                     field: 'TABLESPACE_NAME'
                 }, {
-                    title: '表空间类型',
+                    title: gettext('Tablespace Type'),
                     field: 'TABLESPACE_TYPE'
                 }, {
-                    title: '状态',
+                    title: gettext('Status'),
                     field: 'STATUS'
                 }, {
-                    title: '总空间(MB)',
+                    title: gettext('Total Space (MB)'),
                     field: 'TOTAL_SPACE'
                 }, {
-                    title: '已使用空间(MB)',
+                    title: gettext('Used Space (MB)'),
                     field: 'USED_SPACE'
                 }, {
-                    title: '使用率(%)',
+                    title: gettext('Usage (%)'),
                     field: 'PCT_USED'
                 }]
             ]
@@ -261,31 +262,31 @@
         tablespaceListTableInfos.push(dorisTableInfo)
         let clickhouseTableInfo = ['clickhouse',
             [{
-                title: '数据库',
+                title: gettext('Database'),
                 field: 'database'
             }, {
-                title: '表名',
+                title: gettext('Table Name'),
                 field: 'table'
             }, {
-                title: '存储引擎',
+                title: gettext('Storage Engine'),
                 field: 'engine'
             }, {
-                title: '行数',
+                title: gettext('Rows'),
                 field: 'table_rows'
             }, {
-                title: '总空间',
+                title: gettext('Total Space'),
                 field: 'total_size'
             }, {
-                title: '索引空间',
+                title: gettext('Index Space'),
                 field: 'marks_bytes'
             }, {
-                title: '数据空间(未压缩)',
+                title: gettext('Data Space (Uncompressed)'),
                 field: 'data_uncompressed'
             }, {
-                title: '数据空间(压缩后)',
+                title: gettext('Data Space (Compressed)'),
                 field: 'data_compressed'
             }, {
-                title: '压缩率',
+                title: gettext('Compression Ratio'),
                 field: 'compress_ratio'
             }]
         ]
@@ -293,34 +294,34 @@
         let mongoTableInfo = [
             'mongo',
             [{
-                title: '集合名',
+                title: gettext('Collection Name'),
                 field: 'ns'
             }, {
-                title: '总空间(MB)',
+                title: gettext('Total Space (MB)'),
                 field: 'totalSize'
             }, {
-                title: '行数',
+                title: gettext('Rows'),
                 field: 'count'
             }, {
-                title: '未压缩的数据空间(MB)',
+                title: gettext('Uncompressed Data Space (MB)'),
                 field: 'size'
             }, {
-                title: '每行平均(B)',
+                title: gettext('Average Per Row (B)'),
                 field: 'avgObjSize'
             }, {
-                title: '压缩后的数据空间(MB)',
+                title: gettext('Compressed Data Space (MB)'),
                 field: 'storageSize'
             }, {
-                title: '碎片空间(MB)',
+                title: gettext('Free Space (MB)'),
                 field: 'freeStorageSize'
             }, {
-                title: '固定集合',
+                title: gettext('Capped Collection'),
                 field: 'capped'
             }, {
-                title: '索引数',
+                title: gettext('Index Count'),
                 field: 'nindexes'
             }, {
-                title: '索引空间(MB)',
+                title: gettext('Index Space (MB)'),
                 field: 'totalIndexSize'
             }]
         ]
@@ -359,7 +360,7 @@
                     exportDataType: "all",
                     cardView: false,                    //是否显示详细视图
                     detailView: false,                  //是否显示父子表
-                    locale: 'zh-CN',                    //本地化
+                    locale: window.getBootstrapTableLocale(),                    //本地化
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -431,7 +432,7 @@
                         });
                         return html.join('');
                     },
-                    locale: 'zh-CN',                    //本地化
+                    locale: window.getBootstrapTableLocale(),                    //本地化
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -441,59 +442,59 @@
                         }
                     },
                     columns: [{
-                        title: 'trx_started',
+                        title: gettext('trx_started'),
                         field: 'trx_started',
                         sortable: true
                     }, {
-                        title: 'trx_idle_time',
+                        title: gettext('trx_idle_time'),
                         field: 'trx_idle_time',
                         sortable: true
                     }, {
-                        title: 'trx_state',
+                        title: gettext('trx_state'),
                         field: 'trx_state',
                         sortable: true
                     }, {
-                        title: 'user',
+                        title: gettext('user'),
                         field: 'user',
                     }, {
-                        title: 'host',
+                        title: gettext('host'),
                         field: 'host'
                     }, {
-                        title: 'db',
+                        title: gettext('db'),
                         field: 'db'
                     }, {
-                        title: 'trx_mysql_thread_id',
+                        title: gettext('trx_mysql_thread_id'),
                         field: 'trx_mysql_thread_id',
                     }, {
-                        title: 'trx_operation_state',
+                        title: gettext('trx_operation_state'),
                         field: 'trx_operation_state'
                     }, {
-                        title: 'trx_tables_locked',
+                        title: gettext('trx_tables_locked'),
                         field: 'trx_tables_locked',
                     }, {
-                        title: 'trx_rows_locked',
+                        title: gettext('trx_rows_locked'),
                         field: 'trx_rows_locked',
                     }, {
-                        title: 'trx_rows_modified',
+                        title: gettext('trx_rows_modified'),
                         field: 'trx_rows_modified',
                     }, {
-                        title: 'trx_is_read_only',
+                        title: gettext('trx_is_read_only'),
                         field: 'trx_is_read_only'
                     }, {
-                        title: 'trx_isolation_level',
+                        title: gettext('trx_isolation_level'),
                         field: 'trx_isolation_level'
                     }, {
-                        title: 'thread_time',
+                        title: gettext('thread_time'),
                         field: 'thread_time',
                         sortable: true
                     }, {
-                        title: 'info',
+                        title: gettext('info'),
                         field: 'info',
                         formatter: function (value, row, index) {
                             return truncateText(value, 20);
                         }
                     }, {
-                        title: '完整INFO',
+                        title: gettext('Full INFO'),
                         field: 'info',
                         visible: false // 默认不显示
                     }],
@@ -517,53 +518,53 @@
             [
                 'mysql',
                 [{
-                    title: '等待的状态',
+                    title: gettext('Waiting State'),
                     field: '等待的状态'
                 }, {
-                    title: '等待事务开始时间',
+                    title: gettext('Waiting Transaction Start Time'),
                     field: '等待事务开始时间',
                     sortable: true
                 }, {
-                    title: '等待事务等待开始时间',
+                    title: gettext('Waiting Transaction Wait Start Time'),
                     field: '等待事务等待开始时间'
                 }, {
-                    title: '等待事务ID',
+                    title: gettext('Waiting Transaction ID'),
                     field: '等待事务ID',
                 }, {
-                    title: '等待事务线程ID',
+                    title: gettext('Waiting Transaction Thread ID'),
                     field: '等待事务线程ID',
                 }, {
-                    title: '等待事务的sql',
+                    title: gettext('Waiting Transaction SQL'),
                     field: '等待事务的sql',
                 }, {
-                    title: '等待的表信息',
+                    title: gettext('Waiting Table Info'),
                     field: '等待的表信息',
                 }, {
-                    title: '等待的锁id',
+                    title: gettext('Waiting Lock ID'),
                     field: '等待的锁id'
                 }, {
-                    title: '运行的事务id',
+                    title: gettext('Running Transaction ID'),
                     field: '运行的事务id'
                 }, {
-                    title: '运行的事务线程id',
+                    title: gettext('Running Transaction Thread ID'),
                     field: '运行的事务线程id',
                 }, {
-                    title: '运行的表信息',
+                    title: gettext('Running Table Info'),
                     field: '运行的表信息'
                 }, {
-                    title: '运行的锁id',
+                    title: gettext('Running Lock ID'),
                     field: '运行的锁id'
                 }, {
-                    title: '运行事务的状态',
+                    title: gettext('Running Transaction State'),
                     field: '运行事务的状态'
                 }, {
-                    title: '运行事务的时间',
+                    title: gettext('Running Transaction Time'),
                     field: '运行事务的时间',
                 }, {
-                    title: '运行事务的等待开始时间',
+                    title: gettext('Running Transaction Wait Start Time'),
                     field: '运行事务的等待开始时间',
                 }, {
-                    title: '运行事务的sql',
+                    title: gettext('Running Transaction SQL'),
                     field: '运行事务的sql',
                 }],
                  function (index, row) {
@@ -579,38 +580,38 @@
             [
                 'oracle',
                 [{
-                    title: 'USERNAME',
+                    title: gettext('USERNAME'),
                     field: 'USERNAME'
                 }, {
-                    title: 'OBJECT_OWNER',
+                    title: gettext('OBJECT_OWNER'),
                     field: 'OBJECT_OWNER'
                 }, {
-                    title: 'OBJECT_ID',
+                    title: gettext('OBJECT_ID'),
                     field: 'OBJECT_ID'
                 }, {
-                    title: 'OBJECT_NAME',
+                    title: gettext('OBJECT_NAME'),
                     field: 'OBJECT_NAME'
                 }, {
-                    title: 'LOCKED_MODE',
+                    title: gettext('LOCKED_MODE'),
                     field: 'LOCKED_MODE'
                 }, {
-                    title: 'RELATED_SID',
+                    title: gettext('RELATED_SID'),
                     field: 'RELATED_SID'
                 }, {
-                    title: 'RELATED_SERIAL#',
+                    title: gettext('RELATED_SERIAL#'),
                     field: 'RELATED_SERIAL#'
                 }, {
-                    title: 'MACHINE',
+                    title: gettext('MACHINE'),
                     field: 'MACHINE'
                 }, {
-                    title: 'RELATED_SQL',
+                    title: gettext('RELATED_SQL'),
                     field: 'RELATED_SQL'
                 }, {
-                    title: 'RELATED_SQL_FULL',
+                    title: gettext('RELATED_SQL_FULL'),
                     field: 'RELATED_SQL_FULL',
                     visible: false
                 }, {
-                    title: 'RELATED_SQL_EXEC_START',
+                    title: gettext('RELATED_SQL_EXEC_START'),
                     field: 'RELATED_SQL_EXEC_START'
                 }],
                  function (index, row) {
@@ -659,7 +660,7 @@
                     cardView: false,                    //是否显示详细视图
                     detailView: true,                  //是否显示父子表
                     detailFormatter: lockListDetailFormatCallback,
-                    locale: 'zh-CN',                    //本地化
+                    locale: window.getBootstrapTableLocale(),                    //本地化
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数

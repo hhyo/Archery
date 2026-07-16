@@ -1,11 +1,14 @@
 """engine base库, 包含一个``EngineBase`` class和一个get_engine函数"""
 
 import importlib
+import logging
 import re
 from sql.engines.models import ResultSet, ReviewSet
 from sql.models import Instance
 from sql.utils.ssh_tunnel import SSHConnection
 from django.conf import settings
+
+logger = logging.getLogger("default")
 
 
 class EngineBase:
@@ -271,7 +274,18 @@ def get_engine_map():
         if not config:
             raise ValueError(f"invalid engine {e}, not found in engine map")
         module, o = config["path"].split(":")
-        engine = getattr(importlib.import_module(module), o)
+        try:
+            engine = getattr(importlib.import_module(module), o)
+        except ImportError as exc:
+            # Optional engine dependencies may be absent in development.
+            # Skip engines that cannot be imported so Django can still boot.
+            logger.warning(
+                "skip engine %s because %s could not be imported: %s",
+                e,
+                module,
+                exc,
+            )
+            continue
         enabled_engines[e] = engine
     return enabled_engines
 

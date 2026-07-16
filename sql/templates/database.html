@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
@@ -6,7 +7,7 @@
         <div id="toolbar" class="form-inline pull-left" style="position: absolute;top: 10px">
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
-                        title="请选择实例"
+                        title="{% trans 'Please select an instance' %}"
                         data-live-search="true">
                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
@@ -14,16 +15,16 @@
             </div>
             <div class="form-group">
                 <select id="saved" class="form-control selectpicker"
-                        title="全部">
-                    <option value="" selected="selected">全部</option>
-                    <option value="true">已录入</option>
+                        title="{% trans 'All' %}">
+                    <option value="" selected="selected">{% trans "All" %}</option>
+                    <option value="true">{% trans "Recorded" %}</option>
                 </select>
             </div>
             <div class="form-group ">
                 <button id="btn-create-database" type="button" class="btn btn-default" disabled="disabled"
                         data-toggle="modal" data-target="#modal-create-database">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    创建数据库
+                    {% trans "Create Database" %}
                 </button>
             </div>
         </div>
@@ -41,30 +42,30 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">创建数据库</h4>
+                    <h4 class="modal-title">{% trans "Create Database" %}</h4>
                 </div>
                 <div class="modal-body form-group">
                     <div class="form-group row">
                         <label for="db_name" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库名称</label>
+                            <span style="color:red">*</span>{% trans "Database Name" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="db_name" class="form-control" autocomplete="off"
                                    aria-describedby="dbHelpBlock"
-                                   placeholder="请输入数据库名称">
+                                   placeholder="{% trans 'Please enter the database name' %}">
                             <small id="dbHelpBlock" class="form-text text-muted">
-                                由字母、数字、下划线、中划线组成，字母开头，字母或数字结尾，最长64个字符
+                                {% trans 'Consists of letters, numbers, underscores and hyphens; starts with a letter, ends with a letter or number, max 64 characters' %}
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="owner" class="col-sm-3 col-form-label">
-                            负责人</label>
+                            {% trans "Owner" %}</label>
                         <div class="col-sm-9">
                             <select id="owner" name="owner"
                                     class="selectpicker show-tick form-control bs-select-hidden "
                                     data-live-search="true"
-                                    title="请选择数据库负责人"
-                                    data-none-selected-text="请选择数据库负责人">
+                                    title="{% trans 'Select Database Owner' %}"
+                                    data-none-selected-text="{% trans 'Select Database Owner' %}">
                                 {% for user_info in active_user %}
                                     <option value="{{ user_info.username }}">{{ user_info.display }}({{ user_info.username }})</option>
                                 {% endfor %}
@@ -72,17 +73,17 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="remark" class="col-sm-3 col-form-label">备注</label>
+                        <label for="remark" class="col-sm-3 col-form-label">{% trans "Remark" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="请输入备注">
+                                   placeholder="{% trans 'Please enter a remark' %}">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="btnCreateDb" onclick="create_database()">创建
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-primary" id="btnCreateDb" onclick="create_database()">{% trans "Create" %}
                     </button>
                 </div>
             </div>
@@ -95,27 +96,27 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">编辑/录入数据库信息</h4>
+                    <h4 class="modal-title">{% trans "Edit / Record Database Info" %}</h4>
                 </div>
                 <div class="modal-body form-group">
                     <div class="form-group row">
                         <label for="edit_db_name" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库名称</label>
+                            <span style="color:red">*</span>{% trans "Database Name" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit_db_name" class="form-control" autocomplete="off"
                                    readonly="readonly"
                                    aria-describedby="dbHelpBlock"
-                                   placeholder="请输入数据库名称">
+                                   placeholder="{% trans 'Please enter the database name' %}">
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="edit_owner" class="col-sm-3 col-form-label">
-                            负责人</label>
+                            {% trans "Owner" %}</label>
                         <div class="col-sm-9">
                             <select id="edit_owner" name="edit_owner"
                                     class="selectpicker show-tick form-control bs-select-hidden "
                                     data-live-search="true"
-                                    data-none-selected-text="请选择数据库负责人">
+                                    data-none-selected-text="{% trans 'Select Database Owner' %}">
                                 {% for user_info in active_user %}
                                     <option value="{{ user_info.username }}">{{ user_info.display }}({{ user_info.username }})</option>
                                 {% endfor %}
@@ -123,17 +124,17 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="edit_remark" class="col-sm-3 col-form-label">备注</label>
+                        <label for="edit_remark" class="col-sm-3 col-form-label">{% trans "Remark" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit_remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="请输入备注">
+                                   placeholder="{% trans 'Please enter a remark' %}">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="btnEditDb">创建
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-primary" id="btnEditDb">{% trans "Create" %}
                     </button>
                 </div>
             </div>
@@ -151,16 +152,16 @@
                 case 'mysql':
                     return [
                         {
-                            title: '数据库名',
+                            title: gettext('Database Name'),
                             field: 'db_name'
                         }, {
-                            title: '字符集',
+                            title: gettext('Character Set'),
                             field: 'charset'
                         }, {
-                            title: '排序规则',
+                            title: gettext('Collation'),
                             field: 'collation'
                         }, {
-                            title: '授权账号',
+                            title: gettext('Grantees'),
                             field: 'grantees',
                             formatter: function (value, row, index) {
                                 let grantee = '';
@@ -170,24 +171,24 @@
                                 return grantee
                             }
                         }, {
-                            title: '负责人',
+                            title: gettext('Owner'),
                             field: 'owner',
                             visible: false,
                         }, {
                             title: '负责人',
                             field: 'owner_display'
                         }, {
-                            title: '备注',
+                            title: gettext('Remark'),
                             field: 'remark'
                         }
                     ]
                 case 'mongo':
                     return [
                         {
-                            title: '数据库名',
+                            title: gettext('Database Name'),
                             field: 'db_name'
                         }, {
-                            title: '授权账号',
+                            title: gettext('Grantees'),
                             field: 'grantees',
                             formatter: function (value, row, index) {
                                 let grantee = '';
@@ -197,14 +198,14 @@
                                 return grantee
                             }
                         }, {
-                            title: '负责人',
+                            title: gettext('Owner'),
                             field: 'owner',
                             visible: false,
                         }, {
                             title: '负责人',
                             field: 'owner_display'
                         }, {
-                            title: '备注',
+                            title: gettext('Remark'),
                             field: 'remark'
                         }
                     ]
@@ -249,7 +250,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
                 queryParams:
@@ -265,7 +266,7 @@
                 columns: [
                     ...get_db_columns(db_type),
                     {
-                        title: '操作',
+                        title: gettext('Actions'),
                         field: '',
                         formatter: function (value, row, index) {
                             let btn_edit = "<button class=\"btn btn-primary btn-xs\" db_name=\"" + row.db_name + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";

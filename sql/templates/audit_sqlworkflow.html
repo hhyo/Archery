@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="navStatus" class="form-control selectpicker">
-                <option value="" selected="selected">状态</option>
+                <option value="" selected="selected">{% trans "Status" %}</option>
                 {% for status, status_display in status_list %}
                     <option value="{{ status }}">{{ status_display }}</option>
                 {% endfor %}
@@ -14,7 +15,7 @@
         <div class="form-group">
             <select id="instance_id" class="form-control selectpicker"
                     data-live-search="true">
-                <option value="" selected="selected">实例</option>
+                <option value="" selected="selected">{% trans "Instance" %}</option>
                 {% for ins in instance %}
                     <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
                 {% endfor %}
@@ -23,7 +24,7 @@
         <div class="form-group">
             <select id="group_id" class="form-control selectpicker"
                     data-live-search="true">
-                <option value="" selected="selected">组</option>
+                <option value="" selected="selected">{% trans "Group" %}</option>
                 {% for rgp in resource_group %}
                     <option value="{{ rgp.group_id }}">{{ rgp.group_name }}</option>
                 {% endfor %}
@@ -49,7 +50,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">工单日志</h4>
+                    <h4 class="modal-title text-danger">{% trans "Workflow Log" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
@@ -81,7 +82,7 @@
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html(gettext('All Data'));
                 }
             }
 
@@ -92,24 +93,23 @@
                 locale: {
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
-                    // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    applyLabel: gettext("Apply"),
+                    cancelLabel: gettext("Cancel"),
+                    fromLabel: gettext("Start"),
+                    toLabel: gettext("End"),
+                    customRangeLabel: gettext("Custom"),
+                    daysOfWeek: [gettext("Su"), gettext("Mo"), gettext("Tu"), gettext("We"), gettext("Th"), gettext("Fr"), gettext("Sa")],
+                    monthNames: [gettext("January"), gettext("February"), gettext("March"), gettext("April"), gettext("May"), gettext("June"), gettext("July"), gettext("August"), gettext("September"), gettext("October"), gettext("November"), gettext("December")],
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [null, null],
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    [gettext("All")]: [null, null],
+                    [gettext("Today")]: [moment().startOf('day'), moment()],
+                    [gettext("Yesterday")]: [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    [gettext("Last 7 Days")]: [moment().subtract('days', 6), moment()],
+                    [gettext("Last 30 Days")]: [moment().subtract('days', 29), moment()],
+                    [gettext("This Month")]: [moment().startOf("month"), moment().endOf("month")],
+                    [gettext("Last Month")]: [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 get_workflow_list()
@@ -152,7 +152,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -179,7 +179,7 @@
                         }
                     },
                 columns: [{
-                    title: '工单名称',
+                    title: gettext('Workflow Name'),
                     field: 'workflow_name',
                     formatter: function (value, row, index) {
                         var span = document.createElement('span');
@@ -193,15 +193,15 @@
                         return span.outerHTML;
                     }
                 }, {
-                    title: '工单完整名称',
+                    title: gettext('Full Workflow Name'),
                     field: 'workflow_name',
                     visible: false // 默认不显示
                 }, {
-                    title: '类型',
+                    title: gettext('Type'),
                     field: 'syntax_type',
                     formatter: function (value, row, index) {
                         if (String(value) === '0') {
-                            return '其他'
+                            return gettext('Other')
                         } else if (String(value) === '1') {
                             return 'DDL'
                         } else if (String(value) === '2') {
@@ -209,42 +209,42 @@
                         }
                     }
                 }, {
-                    title: '发起人',
+                    title: gettext('Initiator'),
                     field: 'engineer_display'
                 }, {
-                    title: '工单状态',
+                    title: gettext('Workflow Status'),
                     field: 'status',
                     formatter: function (value, row, index) {
                         return sqlworkflowStatus_formatter(value)
                     }
                 }, {
-                    title: '备份',
+                    title: gettext('Backup'),
                     field: 'is_backup',
                     visible: true, // 默认显示
                     formatter: function (value, row, index) {
                         if (String(value) === 'true') {
-                            return '是'
+                            return gettext('Yes')
                         } else {
-                            return '否'
+                            return gettext('No')
                         }
                     }
                 }, {
-                    title: '发起时间',
+                    title: gettext('Start Time'),
                     field: 'create_time'
                 }, {
-                    title: '目标实例',
+                    title: gettext('Target Instance'),
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: gettext('Database'),
                     field: 'db_name'
                 }, {
-                    title: '组',
+                    title: gettext('Group'),
                     field: 'group_name'
                 }, {
-                    title: '操作',
+                    title: gettext('Actions'),
                     field: 'operation',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >" + gettext('Operation Log') + "\n" + "</button>"
                     }
                 }],
                 onLoadSuccess: function () {
@@ -300,19 +300,19 @@
                         showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
                         cardView: false,                    //是否显示详细视图
                         detailView: false,                  //是否显示父子表
-                        locale: 'zh-CN',                    //本地化
+                        locale: window.getBootstrapTableLocale(),                    //本地化
                         data: data.rows,
                         columns: [{
-                            title: '操作',
+                            title: gettext('Actions'),
                             field: 'operation_type_desc'
                         }, {
-                            title: '操作人',
+                            title: gettext('Operator'),
                             field: 'operator_display'
                         }, {
-                            title: '操作时间',
+                            title: gettext('Operation Time'),
                             field: 'operation_time'
                         }, {
-                            title: '操作信息',
+                            title: gettext('Operation Info'),
                             field: 'operation_info'
                         }],
                         onLoadSuccess: function () {

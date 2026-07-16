@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL优化工具
+                    {% trans "SQL Optimization Tool" %}
                 </div>
                 <div class="panel-body">
                     <form id="form-sqladvisor" action="/sqladvisor/" method="post" class="form-horizontal" role="form">
@@ -16,16 +17,16 @@
                         <div class="text-warning">
                             <dl>
                                 <dd>[MySQL]SQLAdvisor：
-                                    <a href="https://tech.meituan.com/sqladvisor_pr.html">查看介绍</a>
+                                    <a href="https://tech.meituan.com/sqladvisor_pr.html">{% trans "View Introduction" %}</a>
                                 </dd>
                                 <dd>[MySQL]SOAR：
-                                    <a href="https://github.com/XiaoMi/soar">查看介绍</a>
+                                    <a href="https://github.com/XiaoMi/soar">{% trans "View Introduction" %}</a>
                                 </dd>
                                 <dd>[MySQL]MySQLTuning：
-                                    <a href="http://dbaplus.cn/blog-77-736-1.html">查看介绍</a>
+                                    <a href="http://dbaplus.cn/blog-77-736-1.html">{% trans "View Introduction" %}</a>
                                 </dd>
                                 <dd>[ORACLE]SQL Tuning Advisor：
-                                    <a href="https://docs.oracle.com/database/121/TGSQL/tgsql_sqltune.htm#TGSQL540">查看介绍</a>
+                                    <a href="https://docs.oracle.com/database/121/TGSQL/tgsql_sqltune.htm#TGSQL540">{% trans "View Introduction" %}</a>
                                 </dd>
                             </dl>
                         </div>
@@ -34,8 +35,8 @@
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-live-search="true"
-                                        title="请选择实例:"
-                                        data-placeholder="请选择实例:" required>
+                                        title="{% trans 'Please select an instance:' %}"
+                                        data-placeholder="{% trans 'Please select an instance:' %}" required>
                                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                                     <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                 </select>
@@ -44,59 +45,59 @@
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true"
-                                        title="请选择数据库:"
-                                        data-placeholder="请选择数据库:" required>
+                                        title="{% trans 'Please select a database:' %}"
+                                        data-placeholder="{% trans 'Please select a database:' %}" required>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <select id="tools" name="tools"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true"
-                                        title="请选择优化方式:"
-                                        data-placeholder="请选择优化方式:" required>
-                                    <option value="is-empty" disabled="">请选择优化方式:</option>
+                                        title="{% trans 'Please select an optimization method:' %}"
+                                        data-placeholder="{% trans 'Please select an optimization method:' %}" required>
+                                    <option value="is-empty" disabled="">{% trans "Please select an optimization method:" %}</option>
                                 </select>
                             </div>
                             <div id="div_verbose" class="form-group">
                                 <select id="verbose" name="verbose"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-name="是否查看优化过程"
-                                        data-placeholder="是否查看优化过程:" required>
-                                    <option value="is-empty" disabled="">是否查看优化过程:</option>
-                                    <option value="1" selected="selected">是</option>
-                                    <option value="0">否</option>
+                                        data-name="{% trans 'Whether to view the tuning process' %}"
+                                        data-placeholder="{% trans 'Whether to view the tuning process:' %}" required>
+                                    <option value="is-empty" disabled="">{% trans "Whether to view the tuning process:" %}</option>
+                                    <option value="1" selected="selected">{% trans "Yes" %}</option>
+                                    <option value="0">{% trans "No" %}</option>
                                 </select>
                             </div>
                             <div id="div_tuning" class="form-group" style="display: none">
                                 <div class="checkbox">
                                     <label>
                                         <input id="sys_parm" type="checkbox" value="">
-                                        显示系统参数
+                                        {% trans "Show system parameters" %}
                                     </label>
                                 </div>
                                 <div class="checkbox">
                                     <label>
                                         <input id="sql_plan" type="checkbox" value="" checked>
-                                        显示执行计划
+                                        {% trans "Show execution plan" %}
                                     </label>
                                 </div>
                                 <div class="checkbox">
                                     <label>
                                         <input id="obj_stat" type="checkbox" value="" checked>
-                                        显示相关对象(表、索引)统计信息
+                                        {% trans "Show related object statistics (tables and indexes)" %}
                                     </label>
                                 </div>
                                 <div class="checkbox">
                                     <label>
                                         <input id="sql_profile" type="checkbox" value="">
-                                        显示PROFILE跟踪信息(真实执行SQL，谨慎选择)
+                                        {% trans "Show PROFILE tracing information (real SQL execution, use with caution)" %}
                                     </label>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
-                                <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
-                                <input type="button" id="btn-sqladvisor" class="btn btn-success" value="获取优化建议"/>
+                                <input id="btn-format" type="button" class="btn btn-info" value="{% trans 'Format' %}"/>
+                                <input id="btn-explain" type="button" class="btn btn-warning" value="{% trans 'Explain' %}"/>
+                                <input type="button" id="btn-sqladvisor" class="btn btn-success" value="{% trans 'Get Optimization Advice' %}"/>
                             </div>
                         </div>
                     </form>
@@ -106,7 +107,7 @@
         <div class="col-md-12 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    优化建议
+                    {% trans "Optimization Advice" %}
                 </div>
                 <div class="panel-body">
                     <!-- sqladvisor优化信息 -->
@@ -134,22 +135,22 @@
                         <div id="div_sys_parm" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
                             <div class="panel-heading" style="background-color: cornflowerblue; color: white">
-                                BASIC INFORMATION
+                                {% trans "Basic Information" %}
                             </div>
                             <div class="panel-body">
                                 <p>author：<b id="author"></b>
-                                    <a href="http://dbaplus.cn/blog-77-736-1.html" target="_blank"> 查看文章</a></p>
+                                    <a href="http://dbaplus.cn/blog-77-736-1.html" target="_blank">{% trans "View Article" %}</a></p>
                                 <p>db_version：<b id="db_version"></b></p>
                             </div>
                             <div class="panel-heading" style="background-color: dimgray; color: white">
-                                SYSTEM PARAMETER
+                                {% trans "System Parameter" %}
                             </div>
                             <div class="panel-body">
                                 <table id="tb_sys_parameter" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
                             <div class="panel-heading" style="background-color: dimgrey; color: white">
-                                OPTIMIZER SWITCH
+                                {% trans "Optimizer Switch" %}
                             </div>
                             <div class="panel-body">
                                 <table id="tb_optimizer_switch" data-toggle="table" class="table table-condensed"
@@ -159,14 +160,14 @@
                         <div id="div_sql_plan" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
                             <div class="panel-heading" style="background-color: darkseagreen; color: white">
-                                SQL PLAN
+                                {% trans "SQL Plan" %}
                             </div>
                             <div class="panel-body">
                                 <table id="tb_plan" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
                             <div class="panel-heading" style="background-color: darkseagreen; color: white">
-                                OPTIMIZER REWRITE SQL
+                                {% trans "Optimizer Rewrite SQL" %}
                             </div>
                             <div class="panel-body">
                                 <table id="tb_optimizer_rewrite_sql" data-toggle="table" class="table table-condensed"
@@ -176,7 +177,7 @@
                         <div id="div_obj_stat" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
                             <div class="panel-heading" style="background-color: cornflowerblue; color: white">
-                                OBJECT STATISTICS
+                                {% trans "Object Statistics" %}
                             </div>
                             <div id="div_obj_stat-panel-body" class="panel-body">
                             </div>
@@ -184,29 +185,29 @@
                         <div id="div_sql_profile" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
                             <div class="panel-heading" style="background-color: mediumvioletred; color: white">
-                                STATUS&PROFILING
+                                {% trans "Status & Profiling" %}
                             </div>
                             <div class="panel-body">
                                 <div class="panel-heading" style="background-color: mediumvioletred; color: white">
-                                    SESSION STATUS (DIFFERENT)
+                                    {% trans "Session Status (Different)" %}
                                 </div>
                                 <table id="tb_session_status" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                                 <br>
                                 <div class="panel-heading" style="background-color: mediumvioletred; color: white">
-                                    SQL PROFILING(DETAIL)
+                                    {% trans "SQL Profiling (Detail)" %}
                                 </div>
                                 <table id="tb_sql_profiling_detail" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                                 <br>
                                 <div class="panel-heading" style="background-color: mediumvioletred; color: white">
-                                    SQL PROFILING(SUMMARY)
+                                    {% trans "SQL Profiling (Summary)" %}
                                 </div>
                                 <table id="tb_sql_profiling_summary" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                                 <br>
                                 <div class="panel-heading" style="background-color: mediumvioletred; color: white">
-                                    EXECUTE TIME
+                                    {% trans "Execute Time" %}
                                 </div>
                                 <p>execute_time:&nbsp&nbsp&nbsp&nbsp<b id="execute_time"></b></p>
                             </div>
@@ -214,7 +215,7 @@
                     </div>
                     <div id="div_obj_stat_tmp" style="display: none">
                         <div class="panel-heading" style="background-color: cornflowerblue; color: white">
-                            TABLE STRUCTURE
+                            {% trans "Table Structure" %}
                         </div>
                         <table id="tb_table_structure" data-toggle="table" class="table table-condensed"
                                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
@@ -279,13 +280,13 @@
             var db_name = $("#db_name").val();
 
             if (sqlContent === null || sqlContent.trim() === "") {
-                alert("SQL内容不能为空！");
+                alert(gettext("SQL content cannot be empty"));
                 return result = false;
             } else if (instance_name === null || instance_name === $("#instance_name").attr("data-placeholder")) {
-                alert("请选择实例！");
+                alert(gettext("Please select an instance"));
                 return result = false;
             } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
-                alert("请选择数据库！");
+                alert(gettext("Please select a database"));
                 return result = false;
             }
             return result;
@@ -576,7 +577,7 @@
                         escape: true,
                         columns: [{
                             field: 'error',
-                            title: 'Error'
+                            title: gettext('Error')
                         }],
                         data: [{
                             error: result['Error']
@@ -606,7 +607,7 @@
                         pagination: true,
                         pageSize: 100,
                         pageList: [100, 500],
-                        locale: 'zh-CN'
+                        locale: window.getBootstrapTableLocale()
                     });
                 }
                 $("#explain_result").show();
@@ -706,10 +707,10 @@
                         if (result['Error']) {
                             $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
                                 escape: true,
-                                columns: [{
-                                    field: 'error',
-                                    title: 'Error'
-                                }],
+                            columns: [{
+                                field: 'error',
+                                title: gettext('Error')
+                            }],
                                 data: [{
                                     error: result['Error']
                                 }]
@@ -885,7 +886,7 @@
                                                 },
                                             });
                                         } else {
-                                            $("#" + tb_table_structure_id).replaceWith("<p>解析表结构出错或者无权限查看表结构</p>");
+                                            $("#" + tb_table_structure_id).replaceWith("<p>" + gettext("Failed to analyze table structure or no permission to view it") + "</p>");
                                         }
                                         //===== TABLE INFO =====
                                         if (has_table_info) {
@@ -904,7 +905,7 @@
                                                 columns: columns
                                             });
                                         } else {
-                                            $("#" + tb_table_info_id).replaceWith("<p>未获取到表统计信息</p>");
+                                            $("#" + tb_table_info_id).replaceWith("<p>" + gettext("No table statistics were returned") + "</p>");
                                         }
                                         //===== INDEX INFO =====
                                         if (has_index_info) {
@@ -923,10 +924,10 @@
                                                 columns: columns
                                             });
                                         } else {
-                                            $("#" + tb_index_info_id).replaceWith("<p>未获取到索引统计信息</p>");
+                                            $("#" + tb_index_info_id).replaceWith("<p>" + gettext("No index statistics were returned") + "</p>");
                                         }
                                     } else {
-                                        $("#div_obj_stat-panel-body").append("<p>解析表出错或者表不存在，无法展示表信息</p>");
+                                        $("#div_obj_stat-panel-body").append("<p>" + gettext("Failed to analyze table or the table does not exist, unable to display table information") + "</p>");
                                     }
                                 });
                             } else {

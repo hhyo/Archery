@@ -12,6 +12,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 from common.config import SysConfig
 from common.utils.ding_api import get_ding_user_id
 from sql.models import Users, ResourceGroup, TwoFactorAuthConfig
@@ -77,13 +78,21 @@ class ArcheryAuth(object):
             else:
                 return {
                     "status": 1,
-                    "msg": "用户名或密码错误，请重新输入！",
+                    "msg": _(
+                        "Incorrect username or password, please try again!"
+                    ),  # 用户名或密码错误，请重新输入！
                     "data": "",
                 }
         except:
             logger.error("验证用户密码时报错")
             logger.error(traceback.format_exc())
-            return {"status": 1, "msg": f"服务异常，请联系管理员处理", "data": ""}
+            return {
+                "status": 1,
+                "msg": _(
+                    "Service error, please contact the administrator"
+                ),  # 服务异常，请联系管理员处理
+                "data": "",
+            }
         # 已存在用户, 验证是否在锁期间
         # 读取配置文件
         lock_count = int(self.sys_config.get("lock_cnt_threshold", 5))
@@ -98,7 +107,10 @@ class ArcheryAuth(object):
                 ):
                     return {
                         "status": 3,
-                        "msg": f"登录失败超过限制，该账号已被锁定！请等候大约{lock_time}秒再试",
+                        "msg": _(
+                            "Too many failed login attempts, account is locked! Please wait about %d seconds before trying again"
+                        )
+                        % lock_time,  # 登录失败超过限制，该账号已被锁定！请等候大约{lock_time}秒再试
                         "data": "",
                     }
                 else:
@@ -113,7 +125,11 @@ class ArcheryAuth(object):
         user.failed_login_count += 1
         user.last_login_failed_at = datetime.datetime.now()
         user.save()
-        return {"status": 1, "msg": "用户名或密码错误，请重新输入！", "data": ""}
+        return {
+            "status": 1,
+            "msg": _("Incorrect username or password, please try again!"),
+            "data": "",
+        }  # 用户名或密码错误，请重新输入！
 
 
 # ajax接口，登录页面调用，用来验证用户名密码
@@ -165,7 +181,11 @@ def authenticate_entry(request):
 def sign_up(request):
     sign_up_enabled = SysConfig().get("sign_up_enabled", False)
     if not sign_up_enabled:
-        result = {"status": 1, "msg": "注册未启用,请联系管理员开启", "data": None}
+        result = {
+            "status": 1,
+            "msg": _("Registration is not enabled, please contact the administrator"),
+            "data": None,
+        }  # 注册未启用,请联系管理员开启
         return HttpResponse(json.dumps(result), content_type="application/json")
     username = request.POST.get("username")
     password = request.POST.get("password")
@@ -176,16 +196,18 @@ def sign_up(request):
 
     if not (username and password):
         result["status"] = 1
-        result["msg"] = "用户名和密码不能为空"
+        result["msg"] = _(
+            "Username and password cannot be empty"
+        )  # 用户名和密码不能为空
     elif len(Users.objects.filter(username=username)) > 0:
         result["status"] = 1
-        result["msg"] = "用户名已存在"
+        result["msg"] = _("Username already exists")  # 用户名已存在
     elif password != password2:
         result["status"] = 1
-        result["msg"] = "两次输入密码不一致"
+        result["msg"] = _("The two passwords do not match")  # 两次输入密码不一致
     elif not display:
         result["status"] = 1
-        result["msg"] = "请填写中文名"
+        result["msg"] = _("Please enter your display name")  # 请填写中文名
     else:
         # 验证密码
         try:

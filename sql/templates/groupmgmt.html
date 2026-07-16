@@ -1,23 +1,24 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <ul class="breadcrumb">
-        <li><a href="/group/">资源组</a></li>
-        <li class="active">关联对象</li>
+        <li><a href="/group/">{% trans "Resource Group" %}</a></li>
+        <li class="active">{% trans "Related Objects" %}</li>
     </ul>
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline">
         <div class="form-group">
             <select id="type" class="form-control selectpicker">
-                <option value="" selected="selected">全部</option>
-                <option value=0>用户</option>
-                <option value=1>实例</option>
+                <option value="" selected="selected">{% trans "All" %}</option>
+                <option value=0>{% trans "User" %}</option>
+                <option value=1>{% trans "Instance" %}</option>
             </select>
         </div>
         <div class="form-group ">
             <button id="btn_add" type="button" class="btn btn-default" data-toggle="modal" data-target="#add">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                新增关联对象
+                {% trans "Add Related Object" %}
             </button>
         </div>
     </div>
@@ -34,32 +35,32 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">新增关联对象</h4>
+                    <h4 class="modal-title" id="myModalLabel">{% trans "Add Related Object" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <input type="text" class="form-control" id="group_name" value="{{ group.group_name }}" disabled
-                               placeholder="组">
+                               placeholder="{% trans 'Group' %}">
                     </div>
                     <div class="form-group">
                         <select id="object_type" name="object_type"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                data-name="关联对象类型" data-placeholder="请选择关联对象类型:" data-live-search="true" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择关联对象类型:</option>
-                            <option value=0>用户</option>
-                            <option value=1>实例</option>
+                                data-name="{% trans 'Related Object Type' %}" data-placeholder="{% trans 'Please select a related object type:' %}" data-live-search="true" required>
+                            <option value="is-empty" disabled="" selected="selected">{% trans "Please select a related object type:" %}</option>
+                            <option value=0>{% trans "User" %}</option>
+                            <option value=1>{% trans "Instance" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="object_info" name="object_info" data-live-search="true" multiple="multiple"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择关联对象:</option>
+                            <option value="is-empty" disabled="" selected="selected">{% trans "Please select a related object:" %}</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-success" onclick="addRelation()">提交</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-success" onclick="addRelation()">{% trans "Submit" %}</button>
                 </div>
             </div>
         </div>
@@ -102,7 +103,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -117,7 +118,7 @@
                         }
                     },
                 columns: [{
-                    title: '关联对象描述',
+                    title: gettext('Related Object Description'),
                     field: 'object_name',
                     formatter: function (value, row, index) {
                         switch (row.object_type) {
@@ -128,26 +129,26 @@
                                 return "<a href=\"/admin/sql/instance/" + row.object_id + "/change/\">" + row.object_name + "</a>";
                                 break;
                             default:
-                                return "未知"
+                                return gettext("Unknown")
                         }
                     }
                 }, {
-                    title: '关联对象类型',
+                    title: gettext('Related Object Type'),
                     field: 'object_type',
                     formatter: function (value, row, index) {
                         switch (value) {
                             case 0:
-                                return "用户";
+                                return gettext("User");
                                 break;
                             case 1:
-                                return "实例";
+                                return gettext("Instance");
                                 break;
                             default:
-                                return "未知"
+                                return gettext("Unknown")
                         }
                     }
                 }, {
-                    title: '资源组',
+                    title: gettext('Resource Group'),
                     field: 'group_name'
                 }
                 ],
@@ -165,7 +166,7 @@
         //选择控件初始化
         $("#object_info").selectpicker({
             actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-            countSelectedText: "已选中{0}项",
+            countSelectedText: gettext("Selected {0} items"),
             selectedTextFormat: "count > 5"
         });
 
@@ -235,7 +236,7 @@
                     }
                 });
             } else {
-                alert('请填写完整！')
+                alert(gettext('Please fill in all fields!'))
             }
 
         }

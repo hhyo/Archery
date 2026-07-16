@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 
@@ -8,7 +9,7 @@
         <div id="toolbar" class="form-inline pull-left" style="position: absolute;top: 10px">
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
-                        title="请选择实例"
+                        title="{% trans 'Please select an instance' %}"
                         data-live-search="true">
                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
@@ -16,16 +17,16 @@
             </div>
             <div class="form-group">
                 <select id="saved" class="form-control selectpicker"
-                        title="全部">
-                    <option value="" selected="selected">全部</option>
-                    <option value="true">已录入</option>
+                        title="{% trans 'All' %}">
+                    <option value="" selected="selected">{% trans "All" %}</option>
+                    <option value="true">{% trans "Recorded" %}</option>
                 </select>
             </div>
             <div class="form-group ">
                 <button id="btn-create-account" type="button" class="btn btn-default" disabled="disabled"
                         data-toggle="modal" onclick="show_create_modal()">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    创建账号
+                    {% trans "Create Account" %}
                 </button>
             </div>
         </div>
@@ -43,79 +44,79 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">创建账号</h4>
-                    <h6 style="color:red">注：新创建的账号无权限，需要使用授权功能授予相关权限</h6>
+                    <h4 class="modal-title">{% trans "Create Account" %}</h4>
+                    <h6 style="color:red">{% trans "Note: newly created accounts have no privileges. Use the authorization feature to grant the required permissions." %}</h6>
                 </div>
                 <div class="modal-body form-group">
                     <!-- 数据库名称 -->
                     <div class="form-group row" id="db-name1-row">
                         <label for="db_name1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库</label>
+                            <span style="color:red">*</span>{% trans "Database" %}</label>
                         <div class="col-sm-9">
                             <select id="db_name1" class="form-control selectpicker" name="db_name1"
-                                    title="请选择数据库"
+                                    title="{% trans 'Please select a database' %}"
                                     data-live-search="true">
                             </select>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="user" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库账号</label>
+                            <span style="color:red">*</span>{% trans "Database Account" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="user" class="form-control" autocomplete="off"
                                    aria-describedby="userHelpBlock"
-                                   placeholder="请输入账号名称">
+                                   placeholder="{% trans 'Please enter the account name' %}">
                             <small id="userHelpBlock" class="form-text text-muted">
-                                帐号名需要1-16个字符，由字母、数字和特殊字符组成；
+                                {% trans "Account name must be 1 to 16 characters and consist of letters, numbers, and special characters." %}
                             </small>
                         </div>
                     </div>
                     <div class="form-group row" id="host-row">
                         <label for="host" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>主机</label>
+                            <span style="color:red">*</span>{% trans "Host" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="host" class="form-control" autocomplete="new-password"
                                    aria-describedby="hostHelpBlock"
-                                   placeholder="请输入主机">
+                                   placeholder="{% trans 'Please enter the host' %}">
                             <small id="hostHelpBlock" class="form-text text-muted">
-                                1. IP形式，支持填入% <br>
-                                2. 多个主机以|分隔符分隔
+                                {% trans "1. IP format, % is supported." %} <br>
+                                {% trans "2. Separate multiple hosts with |." %}
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>密码</label>
+                            <span style="color:red">*</span>{% trans "Password" %}</label>
                         <div class="col-sm-9">
                             <input type="password" id="password1" class="form-control" autocomplete="new-password"
                                    aria-describedby="passwordHelpBlock"
-                                   placeholder="请输入密码">
+                                   placeholder="{% trans 'Please enter the password' %}">
                             <small id="passwordHelpBlock" class="form-text text-muted">
-                                密码需要8-32个字符，至少包含英文、数字和特殊符号
+                                {% trans "The password must be 8 to 32 characters and include letters, numbers, and special characters." %}
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password2" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>确认密码</label>
+                            <span style="color:red">*</span>{% trans "Confirm Password" %}</label>
                         <div class="col-sm-9">
                             <input type="password" id="password2" class="form-control"
                                    autocomplete="new-password"
-                                   placeholder="请再次输入密码">
+                                   placeholder="{% trans 'Please enter the password again' %}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="remark" class="col-sm-3 col-form-label">备注</label>
+                        <label for="remark" class="col-sm-3 col-form-label">{% trans "Remark" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="请输入备注">
+                                   placeholder="{% trans 'Please enter a remark' %}">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" onclick="create_account()">创建</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-primary" onclick="create_account()">{% trans "Create" %}</button>
                 </div>
             </div>
         </div>
@@ -127,59 +128,59 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">修改/录入账号 </h4>
-                    <h6 style="color:red">注：此操作不会修改账号密码，仅将相关信息录入平台进行管理，如需修改密码请使用改密功能</h6>
+                    <h4 class="modal-title">{% trans "Edit / Register Account" %}</h4>
+                    <h6 style="color:red">{% trans "Note: this action will not change the account password. It only records the information in the platform for management. Use the password change feature if you need to modify the password." %}</h6>
                 </div>
                 <div class="modal-body form-group">
                     <!-- 数据库名称 -->
                     <div class="form-group row" id="edit-db-name1-row">
                         <label for="edit-db-name1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库</label>
+                            <span style="color:red">*</span>{% trans "Database" %}</label>
                         <div class="col-sm-9">
                             <select id="edit-db-name1" class="form-control selectpicker" name="edit_db_name1"
-                                    title="请选择数据库" disabled
+                                    title="{% trans 'Please select a database' %}" disabled
                                     data-live-search="true">
                             </select>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="edit-user" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库账号</label>
+                            <span style="color:red">*</span>{% trans "Database Account" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit-user" class="form-control" autocomplete="off"
                                    readonly="readonly"
-                                   placeholder="请输入账号名称">
+                                   placeholder="{% trans 'Please enter the account name' %}">
                         </div>
                     </div>
                     <div class="form-group row" id="edit-host-row">
                         <label for="edit-host" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>主机</label>
+                            <span style="color:red">*</span>{% trans "Host" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit-host" class="form-control" autocomplete="off"
                                    readonly="readonly"
-                                   placeholder="请输入主机">
+                                   placeholder="{% trans 'Please enter the host' %}">
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="edit-password1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>密码</label>
+                            <span style="color:red">*</span>{% trans "Password" %}</label>
                         <div class="col-sm-9">
                             <input type="password" id="edit-password" class="form-control" autocomplete="new-password"
-                                   placeholder="请输入密码，留空则不修改录入信息">
+                                   placeholder="{% trans 'Please enter the password, leave blank to keep the registered information unchanged' %}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="edit-remark" class="col-sm-3 col-form-label">备注</label>
+                        <label for="edit-remark" class="col-sm-3 col-form-label">{% trans "Remark" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit-remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="请输入备注">
+                                   placeholder="{% trans 'Please enter a remark' %}">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="resetEditBtn">修改/录入</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-primary" id="resetEditBtn">{% trans "Edit / Register" %}</button>
                 </div>
             </div>
         </div>
@@ -191,70 +192,70 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">授权变更
-                        实例: <span id="modify-instance" style="color: red"></span>
-                        账号: <span id="modify-user" style="color: red"></span></h4>
+                    <h4 class="modal-title">{% trans "Grant Changes" %}
+                        {% trans "Instance" %}: <span id="modify-instance" style="color: red"></span>
+                        {% trans "Account" %}: <span id="modify-user" style="color: red"></span></h4>
                 </div>
                 <div class="modal-body">
                     <div id="mysql-grant-content" class="row">
                         <div class="col-md-3">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    对象选择
+                                    {% trans "Object Selection" %}
                                 </div>
                                 <div class="panel-body">
                                     <div class="form-group">
-                                        <h5 class="control-label text-bold">选择操作类型：</h5>
+                                        <h5 class="control-label text-bold">{% trans "Select Action Type:" %}</h5>
                                         <div class="form-group">
                                             <select id="op-type" name="op-type"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="操作类型" title="请选择操作类型" required>
-                                                <option value="0" selected="selected">赋权</option>
-                                                <option value="1">回收</option>
+                                                    data-name="{% trans 'Action Type' %}" title="{% trans 'Please select an action type' %}" required>
+                                                <option value="0" selected="selected">{% trans "Grant" %}</option>
+                                                <option value="1">{% trans "Revoke" %}</option>
                                             </select>
                                         </div>
-                                        <h5 class="control-label text-bold">选择权限类型：</h5>
+                                        <h5 class="control-label text-bold">{% trans "Select Privilege Type:" %}</h5>
                                         <div class="form-group">
                                             <select id="priv-type" name="priv-type"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="配置项" title="请选择配置项" required>
-                                                <option value="0" selected="selected">全局权限</option>
-                                                <option value="1">库权限</option>
-                                                <option value="2">表权限</option>
-                                                <option value="3">列权限</option>
+                                                    data-name="{% trans 'Privilege Type' %}" title="{% trans 'Please select a privilege type' %}" required>
+                                                <option value="0" selected="selected">{% trans "Global Privilege" %}</option>
+                                                <option value="1">{% trans "Database Privilege" %}</option>
+                                                <option value="2">{% trans "Table Privilege" %}</option>
+                                                <option value="3">{% trans "Column Privilege" %}</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="div-db" class="form-group" style="display: none">
-                                        <h5 class="control-label text-bold">请选择数据库：</h5>
+                                        <h5 class="control-label text-bold">{% trans "Please select a database:" %}</h5>
                                         <div class="form-group">
                                             <select id="db_name" name="db_name"
                                                     data-live-search="true"
-                                                    data-none-selected-text="请选择数据库"
+                                                    data-none-selected-text="{% trans 'Please select a database' %}"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="数据库" required>
+                                                    data-name="{% trans 'Database' %}" required>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="div-tb" class="form-group" style="display: none">
-                                        <h5 class="control-label text-bold">请选择表：</h5>
+                                        <h5 class="control-label text-bold">{% trans "Please select a table:" %}</h5>
                                         <div class="form-group">
                                             <select id="tb_name" name="tb_name"
                                                     data-live-search="true"
-                                                    data-none-selected-text="请选择表"
+                                                    data-none-selected-text="{% trans 'Please select a table' %}"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="表" required>
+                                                    data-name="{% trans 'Table' %}" required>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="div-col" class="form-group" style="display: none">
-                                        <h5 class="control-label text-bold">请选择列：</h5>
+                                        <h5 class="control-label text-bold">{% trans "Please select a column:" %}</h5>
                                         <div class="form-group">
                                             <select id="col_name" name="col_name"
                                                     data-live-search="true"
-                                                    data-none-selected-text="请选择列"
+                                                    data-none-selected-text="{% trans 'Please select a column' %}"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="表" required>
+                                                    data-name="{% trans 'Table' %}" required>
                                             </select>
                                         </div>
                                     </div>
@@ -265,13 +266,13 @@
                         <div class="col-md-9">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    权限选择
+                                    {% trans "Privilege Selection" %}
                                 </div>
                                 <div class="panel-body" id="div-global-priv">
                                     <div class="col-sm-3">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_数据_priv">数据</label>
+                                                <label for="checkall_数据_priv">{% trans "Data" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="SELECT" id="checkbox_Select_priv">
@@ -318,7 +319,7 @@
                                     <div class="col-sm-5">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_结构_priv">结构</label>
+                                                <label for="checkall_结构_priv">{% trans "Structure" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="CREATE" id="checkbox_Create_priv">
@@ -426,7 +427,7 @@
                                     <div class="col-sm-4">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_管理_priv">管理</label>
+                                                <label for="checkall_管理_priv">{% trans "Administration" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="GRANT" id="checkbox_Grant_priv">
@@ -1283,7 +1284,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: window.getBootstrapTableLocale(),                    //本地化
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
                 queryParams:

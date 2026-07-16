@@ -25,6 +25,7 @@ from sql.models import (
     WorkflowAuditDetail,
     SqlWorkflowContent,
 )
+from django.utils.translation import gettext as _
 from sql.utils.resource_group import auth_group_users
 from sql.utils.workflow_audit import Audit, AuditV2
 from sql_api.serializers import (
@@ -67,7 +68,7 @@ class Notifier:
 
     def __post_init__(self):
         if not self.audit and not self.workflow:
-            raise ValueError("需要提供 WorkflowAudit 或 workflow")
+            raise ValueError(_("WorkflowAudit or workflow must be provided"))  # 需要提供 WorkflowAudit 或 workflow
         if not self.workflow:
             self.workflow = self.audit.get_workflow()
         if not self.audit and not isinstance(self.workflow, My2SqlResult):
@@ -167,13 +168,13 @@ class LegacyRender(Notifier):
             db_name = workflow_detail.db_list
             workflow_content = ""
             if workflow_detail.priv_type == 1:
-                workflow_content = f"""数据库清单：{workflow_detail.db_list}\n"""
+                workflow_content = _("Database list: {db_list}\n").format(db_list=workflow_detail.db_list)  # 数据库清单：{db_list}\n
             elif workflow_detail.priv_type == 2:
-                workflow_content = f"""数据库：{workflow_detail.db_list}\n表清单：{workflow_detail.table_list}\n"""
+                workflow_content = _("Database: {db_list}\nTable list: {table_list}\n").format(db_list=workflow_detail.db_list, table_list=workflow_detail.table_list)  # 数据库：{db_list}\n表清单：{table_list}\n
             auth_ends_at = datetime.datetime.strftime(
                 workflow_detail.valid_date, "%Y-%m-%d %H:%M:%S"
             )
-            workflow_content += f"""授权截止时间：{auth_ends_at}\n结果集：{workflow_detail.limit_num}\n"""
+            workflow_content += _("Authorization expires: {auth_ends_at}\nResult set limit: {limit_num}\n").format(auth_ends_at=auth_ends_at, limit_num=workflow_detail.limit_num)  # 授权截止时间：{auth_ends_at}\n结果集：{limit_num}\n
         elif workflow_type == WorkflowType.SQL_REVIEW:
             workflow_type_display = WorkflowType.SQL_REVIEW.label
             workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
@@ -189,74 +190,63 @@ class LegacyRender(Notifier):
             workflow_detail = ArchiveConfig.objects.get(pk=workflow_id)
             instance = workflow_detail.src_instance.instance_name
             db_name = workflow_detail.src_db_name
-            workflow_content = """归档表：{}\n归档模式：{}\n归档条件：{}\n""".format(
-                workflow_detail.src_table_name,
-                workflow_detail.mode,
-                workflow_detail.condition,
+            workflow_content = _("Archive table: {table}\nArchive mode: {mode}\nArchive condition: {condition}\n").format(  # 归档表：{}\n归档模式：{}\n归档条件：{}\n
+                table=workflow_detail.src_table_name,
+                mode=workflow_detail.mode,
+                condition=workflow_detail.condition,
             )
         else:
-            raise Exception("工单类型不正确")
+            raise Exception(_("Invalid workflow type"))  # 工单类型不正确
         # 渲染提醒内容, 包括工单的所有信息, 申请人, 审批流等
         if status == WorkflowStatus.WAITING:  # 申请阶段
-            msg_title = "[{}]新的工单申请#{}".format(workflow_type_display, audit_id)
+            msg_title = _("[{workflow_type}] New workflow application #{audit_id}").format(workflow_type=workflow_type_display, audit_id=audit_id)  # [{workflow_type}]新的工单申请#{audit_id}
             # 接收人，发送给该资源组内对应权限组所有的用户
             auth_group_names = Group.objects.get(id=self.audit.current_audit).name
             msg_to = auth_group_users([auth_group_names], self.audit.group_id)
             # 消息内容
-            msg_content = """发起时间：{}
-发起人：{}
-组：{}
-目标实例：{}
-数据库：{}
-审批流程：{}
-当前审批：{}
-工单名称：{}
-工单地址：{}
-工单详情预览：{}""".format(
-                workflow_detail.create_time.strftime("%Y-%m-%d %H:%M:%S"),
-                workflow_from,
-                group_name,
-                instance,
-                db_name,
-                review_info.readable_info,
-                review_info.current_node.group.name,
-                workflow_title,
-                workflow_url,
-                workflow_content,
+            msg_content = _("Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nCurrent approver: {current_node}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nWorkflow details preview: {workflow_content}").format(  # 发起时间/发起人/组/目标实例/数据库/审批流程/当前审批/工单名称/工单地址/工单详情预览
+                create_time=workflow_detail.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+                workflow_from=workflow_from,
+                group_name=group_name,
+                instance=instance,
+                db_name=db_name,
+                review_info=review_info.readable_info,
+                current_node=review_info.current_node.group.name,
+                workflow_title=workflow_title,
+                workflow_url=workflow_url,
+                workflow_content=workflow_content,
             )
         elif status == WorkflowStatus.PASSED:  # 审核通过
-            msg_title = "[{}]工单审核通过#{}".format(workflow_type_display, audit_id)
+            msg_title = _("[{workflow_type}] Workflow approved #{audit_id}").format(workflow_type=workflow_type_display, audit_id=audit_id)  # [{workflow_type}]工单审核通过#{audit_id}
             # 接收人，仅发送给申请人
             msg_to = [Users.objects.get(username=self.audit.create_user)]
             # 消息内容
-            msg_content = """发起时间：{}\n发起人：{}\n组：{}\n目标实例：{}\n数据库：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n""".format(
-                workflow_detail.create_time.strftime("%Y-%m-%d %H:%M:%S"),
-                workflow_from,
-                group_name,
-                instance,
-                db_name,
-                review_info.readable_info,
-                workflow_title,
-                workflow_url,
-                workflow_content,
+            msg_content = _("Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nWorkflow details preview: {workflow_content}\n").format(  # 发起时间/发起人/组/目标实例/数据库/审批流程/工单名称/工单地址/工单详情预览
+                create_time=workflow_detail.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+                workflow_from=workflow_from,
+                group_name=group_name,
+                instance=instance,
+                db_name=db_name,
+                review_info=review_info.readable_info,
+                workflow_title=workflow_title,
+                workflow_url=workflow_url,
+                workflow_content=workflow_content,
             )
         elif status == WorkflowStatus.REJECTED:  # 审核驳回
-            msg_title = "[{}]工单被驳回#{}".format(workflow_type_display, audit_id)
+            msg_title = _("[{workflow_type}] Workflow rejected #{audit_id}").format(workflow_type=workflow_type_display, audit_id=audit_id)  # [{workflow_type}]工单被驳回#{audit_id}
             # 接收人，仅发送给申请人
             msg_to = [Users.objects.get(username=self.audit.create_user)]
             # 消息内容
-            msg_content = """发起时间：{}\n目标实例：{}\n数据库：{}\n工单名称：{}\n工单地址：{}\n驳回原因：{}\n提醒：此工单被审核不通过，请按照驳回原因进行修改！""".format(
-                workflow_detail.create_time.strftime("%Y-%m-%d %H:%M:%S"),
-                instance,
-                db_name,
-                workflow_title,
-                workflow_url,
-                re.sub("[\r\n\f]{2,}", "\n", self.audit_detail.remark),
+            msg_content = _("Submitted at: {create_time}\nTarget instance: {instance}\nDatabase: {db_name}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nRejection reason: {remark}\nNote: This workflow was rejected, please revise according to the rejection reason!").format(  # 发起时间/目标实例/数据库/工单名称/工单地址/驳回原因/提醒
+                create_time=workflow_detail.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+                instance=instance,
+                db_name=db_name,
+                workflow_title=workflow_title,
+                workflow_url=workflow_url,
+                remark=re.sub("[\r\n\f]{2,}", "\n", self.audit_detail.remark),
             )
         elif status == WorkflowStatus.ABORTED:  # 审核取消，通知所有审核人
-            msg_title = "[{}]提交人主动终止工单#{}".format(
-                workflow_type_display, audit_id
-            )
+            msg_title = _("[{workflow_type}] Workflow aborted by submitter #{audit_id}").format(workflow_type=workflow_type_display, audit_id=audit_id)  # [{workflow_type}]提交人主动终止工单#{audit_id}
             # 接收人，发送给该资源组内对应权限组所有的用户
             auth_group_names = [
                 Group.objects.get(id=auth_group_id).name
@@ -264,18 +254,18 @@ class LegacyRender(Notifier):
             ]
             msg_to = auth_group_users(auth_group_names, self.audit.group_id)
             # 消息内容
-            msg_content = """发起时间：{}\n发起人：{}\n组：{}\n目标实例：{}\n数据库：{}\n工单名称：{}\n工单地址：{}\n终止原因：{}""".format(
-                workflow_detail.create_time.strftime("%Y-%m-%d %H:%M:%S"),
-                workflow_from,
-                group_name,
-                instance,
-                db_name,
-                workflow_title,
-                workflow_url,
-                re.sub("[\r\n\f]{2,}", "\n", self.audit_detail.remark),
+            msg_content = _("Submitted at: {create_time}\nSubmitted by: {workflow_from}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nWorkflow name: {workflow_title}\nWorkflow URL: {workflow_url}\nAbort reason: {remark}").format(  # 发起时间/发起人/组/目标实例/数据库/工单名称/工单地址/终止原因
+                create_time=workflow_detail.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+                workflow_from=workflow_from,
+                group_name=group_name,
+                instance=instance,
+                db_name=db_name,
+                workflow_title=workflow_title,
+                workflow_url=workflow_url,
+                remark=re.sub("[\r\n\f]{2,}", "\n", self.audit_detail.remark),
             )
         else:
-            raise Exception("工单状态不正确")
+            raise Exception(_("Invalid workflow status"))  # 工单状态不正确
         logger.info(f"通知Debug{msg_to}")
         self.messages.append(LegacyMessage(msg_title, msg_content, msg_to))
 
@@ -289,24 +279,27 @@ class LegacyRender(Notifier):
         url = "{base_url}/workflow/{audit_id}".format(
             base_url=base_url, audit_id=audit_id
         )
-        msg_title = (
-            f"[{WorkflowType.SQL_REVIEW.label}]工单"
-            f"{self.workflow.get_status_display()}#{audit_id}"
+        msg_title = _("[{workflow_type}] Workflow {status} #{audit_id}").format(  # [{workflow_type}]工单{status}#{audit_id}
+            workflow_type=WorkflowType.SQL_REVIEW.label,
+            status=self.workflow.get_status_display(),
+            audit_id=audit_id,
         )
         preview = re.sub(
             "[\r\n\f]{2,}",
             "\n",
             self.workflow.sqlworkflowcontent.sql_content[0:500].replace("\r", ""),
         )
-        msg_content = f"""发起时间：{self.workflow.create_time.strftime("%Y-%m-%d %H:%M:%S")}
-发起人：{self.workflow.engineer_display}
-组：{self.workflow.group_name}
-目标实例：{self.workflow.instance.instance_name}
-数据库：{self.workflow.db_name}
-审批流程：{review_info.readable_info}
-工单名称：{self.workflow.workflow_name}
-工单地址：{url}
-工单详情预览：{preview}"""
+        msg_content = _("Submitted at: {create_time}\nSubmitted by: {engineer}\nGroup: {group_name}\nTarget instance: {instance}\nDatabase: {db_name}\nApproval workflow: {review_info}\nWorkflow name: {workflow_name}\nWorkflow URL: {url}\nWorkflow details preview: {preview}").format(  # 发起时间/发起人/组/目标实例/数据库/审批流程/工单名称/工单地址/工单详情预览
+            create_time=self.workflow.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+            engineer=self.workflow.engineer_display,
+            group_name=self.workflow.group_name,
+            instance=self.workflow.instance.instance_name,
+            db_name=self.workflow.db_name,
+            review_info=review_info.readable_info,
+            workflow_name=self.workflow.workflow_name,
+            url=url,
+            preview=preview,
+        )
         # 邮件通知申请人，抄送DBA
         msg_to = Users.objects.filter(username=self.workflow.engineer)
         msg_cc = auth_group_users(
@@ -321,14 +314,16 @@ class LegacyRender(Notifier):
             # 判断上线语句是否存在DDL，存在则通知相关人员
             if self.workflow.syntax_type == 1:
                 # 消息内容通知
-                msg_title = "[Archery]有新的DDL语句执行完成#{}".format(audit_id)
-                msg_content = f"""发起人：{Users.objects.get(username=self.workflow.engineer).display}
-变更组：{self.workflow.group_name}
-变更实例：{self.workflow.instance.instance_name}
-变更数据库：{self.workflow.db_name}
-工单名称：{self.workflow.workflow_name}
-工单地址：{url}
-工单预览：{preview}"""
+                msg_title = _("[Archery] New DDL statement executed #{audit_id}").format(audit_id=audit_id)  # [Archery]有新的DDL语句执行完成#{audit_id}
+                msg_content = _("Submitted by: {engineer}\nChange group: {group_name}\nChange instance: {instance}\nChange database: {db_name}\nWorkflow name: {workflow_name}\nWorkflow URL: {url}\nWorkflow preview: {preview}").format(  # 发起人/变更组/变更实例/变更数据库/工单名称/工单地址/工单预览
+                    engineer=Users.objects.get(username=self.workflow.engineer).display,
+                    group_name=self.workflow.group_name,
+                    instance=self.workflow.instance.instance_name,
+                    db_name=self.workflow.db_name,
+                    workflow_name=self.workflow.workflow_name,
+                    url=url,
+                    preview=preview,
+                )
                 # 获取通知成员ddl_notify_auth_group
                 ddl_notify_auth_group = self.sys_config.get(
                     "ddl_notify_auth_group", ""
@@ -339,10 +334,10 @@ class LegacyRender(Notifier):
     def render_m2sql(self):
         submitter_in_db = Users.objects.get(username=self.workflow.submitter)
         if self.workflow.success:
-            title = "[Archery 通知]My2SQL执行结束"
-            content = f"解析的SQL文件在{self.workflow.file_path}目录下，请前往查看"
+            title = _("[Archery] My2SQL execution completed")  # [Archery 通知]My2SQL执行结束
+            content = _("The parsed SQL files are in the {file_path} directory, please check").format(file_path=self.workflow.file_path)  # 解析的SQL文件在{file_path}目录下，请前往查看
         else:
-            title = "[Archery 通知]My2SQL执行失败"
+            title = _("[Archery] My2SQL execution failed")  # [Archery 通知]My2SQL执行失败
             content = self.workflow.error
         self.messages = [
             LegacyMessage(
