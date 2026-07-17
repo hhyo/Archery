@@ -23,7 +23,7 @@ class TestMqttEngine(TestCase):
 
     def test_query_check_allows_subscribe(self):
         engine = MqttEngine(instance=self.ins)
-        result = engine.query_check(sql="subscribe archery/test 2 5")
+        result = engine.query_check(sql="sub -t archery/test -C 5")
         self.assertFalse(result["bad_query"])
 
     def test_query_check_allows_help(self):
@@ -33,28 +33,28 @@ class TestMqttEngine(TestCase):
 
     def test_query_check_blocks_publish(self):
         engine = MqttEngine(instance=self.ins)
-        result = engine.query_check(sql='publish archery/test "hi"')
+        result = engine.query_check(sql="pub -t archery/test -m hi")
         self.assertTrue(result["bad_query"])
 
     def test_query_check_rejects_invalid_subscribe_arguments(self):
         engine = MqttEngine(instance=self.ins)
         for command in (
-            "subscribe",
-            "subscribe topic invalid",
-            "subscribe topic 0",
-            "subscribe topic 1 0",
-            "subscribe topic 1 2 extra",
+            "sub",
+            "sub -t",
+            "sub -t topic --bench",
+            "subscribe archery/test",
+            "sub -t topic -C 0",
         ):
             with self.subTest(command=command):
                 self.assertTrue(engine.query_check(sql=command)["bad_query"])
 
     def test_execute_check_allows_publish_only(self):
         engine = MqttEngine(instance=self.ins)
-        allowed = engine.execute_check(sql='publish archery/test "hello world"')
+        allowed = engine.execute_check(sql='pub -t archery/test -m "hello world"')
         allowed_qos = engine.execute_check(
-            sql='publish archery/test "hello world" 2'
+            sql='pub -t archery/test -m "hello world" -q 2'
         )
-        blocked = engine.execute_check(sql="subscribe archery/test")
+        blocked = engine.execute_check(sql="sub -t archery/test")
         self.assertEqual(allowed.rows[0].errlevel, 0)
         self.assertEqual(allowed_qos.rows[0].errlevel, 0)
         self.assertEqual(blocked.rows[0].errlevel, 2)
@@ -63,9 +63,9 @@ class TestMqttEngine(TestCase):
     def test_execute_check_rejects_invalid_publish_qos(self):
         engine = MqttEngine(instance=self.ins)
         for command in (
-            'publish archery/test "hello" 3',
-            'publish archery/test "hello" invalid',
-            'publish archery/test "hello" 1 extra',
+            'pub -t archery/test -m "hello" -q 3',
+            'pub -t archery/test -m "hello" -q invalid',
+            'pub -t archery/test -m "hello" --bench',
         ):
             with self.subTest(command=command):
                 result = engine.execute_check(sql=command)
@@ -121,11 +121,9 @@ class TestMqttEngine(TestCase):
         mock_client_cls.return_value.loop_stop.assert_called_once()
         mock_client_cls.return_value.disconnect.assert_called_once()
 
-    @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 31])
+    @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 61])
     @patch("sql.engines.mqtt.mqtt.Client")
-    def test_subscribe_caps_timeout_and_message_count(
-        self, mock_client_cls, _mock_monotonic
-    ):
+    def test_subscribe_caps_message_count(self, mock_client_cls, _mock_monotonic):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
@@ -143,13 +141,13 @@ class TestMqttEngine(TestCase):
         mock_client.loop_start.side_effect = deliver_messages
         engine = MqttEngine(instance=self.ins)
 
-        result = engine.query(sql="subscribe archery/test 999 999")
+        result = engine.query(sql="sub -t archery/test -C 999")
 
         mock_client.subscribe.assert_called_once_with("archery/test", qos=0)
         self.assertEqual(result.affected_rows, 100)
         self.assertEqual(result.error, None)
 
-    @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 3])
+    @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 60])
     @patch("sql.engines.mqtt.mqtt.Client")
     def test_subscribe_uses_defaults(self, mock_client_cls, _mock_monotonic):
         mock_client = MagicMock()
@@ -159,11 +157,12 @@ class TestMqttEngine(TestCase):
         )
         engine = MqttEngine(instance=self.ins)
 
-        result = engine.query(sql="subscribe archery/test")
+        result = engine.query(sql="sub -t archery/test")
 
         self.assertEqual(result.error, None)
         self.assertEqual(result.column_list, ["topic", "payload", "qos", "retain"])
         self.assertIn("超时", result.warning)
+        self.assertIn("60", result.warning)
 
     @patch("sql.engines.mqtt.mqtt.Client")
     def test_subscribe_collects_messages_and_decodes_payload(self, mock_client_cls):
@@ -180,7 +179,7 @@ class TestMqttEngine(TestCase):
         mock_client.loop_start.side_effect = deliver_message
         engine = MqttEngine(instance=self.ins)
 
-        result = engine.query(sql="subscribe archery/test 3 1")
+        result = engine.query(sql="sub -t archery/test -C 1")
 
         self.assertEqual(result.rows, [["archery/test", "hello", 1, False]])
         mock_client.loop_stop.assert_called_once()
@@ -268,7 +267,7 @@ class TestMqttEngine(TestCase):
         )
         engine = MqttEngine(instance=self.ins)
 
-        result = engine.query(sql="subscribe archery/test 1 1")
+        result = engine.query(sql="sub -t archery/test -C 1")
 
         self.assertIn("Bad user name or password", result.error)
         mock_client.subscribe.assert_not_called()
@@ -279,7 +278,8 @@ class TestMqttEngine(TestCase):
         result = engine.query(sql="help")
 
         self.assertEqual(result.error, None)
-        self.assertIn(["subscribe <topic> [timeout_sec] [max_msgs]"], result.rows)
+        self.assertIn(["sub -t <topic> [-q N] [-C N]"], result.rows)
+        self.assertIn(["pub -t <topic> -m <payload> [-q N]"], result.rows)
         self.assertIn(["help"], result.rows)
 
     @patch("sql.engines.mqtt.mqtt.Client")
@@ -291,7 +291,9 @@ class TestMqttEngine(TestCase):
         )
         workflow = MagicMock()
         workflow.db_name = "default"
-        workflow.sqlworkflowcontent.sql_content = 'publish archery/test "hello world"'
+        workflow.sqlworkflowcontent.sql_content = (
+            'pub -t archery/test -m "hello world"'
+        )
         engine = MqttEngine(instance=self.ins)
 
         result = engine.execute_workflow(workflow)
@@ -313,7 +315,7 @@ class TestMqttEngine(TestCase):
         workflow = MagicMock()
         workflow.db_name = "default"
         workflow.sqlworkflowcontent.sql_content = (
-            'publish archery/test "hello world" 2'
+            'pub -t archery/test -m "hello world" -q 2'
         )
         engine = MqttEngine(instance=self.ins)
 
@@ -323,3 +325,35 @@ class TestMqttEngine(TestCase):
             "archery/test", payload="hello world", qos=2, retain=False
         )
         self.assertEqual(result.rows[0].errlevel, 0)
+
+    @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 0.01, 0.02, 60])
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_run_subscribe_honors_cancel_check_and_on_message(
+        self, mock_client_cls, _mock_monotonic
+    ):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, 0, None
+        )
+        engine = MqttEngine(instance=self.ins)
+        seen = []
+        ticks = {"n": 0}
+
+        def cancel_check():
+            ticks["n"] += 1
+            return ticks["n"] >= 2
+
+        result = engine.run_subscribe(
+            topic="archery/test",
+            qos=1,
+            max_msgs=10,
+            timeout_sec=60,
+            cancel_check=cancel_check,
+            on_message=seen.append,
+        )
+
+        mock_client.subscribe.assert_called_once_with("archery/test", qos=1)
+        self.assertEqual(result.error, None)
+        self.assertEqual(result.rows, [])
+        self.assertEqual(seen, [])

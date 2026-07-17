@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 import logging
 import os
-import shlex
 import ssl
 import tempfile
 import threading
@@ -12,14 +11,24 @@ import paho.mqtt.client as mqtt
 from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
+from .mq_cli import parse_mqtt_line, split_mq_lines
 
 logger = logging.getLogger("default")
+
+MQTT_HELP_ROWS = [
+    ["sub -t <topic> [-q N] [-C N]"],
+    ["pub -t <topic> -m <payload> [-q N]"],
+    ["help"],
+]
+DEFAULT_QUERY_TIMEOUT_SEC = 60
+MAX_QUERY_TIMEOUT_SEC = 3600
+MAX_SUBSCRIBE_COUNT = 100
 
 
 class MqttEngine(EngineBase):
     name = "MQTT"
     info = "MQTT engine"
-    write_commands = {"publish"}
+    write_commands = {"pub"}
     connack_timeout = 10
 
     def _validate_certs(self):
@@ -140,37 +149,49 @@ class MqttEngine(EngineBase):
         return ResultSet(rows=[])
 
     @staticmethod
-    def _parse_subscribe(sql):
-        parts = shlex.split(sql)
-        if not parts or parts[0].lower() != "subscribe":
-            raise ValueError("禁止执行该命令！")
-        if len(parts) < 2 or len(parts) > 4:
-            raise ValueError(
-                "subscribe 命令格式：subscribe <topic> [timeout_sec] [max_msgs]"
-            )
-
-        try:
-            timeout_sec = int(parts[2]) if len(parts) >= 3 else 3
-            max_msgs = int(parts[3]) if len(parts) == 4 else 10
-        except ValueError as exc:
-            raise ValueError("timeout_sec 和 max_msgs 必须为正整数") from exc
-        if timeout_sec <= 0 or max_msgs <= 0:
-            raise ValueError("timeout_sec 和 max_msgs 必须为正整数")
-        return parts[1], min(timeout_sec, 30), min(max_msgs, 100)
+    def _validate_qos(qos):
+        if qos not in {0, 1, 2}:
+            raise ValueError("qos 必须为 0、1 或 2")
+        return qos
 
     @classmethod
-    def _parse_query(cls, sql):
-        parts = shlex.split(sql)
-        if parts and parts[0].lower() == "help":
-            if len(parts) != 1:
-                raise ValueError("help 命令不接受参数")
-            return "help", None
-        return "subscribe", cls._parse_subscribe(sql)
+    def _validate_query_command(cls, cmd):
+        if cmd.action not in {"sub", "help"}:
+            raise ValueError("禁止执行该命令！")
+        if cmd.action == "help":
+            return
+        if "topic" not in cmd.args:
+            raise ValueError("sub requires topic")
+        cls._validate_qos(cmd.args.get("qos", 0))
+        count = cmd.args.get("count", 10)
+        if not isinstance(count, int) or count <= 0:
+            raise ValueError("count 必须为正整数")
+
+    @classmethod
+    def _validate_pub_command(cls, cmd):
+        if cmd.action != "pub":
+            raise ValueError("禁止执行该命令！")
+        cls._validate_qos(cmd.args.get("qos", 0))
+
+    @staticmethod
+    def _clamp_timeout_sec(timeout_sec):
+        try:
+            value = int(timeout_sec)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("timeout_sec 必须为正整数") from exc
+        if value <= 0:
+            raise ValueError("timeout_sec 必须为正整数")
+        return min(value, MAX_QUERY_TIMEOUT_SEC)
 
     def query_check(self, db_name=None, sql=""):
         filtered_sql = sql.strip()
         try:
-            self._parse_query(filtered_sql)
+            lines = split_mq_lines(filtered_sql)
+            if not lines:
+                raise ValueError("empty mqtt command")
+            for line in lines:
+                cmd = parse_mqtt_line(line)
+                self._validate_query_command(cmd)
         except ValueError as exc:
             return {
                 "bad_query": True,
@@ -178,6 +199,74 @@ class MqttEngine(EngineBase):
                 "msg": str(exc),
             }
         return {"bad_query": False, "filtered_sql": filtered_sql, "msg": ""}
+
+    def run_subscribe(
+        self,
+        topic,
+        qos,
+        max_msgs,
+        timeout_sec,
+        cancel_check=None,
+        on_message=None,
+        db_name=None,
+        close_conn=True,
+        limit_num=0,
+        full_sql="",
+    ):
+        result = ResultSet(
+            full_sql=full_sql, column_list=["topic", "payload", "qos", "retain"]
+        )
+        client = None
+        connected = False
+        loop_started = False
+        messages = []
+        try:
+            qos = self._validate_qos(qos)
+
+            def _on_message(_client, _userdata, message):
+                if len(messages) >= max_msgs:
+                    return
+                payload = message.payload
+                if isinstance(payload, bytes):
+                    payload = payload.decode("utf-8", errors="replace")
+                row = [message.topic, payload, message.qos, message.retain]
+                messages.append(row)
+                if on_message is not None:
+                    on_message(row)
+
+            client = self.get_connection(db_name)
+            client.on_message = _on_message
+            self._connect_and_wait(client)
+            connected = True
+            loop_started = True
+            client.subscribe(topic, qos=qos)
+
+            started_at = time.monotonic()
+            cancelled = False
+            while (
+                len(messages) < max_msgs
+                and time.monotonic() - started_at < timeout_sec
+            ):
+                if cancel_check and cancel_check():
+                    cancelled = True
+                    break
+                time.sleep(0.05)
+
+            if limit_num > 0:
+                messages = messages[:limit_num]
+            result.rows = messages
+            result.affected_rows = len(messages)
+            if not messages and not cancelled:
+                result.warning = f"订阅等待 {timeout_sec} 秒超时，未收到消息"
+        except Exception as exc:
+            logger.warning("MQTT 订阅执行失败: %s", exc)
+            result.error = str(exc)
+        finally:
+            if client is not None and loop_started:
+                client.loop_stop()
+            if client is not None and connected and close_conn:
+                client.disconnect()
+        return result
 
     def query(
         self,
@@ -191,85 +280,83 @@ class MqttEngine(EngineBase):
         result = ResultSet(
             full_sql=sql, column_list=["topic", "payload", "qos", "retain"]
         )
-        client = None
-        connected = False
-        loop_started = False
-        messages = []
         try:
-            command, parsed = self._parse_query(sql)
-            if command == "help":
+            lines = split_mq_lines(sql)
+            if not lines:
+                raise ValueError("empty mqtt command")
+            commands = [parse_mqtt_line(line) for line in lines]
+            for cmd in commands:
+                self._validate_query_command(cmd)
+
+            help_only = all(cmd.action == "help" for cmd in commands)
+            if help_only:
                 result.column_list = ["命令"]
-                result.rows = [
-                    ["subscribe <topic> [timeout_sec] [max_msgs]"],
-                    ["help"],
-                ]
+                result.rows = list(MQTT_HELP_ROWS)
                 result.affected_rows = len(result.rows)
                 return result
 
-            topic, timeout_sec, max_msgs = parsed
-
-            def on_message(_client, _userdata, message):
-                if len(messages) >= max_msgs:
-                    return
-                payload = message.payload
-                if isinstance(payload, bytes):
-                    payload = payload.decode("utf-8", errors="replace")
-                messages.append(
-                    [message.topic, payload, message.qos, message.retain]
+            timeout_sec = self._clamp_timeout_sec(
+                kwargs.get("timeout_sec", DEFAULT_QUERY_TIMEOUT_SEC)
+            )
+            aggregated = []
+            warning = None
+            for cmd in commands:
+                if cmd.action == "help":
+                    continue
+                max_msgs = min(int(cmd.args.get("count", 10)), MAX_SUBSCRIBE_COUNT)
+                sub_result = self.run_subscribe(
+                    topic=cmd.args["topic"],
+                    qos=cmd.args.get("qos", 0),
+                    max_msgs=max_msgs,
+                    timeout_sec=timeout_sec,
+                    cancel_check=None,
+                    on_message=None,
+                    db_name=db_name,
+                    close_conn=close_conn,
+                    limit_num=limit_num,
+                    full_sql=cmd.raw_line,
                 )
-
-            client = self.get_connection(db_name)
-            client.on_message = on_message
-            self._connect_and_wait(client)
-            connected = True
-            loop_started = True
-            client.subscribe(topic, qos=0)
-
-            started_at = time.monotonic()
-            while (
-                len(messages) < max_msgs
-                and time.monotonic() - started_at < timeout_sec
-            ):
-                time.sleep(0.05)
+                if sub_result.error:
+                    result.error = sub_result.error
+                    return result
+                aggregated.extend(sub_result.rows)
+                if sub_result.warning:
+                    warning = sub_result.warning
 
             if limit_num > 0:
-                messages = messages[:limit_num]
-            result.rows = messages
-            result.affected_rows = len(messages)
-            if not messages:
+                aggregated = aggregated[:limit_num]
+            result.rows = aggregated
+            result.affected_rows = len(aggregated)
+            if warning and not aggregated:
+                result.warning = warning
+            elif not aggregated:
                 result.warning = f"订阅等待 {timeout_sec} 秒超时，未收到消息"
         except Exception as exc:
             logger.warning("MQTT 查询执行失败: %s", exc)
             result.error = str(exc)
-        finally:
-            if client is not None and loop_started:
-                client.loop_stop()
-            if client is not None and connected and close_conn:
-                client.disconnect()
         return result
 
     def execute_check(self, db_name=None, sql=""):
         """审核 MQTT 上线写命令。"""
         check_result = ReviewSet(full_sql=sql)
-        statements = [
-            command.strip() for command in sql.splitlines() if command.strip()
-        ]
+        statements = split_mq_lines(sql)
 
         for line, statement in enumerate(statements, start=1):
-            query_result = self.query_check(db_name=db_name, sql=statement)
-            if not query_result["bad_query"]:
+            try:
+                cmd = parse_mqtt_line(statement)
+                if cmd.action in {"sub", "help"}:
+                    errlevel = 2
+                    status = "Audit failed"
+                    message = "禁止使用查询命令！"
+                else:
+                    self._validate_pub_command(cmd)
+                    errlevel = 0
+                    status = "Audit completed"
+                    message = "暂不支持显示影响行数"
+            except ValueError:
                 errlevel = 2
                 status = "Audit failed"
-                message = "禁止使用查询命令！"
-            else:
-                try:
-                    self._parse_publish(statement)
-                    is_allowed = True
-                except ValueError:
-                    is_allowed = False
-                errlevel = 0 if is_allowed else 2
-                status = "Audit completed" if is_allowed else "Audit failed"
-                message = "暂不支持显示影响行数" if is_allowed else "禁止执行该命令！"
+                message = "禁止执行该命令！"
 
             check_result.rows.append(
                 ReviewResult(
@@ -285,30 +372,19 @@ class MqttEngine(EngineBase):
         return check_result
 
     @staticmethod
-    def _parse_publish(statement):
-        parts = shlex.split(statement)
-        if len(parts) not in {3, 4} or parts[0].lower() != "publish":
-            raise ValueError("publish 命令格式：publish <topic> <payload> [qos]")
-        try:
-            qos = int(parts[3]) if len(parts) == 4 else 0
-        except ValueError as exc:
-            raise ValueError("qos 必须为 0、1 或 2") from exc
-        if qos not in {0, 1, 2}:
-            raise ValueError("qos 必须为 0、1 或 2")
-        return parts[1], parts[2], qos
-
-    @classmethod
-    def _execute_publish(cls, client, statement):
-        topic, payload, qos = cls._parse_publish(statement)
-        publish_info = client.publish(topic, payload=payload, qos=qos, retain=False)
+    def _execute_pub(client, cmd):
+        publish_info = client.publish(
+            cmd.args["topic"],
+            payload=cmd.args["payload"],
+            qos=cmd.args.get("qos", 0),
+            retain=False,
+        )
         publish_info.wait_for_publish()
 
     def execute_workflow(self, workflow):
         """执行 MQTT 上线工单。"""
         sql = workflow.sqlworkflowcontent.sql_content
-        statements = [
-            command.strip() for command in sql.splitlines() if command.strip()
-        ]
+        statements = split_mq_lines(sql)
         execute_result = ReviewSet(full_sql=sql)
         client = None
         connected = False
@@ -321,8 +397,10 @@ class MqttEngine(EngineBase):
             connected = True
             loop_started = True
             for statement in statements:
+                cmd = parse_mqtt_line(statement)
+                self._validate_pub_command(cmd)
                 with FuncTimer() as timer:
-                    self._execute_publish(client, statement)
+                    self._execute_pub(client, cmd)
                 execute_result.rows.append(
                     ReviewResult(
                         id=line,
