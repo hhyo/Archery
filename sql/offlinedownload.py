@@ -38,7 +38,7 @@ SQL_COUNT_ENGINES = {
     "doris",
 }
 
-LINE_BASED_COMMAND_ENGINES = {"redis", "memcached"}
+LINE_BASED_COMMAND_ENGINES = {"redis", "memcached", "mqtt", "rabbitmq"}
 
 
 def get_single_export_statement(raw_sql, db_type):

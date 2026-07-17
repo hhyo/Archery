@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
-from django.forms import PasswordInput
+from django.forms import PasswordInput, Textarea
 
 from .models import (
     Users,
@@ -179,8 +179,10 @@ class InstanceAdmin(admin.ModelAdmin):
     list_filter = ("db_type", "type", "instance_tag")
 
     def formfield_for_dbfield(self, db_field, **kwargs):
-        if db_field.name == "password":
+        if db_field.name in ["password", "client_key"]:
             kwargs["widget"] = PasswordInput(render_value=True)
+        elif db_field.name in ["client_cert", "ca_cert"]:
+            kwargs["widget"] = Textarea()
         return super(InstanceAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
     # 阿里云实例关系配置
