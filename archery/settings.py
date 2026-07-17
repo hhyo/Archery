@@ -64,6 +64,8 @@ env = environ.Env(
             "opensearch",
             "memcached",
             "tdengine",
+            "mqtt",
+            "rabbitmq",
         ],
     ),
     ENABLED_NOTIFIERS=(
@@ -117,6 +119,8 @@ AVAILABLE_ENGINES = {
     "opensearch": {"path": "sql.engines.elasticsearch:OpenSearchEngine"},
     "memcached": {"path": "sql.engines.memcached:MemcachedEngine"},
     "tdengine": {"path": "sql.engines.tdengine:TDengineEngine"},
+    "mqtt": {"path": "sql.engines.mqtt:MqttEngine"},
+    "rabbitmq": {"path": "sql.engines.rabbitmq:RabbitmqEngine"},
 }
 
 ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")
