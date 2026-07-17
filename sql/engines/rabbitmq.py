@@ -1,31 +1,40 @@
 # -*- coding: UTF-8 -*-
 import logging
 import os
-import shlex
 import ssl
 import tempfile
+import time
 
 import pika
 
 from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
+from .mq_cli import parse_rabbitmq_line, split_mq_lines
 
 logger = logging.getLogger("default")
+
+RABBITMQ_HELP_ROWS = [
+    ["get queue=<name> [count=N]"],
+    ["list queues"],
+    ["publish routing_key=… payload=… [exchange=…]"],
+    ["declare queue name=…"],
+    ["declare exchange name=… [type=…]"],
+    ["declare binding queue=… exchange=… routing_key=…"],
+    ["purge queue name=…"],
+    ["delete queue name=…"],
+    ["help"],
+]
+DEFAULT_QUERY_TIMEOUT_SEC = 60
+MAX_QUERY_TIMEOUT_SEC = 3600
+MAX_GET_COUNT = 100
+LIST_QUEUES_ERROR = "list queues 需要 RabbitMQ Management API，当前引擎未启用"
 
 
 class RabbitmqEngine(EngineBase):
     name = "RabbitMQ"
     info = "RabbitMQ engine"
-    write_commands = {
-        "publish",
-        "queue_declare",
-        "exchange_declare",
-        "queue_bind",
-        "purge",
-        "queue_purge",
-        "queue_delete",
-    }
+    write_commands = {"publish", "declare", "purge", "delete"}
 
     def _vhost(self, db_name=None):
         return db_name or self.db_name or "/"
@@ -120,24 +129,130 @@ class RabbitmqEngine(EngineBase):
     def get_all_tables(self, db_name, **kwargs):
         return ResultSet(rows=[])
 
+    @classmethod
+    def _validate_query_command(cls, cmd):
+        if cmd.action not in {"get", "list", "help"}:
+            raise ValueError("禁止执行该命令！")
+        if cmd.action == "help":
+            return
+        if cmd.action == "list":
+            if cmd.args.get("target") != "queues":
+                raise ValueError("list requires queues")
+            return
+        if "queue" not in cmd.args:
+            raise ValueError("get requires queue")
+        count = cmd.args.get("count", 1)
+        if not isinstance(count, int) or count <= 0:
+            raise ValueError("count 必须为正整数")
+
+    @classmethod
+    def _validate_write_command(cls, cmd):
+        if cmd.action not in cls.write_commands:
+            raise ValueError("禁止执行该命令！")
+        if cmd.action == "publish":
+            if "routing_key" not in cmd.args:
+                raise ValueError("publish requires routing_key")
+            if "payload" not in cmd.args:
+                raise ValueError("publish requires payload")
+        elif cmd.action == "declare":
+            target = cmd.args.get("target")
+            if target == "queue" and "name" not in cmd.args:
+                raise ValueError("declare queue requires name")
+            if target == "exchange" and "name" not in cmd.args:
+                raise ValueError("declare exchange requires name")
+            if target == "binding":
+                for key in ("queue", "exchange", "routing_key"):
+                    if key not in cmd.args:
+                        raise ValueError(f"declare binding requires {key}")
+        elif cmd.action in {"purge", "delete"}:
+            if cmd.args.get("target") != "queue" or "name" not in cmd.args:
+                raise ValueError(f"{cmd.action} queue requires name")
+
+    @staticmethod
+    def _clamp_timeout_sec(timeout_sec):
+        try:
+            value = int(timeout_sec)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("timeout_sec 必须为正整数") from exc
+        if value <= 0:
+            raise ValueError("timeout_sec 必须为正整数")
+        return min(value, MAX_QUERY_TIMEOUT_SEC)
+
     def query_check(self, db_name=None, sql=""):
         filtered_sql = sql.strip()
         try:
-            parts = shlex.split(filtered_sql)
+            lines = split_mq_lines(filtered_sql)
+            if not lines:
+                raise ValueError("empty rabbitmq command")
+            for line in lines:
+                cmd = parse_rabbitmq_line(line)
+                self._validate_query_command(cmd)
         except ValueError as exc:
             return {
                 "bad_query": True,
                 "filtered_sql": filtered_sql,
                 "msg": str(exc),
             }
+        return {"bad_query": False, "filtered_sql": filtered_sql, "msg": ""}
 
-        allowed = {"basic_get", "get", "queue_declare_passive", "help"}
-        bad_query = not parts or parts[0].lower() not in allowed
-        return {
-            "bad_query": bad_query,
-            "filtered_sql": filtered_sql,
-            "msg": "禁止执行该命令！" if bad_query else "",
-        }
+    def run_get(
+        self,
+        queue,
+        count,
+        timeout_sec,
+        cancel_check=None,
+        on_message=None,
+        db_name=None,
+        close_conn=True,
+        limit_num=0,
+        full_sql="",
+    ):
+        result = ResultSet(
+            full_sql=full_sql, column_list=["queue", "routing_key", "body"]
+        )
+        conn = None
+        rows = []
+        try:
+            conn = self.get_connection(db_name)
+            channel = conn.channel()
+            started_at = time.monotonic()
+            cancelled = False
+            while (
+                len(rows) < count and time.monotonic() - started_at < timeout_sec
+            ):
+                if cancel_check and cancel_check():
+                    cancelled = True
+                    break
+                method, _properties, body = channel.basic_get(
+                    queue=queue, auto_ack=False
+                )
+                if method is not None:
+                    channel.basic_ack(delivery_tag=method.delivery_tag)
+                    payload = (
+                        body.decode("utf-8", errors="replace")
+                        if isinstance(body, bytes)
+                        else body
+                    )
+                    row = [queue, method.routing_key, payload]
+                    rows.append(row)
+                    if on_message is not None:
+                        on_message(row)
+                else:
+                    time.sleep(0.05)
+
+            if limit_num > 0:
+                rows = rows[:limit_num]
+            result.rows = rows
+            result.affected_rows = len(rows)
+            if not rows and not cancelled:
+                result.warning = f"获取等待 {timeout_sec} 秒超时，未收到消息"
+        except Exception as exc:
+            logger.warning("RabbitMQ get 执行失败: %s", exc)
+            result.error = str(exc)
+        finally:
+            if close_conn and conn is not None and conn.is_open:
+                conn.close()
+        return result
 
     def query(
         self,
@@ -148,83 +263,89 @@ class RabbitmqEngine(EngineBase):
         parameters=None,
         **kwargs,
     ):
-        result = ResultSet(full_sql=sql)
-        conn = None
+        result = ResultSet(
+            full_sql=sql, column_list=["queue", "routing_key", "body"]
+        )
         try:
-            parts = shlex.split(sql)
-            if not parts:
-                raise ValueError("命令不能为空")
-            command = parts[0].lower()
+            lines = split_mq_lines(sql)
+            if not lines:
+                raise ValueError("empty rabbitmq command")
+            commands = [parse_rabbitmq_line(line) for line in lines]
+            for cmd in commands:
+                self._validate_query_command(cmd)
 
-            if command == "help":
+            help_only = all(cmd.action == "help" for cmd in commands)
+            if help_only:
                 result.column_list = ["命令"]
-                result.rows = [
-                    ["basic_get <queue>"],
-                    ["get <queue>"],
-                    ["queue_declare_passive <queue>"],
-                    ["help"],
-                ]
-            else:
-                if len(parts) != 2:
-                    raise ValueError(f"{command} 命令需要且仅需要一个队列名")
-                queue = parts[1]
-                conn = self.get_connection(db_name)
-                channel = conn.channel()
+                result.rows = list(RABBITMQ_HELP_ROWS)
+                result.affected_rows = len(result.rows)
+                return result
 
-                if command in {"basic_get", "get"}:
-                    method, properties, body = channel.basic_get(
-                        queue=queue, auto_ack=False
-                    )
-                    result.column_list = ["queue", "routing_key", "body"]
-                    if method is not None:
-                        channel.basic_ack(delivery_tag=method.delivery_tag)
-                        payload = (
-                            body.decode("utf-8", errors="replace")
-                            if isinstance(body, bytes)
-                            else body
-                        )
-                        result.rows = [[queue, method.routing_key, payload]]
-                elif command == "queue_declare_passive":
-                    declared = channel.queue_declare(queue=queue, passive=True)
-                    method = declared.method
-                    result.column_list = ["queue", "message_count", "consumer_count"]
-                    result.rows = [
-                        [method.queue, method.message_count, method.consumer_count]
-                    ]
-                else:
-                    raise ValueError("禁止执行该命令！")
+            if any(cmd.action == "list" for cmd in commands):
+                result.error = LIST_QUEUES_ERROR
+                return result
+
+            timeout_sec = self._clamp_timeout_sec(
+                kwargs.get("timeout_sec", DEFAULT_QUERY_TIMEOUT_SEC)
+            )
+            aggregated = []
+            warning = None
+            for cmd in commands:
+                if cmd.action == "help":
+                    continue
+                max_msgs = min(int(cmd.args.get("count", 1)), MAX_GET_COUNT)
+                get_result = self.run_get(
+                    queue=cmd.args["queue"],
+                    count=max_msgs,
+                    timeout_sec=timeout_sec,
+                    cancel_check=None,
+                    on_message=None,
+                    db_name=db_name,
+                    close_conn=close_conn,
+                    limit_num=limit_num,
+                    full_sql=cmd.raw_line,
+                )
+                if get_result.error:
+                    result.error = get_result.error
+                    return result
+                aggregated.extend(get_result.rows)
+                if get_result.warning:
+                    warning = get_result.warning
 
             if limit_num > 0:
-                result.rows = result.rows[:limit_num]
-            result.affected_rows = len(result.rows)
+                aggregated = aggregated[:limit_num]
+            result.rows = aggregated
+            result.affected_rows = len(aggregated)
+            if warning and not aggregated:
+                result.warning = warning
+            elif not aggregated:
+                result.warning = f"获取等待 {timeout_sec} 秒超时，未收到消息"
         except Exception as exc:
             logger.warning("RabbitMQ 查询执行失败: %s", exc)
             result.error = str(exc)
-        finally:
-            if close_conn and conn is not None and conn.is_open:
-                conn.close()
         return result
 
     def execute_check(self, db_name=None, sql=""):
         """审核 RabbitMQ 上线写命令。"""
         check_result = ReviewSet(full_sql=sql)
-        statements = [command.strip() for command in sql.splitlines() if command.strip()]
+        statements = split_mq_lines(sql)
 
         for line, statement in enumerate(statements, start=1):
-            query_result = self.query_check(db_name=db_name, sql=statement)
-            if not query_result["bad_query"]:
+            try:
+                cmd = parse_rabbitmq_line(statement)
+                if cmd.action in {"get", "list", "help"}:
+                    errlevel = 2
+                    status = "Audit failed"
+                    message = "禁止使用查询命令！"
+                else:
+                    self._validate_write_command(cmd)
+                    errlevel = 0
+                    status = "Audit completed"
+                    message = "暂不支持显示影响行数"
+            except ValueError:
                 errlevel = 2
                 status = "Audit failed"
-                message = "禁止使用查询命令！"
-            else:
-                try:
-                    parts = shlex.split(statement)
-                except ValueError:
-                    parts = []
-                is_allowed = bool(parts) and parts[0].lower() in self.write_commands
-                errlevel = 0 if is_allowed else 2
-                status = "Audit completed" if is_allowed else "Audit failed"
-                message = "暂不支持显示影响行数" if is_allowed else "禁止执行该命令！"
+                message = "禁止执行该命令！"
 
             check_result.rows.append(
                 ReviewResult(
@@ -240,56 +361,43 @@ class RabbitmqEngine(EngineBase):
         return check_result
 
     @staticmethod
-    def _execute_write_command(channel, statement):
-        parts = shlex.split(statement)
-        if not parts:
-            raise ValueError("命令不能为空")
-
-        command = parts[0].lower()
-        if command == "publish":
-            if len(parts) != 4:
-                raise ValueError("publish 命令格式：publish <exchange> <routing_key> <body>")
+    def _execute_write_command(channel, cmd):
+        action = cmd.action
+        args = cmd.args
+        if action == "publish":
             channel.basic_publish(
-                exchange=parts[1], routing_key=parts[2], body=parts[3]
+                exchange=args.get("exchange", ""),
+                routing_key=args["routing_key"],
+                body=args["payload"],
             )
-        elif command == "queue_declare":
-            if len(parts) != 2:
-                raise ValueError("queue_declare 命令格式：queue_declare <queue>")
-            channel.queue_declare(queue=parts[1])
-        elif command == "exchange_declare":
-            if len(parts) not in {2, 3}:
-                raise ValueError(
-                    "exchange_declare 命令格式：exchange_declare <exchange> [type]"
+        elif action == "declare":
+            target = args.get("target")
+            if target == "queue":
+                channel.queue_declare(queue=args["name"])
+            elif target == "exchange":
+                channel.exchange_declare(
+                    exchange=args["name"],
+                    exchange_type=args.get("type", "direct"),
                 )
-            channel.exchange_declare(
-                exchange=parts[1],
-                exchange_type=parts[2] if len(parts) == 3 else "direct",
-            )
-        elif command == "queue_bind":
-            if len(parts) not in {3, 4}:
-                raise ValueError(
-                    "queue_bind 命令格式：queue_bind <queue> <exchange> [routing_key]"
+            elif target == "binding":
+                channel.queue_bind(
+                    queue=args["queue"],
+                    exchange=args["exchange"],
+                    routing_key=args["routing_key"],
                 )
-            channel.queue_bind(
-                queue=parts[1],
-                exchange=parts[2],
-                routing_key=parts[3] if len(parts) == 4 else "",
-            )
-        elif command in {"purge", "queue_purge"}:
-            if len(parts) != 2:
-                raise ValueError(f"{command} 命令格式：{command} <queue>")
-            channel.queue_purge(queue=parts[1])
-        elif command == "queue_delete":
-            if len(parts) != 2:
-                raise ValueError("queue_delete 命令格式：queue_delete <queue>")
-            channel.queue_delete(queue=parts[1])
+            else:
+                raise ValueError("禁止执行该命令！")
+        elif action == "purge":
+            channel.queue_purge(queue=args["name"])
+        elif action == "delete":
+            channel.queue_delete(queue=args["name"])
         else:
             raise ValueError("禁止执行该命令！")
 
     def execute_workflow(self, workflow):
         """执行 RabbitMQ 上线工单。"""
         sql = workflow.sqlworkflowcontent.sql_content
-        statements = [command.strip() for command in sql.splitlines() if command.strip()]
+        statements = split_mq_lines(sql)
         execute_result = ReviewSet(full_sql=sql)
         conn = None
         line = 1
@@ -298,8 +406,10 @@ class RabbitmqEngine(EngineBase):
             conn = self.get_connection(db_name=workflow.db_name)
             channel = conn.channel()
             for statement in statements:
+                cmd = parse_rabbitmq_line(statement)
+                self._validate_write_command(cmd)
                 with FuncTimer() as timer:
-                    self._execute_write_command(channel, statement)
+                    self._execute_write_command(channel, cmd)
                 execute_result.rows.append(
                     ReviewResult(
                         id=line,
