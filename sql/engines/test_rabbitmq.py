@@ -29,6 +29,18 @@ class TestRabbitmqEngine(TestCase):
         self.assertFalse(result.error)
         mock_conn.close.assert_called()
 
+    @patch("sql.engines.rabbitmq.pika.BlockingConnection")
+    def test_client_cert_and_key_are_validated_without_ssl(self, mock_conn_cls):
+        self.ins.is_ssl = False
+        self.ins.client_cert = "CERT PEM"
+        self.ins.client_key = ""
+        engine = RabbitmqEngine(instance=self.ins)
+
+        result = engine.test_connection()
+
+        self.assertIn("必须同时配置", result.error)
+        mock_conn_cls.assert_not_called()
+
     def test_query_check_allows_basic_get(self):
         engine = RabbitmqEngine(instance=self.ins)
         r = engine.query_check(sql="basic_get myqueue")

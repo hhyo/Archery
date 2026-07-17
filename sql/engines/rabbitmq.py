@@ -47,10 +47,10 @@ class RabbitmqEngine(EngineBase):
             pem.close()
 
     def _ssl_options(self):
+        cert, key = self._validate_certs()
         if not self.instance.is_ssl:
             return None
 
-        cert, key = self._validate_certs()
         ca_cert = self.instance.ca_cert or ""
         temp_paths = []
         try:

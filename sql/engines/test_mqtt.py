@@ -26,6 +26,11 @@ class TestMqttEngine(TestCase):
         result = engine.query_check(sql="subscribe archery/test 2 5")
         self.assertFalse(result["bad_query"])
 
+    def test_query_check_allows_help(self):
+        engine = MqttEngine(instance=self.ins)
+        result = engine.query_check(sql="help")
+        self.assertFalse(result["bad_query"])
+
     def test_query_check_blocks_publish(self):
         engine = MqttEngine(instance=self.ins)
         result = engine.query_check(sql='publish archery/test "hi"')
@@ -46,23 +51,75 @@ class TestMqttEngine(TestCase):
     def test_execute_check_allows_publish_only(self):
         engine = MqttEngine(instance=self.ins)
         allowed = engine.execute_check(sql='publish archery/test "hello world"')
+        allowed_qos = engine.execute_check(
+            sql='publish archery/test "hello world" 2'
+        )
         blocked = engine.execute_check(sql="subscribe archery/test")
         self.assertEqual(allowed.rows[0].errlevel, 0)
+        self.assertEqual(allowed_qos.rows[0].errlevel, 0)
         self.assertEqual(blocked.rows[0].errlevel, 2)
         self.assertEqual(blocked.rows[0].errormessage, "禁止使用查询命令！")
+
+    def test_execute_check_rejects_invalid_publish_qos(self):
+        engine = MqttEngine(instance=self.ins)
+        for command in (
+            'publish archery/test "hello" 3',
+            'publish archery/test "hello" invalid',
+            'publish archery/test "hello" 1 extra',
+        ):
+            with self.subTest(command=command):
+                result = engine.execute_check(sql=command)
+                self.assertEqual(result.rows[0].errlevel, 2)
 
     @patch("sql.engines.mqtt.mqtt.Client")
     def test_test_connection(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, 0, None
+        )
         engine = MqttEngine(instance=self.ins)
 
         result = engine.test_connection()
 
         mock_client_cls.assert_called_once()
         mock_client.connect.assert_called_once_with("127.0.0.1", 1883, keepalive=30)
+        mock_client.loop_start.assert_called_once()
+        mock_client.loop_stop.assert_called_once()
         mock_client.disconnect.assert_called_once()
         self.assertFalse(result.error)
+
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_test_connection_reports_bad_credentials(self, mock_client_cls):
+        self.ins.user = "bad-user"
+        self.ins.password = "bad-password"
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        reason_code = MagicMock(is_failure=True)
+        reason_code.__str__.return_value = "Not authorized"
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, reason_code, None
+        )
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.test_connection()
+
+        self.assertIn("Not authorized", result.error)
+        self.assertEqual(result.rows, [])
+
+    @patch("sql.engines.mqtt.threading.Event.wait", return_value=False)
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_test_connection_reports_connack_timeout(
+        self, mock_client_cls, _mock_wait
+    ):
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.test_connection()
+
+        self.assertIn("CONNACK", result.error)
+        self.assertIn("超时", result.error)
+        mock_client_cls.return_value.loop_stop.assert_called_once()
+        mock_client_cls.return_value.disconnect.assert_called_once()
 
     @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 31])
     @patch("sql.engines.mqtt.mqtt.Client")
@@ -73,6 +130,7 @@ class TestMqttEngine(TestCase):
         mock_client_cls.return_value = mock_client
 
         def deliver_messages(*_args, **_kwargs):
+            mock_client.on_connect(mock_client, None, None, 0, None)
             for index in range(101):
                 message = MagicMock(
                     topic="archery/test",
@@ -96,12 +154,16 @@ class TestMqttEngine(TestCase):
     def test_subscribe_uses_defaults(self, mock_client_cls, _mock_monotonic):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, 0, None
+        )
         engine = MqttEngine(instance=self.ins)
 
         result = engine.query(sql="subscribe archery/test")
 
         self.assertEqual(result.error, None)
         self.assertEqual(result.column_list, ["topic", "payload", "qos", "retain"])
+        self.assertIn("超时", result.warning)
 
     @patch("sql.engines.mqtt.mqtt.Client")
     def test_subscribe_collects_messages_and_decodes_payload(self, mock_client_cls):
@@ -109,6 +171,7 @@ class TestMqttEngine(TestCase):
         mock_client_cls.return_value = mock_client
 
         def deliver_message(*_args, **_kwargs):
+            mock_client.on_connect(mock_client, None, None, 0, None)
             message = MagicMock(
                 topic="archery/test", payload=b"hello", qos=1, retain=False
             )
@@ -127,6 +190,11 @@ class TestMqttEngine(TestCase):
     def test_client_uses_version2_and_credentials(self, mock_client_cls):
         self.ins.user = "mqtt-user"
         self.ins.password = "mqtt-password"
+        mock_client_cls.return_value.loop_start.side_effect = (
+            lambda: mock_client_cls.return_value.on_connect(
+                mock_client_cls.return_value, None, None, 0, None
+            )
+        )
         engine = MqttEngine(instance=self.ins)
 
         engine.test_connection()
@@ -149,6 +217,11 @@ class TestMqttEngine(TestCase):
         self.ins.client_key = "KEY PEM"
         context = MagicMock()
         mock_create_context.return_value = context
+        mock_client_cls.return_value.loop_start.side_effect = (
+            lambda: mock_client_cls.return_value.on_connect(
+                mock_client_cls.return_value, None, None, 0, None
+            )
+        )
         engine = MqttEngine(instance=self.ins)
 
         result = engine.test_connection()
@@ -173,9 +246,49 @@ class TestMqttEngine(TestCase):
         mock_client_cls.assert_not_called()
 
     @patch("sql.engines.mqtt.mqtt.Client")
+    def test_client_cert_and_key_are_validated_without_ssl(self, mock_client_cls):
+        self.ins.is_ssl = False
+        self.ins.client_cert = "CERT PEM"
+        self.ins.client_key = ""
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.test_connection()
+
+        self.assertIn("必须同时配置", result.error)
+        mock_client_cls.assert_not_called()
+
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_query_reports_bad_credentials(self, mock_client_cls):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        reason_code = MagicMock(is_failure=True)
+        reason_code.__str__.return_value = "Bad user name or password"
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, reason_code, None
+        )
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.query(sql="subscribe archery/test 1 1")
+
+        self.assertIn("Bad user name or password", result.error)
+        mock_client.subscribe.assert_not_called()
+
+    def test_query_help(self):
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.query(sql="help")
+
+        self.assertEqual(result.error, None)
+        self.assertIn(["subscribe <topic> [timeout_sec] [max_msgs]"], result.rows)
+        self.assertIn(["help"], result.rows)
+
+    @patch("sql.engines.mqtt.mqtt.Client")
     def test_execute_workflow_publishes(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, 0, None
+        )
         workflow = MagicMock()
         workflow.db_name = "default"
         workflow.sqlworkflowcontent.sql_content = 'publish archery/test "hello world"'
@@ -188,4 +301,25 @@ class TestMqttEngine(TestCase):
         )
         mock_client.loop_stop.assert_called_once()
         mock_client.disconnect.assert_called_once()
+        self.assertEqual(result.rows[0].errlevel, 0)
+
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_execute_workflow_publishes_with_qos(self, mock_client_cls):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, 0, None
+        )
+        workflow = MagicMock()
+        workflow.db_name = "default"
+        workflow.sqlworkflowcontent.sql_content = (
+            'publish archery/test "hello world" 2'
+        )
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.execute_workflow(workflow)
+
+        mock_client.publish.assert_called_once_with(
+            "archery/test", payload="hello world", qos=2, retain=False
+        )
         self.assertEqual(result.rows[0].errlevel, 0)
