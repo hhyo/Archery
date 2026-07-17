@@ -140,6 +140,8 @@ python3 scripts/mq_env/verify_auth.py --tls \
 
 保存后点击 **测试连接**，应返回成功。
 
+**必做：实例标签 + 资源组。** SQL 在线查询按标签 `can_read` 拉实例，SQL 上线按 `can_write` 拉实例。新建实例后须在 Admin 勾选这两个标签，并把实例（及当前用户）关联到同一资源组；否则两个页面的「选择实例」下拉会为空。本地一键种子脚本 `setup_local.py` 已自动打标签并关联资源组 `mq-test`。
+
 ### MQTT（匿名 EMQX）
 
 | 字段 | 值 |
@@ -173,48 +175,140 @@ python3 scripts/mq_env/verify_auth.py --tls \
 
 ### 查询页命令示例（只读 / 短拉取）
 
-在 Archery **SQL 查询** 页选择对应实例与逻辑库后执行：
-
-**RabbitMQ**（允许 `basic_get`、`get`、`queue_declare_passive`、`help`）：
-
-```text
-queue_declare_passive archery_test_queue
-basic_get archery_test_queue
-help
-```
-
-**MQTT**（允许 `subscribe`、`help`）：
-
-```text
-subscribe archery/test 3 10
-help
-```
-
-查询页执行写命令应被拦截，例如：
-
-```text
-publish "" archery_test_queue "forbidden-on-query-page"
-publish archery/test "forbidden-on-query-page"
-```
+详见下文 **「指令级测试用例」**。
 
 ### 上线工单命令示例（写命令）
 
-通过 **SQL 上线** 提交工单；审核通过后执行。
+详见下文 **「指令级测试用例」**。
 
-**RabbitMQ**（允许 `publish`、`queue_declare`、`exchange_declare`、`queue_bind`、`purge` / `queue_purge`、`queue_delete`）：
+## 指令级测试用例（输入 → 预期）
+
+公共前置：
+
+| 项 | 值 |
+| --- | --- |
+| 查询页 | 实例 `rabbitmq_local` 库 `/`，或 `mqtt_local` 库 `default` |
+| 上线页 | 资源组先选 `mq-test`，再选同上实例/库 |
+| 登录 | `archer` / `archer` |
+
+说明：查询页「拦截」指提交后提示类似 **禁止执行该命令！**（`bad_query`）；上线「检测失败」指检测结果 `errlevel=2`，文案为 **禁止使用查询命令！** 或 **禁止执行该命令！**。
+
+---
+
+### A. 在线查询 · RabbitMQ（实例 `rabbitmq_local`，库 `/`）
+
+| # | 输入（整行粘贴） | 预期结果 |
+| --- | --- | --- |
+| A1 | `help` | 成功。结果表列名 `命令`，含 `get queue=<name> [count=N]`、`list queues`、`publish …`、`declare …`、`purge …`、`delete …`、`help` 等 rabbitmqadmin 子集示例。 |
+| A2 | `list queues` | 失败，错误含 `list queues 需要 RabbitMQ Management API`（说明已连上 broker，但 v1 未启用 Mgmt API）。 |
+| A3 | `get queue=archery_test_queue count=1` | **异步**长等待。**队列空**：默认约 60s 后 0 行，warning 含「获取等待 … 秒超时，未收到消息」。**队列有消息**（先跑 B2）：1 行，列 `queue` / `routing_key` / `body`；`body` 含写入内容；消息会被 ack 消费掉。 |
+| A4 | `publish routing_key=archery_test_queue payload="x"` | **拦截**：禁止执行该命令！（查询白名单不含写命令） |
+| A5 | `declare queue name=archery_test_queue` | **拦截**：禁止执行该命令！ |
+| A6 | `get` | **拦截**：格式错误（如 `get requires queue`）。 |
+| A7 | `basic_get archery_test_queue` | **拦截**：旧 DSL，无法解析 / 禁止执行。 |
+| A8 | `SELECT 1` | **拦截**：禁止执行该命令！ |
+
+推荐顺序：A1 → A4（确认拦截）→ 上线 B2 建队写入 → 回查询 A3。
+
+---
+
+### B. SQL 上线 · RabbitMQ（资源组 `mq-test`，实例 `rabbitmq_local`，库 `/`）
+
+检测通过后审核/执行；本地 `Q_CLUSTER.sync=True` 时可能自动通过，以实际 UI 为准。
+
+| # | 工单 SQL 内容（可多行） | 检测预期 | 执行预期 |
+| --- | --- | --- | --- |
+| B1 | `declare queue name=archery_test_queue` | 通过：`Audit completed`，提示「暂不支持显示影响行数」 | 成功：`Execute Successfully`；broker 上出现队列 `archery_test_queue`。 |
+| B2 | ```text
+declare queue name=archery_test_queue
+publish routing_key=archery_test_queue payload="hello from archery"
+``` | 两行均通过 | 两行均 `Execute Successfully`；向默认 exchange 按 routing_key=`archery_test_queue` 投递 body=`hello from archery`。 |
+| B3 | `publish routing_key=archery_test_queue payload="msg-2"` | 通过 | 成功；查询页再 `get queue=archery_test_queue count=1` 可读到 `msg-2`（若队列未被别的消费者掏空）。 |
+| B4 | `declare exchange name=archery_test_ex type=topic` | 通过 | 成功；创建 topic 类型交换机（省略 type 时默认 `direct`）。 |
+| B5 | ```text
+declare queue name=archery_test_q2
+declare binding queue=archery_test_q2 exchange=archery_test_ex routing_key=archery.rk
+publish exchange=archery_test_ex routing_key=archery.rk payload="bound-msg"
+``` | 三行均通过（需先有 B4 的 exchange，或本工单前加 `declare exchange`） | 全部成功；向绑定队列投递。 |
+| B6 | `purge queue name=archery_test_queue` | 通过 | 成功；队列消息被清空。 |
+| B7 | `delete queue name=archery_test_q2` | 通过 | 成功；队列删除（勿删仍要继续测的 `archery_test_queue`，或测完再删）。 |
+| B8 | `get queue=archery_test_queue count=1` | **失败**：`Audit failed`，**禁止使用查询命令！** | 不应执行 |
+| B9 | `help` | **失败**：禁止使用查询命令！ | 不应执行 |
+| B10 | `sub -t archery/test` | **失败**：禁止执行该命令！（非写白名单） | 不应执行 |
+| B11 | `publish routing_key=archery_test_queue` | **失败**：禁止执行该命令！（缺 `payload=`） | 不应执行 |
+
+`publish` 格式（上线，rabbitmqadmin 风格）：
 
 ```text
-queue_declare archery_test_queue
-publish "" archery_test_queue "hello from archery"
+publish routing_key=<name> payload=<body> [exchange=<name>]
 ```
 
-**MQTT**（允许 `publish`）：
+默认交换机投递到队列：省略 `exchange=`（内部默认 `""`），`routing_key` 用队列名。
+
+---
+
+### C. 在线查询 · MQTT（实例 `mqtt_local`，库 `default`）
+
+| # | 输入 | 预期结果 |
+| --- | --- | --- |
+| C1 | `help` | 成功。列 `命令`，3 行：`sub -t <topic> [-q N] [-C N]`、`pub -t <topic> -m <payload> [-q N]`、`help`。 |
+| C2 | `sub -t archery/test -C 10` | **异步**长等待。列 `topic` / `payload` / `qos` / `retain`。**窗口内无消息**：默认约 60s 后 0 行，warning 含「订阅等待 … 秒超时，未收到消息」。**有消息**（先跑 D1 或外部发布）：最多 10 行，`topic` 匹配，`payload` 为消息体。 |
+| C3 | `sub -t archery/test` | 成功；默认 `-C 10`（行为同 C2）。 |
+| C4 | `sub -t archery/test -C 2` | 成功；最多收 2 条（`-C` 硬上限 100）。 |
+| C5 | `pub -t archery/test -m "x"` | **拦截**：禁止执行该命令！ |
+| C6 | `sub` | **拦截**：格式错误（如 `missing topic value` / `unknown mqtt action`）。 |
+| C7 | `sub -t archery/test -C 0` | **拦截**：格式或数值错误。 |
+| C8 | `help foo` | **拦截**：格式错误（`unknown flag: foo` 一类）。 |
+| C9 | `get queue=q` | **拦截**：禁止执行该命令！ |
+
+有消息验证建议：先提交上线 D1，再立刻在查询页跑 C2（订阅窗口内发消息更稳：先开 C2，另开上线 D1 或外部 `mqttx pub` / `mosquitto_pub`）。
+
+---
+
+### D. SQL 上线 · MQTT（资源组 `mq-test`，实例 `mqtt_local`，库 `default`）
+
+| # | 工单 SQL 内容 | 检测预期 | 执行预期 |
+| --- | --- | --- | --- |
+| D1 | `pub -t archery/test -m "hello from archery"` | 通过：`Audit completed`，「暂不支持显示影响行数」 | 成功：`Execute Successfully`；topic=`archery/test`，payload 如上，默认 qos=0。 |
+| D2 | `pub -t archery/test -m "qos-one" -q 1` | 通过 | 成功；qos=1 发布。 |
+| D3 | ```text
+pub -t archery/test -m "line-1"
+pub -t archery/test -m "line-2" -q 0
+``` | 两行均通过 | 两行均执行成功。 |
+| D4 | `sub -t archery/test -C 10` | **失败**：禁止使用查询命令！ | 不应执行 |
+| D5 | `help` | **失败**：禁止使用查询命令！ | 不应执行 |
+| D6 | `pub -t archery/test` | **失败**：禁止执行该命令！（缺 `-m`） | 不应执行 |
+| D7 | `pub -t archery/test -m "x" -q 9` | **失败**：禁止执行该命令！（qos 非法；合法为 0/1/2） | 不应执行 |
+| D8 | `declare queue name=x` | **失败**：禁止执行该命令！ | 不应执行 |
+
+`pub` 格式（上线，MQTTX 风格）：
 
 ```text
-publish archery/test "hello from archery"
+pub -t <topic> -m <payload> [-q N]
 ```
 
-工单中提交只读命令应被拒绝（如 `basic_get`、`subscribe`）。
+`-q` 可选，默认 `0`，仅允许 `0` / `1` / `2`。
+
+---
+
+### E. 推荐最小回归路径（约 10 分钟）
+
+1. 查询 RabbitMQ：`help`（A1）→ `publish routing_key=… payload=…` 应拦截（A4）
+2. 上线 RabbitMQ：粘贴 B2 整段 → 检测通过 → 执行成功
+3. 查询 RabbitMQ：`get queue=archery_test_queue count=1`（A3 读到 `hello from archery`）
+4. 查询 MQTT：`help`（C1）→ `pub -t … -m …` 应拦截（C5）
+5. 上线 MQTT：D1 → 执行成功
+6. 查询 MQTT：`sub -t archery/test`（C2/C3；若空结果可再发一条 D1 后立刻订阅）
+7. 上线反向：B8、D4 检测失败
+
+命令速查（连接参数取自实例，命令中可省略 host/port/user）：
+
+```text
+sub -t archery/test
+pub -t archery/test -m "hello from archery"
+get queue=archery_test_queue count=1
+publish routing_key=archery_test_queue payload="hello from archery"
+```
 
 ### 可选：引擎集成冒烟测试
 
@@ -230,12 +324,131 @@ pytest sql/engines/test_mq_integration.py -v
 
 有 broker 且无密码缺失时明文用例应 PASS；mTLS 用例在 `ARCHERY_TEST_MQ_CA/CERT/KEY` 与 TLS 端口未就绪时按预期 skip。
 
+## 手工 UI 测试步骤（明文，推荐按此顺序）
+
+以下假设已用 `setup_local.py` 种子过（用户 `archer`、资源组 `mq-test`、实例 `mqtt_local` / `rabbitmq_local`，且已打 `can_read` + `can_write` 标签）。
+
+### 0. 启动依赖
+
+在 Windows PowerShell：
+
+```powershell
+# 1) 启动 broker
+wsl -u root -e bash -lc 'systemctl start docker'
+wsl -e bash -lc 'docker start rabbitmq_3_13 emqx 2>/dev/null; docker ps --filter name=rabbitmq_3_13 --filter name=emqx --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
+
+# 2)（可选）确认明文连接
+wsl -e bash -lc "cd /mnt/e/github/Archery; source .venv-mq/bin/activate; export ARCHERY_TEST_RABBITMQ_USER=archery_test ARCHERY_TEST_RABBITMQ_PASSWORD='ArcheryTest1!' ARCHERY_TEST_RABBITMQ_VHOST=/; unset ARCHERY_TEST_MQTT_USER ARCHERY_TEST_MQTT_PASSWORD; python3 scripts/mq_env/verify_auth.py"
+
+# 3) 若尚未种子或实例下拉为空，重新种子（会补 can_read/can_write）
+wsl -e bash -lc 'cd /mnt/e/github/Archery; source .venv-mq/bin/activate; export PYTHONPATH=/mnt/e/github/Archery SECRET_KEY=local-mq-test-secret-key-change-me-please-32chars-plus; python scripts/mq_env/setup_local.py'
+
+# 4) 启动 Archery（另开一个窗口保持运行）
+wsl -e bash -lc 'bash /mnt/e/github/Archery/scripts/mq_env/start_runserver.sh'
+```
+
+浏览器打开：<http://127.0.0.1:8000/login/>  
+账号：**`archer` / `archer`**
+
+### 1. 确认实例标签与连通（约 2 分钟）
+
+1. 打开 <http://127.0.0.1:8000/admin/sql/instance/>（或菜单 **实例管理**）。
+2. 点开 `mqtt_local`、`rabbitmq_local`，确认：
+   - 已关联资源组 **`mq-test`**
+   - 标签勾选 **`支持查询 (can_read)`**、**`支持上线 (can_write)`**
+3. 对两个实例分别点 **测试连接**，应成功。  
+   失败时先看第 0 步容器是否 `Up`、端口 `5672` / `1883`、RabbitMQ 用户是否为 `archery_test`。
+
+### 2. SQL 在线查询（只读 / 短拉取）
+
+1. 打开菜单 **SQL 查询**（路径一般为 `/sqlquery/`）。
+2. **选择实例** 下拉应能看到：
+   - `mqtt_local`（类型 MQTT）
+   - `rabbitmq_local`（类型 RabbitMQ）  
+   若为空：回到步骤 1 检查标签；或重跑 `setup_local.py` 后强制刷新页面（Ctrl+F5）。
+3. 选 **`rabbitmq_local`** → **选择数据库** 应为 **`/`**。
+4. 在编辑器执行（逐条）：
+
+```text
+help
+list queues
+get queue=archery_test_queue count=1
+```
+
+预期：`help` 有 rabbitmqadmin 子集说明；`list queues` 报 Mgmt API 未启用或 `get` 异步等待后返回（队列不存在时可能 0 行 + 超时 warning）。
+
+5. 同页执行写命令，应被拦截：
+
+```text
+publish routing_key=archery_test_queue payload="forbidden-on-query-page"
+```
+
+6. 改选 **`mqtt_local`** → 数据库 **`default`**，执行：
+
+```text
+help
+sub -t archery/test -C 10
+```
+
+预期：异步短订阅后返回（可能 0 条消息）；再执行 `pub -t archery/test -m "x"` 应被拦截。
+
+### 3. SQL 上线（写命令工单）
+
+> **按钮说明（易踩坑）**：「SQL提交」默认是灰色不可点的，这是产品设计，不是 MQTT bug。必须先填齐表单并点红色 **「SQL检测」**，检测接口成功返回后，「SQL提交」才会变绿可点。检测后若再改编辑器内容，提交按钮会再次灰掉，需重新检测。
+
+必填项（缺一则点「SQL检测」会弹窗，提交按钮一直灰）：
+
+| 字段 | 说明 |
+| --- | --- |
+| 上线单名称 | 必填，&lt;50 字 |
+| 资源组 | `mq-test` |
+| 实例 / 数据库 | `mqtt_local` + `default` 或 `rabbitmq_local` + `/` |
+| 审批流程 | 选组后应显示审批组名；若提示「请配置审批流程」，说明资源组未配 WorkflowAuditSetting（`setup_local.py` 会创建权限组 `mq-approver` 并挂到 `mq-test`） |
+| 可执行时间 | 可选；若填写，起止间隔须 ≥ 60 分钟 |
+
+1. 打开菜单 **SQL 上线**（路径一般为 `/submitsql/`）。
+2. 填写上线单名称，**资源组** 选 **`mq-test`**（必须先选组，实例下拉才会加载；并应出现审批流程展示）。
+3. **选择实例** 应出现 `mqtt_local` / `rabbitmq_local`；库名同上（`/` 或 `default`）。
+4. 输入命令后先点 **SQL检测**，表格出现且审核状态为 pass，再点 **SQL提交**。
+5. **RabbitMQ 工单**：实例 `rabbitmq_local`，库 `/`，SQL 内容：
+
+```text
+declare queue name=archery_test_queue
+publish routing_key=archery_test_queue payload="hello from archery"
+```
+
+提交 → 审核通过 → 执行，应成功。
+
+5. **MQTT 工单**：实例 `mqtt_local`，库 `default`，SQL 内容：
+
+```text
+pub -t archery/test -m "hello from archery"
+```
+
+提交 → 审核通过 → 执行，应成功。
+
+6. 反向校验：在上线工单里提交只读命令（如 `get queue=… count=1` 或 `sub -t …`），审核/检测阶段应拒绝。
+
+> 本地 `Q_CLUSTER.sync=True` 时审批流可能自动通过或同步执行，以你环境实际弹窗为准；关键是写命令能跑通、只读命令在上线路径被拒。
+
+### 4. 查询 ↔ 上线串联（可选）
+
+1. 用步骤 3 的 RabbitMQ `publish routing_key=…` 写入一条消息。
+2. 回到 **SQL 查询**，对同一实例执行 `get queue=archery_test_queue count=1`，应能读到刚写入的内容（或至少不再是“永远连不上”）。
+3. MQTT：一边用外部工具或另开终端往 `archery/test` 发消息，一边在查询页 `sub -t archery/test -C 10`，应能短拉取到。
+
+### 5. mTLS（证书环境就绪后再做）
+
+见上文「生成并配置测试证书」与验收清单第 5 项；当前容器默认未开 `5671`/`8883`，可跳过。
+
 ## 手工验收清单
 
 按顺序勾选；前四项为明文环境必做，第五项在 TLS 监听与证书挂载完成后执行。
 
-- [ ] **1. Admin 可创建实例** — 在 **实例配置** 中分别新建 `db_type=MQTT` 与 `db_type=RabbitMQ` 实例，字段按上文示例填写并保存无报错。
-- [ ] **2. 测试连通成功** — 两个实例均点击 **测试连接**，返回成功（失败时先确认 Docker 容器 Up、端口与凭据一致）。
-- [ ] **3. 查询页只读 / 短拉取成功，写命令被拒** — RabbitMQ 执行 `basic_get` 或 `queue_declare_passive` 有结果或空结果；MQTT 执行 `subscribe archery/test 3 10` 能短拉取；同页执行 `publish ...` 被拦截并提示禁止。
-- [ ] **4. 上线工单写命令成功** — RabbitMQ 工单 `queue_declare` + `publish` 执行成功；MQTT 工单 `publish archery/test "..."` 执行成功；工单内 `basic_get` / `subscribe` 在审核阶段被拒绝。
-- [ ] **5. （证书环境就绪时）mTLS 连通成功** — 实例启用 SSL 并填写 CA / 客户端证书与密钥；RabbitMQ `5671`、EMQX `8883` 使用测试 CA 监听后，**测试连接**、查询短拉取与工单写命令均成功；或 `verify_auth.py --tls` 与 `test_mq_integration.py` 中 mTLS 用例 PASS 而非 skip。
+- [ ] **0. 环境就绪** — broker Up；`verify_auth.py` 打印 OK；Archery 已启动；`archer` 可登录。
+- [ ] **1. 实例标签与连通** — 两实例有 `can_read`/`can_write` + 资源组 `mq-test`；测试连接成功。
+- [ ] **2. 查询页下拉有数据** — 能选到实例与库（`/` / `default`）。
+- [ ] **3. 查询页只读成功、写命令被拒** — RabbitMQ `get queue=…` / `list queues`；MQTT `sub -t …`；`pub` / `publish` 被拦截。
+- [ ] **4. 上线工单写命令成功** — 先选 `mq-test`；RabbitMQ `declare`+`publish`；MQTT `pub -t … -m …`；工单内只读命令被拒。
+- [ ] **5. （可选）串联验证** — 上线写入后查询页能读到。
+- [ ] **6. （证书环境就绪时）mTLS** — 见上文 TLS 说明。

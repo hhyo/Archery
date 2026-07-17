@@ -3,6 +3,8 @@
 日期：2026-07-17  
 状态：草稿（待用户审阅）
 
+> **命令语法**以 [2026-07-18 设计](2026-07-18-mq-familiar-cli-async-query-design.md) 为准（MQTTX / rabbitmqadmin 子集）；本文其余章节（实例、认证、安全边界）仍有效。
+
 ## 1. 背景与目标
 
 Archery 通过 `EngineBase` + `AVAILABLE_ENGINES` / `ENABLED_ENGINES` + `Instance.db_type` 扩展数据源。现有引擎含 Redis、Memcached 等非 SQL 类型，但 **不支持 MQTT 与 RabbitMQ**。
