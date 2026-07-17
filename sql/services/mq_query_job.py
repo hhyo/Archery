@@ -11,8 +11,8 @@ from django_q.tasks import async_task
 from common.config import SysConfig
 from sql.engines import get_engine
 from sql.engines.mq_cli import parse_mqtt_line, parse_rabbitmq_line
-from sql.engines.mqtt import MAX_SUBSCRIBE_COUNT
-from sql.engines.rabbitmq import MAX_GET_COUNT
+from sql.engines.mqtt import MAX_SUBSCRIBE_COUNT, MqttEngine
+from sql.engines.rabbitmq import MAX_GET_COUNT, RabbitmqEngine
 from sql.models import Instance
 from sql.utils.resource_group import user_instances
 
@@ -26,6 +26,10 @@ JOB_CACHE_TTL = DEFAULT_TIMEOUT_MAX_SEC + 600
 
 def job_cache_key(job_id: str) -> str:
     return f"{CACHE_KEY_PREFIX}{job_id}"
+
+
+def cancel_cache_key(job_id: str) -> str:
+    return f"{CACHE_KEY_PREFIX}{job_id}:cancel"
 
 
 def _resolve_timeout_sec() -> tuple[int, int]:
@@ -71,6 +75,32 @@ def _save_job(job: dict, ttl: int | None = None) -> dict:
     return job
 
 
+def _update_job(job_id: str, mutator, ttl: int | None = None) -> dict:
+    """Re-get job from cache, apply mutator in place, then set.
+
+    Reduces lost-update races between cancel and on_message by always
+    merging against the latest cached payload before write.
+    """
+    if ttl is None:
+        _, ttl = _resolve_timeout_sec()
+    key = job_cache_key(job_id)
+    current = cache.get(key)
+    if not current:
+        raise KeyError(f"job not found: {job_id}")
+    mutator(current)
+    cache.set(key, current, ttl)
+    return current
+
+
+def _is_cancelled(job_id: str, job: dict | None = None) -> bool:
+    if cache.get(cancel_cache_key(job_id)):
+        return True
+    if job is not None and job.get("cancel"):
+        return True
+    current = cache.get(job_cache_key(job_id))
+    return bool(current and current.get("cancel"))
+
+
 def create_mq_query_job(user, instance_id, db_name, sql_line) -> dict:
     instance = _get_readable_instance(user, instance_id)
     if instance.db_type not in ("mqtt", "rabbitmq"):
@@ -84,10 +114,12 @@ def create_mq_query_job(user, instance_id, db_name, sql_line) -> dict:
         cmd = parse_mqtt_line(line)
         if cmd.action != "sub":
             raise ValueError("仅 sub 支持异步任务")
+        MqttEngine._validate_query_command(cmd)
     else:
         cmd = parse_rabbitmq_line(line)
         if cmd.action != "get":
             raise ValueError("仅 get 支持异步任务")
+        RabbitmqEngine._validate_query_command(cmd)
 
     timeout_sec, ttl = _resolve_timeout_sec()
     job_id = uuid.uuid4().hex
@@ -119,12 +151,14 @@ def get_mq_query_job(user, job_id: str) -> dict:
 def cancel_mq_query_job(user, job_id: str) -> dict:
     job = _load_job(job_id)
     _assert_job_owner(user, job)
-    job["cancel"] = True
-    if job.get("status") in ("pending", "running", "partial"):
-        # Flag only; run_mq_query_job finalizes status=cancelled and keeps rows.
-        pass
     _, ttl = _resolve_timeout_sec()
-    return _save_job(job, ttl)
+    # Dedicated cancel key so cancel_check survives job payload RMW races.
+    cache.set(cancel_cache_key(job_id), True, ttl)
+
+    def mark_cancel(current):
+        current["cancel"] = True
+
+    return _update_job(job_id, mark_cancel, ttl)
 
 
 def run_mq_query_job(job_id: str) -> None:
@@ -145,16 +179,17 @@ def run_mq_query_job(job_id: str) -> None:
         timeout_sec = int(job.get("timeout_sec") or DEFAULT_TIMEOUT_SEC)
 
         def cancel_check():
-            current = cache.get(key)
-            return bool(current and current.get("cancel"))
+            return _is_cancelled(job_id)
 
         def on_message(row):
-            current = cache.get(key)
-            if not current:
+            def append_row(current):
+                current["rows"].append(row)
+                current["status"] = "partial"
+
+            try:
+                _update_job(job_id, append_row, ttl)
+            except KeyError:
                 return
-            current["rows"].append(row)
-            current["status"] = "partial"
-            cache.set(key, current, ttl)
 
         if instance.db_type == "mqtt":
             cmd = parse_mqtt_line(line)
@@ -184,22 +219,35 @@ def run_mq_query_job(job_id: str) -> None:
         else:
             raise ValueError("仅 MQTT/RabbitMQ 支持异步查询任务")
 
-        current = cache.get(key) or job
-        current["column_list"] = list(result.column_list or [])
-        # Prefer engine rows as authoritative; fall back to incremental cache rows.
-        current["rows"] = list(result.rows if result.rows is not None else current.get("rows") or [])
-        current["warning"] = result.warning or ""
-        current["error"] = result.error or ""
-        if current.get("cancel"):
-            current["status"] = "cancelled"
-        elif result.error:
-            current["status"] = "failed"
-        else:
-            current["status"] = "done"
-        _save_job(current, ttl)
+        def finalize(current):
+            current["column_list"] = list(result.column_list or [])
+            # Prefer engine rows as authoritative; fall back to incremental cache rows.
+            current["rows"] = list(
+                result.rows if result.rows is not None else current.get("rows") or []
+            )
+            current["warning"] = result.warning or ""
+            current["error"] = result.error or ""
+            if _is_cancelled(job_id, current):
+                current["cancel"] = True
+                current["status"] = "cancelled"
+            elif result.error:
+                current["status"] = "failed"
+            else:
+                current["status"] = "done"
+
+        _update_job(job_id, finalize, ttl)
     except Exception as exc:
         logger.warning("mq query job failed: %s %s", job_id, exc)
-        current = cache.get(key) or job
-        current["status"] = "failed"
-        current["error"] = str(exc)
-        _save_job(current, ttl)
+
+        def mark_failed(current):
+            current["error"] = str(exc)
+            if _is_cancelled(job_id, current):
+                current["cancel"] = True
+                current["status"] = "cancelled"
+            else:
+                current["status"] = "failed"
+
+        try:
+            _update_job(job_id, mark_failed, ttl)
+        except KeyError:
+            pass

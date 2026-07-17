@@ -83,6 +83,18 @@ def test_create_rejects_non_async_actions(mqtt_instance, rabbitmq_instance, quer
 
 
 @pytest.mark.django_db
+def test_create_validates_query_command(mqtt_instance, rabbitmq_instance, query_user):
+    with pytest.raises(ValueError, match="sub requires topic"):
+        svc.create_mq_query_job(query_user, mqtt_instance.id, "default", "sub")
+    with pytest.raises(ValueError, match="count 必须为正整数"):
+        svc.create_mq_query_job(
+            query_user, mqtt_instance.id, "default", "sub -t t -C 0"
+        )
+    with pytest.raises(ValueError, match="get requires queue"):
+        svc.create_mq_query_job(query_user, rabbitmq_instance.id, "/", "get")
+
+
+@pytest.mark.django_db
 def test_create_writes_pending_job_and_queues_task(
     mqtt_instance, query_user, monkeypatch
 ):
@@ -248,3 +260,26 @@ def test_get_rejects_other_user(mqtt_instance, query_user, django_user_model, mo
         svc.get_mq_query_job(other, job_id)
     with pytest.raises(PermissionError):
         svc.cancel_mq_query_job(other, job_id)
+
+
+@pytest.mark.django_db
+def test_cancel_key_survives_stale_job_overwrite(
+    mqtt_instance, query_user, monkeypatch
+):
+    """Dedicated cancel key keeps cancel_check true even if job payload loses cancel."""
+    monkeypatch.setattr(svc, "async_task", lambda *a, **k: None)
+    job_id = svc.create_mq_query_job(
+        query_user, mqtt_instance.id, "default", "sub -t demo"
+    )["job_id"]
+    svc.cancel_mq_query_job(query_user, job_id)
+
+    # Simulate a racing on_message that overwrote cancel=False onto the job dict.
+    key = svc.job_cache_key(job_id)
+    stale = cache.get(key)
+    stale["cancel"] = False
+    stale["status"] = "partial"
+    stale["rows"] = [["demo", "x", 0, False]]
+    cache.set(key, stale, svc.JOB_CACHE_TTL)
+
+    assert cache.get(svc.cancel_cache_key(job_id)) is True
+    assert svc._is_cancelled(job_id) is True

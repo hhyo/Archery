@@ -38,8 +38,9 @@ def mqtt_instance(db):
 
 @pytest.fixture
 def query_user(normal_user):
-    perm = Permission.objects.get(codename="query_all_instances")
-    normal_user.user_permissions.add(perm)
+    for codename in ("query_all_instances", "query_submit"):
+        perm = Permission.objects.get(codename=codename)
+        normal_user.user_permissions.add(perm)
     return normal_user
 
 
@@ -223,6 +224,37 @@ def test_create_mq_job_service_value_error(monkeypatch, api_client, super_user):
     )
     assert response.status_code == 400
     assert "MQTT" in response.json()["msg"]
+
+
+@pytest.mark.django_db
+def test_mq_job_apis_require_query_submit(
+    monkeypatch, api_client, normal_user, mqtt_instance
+):
+    """Logged-in user without query_submit cannot create/detail/cancel."""
+    perm = Permission.objects.get(codename="query_all_instances")
+    normal_user.user_permissions.add(perm)
+    monkeypatch.setattr(
+        "sql.services.mq_query_job.async_task", lambda *a, **k: None
+    )
+
+    api_client.force_authenticate(user=normal_user)
+    create_resp = api_client.post(
+        MQ_JOBS,
+        {
+            "instance_id": mqtt_instance.id,
+            "db_name": "default",
+            "sql_line": "sub -t demo/topic -C 1",
+        },
+        format="json",
+    )
+    assert create_resp.status_code == 403
+    assert "无执行查询权限" in create_resp.json()["msg"]
+
+    detail_resp = api_client.get(MQ_JOB_DETAIL.format(job_id="x"))
+    assert detail_resp.status_code == 403
+
+    cancel_resp = api_client.post(MQ_JOB_CANCEL.format(job_id="x"), format="json")
+    assert cancel_resp.status_code == 403
 
 
 @pytest.mark.django_db

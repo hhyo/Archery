@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import shlex
 from dataclasses import dataclass
-from typing import Iterable
 
 MQTT_CONN_FLAGS = frozenset(
     {
@@ -67,12 +66,6 @@ def _consume_flag_value(tokens: list[str], index: int) -> int:
     if index + 1 < len(tokens) and not tokens[index + 1].startswith("-"):
         return index + 2
     return index + 1
-
-
-def _skip_conn_flags(tokens: list[str], index: int, conn_flags: Iterable[str]) -> int:
-    while index < len(tokens) and tokens[index] in conn_flags:
-        index = _consume_flag_value(tokens, index)
-    return index
 
 
 def _parse_kv(token: str) -> tuple[str, str] | None:

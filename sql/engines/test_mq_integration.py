@@ -1,5 +1,9 @@
 # -*- coding: UTF-8 -*-
-"""Optional smoke tests against live RabbitMQ and MQTT brokers."""
+"""Optional smoke tests against live RabbitMQ and MQTT brokers.
+
+Uses MQTTX / rabbitmqadmin subset syntax (same as engines).
+Requires brokers reachable and env vars; otherwise tests skip.
+"""
 import os
 import socket
 import time
@@ -123,26 +127,33 @@ def _rabbitmq_roundtrip(engine):
         write_result = engine.execute_workflow(
             _workflow(
                 engine.db_name,
-                f'queue_declare {queue}\npublish "" {queue} {payload}',
+                f"declare queue name={queue}\n"
+                f'publish routing_key={queue} payload="{payload}"',
             )
         )
         assert not write_result.error, write_result.error
 
-        read_result = engine.query(db_name=engine.db_name, sql=f"basic_get {queue}")
+        read_result = engine.query(
+            db_name=engine.db_name, sql=f"get queue={queue} count=1"
+        )
         assert not read_result.error, read_result.error
         assert read_result.rows == [[queue, queue, payload]]
     finally:
-        engine.execute_workflow(_workflow(engine.db_name, f"queue_delete {queue}"))
+        engine.execute_workflow(
+            _workflow(engine.db_name, f"delete queue name={queue}")
+        )
 
 
 def _mqtt_roundtrip(engine):
     topic = f"archery/integration/{uuid.uuid4().hex}"
     payload = f"mqtt-{uuid.uuid4().hex}"
     with ThreadPoolExecutor(max_workers=1) as executor:
-        subscribed = executor.submit(engine.query, sql=f"subscribe {topic} 5 1")
+        subscribed = executor.submit(
+            engine.query, sql=f"sub -t {topic} -C 1", timeout_sec=5
+        )
         time.sleep(0.5)
         write_result = engine.execute_workflow(
-            _workflow(engine.db_name, f"publish {topic} {payload}")
+            _workflow(engine.db_name, f'pub -t {topic} -m "{payload}"')
         )
         assert not write_result.error, write_result.error
         read_result = subscribed.result(timeout=7)

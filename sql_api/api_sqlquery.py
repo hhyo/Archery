@@ -144,11 +144,22 @@ def _public_mq_job_payload(job: dict) -> dict:
     return payload
 
 
+def _deny_without_query_submit(user):
+    if user.is_superuser or user.has_perm("sql.query_submit"):
+        return None
+    return Response(
+        {"msg": "无执行查询权限"}, status=status.HTTP_403_FORBIDDEN
+    )
+
+
 class SQLQueryMqJobListCreateView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(summary="创建 MQ 异步查询任务")
     def post(self, request):
+        denied = _deny_without_query_submit(request.user)
+        if denied is not None:
+            return denied
         serializer = MqQueryJobCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
@@ -180,6 +191,9 @@ class SQLQueryMqJobDetailView(views.APIView):
 
     @extend_schema(summary="查询 MQ 异步任务状态")
     def get(self, request, job_id):
+        denied = _deny_without_query_submit(request.user)
+        if denied is not None:
+            return denied
         try:
             job = get_mq_query_job(user=request.user, job_id=job_id)
         except KeyError:
@@ -194,6 +208,9 @@ class SQLQueryMqJobCancelView(views.APIView):
 
     @extend_schema(summary="取消 MQ 异步查询任务")
     def post(self, request, job_id):
+        denied = _deny_without_query_submit(request.user)
+        if denied is not None:
+            return denied
         try:
             job = cancel_mq_query_job(user=request.user, job_id=job_id)
         except KeyError:

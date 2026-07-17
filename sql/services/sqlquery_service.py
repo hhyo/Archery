@@ -11,12 +11,36 @@ from django.db import close_old_connections, connection
 from common.config import SysConfig
 from common.utils.timer import FuncTimer
 from sql.engines import get_engine
+from sql.engines.mq_cli import parse_mqtt_line, parse_rabbitmq_line, split_mq_lines
 from sql.models import Instance, QueryLog
 from sql.query_privileges import query_priv_check
 from sql.utils.resource_group import user_instances
 from sql.utils.tasks import add_kill_conn_schedule, del_schedule
 
 logger = logging.getLogger("default")
+
+MQ_ASYNC_EXECUTE_HINT = (
+    "MQTT/RabbitMQ 的 sub/get 请使用异步接口 /api/v1/sqlquery/mq-jobs/"
+)
+
+
+def _reject_sync_mq_long_wait(instance, sql_content):
+    """Block sync execute for MQ long-wait commands (sub/get)."""
+    db_type = getattr(instance, "db_type", None)
+    if db_type not in ("mqtt", "rabbitmq"):
+        return None
+    try:
+        lines = split_mq_lines(sql_content)
+        for line in lines:
+            if db_type == "mqtt":
+                if parse_mqtt_line(line).action == "sub":
+                    return MQ_ASYNC_EXECUTE_HINT
+            elif parse_rabbitmq_line(line).action == "get":
+                return MQ_ASYNC_EXECUTE_HINT
+    except ValueError:
+        # Let query_check / engine surface parse errors.
+        return None
+    return None
 
 
 def execute_sql_query(
@@ -64,6 +88,12 @@ def execute_sql_query(
             result["msg"] = query_check_info.get("msg")
             return result
         sql_content = query_check_info["filtered_sql"]
+
+        sync_reject = _reject_sync_mq_long_wait(instance, sql_content)
+        if sync_reject:
+            result["status"] = 1
+            result["msg"] = sync_reject
+            return result
 
         priv_check_info = query_priv_check(
             user, instance, db_name, sql_content, limit_num

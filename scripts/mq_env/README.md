@@ -419,7 +419,7 @@ publish routing_key=archery_test_queue payload="hello from archery"
 
 提交 → 审核通过 → 执行，应成功。
 
-5. **MQTT 工单**：实例 `mqtt_local`，库 `default`，SQL 内容：
+6. **MQTT 工单**：实例 `mqtt_local`，库 `default`，SQL 内容：
 
 ```text
 pub -t archery/test -m "hello from archery"
@@ -427,7 +427,7 @@ pub -t archery/test -m "hello from archery"
 
 提交 → 审核通过 → 执行，应成功。
 
-6. 反向校验：在上线工单里提交只读命令（如 `get queue=… count=1` 或 `sub -t …`），审核/检测阶段应拒绝。
+7. 反向校验：在上线工单里提交只读命令（如 `get queue=… count=1` 或 `sub -t …`），审核/检测阶段应拒绝。
 
 > 本地 `Q_CLUSTER.sync=True` 时审批流可能自动通过或同步执行，以你环境实际弹窗为准；关键是写命令能跑通、只读命令在上线路径被拒。
 
