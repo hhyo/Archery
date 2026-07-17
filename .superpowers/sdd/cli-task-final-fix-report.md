@@ -2,7 +2,8 @@
 
 **Branch:** `feat/mqtt-rabbitmq-engine`  
 **Date:** 2026-07-18  
-**Review:** `.superpowers/sdd/cli-final-review.md`
+**Review:** `.superpowers/sdd/cli-final-review.md`  
+**Commit:** `2b4d203`
 
 ## Status
 
