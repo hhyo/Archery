@@ -393,6 +393,20 @@ class SqlQueryFavoriteSerializer(serializers.Serializer):
         return str(value).lower() == "true"
 
 
+class MqQueryJobCreateSerializer(serializers.Serializer):
+    instance_id = serializers.IntegerField(required=False)
+    instance_name = serializers.CharField(required=False, allow_blank=True)
+    db_name = serializers.CharField(required=False, allow_blank=True, default="")
+    sql_line = serializers.CharField()
+
+    def validate(self, attrs):
+        if not attrs.get("instance_id") and not attrs.get("instance_name"):
+            raise serializers.ValidationError(
+                "instance_id 或 instance_name 必须提供一个"
+            )
+        return attrs
+
+
 class ExecuteCheckSerializer(serializers.Serializer):
     instance_id = serializers.IntegerField(label="实例id")
     db_name = serializers.CharField(label="数据库名")
