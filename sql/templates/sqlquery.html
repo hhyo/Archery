@@ -700,8 +700,12 @@
             }
         );
 
-        //先做表单验证，验证成功再成功提交查询请求
+        //先做表单验证，验证成功再成功提交查询请求；MQ 异步任务进行中时点击为停止/取消
         $("#btn-sqlquery").click(function () {
+                if ($(this).data('mq-running')) {
+                    cancelAllMqJobs();
+                    return;
+                }
                 dosqlquery();
             }
         );
@@ -1047,9 +1051,311 @@
             }
         }
 
+        // ---- MQ 异步查询（mqtt sub / rabbitmq get）：创建 job、轮询增量、离开页取消 ----
+        var mqJobs = {};
+        var mqPollTimers = {};
+
+        function getSelectedDbType() {
+            var id = ($('#instance_name :selected').parent().attr('id') || '');
+            return id.replace(/^optgroup-/, '');
+        }
+
+        function isMqEngine(dbType) {
+            return dbType === 'mqtt' || dbType === 'rabbitmq';
+        }
+
+        function splitMqEditorLines(sql) {
+            var lines = [];
+            String(sql || '').split(/\r?\n/).forEach(function (line) {
+                var s = line.trim();
+                if (!s || s.charAt(0) === '#') {
+                    return;
+                }
+                lines.push(s);
+            });
+            return lines;
+        }
+
+        function isMqAsyncLine(line, dbType) {
+            if (dbType === 'mqtt') {
+                return /^(mqttx\s+)?sub\b/i.test(line);
+            }
+            if (dbType === 'rabbitmq') {
+                return /^(rabbitmqadmin\s+)?get\b/i.test(line);
+            }
+            return false;
+        }
+
+        function setMqStopMode(on) {
+            var $btn = $('#btn-sqlquery');
+            if (on) {
+                $btn.data('mq-running', true);
+                $btn.removeClass('disabled btn-success').addClass('btn-danger');
+                $btn.prop('disabled', false);
+                $btn.val('停止');
+            } else {
+                $btn.data('mq-running', false);
+                $btn.removeClass('btn-danger disabled').addClass('btn-success');
+                $btn.val('SQL查询');
+            }
+        }
+
+        function finishMqQuerySession() {
+            setMqStopMode(false);
+            $('input[type=button]').removeClass('disabled');
+            $('input[type=button]').prop('disabled', false);
+            optgroup_control();
+        }
+
+        function hasActiveMqJobs() {
+            return Object.keys(mqJobs).length > 0;
+        }
+
+        function display_mq_job_result(job, tabN) {
+            var n = tabN;
+            if (job.error || job.status === 'failed') {
+                $("#query_result" + n).bootstrapTable('destroy').bootstrapTable({
+                    escape: false,
+                    columns: [{field: 'error', title: 'Error'}],
+                    data: [{error: job.error || '任务失败'}]
+                });
+                $("#time" + n).text(job.status || 'failed');
+                $("#masking_time" + n).text('-');
+                return;
+            }
+            var columns = [];
+            var columnList = job.column_list || [];
+            $.each(columnList, function (i, column) {
+                columns.push({
+                    "field": i,
+                    "title": column,
+                    "sortable": true,
+                    formatter: function (value) {
+                        if (value instanceof Array || value instanceof Object) {
+                            return JSON.stringify(value);
+                        }
+                        return value;
+                    }
+                });
+            });
+            if (columns.length === 0) {
+                columns = [{"field": "msg", "title": "Status"}];
+                var statusMsg = job.status || 'pending';
+                if (job.warning) {
+                    statusMsg += ' | ' + job.warning;
+                }
+                $("#query_result" + n).bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    data: [{"msg": statusMsg}],
+                    columns: columns,
+                    locale: 'zh-CN'
+                });
+            } else {
+                $("#query_result" + n).bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    data: job.rows || [],
+                    columns: columns,
+                    undefinedText: '(null)',
+                    showColumns: true,
+                    striped: true,
+                    pagination: true,
+                    pageSize: 30,
+                    pageList: [30, 50, 100, 500, 1000],
+                    search: true,
+                    strictSearch: false,
+                    locale: 'zh-CN'
+                });
+            }
+            var timeLabel = job.status || '';
+            if (job.warning) {
+                timeLabel += (timeLabel ? ' | ' : '') + job.warning;
+            }
+            $("#time" + n).text(timeLabel);
+            $("#masking_time" + n).text('-');
+        }
+
+        function cancelMqJob(jobId, keepalive) {
+            var opts = {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {'X-CSRFToken': getCookie('csrftoken')}
+            };
+            if (keepalive) {
+                opts.keepalive = true;
+            }
+            try {
+                fetch('/api/v1/sqlquery/mq-jobs/' + jobId + '/cancel/', opts);
+            } catch (e) {
+                // 页面卸载时忽略
+            }
+        }
+
+        function cancelAllMqJobs() {
+            Object.keys(mqJobs).forEach(function (jobId) {
+                cancelMqJob(jobId, false);
+            });
+        }
+
+        function onPageLeaveCancelMqJobs() {
+            Object.keys(mqJobs).forEach(function (jobId) {
+                if (mqPollTimers[jobId]) {
+                    clearInterval(mqPollTimers[jobId]);
+                    delete mqPollTimers[jobId];
+                }
+                cancelMqJob(jobId, true);
+            });
+            mqJobs = {};
+            mqPollTimers = {};
+        }
+
+        window.addEventListener('pagehide', onPageLeaveCancelMqJobs);
+        window.addEventListener('beforeunload', onPageLeaveCancelMqJobs);
+
+        function startMqPoll(jobId) {
+            function tick() {
+                if (!mqJobs[jobId]) {
+                    return;
+                }
+                $.ajax({
+                    type: "get",
+                    url: "/api/v1/sqlquery/mq-jobs/" + jobId + "/",
+                    dataType: "json"
+                }).done(function (job) {
+                    if (!mqJobs[jobId]) {
+                        return;
+                    }
+                    var meta = mqJobs[jobId];
+                    var rowCount = (job.rows || []).length;
+                    var refreshStatuses = {
+                        partial: true,
+                        done: true,
+                        cancelled: true,
+                        failed: true
+                    };
+                    if (refreshStatuses[job.status]) {
+                        if (rowCount !== meta.lastRows ||
+                            job.status !== meta.lastRenderedStatus ||
+                            (job.warning || '') !== (meta.lastWarning || '')) {
+                            meta.lastRows = rowCount;
+                            meta.lastRenderedStatus = job.status;
+                            meta.lastWarning = job.warning || '';
+                            display_mq_job_result(job, meta.tabN);
+                        }
+                    }
+                    meta.status = job.status;
+                    if (job.status === 'done' || job.status === 'cancelled' || job.status === 'failed') {
+                        if (mqPollTimers[jobId]) {
+                            clearInterval(mqPollTimers[jobId]);
+                            delete mqPollTimers[jobId];
+                        }
+                        delete mqJobs[jobId];
+                        if (!hasActiveMqJobs()) {
+                            finishMqQuerySession();
+                        }
+                    }
+                }).fail(function () {
+                    // 轮询短暂失败时继续，由用户停止或离开页取消
+                });
+            }
+
+            if (mqPollTimers[jobId]) {
+                clearInterval(mqPollTimers[jobId]);
+            }
+            mqPollTimers[jobId] = setInterval(tick, 500);
+            tick();
+        }
+
+        function createAndPollMqJob(line) {
+            return $.ajax({
+                type: "post",
+                url: "/api/v1/sqlquery/mq-jobs/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val() || "",
+                    sql_line: line
+                }
+            }).done(function (data) {
+                if (!data.job_id) {
+                    alert(data.msg || '创建任务失败');
+                    return;
+                }
+                tab_add();
+                var tabN = sessionStorage.getItem('tab_num');
+                mqJobs[data.job_id] = {
+                    tabN: tabN,
+                    sql_line: line,
+                    status: 'pending',
+                    lastRows: -1,
+                    lastRenderedStatus: '',
+                    lastWarning: ''
+                };
+                setMqStopMode(true);
+                display_mq_job_result({
+                    status: 'pending',
+                    column_list: [],
+                    rows: [],
+                    sql_line: line,
+                    warning: ''
+                }, tabN);
+                startMqPoll(data.job_id);
+            }).fail(function (xhr) {
+                var msg = (xhr.responseJSON && (xhr.responseJSON.msg || xhr.responseJSON.detail)) ||
+                    xhr.statusText || '创建任务失败';
+                alert(msg);
+            });
+        }
+
+        function sqlquerySyncAjax(sqlContent) {
+            return $.ajax({
+                type: "post",
+                url: "/api/v1/sqlquery/execute/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val(),
+                    schema_name: $("#schema_name").val(),
+                    tb_name: $("#table_name").val(),
+                    sql_content: sqlContent,
+                    limit_num: $("#limit_num").val()
+                }
+            });
+        }
+
+        function runMqQueryLines(lines, dbType) {
+            var i = 0;
+
+            function next() {
+                if (i >= lines.length) {
+                    if (!hasActiveMqJobs()) {
+                        finishMqQuerySession();
+                    }
+                    return;
+                }
+                var line = lines[i++];
+                if (isMqAsyncLine(line, dbType)) {
+                    createAndPollMqJob(line).always(function () {
+                        next();
+                    });
+                } else {
+                    sqlquerySyncAjax(line).done(function (data) {
+                        var target = $("#instance_name").val() + "/" + $("#db_name").val();
+                        display_data(data, target);
+                    }).fail(function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }).always(function () {
+                        next();
+                    });
+                }
+            }
+
+            next();
+        }
+
         //将数据通过ajax提交给后端进行检查
         function sqlquery(sql) {
             var optgroup = $('#instance_name :selected').parent().attr('label');
+            var dbType = getSelectedDbType();
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             var sqlContent;
             if (select_sqlContent) {
@@ -1104,31 +1410,29 @@
                     sqlContent = 'explain ' + sqlContent
                 }
             }
-            //提交请求
-            $.ajax({
-                type: "post",
-                url: "/api/v1/sqlquery/execute/",
-                dataType: "json",
-                data: {
-                    instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val(),
-                    schema_name: $("#schema_name").val(),
-                    tb_name: $("#table_name").val(),
-                    sql_content: sqlContent,
-                    limit_num: $("#limit_num").val()
-                },
-                complete: function () {
-                    $('input[type=button]').removeClass('disabled');
-                    $('input[type=button]').prop('disabled', false);
-                    optgroup_control();
-                },
-                success: function (data) {
-                    var target = $("#instance_name").val()+"/"+$("#db_name").val();
-                    display_data(data, target);
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+
+            // MQTT / RabbitMQ：按行分流（sub/get 异步轮询，其它行同步）
+            if (isMqEngine(dbType)) {
+                var lines = splitMqEditorLines(sqlContent);
+                if (lines.length === 0) {
+                    alert('没有可执行的命令');
+                    finishMqQuerySession();
+                    return;
                 }
+                runMqQueryLines(lines, dbType);
+                return;
+            }
+
+            //提交请求（非 MQ 引擎保持原同步路径）
+            sqlquerySyncAjax(sqlContent).done(function (data) {
+                var target = $("#instance_name").val()+"/"+$("#db_name").val();
+                display_data(data, target);
+            }).fail(function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown);
+            }).always(function () {
+                $('input[type=button]').removeClass('disabled');
+                $('input[type=button]').prop('disabled', false);
+                optgroup_control();
             });
         }
 
