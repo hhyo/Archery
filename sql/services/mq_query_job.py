@@ -1,0 +1,205 @@
+# -*- coding: UTF-8 -*-
+"""Cancelable async MQ query jobs backed by Django cache + django-q."""
+from __future__ import annotations
+
+import logging
+import uuid
+
+from django.core.cache import cache
+from django_q.tasks import async_task
+
+from common.config import SysConfig
+from sql.engines import get_engine
+from sql.engines.mq_cli import parse_mqtt_line, parse_rabbitmq_line
+from sql.engines.mqtt import MAX_SUBSCRIBE_COUNT
+from sql.engines.rabbitmq import MAX_GET_COUNT
+from sql.models import Instance
+from sql.utils.resource_group import user_instances
+
+logger = logging.getLogger("default")
+
+CACHE_KEY_PREFIX = "mq_query_job:"
+DEFAULT_TIMEOUT_SEC = 60
+DEFAULT_TIMEOUT_MAX_SEC = 3600
+JOB_CACHE_TTL = DEFAULT_TIMEOUT_MAX_SEC + 600
+
+
+def job_cache_key(job_id: str) -> str:
+    return f"{CACHE_KEY_PREFIX}{job_id}"
+
+
+def _resolve_timeout_sec() -> tuple[int, int]:
+    """Return (timeout_sec, cache_ttl) from SysConfig, clamped to [1, max]."""
+    config = SysConfig()
+    try:
+        default = int(config.get("mq_query_timeout_default", DEFAULT_TIMEOUT_SEC))
+    except (TypeError, ValueError):
+        default = DEFAULT_TIMEOUT_SEC
+    try:
+        max_sec = int(config.get("mq_query_timeout_max", DEFAULT_TIMEOUT_MAX_SEC))
+    except (TypeError, ValueError):
+        max_sec = DEFAULT_TIMEOUT_MAX_SEC
+    if max_sec < 1:
+        max_sec = 1
+    timeout_sec = max(1, min(default, max_sec))
+    ttl = max(max_sec + 600, JOB_CACHE_TTL)
+    return timeout_sec, ttl
+
+
+def _get_readable_instance(user, instance_id: int) -> Instance:
+    return user_instances(user, tag_codes=["can_read"]).get(id=instance_id)
+
+
+def _assert_job_owner(user, job: dict) -> None:
+    if user.is_superuser:
+        return
+    if job.get("user_id") != user.id:
+        raise PermissionError("无权访问该查询任务")
+
+
+def _load_job(job_id: str) -> dict:
+    job = cache.get(job_cache_key(job_id))
+    if not job:
+        raise KeyError(f"job not found: {job_id}")
+    return job
+
+
+def _save_job(job: dict, ttl: int | None = None) -> dict:
+    if ttl is None:
+        _, ttl = _resolve_timeout_sec()
+    cache.set(job_cache_key(job["job_id"]), job, ttl)
+    return job
+
+
+def create_mq_query_job(user, instance_id, db_name, sql_line) -> dict:
+    instance = _get_readable_instance(user, instance_id)
+    if instance.db_type not in ("mqtt", "rabbitmq"):
+        raise ValueError("仅 MQTT/RabbitMQ 支持异步查询任务")
+
+    line = (sql_line or "").strip()
+    if not line:
+        raise ValueError("sql_line 不能为空")
+
+    if instance.db_type == "mqtt":
+        cmd = parse_mqtt_line(line)
+        if cmd.action != "sub":
+            raise ValueError("仅 sub 支持异步任务")
+    else:
+        cmd = parse_rabbitmq_line(line)
+        if cmd.action != "get":
+            raise ValueError("仅 get 支持异步任务")
+
+    timeout_sec, ttl = _resolve_timeout_sec()
+    job_id = uuid.uuid4().hex
+    job = {
+        "job_id": job_id,
+        "user_id": user.id,
+        "instance_id": instance.id,
+        "db_name": db_name or "",
+        "sql_line": line,
+        "status": "pending",
+        "column_list": [],
+        "rows": [],
+        "warning": "",
+        "error": "",
+        "cancel": False,
+        "timeout_sec": timeout_sec,
+    }
+    _save_job(job, ttl)
+    async_task("sql.services.mq_query_job.run_mq_query_job", job_id)
+    return {"job_id": job_id}
+
+
+def get_mq_query_job(user, job_id: str) -> dict:
+    job = _load_job(job_id)
+    _assert_job_owner(user, job)
+    return job
+
+
+def cancel_mq_query_job(user, job_id: str) -> dict:
+    job = _load_job(job_id)
+    _assert_job_owner(user, job)
+    job["cancel"] = True
+    if job.get("status") in ("pending", "running", "partial"):
+        # Flag only; run_mq_query_job finalizes status=cancelled and keeps rows.
+        pass
+    _, ttl = _resolve_timeout_sec()
+    return _save_job(job, ttl)
+
+
+def run_mq_query_job(job_id: str) -> None:
+    key = job_cache_key(job_id)
+    job = cache.get(key)
+    if not job:
+        logger.warning("mq query job missing: %s", job_id)
+        return
+
+    _, ttl = _resolve_timeout_sec()
+    job["status"] = "running"
+    _save_job(job, ttl)
+
+    try:
+        instance = Instance.objects.get(pk=job["instance_id"])
+        engine = get_engine(instance)
+        line = job["sql_line"]
+        timeout_sec = int(job.get("timeout_sec") or DEFAULT_TIMEOUT_SEC)
+
+        def cancel_check():
+            current = cache.get(key)
+            return bool(current and current.get("cancel"))
+
+        def on_message(row):
+            current = cache.get(key)
+            if not current:
+                return
+            current["rows"].append(row)
+            current["status"] = "partial"
+            cache.set(key, current, ttl)
+
+        if instance.db_type == "mqtt":
+            cmd = parse_mqtt_line(line)
+            max_msgs = min(int(cmd.args.get("count", 10)), MAX_SUBSCRIBE_COUNT)
+            result = engine.run_subscribe(
+                topic=cmd.args["topic"],
+                qos=cmd.args.get("qos", 0),
+                max_msgs=max_msgs,
+                timeout_sec=timeout_sec,
+                cancel_check=cancel_check,
+                on_message=on_message,
+                db_name=job.get("db_name") or None,
+                full_sql=cmd.raw_line,
+            )
+        elif instance.db_type == "rabbitmq":
+            cmd = parse_rabbitmq_line(line)
+            count = min(int(cmd.args.get("count", 1)), MAX_GET_COUNT)
+            result = engine.run_get(
+                queue=cmd.args["queue"],
+                count=count,
+                timeout_sec=timeout_sec,
+                cancel_check=cancel_check,
+                on_message=on_message,
+                db_name=job.get("db_name") or None,
+                full_sql=cmd.raw_line,
+            )
+        else:
+            raise ValueError("仅 MQTT/RabbitMQ 支持异步查询任务")
+
+        current = cache.get(key) or job
+        current["column_list"] = list(result.column_list or [])
+        # Prefer engine rows as authoritative; fall back to incremental cache rows.
+        current["rows"] = list(result.rows if result.rows is not None else current.get("rows") or [])
+        current["warning"] = result.warning or ""
+        current["error"] = result.error or ""
+        if current.get("cancel"):
+            current["status"] = "cancelled"
+        elif result.error:
+            current["status"] = "failed"
+        else:
+            current["status"] = "done"
+        _save_job(current, ttl)
+    except Exception as exc:
+        logger.warning("mq query job failed: %s %s", job_id, exc)
+        current = cache.get(key) or job
+        current["status"] = "failed"
+        current["error"] = str(exc)
+        _save_job(current, ttl)
