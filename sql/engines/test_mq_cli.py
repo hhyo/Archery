@@ -45,3 +45,17 @@ def test_old_dsl_rejected():
         parse_mqtt_line('publish archery/test "hello"')
     with pytest.raises(ValueError):
         parse_rabbitmq_line("basic_get q1")
+
+
+def test_rabbitmq_leading_conn_flags_ignored():
+    cmd = parse_rabbitmq_line(
+        "rabbitmqadmin -H 10.0.0.1 -P 15672 -u guest -p guest get queue=q1 count=2"
+    )
+    assert cmd.action == "get"
+    assert cmd.args == {"queue": "q1", "count": 2}
+
+
+def test_mqtt_leading_conn_flags_ignored():
+    cmd = parse_mqtt_line("mqttx -h 1.2.3.4 -p 1883 sub -t archery/test")
+    assert cmd.action == "sub"
+    assert cmd.args["topic"] == "archery/test"

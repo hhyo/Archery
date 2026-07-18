@@ -71,6 +71,22 @@ def _consume_flag_value(tokens: list[str], index: int) -> int:
     return index + 1
 
 
+def _skip_leading_conn_flags(tokens: list[str], conn_flags: frozenset) -> list[str]:
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok in conn_flags:
+            i = _consume_flag_value(tokens, i)
+            continue
+        if tok.startswith("--") and "=" in tok:
+            name = tok.split("=", 1)[0]
+            if name in conn_flags:
+                i += 1
+                continue
+        break
+    return tokens[i:]
+
+
 def _parse_kv(token: str) -> tuple[str, str] | None:
     if "=" not in token:
         return None
@@ -131,6 +147,10 @@ def parse_mqtt_line(line: str) -> MqCommand:
     if not tokens:
         raise ValueError("empty mqtt command")
 
+    tokens = _skip_leading_conn_flags(tokens, MQTT_CONN_FLAGS)
+    if not tokens:
+        raise ValueError("empty mqtt command")
+
     action = tokens[0]
     if action not in MQTT_ACTIONS:
         raise ValueError(f"unknown mqtt action: {action}")
@@ -173,6 +193,10 @@ def parse_rabbitmq_line(line: str) -> MqCommand:
         raise ValueError("empty rabbitmq command")
     if tokens[0] == "rabbitmqadmin":
         tokens = tokens[1:]
+    if not tokens:
+        raise ValueError("empty rabbitmq command")
+
+    tokens = _skip_leading_conn_flags(tokens, RABBITMQ_CONN_FLAGS)
     if not tokens:
         raise ValueError("empty rabbitmq command")
 
