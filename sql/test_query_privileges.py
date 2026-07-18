@@ -713,3 +713,30 @@ def test_query_privilege_audit(
     )
     sql_query_apply.refresh_from_db()
     assert sql_query_apply.status == WorkflowStatus.PASSED
+
+
+@patch("sql.query_privileges.extract_tables")
+@patch("sql.query_privileges._db_priv", return_value=False)
+def test_query_priv_check_mqtt_uses_db_name_only(
+    __db_priv, __extract_tables, normal_user
+):
+    """mqtt 仅校验当前选择的库，不走 extract_tables。"""
+    mqtt_instance = Instance(
+        instance_name="mqtt_priv",
+        type="slave",
+        db_type="mqtt",
+        host="some_host",
+        port=1883,
+        user="",
+        password="",
+    )
+    r = sql.query_privileges.query_priv_check(
+        user=normal_user,
+        instance=mqtt_instance,
+        db_name="vhost1",
+        sql_content="sub -t should/not/parse",
+        limit_num=100,
+    )
+    __db_priv.assert_called_with(normal_user, mqtt_instance, "vhost1")
+    __extract_tables.assert_not_called()
+    assert r["status"] == 2

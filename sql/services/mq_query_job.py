@@ -17,6 +17,7 @@ from sql.engines.mq_cli import parse_mqtt_line, parse_rabbitmq_line
 from sql.engines.mqtt import MAX_SUBSCRIBE_COUNT, MqttEngine
 from sql.engines.rabbitmq import MAX_GET_COUNT, RabbitmqEngine
 from sql.models import Instance
+from sql.query_privileges import query_priv_check
 from sql.utils.resource_group import user_instances
 
 logger = logging.getLogger("default")
@@ -147,6 +148,10 @@ def create_mq_query_job(user, instance_id, db_name, sql_line) -> dict:
         if cmd.action != "get":
             raise ValueError("仅 get 支持异步任务")
         RabbitmqEngine._validate_query_command(cmd)
+
+    priv = query_priv_check(user, instance, db_name or "", line, 0)
+    if priv.get("status") != 0:
+        raise PermissionError(priv.get("msg") or "无查询权限")
 
     timeout_sec, ttl = _resolve_timeout_sec()
     job_id = uuid.uuid4().hex

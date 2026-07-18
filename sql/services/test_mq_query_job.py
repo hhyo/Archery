@@ -67,6 +67,35 @@ def _clear_cache():
 
 
 @pytest.mark.django_db
+def test_create_mq_job_requires_db_priv(monkeypatch, normal_user, mqtt_instance):
+    from django.contrib.auth.models import Permission
+
+    from sql.models import ResourceGroup
+
+    perm = Permission.objects.get(codename="query_submit")
+    normal_user.user_permissions.add(perm)
+    # 用户可读实例（资源组），但无任何库查询权限
+    group = ResourceGroup.objects.create(group_name="mq_priv_group")
+    normal_user.resource_group.add(group)
+    mqtt_instance.resource_group.add(group)
+    monkeypatch.setattr(
+        "sql.services.mq_query_job.query_priv_check",
+        lambda *a, **k: {
+            "status": 2,
+            "msg": "你无db的查询权限！请先到查询权限管理进行申请",
+            "data": {},
+        },
+    )
+    with pytest.raises(PermissionError):
+        svc.create_mq_query_job(
+            user=normal_user,
+            instance_id=mqtt_instance.id,
+            db_name="vhost1",
+            sql_line="sub -t t",
+        )
+
+
+@pytest.mark.django_db
 def test_create_rejects_non_mq_instance(db_instance, query_user, can_read_tag):
     db_instance.instance_tag.add(can_read_tag)
     with pytest.raises(ValueError, match="仅 MQTT/RabbitMQ"):
