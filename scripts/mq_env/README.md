@@ -193,6 +193,8 @@ python3 scripts/mq_env/verify_auth.py --tls \
 
 说明：查询页「拦截」指提交后提示类似 **禁止执行该命令！**（`bad_query`）；上线「检测失败」指检测结果 `errlevel=2`，文案为 **禁止使用查询命令！** 或 **禁止执行该命令！**。
 
+运维：非 sync 异步模式下，MQ 任务入队会传 per-task `timeout=wait+60`（`settings.Q_CLUSTER` 默认仍为 60）；建议环境变量 `Q_CLUISTER_TIMEOUT` ≥ `mq_query_timeout_max`，以免 worker/集群侧其它限制过早打断长订阅。
+
 ---
 
 ### A. 在线查询 · RabbitMQ（实例 `rabbitmq_local`，库 `/`）

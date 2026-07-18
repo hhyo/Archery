@@ -125,6 +125,24 @@ def test_create_validates_query_command(mqtt_instance, rabbitmq_instance, query_
 
 
 @pytest.mark.django_db
+def test_enqueue_passes_timeout_to_async_task(monkeypatch, settings):
+    """Non-sync enqueue must pass per-task django-q timeout = wait + 60."""
+    settings.Q_CLUSTER = {**dict(settings.Q_CLUSTER), "sync": False}
+    captured = {}
+
+    def fake_async_task(func, job_id, *args, **kwargs):
+        captured["func"] = func
+        captured["job_id"] = job_id
+        captured["timeout"] = kwargs.get("timeout")
+
+    monkeypatch.setattr(svc, "async_task", fake_async_task)
+    svc._enqueue_mq_query_job("abc", timeout_sec=120)
+    assert captured["func"] == "sql.services.mq_query_job.run_mq_query_job"
+    assert captured["job_id"] == "abc"
+    assert captured["timeout"] == 180  # 120 + 60 buffer
+
+
+@pytest.mark.django_db
 def test_create_writes_pending_job_and_queues_task(
     mqtt_instance, query_user, monkeypatch, settings
 ):
@@ -132,7 +150,7 @@ def test_create_writes_pending_job_and_queues_task(
     queued = []
 
     def fake_async_task(func_path, job_id, *args, **kwargs):
-        queued.append((func_path, job_id))
+        queued.append((func_path, job_id, kwargs.get("timeout")))
 
     monkeypatch.setattr(svc, "async_task", fake_async_task)
 
@@ -150,7 +168,9 @@ def test_create_writes_pending_job_and_queues_task(
     assert job["timeout_sec"] == 60
     assert job["cancel"] is False
     assert job["rows"] == []
-    assert queued == [("sql.services.mq_query_job.run_mq_query_job", job_id)]
+    assert queued == [
+        ("sql.services.mq_query_job.run_mq_query_job", job_id, 120)
+    ]
 
 
 @pytest.mark.django_db
