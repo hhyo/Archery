@@ -1,4 +1,7 @@
 # -*- coding: UTF-8 -*-
+import threading
+import time
+
 import pytest
 from django.contrib.auth.models import Permission
 from django.core.cache import cache
@@ -96,8 +99,9 @@ def test_create_validates_query_command(mqtt_instance, rabbitmq_instance, query_
 
 @pytest.mark.django_db
 def test_create_writes_pending_job_and_queues_task(
-    mqtt_instance, query_user, monkeypatch
+    mqtt_instance, query_user, monkeypatch, settings
 ):
+    settings.Q_CLUSTER = {**dict(settings.Q_CLUSTER), "sync": False}
     queued = []
 
     def fake_async_task(func_path, job_id, *args, **kwargs):
@@ -123,10 +127,81 @@ def test_create_writes_pending_job_and_queues_task(
 
 
 @pytest.mark.django_db
+def test_sync_mode_create_returns_before_job_finishes(
+    mqtt_instance, query_user, monkeypatch, settings
+):
+    """Q_CLUSTER sync must not block create — UI needs job_id to poll partial rows."""
+    started = threading.Event()
+    release = threading.Event()
+
+    def blocking_run(job_id):
+        started.set()
+        release.wait(timeout=5)
+
+    monkeypatch.setattr(svc, "run_mq_query_job", blocking_run)
+    settings.Q_CLUSTER = {**dict(settings.Q_CLUSTER), "sync": True}
+
+    t0 = time.monotonic()
+    result = svc.create_mq_query_job(
+        query_user, mqtt_instance.id, "default", "sub -t demo"
+    )
+    assert time.monotonic() - t0 < 1.0
+    assert result["job_id"]
+    assert started.wait(2.0)
+    assert cache.get(svc.job_cache_key(result["job_id"]))["status"] == "pending"
+    release.set()
+
+
+@pytest.mark.django_db
+def test_on_message_sets_column_list_while_partial(
+    mqtt_instance, query_user, monkeypatch
+):
+    """Frontend only renders rows when column_list is set; must be present on partial."""
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    job_id = svc.create_mq_query_job(
+        query_user, mqtt_instance.id, "default", "sub -t demo -C 2"
+    )["job_id"]
+    mid = {}
+
+    def fake_run_subscribe(
+        self,
+        topic,
+        qos,
+        max_msgs,
+        timeout_sec,
+        cancel_check=None,
+        on_message=None,
+        **kwargs,
+    ):
+        row = ["demo", "hello", 0, False]
+        if on_message:
+            on_message(row)
+            snapshot = cache.get(svc.job_cache_key(job_id))
+            mid["status"] = snapshot["status"]
+            mid["column_list"] = list(snapshot.get("column_list") or [])
+            mid["rows"] = list(snapshot.get("rows") or [])
+        result = ResultSet(
+            full_sql=kwargs.get("full_sql", ""),
+            column_list=["topic", "payload", "qos", "retain"],
+        )
+        result.rows = [row]
+        result.affected_rows = 1
+        return result
+
+    monkeypatch.setattr(
+        "sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe
+    )
+    svc.run_mq_query_job(job_id)
+    assert mid["status"] == "partial"
+    assert mid["column_list"] == ["topic", "payload", "qos", "retain"]
+    assert mid["rows"] == [["demo", "hello", 0, False]]
+
+
+@pytest.mark.django_db
 def test_timeout_sec_uses_sysconfig_default_and_clamp(
     mqtt_instance, query_user, monkeypatch, setup_sys_config
 ):
-    monkeypatch.setattr(svc, "async_task", lambda *a, **k: None)
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
 
     setup_sys_config.set("mq_query_timeout_default", "120")
     setup_sys_config.set("mq_query_timeout_max", "200")
@@ -152,7 +227,7 @@ def test_timeout_sec_uses_sysconfig_default_and_clamp(
 
 @pytest.mark.django_db
 def test_cancel_sets_flag_and_preserves_rows(mqtt_instance, query_user, monkeypatch):
-    monkeypatch.setattr(svc, "async_task", lambda *a, **k: None)
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
 
     job_id = svc.create_mq_query_job(
         query_user, mqtt_instance.id, "default", "sub -t demo"
@@ -206,7 +281,7 @@ def test_cancel_sets_flag_and_preserves_rows(mqtt_instance, query_user, monkeypa
 
 @pytest.mark.django_db
 def test_run_mq_query_job_marks_done(mqtt_instance, query_user, monkeypatch):
-    monkeypatch.setattr(svc, "async_task", lambda *a, **k: None)
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
     job_id = svc.create_mq_query_job(
         query_user, mqtt_instance.id, "default", "sub -t demo -C 2"
     )["job_id"]
@@ -251,7 +326,7 @@ def test_run_mq_query_job_marks_done(mqtt_instance, query_user, monkeypatch):
 
 @pytest.mark.django_db
 def test_get_rejects_other_user(mqtt_instance, query_user, django_user_model, monkeypatch):
-    monkeypatch.setattr(svc, "async_task", lambda *a, **k: None)
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
     job_id = svc.create_mq_query_job(
         query_user, mqtt_instance.id, "default", "sub -t demo"
     )["job_id"]
@@ -267,7 +342,7 @@ def test_cancel_key_survives_stale_job_overwrite(
     mqtt_instance, query_user, monkeypatch
 ):
     """Dedicated cancel key keeps cancel_check true even if job payload loses cancel."""
-    monkeypatch.setattr(svc, "async_task", lambda *a, **k: None)
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
     job_id = svc.create_mq_query_job(
         query_user, mqtt_instance.id, "default", "sub -t demo"
     )["job_id"]

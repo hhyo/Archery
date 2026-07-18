@@ -234,7 +234,7 @@ def test_mq_job_apis_require_query_submit(
     perm = Permission.objects.get(codename="query_all_instances")
     normal_user.user_permissions.add(perm)
     monkeypatch.setattr(
-        "sql.services.mq_query_job.async_task", lambda *a, **k: None
+        "sql.services.mq_query_job._enqueue_mq_query_job", lambda *a, **k: None
     )
 
     api_client.force_authenticate(user=normal_user)
@@ -259,8 +259,9 @@ def test_mq_job_apis_require_query_submit(
 
 @pytest.mark.django_db
 def test_create_get_cancel_with_async_task_mocked(
-    monkeypatch, api_client, query_user, mqtt_instance
+    monkeypatch, api_client, query_user, mqtt_instance, settings
 ):
+    settings.Q_CLUSTER = {**dict(settings.Q_CLUSTER), "sync": False}
     queued = []
 
     def fake_async_task(func_path, job_id, *args, **kwargs):

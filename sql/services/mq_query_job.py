@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import logging
+import threading
 import uuid
 
+from django.conf import settings
 from django.core.cache import cache
 from django_q.tasks import async_task
 
@@ -23,6 +25,9 @@ DEFAULT_TIMEOUT_SEC = 60
 DEFAULT_TIMEOUT_MAX_SEC = 3600
 JOB_CACHE_TTL = DEFAULT_TIMEOUT_MAX_SEC + 600
 
+MQTT_COLUMN_LIST = ["topic", "payload", "qos", "retain"]
+RABBITMQ_COLUMN_LIST = ["queue", "routing_key", "body"]
+
 
 def job_cache_key(job_id: str) -> str:
     return f"{CACHE_KEY_PREFIX}{job_id}"
@@ -30,6 +35,27 @@ def job_cache_key(job_id: str) -> str:
 
 def cancel_cache_key(job_id: str) -> str:
     return f"{CACHE_KEY_PREFIX}{job_id}:cancel"
+
+
+def _enqueue_mq_query_job(job_id: str) -> None:
+    """Enqueue job without blocking the create HTTP request.
+
+    When Q_CLUSTER sync=True, django-q runs async_task inline in the caller.
+    That would hold POST /mq-jobs/ until sub/get finishes (often the full
+    timeout), so the browser cannot poll partial rows. Use a daemon thread
+    instead; locmem cache is process-local and shared with poll handlers.
+    """
+    sync = bool(settings.Q_CLUSTER.get("sync"))
+    if sync:
+        thread = threading.Thread(
+            target=run_mq_query_job,
+            args=(job_id,),
+            name=f"mq-query-job-{job_id[:8]}",
+            daemon=True,
+        )
+        thread.start()
+        return
+    async_task("sql.services.mq_query_job.run_mq_query_job", job_id)
 
 
 def _resolve_timeout_sec() -> tuple[int, int]:
@@ -138,7 +164,7 @@ def create_mq_query_job(user, instance_id, db_name, sql_line) -> dict:
         "timeout_sec": timeout_sec,
     }
     _save_job(job, ttl)
-    async_task("sql.services.mq_query_job.run_mq_query_job", job_id)
+    _enqueue_mq_query_job(job_id)
     return {"job_id": job_id}
 
 
@@ -183,6 +209,8 @@ def run_mq_query_job(job_id: str) -> None:
 
         def on_message(row):
             def append_row(current):
+                if not current.get("column_list"):
+                    current["column_list"] = list(column_list)
                 current["rows"].append(row)
                 current["status"] = "partial"
 
@@ -194,6 +222,7 @@ def run_mq_query_job(job_id: str) -> None:
         if instance.db_type == "mqtt":
             cmd = parse_mqtt_line(line)
             max_msgs = min(int(cmd.args.get("count", 10)), MAX_SUBSCRIBE_COUNT)
+            column_list = MQTT_COLUMN_LIST
             result = engine.run_subscribe(
                 topic=cmd.args["topic"],
                 qos=cmd.args.get("qos", 0),
@@ -207,6 +236,7 @@ def run_mq_query_job(job_id: str) -> None:
         elif instance.db_type == "rabbitmq":
             cmd = parse_rabbitmq_line(line)
             count = min(int(cmd.args.get("count", 1)), MAX_GET_COUNT)
+            column_list = RABBITMQ_COLUMN_LIST
             result = engine.run_get(
                 queue=cmd.args["queue"],
                 count=count,
