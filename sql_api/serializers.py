@@ -198,7 +198,11 @@ class InstanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Instance
         fields = "__all__"
-        extra_kwargs = {"password": {"write_only": True}}
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "client_key": {"write_only": True},
+            "client_cert": {"write_only": True},
+        }
 
 
 class InstanceDetailSerializer(serializers.ModelSerializer):
@@ -207,6 +211,8 @@ class InstanceDetailSerializer(serializers.ModelSerializer):
         fields = "__all__"
         extra_kwargs = {
             "password": {"write_only": True},
+            "client_key": {"write_only": True},
+            "client_cert": {"write_only": True},
             "instance_name": {"required": False},
             "type": {"required": False},
             "db_type": {"required": False},
