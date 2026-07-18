@@ -1,8 +1,4 @@
 # -*- coding: UTF-8 -*-
-import pymysql
-
-pymysql.install_as_MySQLdb()
-
 import pytest
 
 from common.config import SysConfig

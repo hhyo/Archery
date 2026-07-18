@@ -1,9 +1,5 @@
 # -*- coding: UTF-8 -*-
 """Local fixtures so tests can run with --confcutdir=sql_api (avoids root pytest_mock)."""
-import pymysql
-
-pymysql.install_as_MySQLdb()
-
 import pytest
 
 from sql.models import Instance
