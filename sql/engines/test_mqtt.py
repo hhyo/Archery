@@ -48,6 +48,14 @@ class TestMqttEngine(TestCase):
             with self.subTest(command=command):
                 self.assertTrue(engine.query_check(sql=command)["bad_query"])
 
+    def test_mqtt_query_check_rejects_explain_prefix(self):
+        engine = MqttEngine(instance=self.ins)
+        for sql in ("explain sub -t t", "explain", "EXPLAIN\nsub -t t"):
+            with self.subTest(sql=sql):
+                out = engine.query_check(sql=sql)
+                self.assertTrue(out["bad_query"])
+                self.assertIn("不支持执行计划", out["msg"])
+
     def test_execute_check_allows_publish_only(self):
         engine = MqttEngine(instance=self.ins)
         allowed = engine.execute_check(sql='pub -t archery/test -m "hello world"')

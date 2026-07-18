@@ -185,6 +185,17 @@ class MqttEngine(EngineBase):
 
     def query_check(self, db_name=None, sql=""):
         filtered_sql = sql.strip()
+        lowered = filtered_sql.lower()
+        if (
+            lowered.startswith("explain ")
+            or lowered.startswith("explain\n")
+            or lowered == "explain"
+        ):
+            return {
+                "bad_query": True,
+                "filtered_sql": filtered_sql,
+                "msg": "MQTT/RabbitMQ 不支持执行计划",
+            }
         try:
             lines = split_mq_lines(filtered_sql)
             if not lines:

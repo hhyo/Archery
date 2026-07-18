@@ -71,6 +71,14 @@ class TestRabbitmqEngine(TestCase):
             with self.subTest(command=command):
                 self.assertTrue(engine.query_check(sql=command)["bad_query"])
 
+    def test_rabbitmq_query_check_rejects_explain_prefix(self):
+        engine = RabbitmqEngine(instance=self.ins)
+        for sql in ("explain get queue=q count=1", "explain", "EXPLAIN\nget queue=q"):
+            with self.subTest(sql=sql):
+                out = engine.query_check(sql=sql)
+                self.assertTrue(out["bad_query"])
+                self.assertIn("不支持执行计划", out["msg"])
+
     def test_execute_check_allows_write_commands(self):
         engine = RabbitmqEngine(instance=self.ins)
         commands = [
