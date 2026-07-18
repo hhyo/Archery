@@ -59,3 +59,9 @@ def test_mqtt_leading_conn_flags_ignored():
     cmd = parse_mqtt_line("mqttx -h 1.2.3.4 -p 1883 sub -t archery/test")
     assert cmd.action == "sub"
     assert cmd.args["topic"] == "archery/test"
+
+
+def test_declare_queue_parses_durable():
+    cmd = parse_rabbitmq_line("declare queue name=q1 durable=true")
+    assert cmd.args["name"] == "q1"
+    assert cmd.args["durable"] is True

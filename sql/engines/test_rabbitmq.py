@@ -288,3 +288,11 @@ class TestRabbitmqEngine(TestCase):
         mock_ch.queue_delete.assert_called_once_with(queue="myqueue")
         self.assertEqual(len(result.rows), 5)
         self.assertTrue(all(row.errlevel == 0 for row in result.rows))
+
+    def test_queue_declare_passes_durable(self):
+        from sql.engines.mq_cli import parse_rabbitmq_line
+
+        channel = MagicMock()
+        cmd = parse_rabbitmq_line("declare queue name=q1 durable=true")
+        RabbitmqEngine._execute_write_command(channel, cmd)
+        channel.queue_declare.assert_called_once_with(queue="q1", durable=True)

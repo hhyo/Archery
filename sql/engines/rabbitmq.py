@@ -380,12 +380,18 @@ class RabbitmqEngine(EngineBase):
         elif action == "declare":
             target = args.get("target")
             if target == "queue":
-                channel.queue_declare(queue=args["name"])
+                kwargs = {"queue": args["name"]}
+                if "durable" in args:
+                    kwargs["durable"] = args["durable"]
+                channel.queue_declare(**kwargs)
             elif target == "exchange":
-                channel.exchange_declare(
-                    exchange=args["name"],
-                    exchange_type=args.get("type", "direct"),
-                )
+                kwargs = {
+                    "exchange": args["name"],
+                    "exchange_type": args.get("type", "direct"),
+                }
+                if "durable" in args:
+                    kwargs["durable"] = args["durable"]
+                channel.exchange_declare(**kwargs)
             elif target == "binding":
                 channel.queue_bind(
                     queue=args["queue"],

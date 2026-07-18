@@ -253,6 +253,11 @@ def parse_rabbitmq_line(line: str) -> MqCommand:
             for key in ("queue", "exchange", "routing_key"):
                 if key not in args:
                     raise ValueError(f"declare binding requires {key}")
+        if "durable" in args:
+            val = args["durable"].lower()
+            if val not in {"true", "false", "1", "0", "yes", "no"}:
+                raise ValueError("durable must be true or false")
+            args["durable"] = val in {"true", "1", "yes"}
     elif action in {"purge", "delete"}:
         if "name" not in args:
             raise ValueError(f"{action} queue requires name")
