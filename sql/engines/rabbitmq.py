@@ -372,11 +372,18 @@ class RabbitmqEngine(EngineBase):
         action = cmd.action
         args = cmd.args
         if action == "publish":
-            channel.basic_publish(
-                exchange=args.get("exchange", ""),
-                routing_key=args["routing_key"],
-                body=args["payload"],
-            )
+            channel.confirm_delivery()
+            try:
+                channel.basic_publish(
+                    exchange=args.get("exchange", ""),
+                    routing_key=args["routing_key"],
+                    body=args["payload"],
+                    mandatory=True,
+                )
+            except Exception as exc:
+                if type(exc).__name__ in {"UnroutableError", "NackError"}:
+                    raise ValueError("消息不可路由或未被确认") from exc
+                raise
         elif action == "declare":
             target = args.get("target")
             if target == "queue":

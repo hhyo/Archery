@@ -249,8 +249,12 @@ class TestRabbitmqEngine(TestCase):
 
         result = engine.execute_workflow(workflow)
 
+        mock_ch.confirm_delivery.assert_called_once_with()
         mock_ch.basic_publish.assert_called_once_with(
-            exchange="", routing_key="myqueue", body="hello"
+            exchange="",
+            routing_key="myqueue",
+            body="hello",
+            mandatory=True,
         )
         self.assertEqual(result.rows[0].errlevel, 0)
         mock_conn.close.assert_called_once()
@@ -296,3 +300,41 @@ class TestRabbitmqEngine(TestCase):
         cmd = parse_rabbitmq_line("declare queue name=q1 durable=true")
         RabbitmqEngine._execute_write_command(channel, cmd)
         channel.queue_declare.assert_called_once_with(queue="q1", durable=True)
+
+    def test_publish_unroutable_raises(self):
+        import pika.exceptions
+        from sql.engines.mq_cli import parse_rabbitmq_line
+
+        cmd_publish = parse_rabbitmq_line(
+            'publish routing_key=q1 payload="hello"'
+        )
+
+        class Ch:
+            def __init__(self):
+                self.confirmed = False
+
+            def confirm_delivery(self):
+                self.confirmed = True
+
+            def basic_publish(self, **kwargs):
+                assert kwargs.get("mandatory") is True
+                raise pika.exceptions.UnroutableError("x")
+
+        channel = Ch()
+        with self.assertRaises((pika.exceptions.UnroutableError, ValueError)):
+            RabbitmqEngine._execute_write_command(channel, cmd_publish)
+        self.assertTrue(channel.confirmed)
+
+    def test_publish_calls_confirm_delivery(self):
+        from sql.engines.mq_cli import parse_rabbitmq_line
+
+        channel = MagicMock()
+        cmd = parse_rabbitmq_line('publish routing_key=q1 payload="hello"')
+        RabbitmqEngine._execute_write_command(channel, cmd)
+        channel.confirm_delivery.assert_called_once_with()
+        channel.basic_publish.assert_called_once_with(
+            exchange="",
+            routing_key="q1",
+            body="hello",
+            mandatory=True,
+        )
