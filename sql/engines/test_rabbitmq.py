@@ -305,9 +305,7 @@ class TestRabbitmqEngine(TestCase):
         import pika.exceptions
         from sql.engines.mq_cli import parse_rabbitmq_line
 
-        cmd_publish = parse_rabbitmq_line(
-            'publish routing_key=q1 payload="hello"'
-        )
+        cmd_publish = parse_rabbitmq_line('publish routing_key=q1 payload="hello"')
 
         class Ch:
             def __init__(self):

@@ -168,9 +168,7 @@ def test_create_writes_pending_job_and_queues_task(
     assert job["timeout_sec"] == 60
     assert job["cancel"] is False
     assert job["rows"] == []
-    assert queued == [
-        ("sql.services.mq_query_job.run_mq_query_job", job_id, 120)
-    ]
+    assert queued == [("sql.services.mq_query_job.run_mq_query_job", job_id, 120)]
 
 
 @pytest.mark.django_db
