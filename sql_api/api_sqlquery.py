@@ -144,6 +144,30 @@ def _public_mq_job_payload(job: dict) -> dict:
     return payload
 
 
+_MQ_VALUE_ERROR_MESSAGES = frozenset(
+    {
+        "仅 MQTT/RabbitMQ 支持异步查询任务",
+        "sql_line 不能为空",
+        "仅 sub 支持异步任务",
+        "仅 get 支持异步任务",
+    }
+)
+
+
+def _mq_client_error_msg(exc: Exception, *, permission: bool = False) -> str:
+    if permission:
+        # priv 文案允许透出（无路径）；其它 PermissionError 用固定句
+        msg = str(exc)
+        if msg and "权限" in msg and "/" not in msg and "Traceback" not in msg:
+            return msg
+        return "无权访问该查询任务"
+    msg = str(exc)
+    if msg in _MQ_VALUE_ERROR_MESSAGES:
+        return msg
+    logger.warning("mq job api error: %s", exc, exc_info=True)
+    return "请求无效"
+
+
 def _deny_without_query_submit(user):
     if user.is_superuser or user.has_perm("sql.query_submit"):
         return None
@@ -178,9 +202,14 @@ class SQLQueryMqJobListCreateView(views.APIView):
                 {"msg": "实例不存在或无权限"}, status=status.HTTP_400_BAD_REQUEST
             )
         except ValueError as exc:
-            return Response({"msg": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"msg": _mq_client_error_msg(exc)}, status=status.HTTP_400_BAD_REQUEST
+            )
         except PermissionError as exc:
-            return Response({"msg": str(exc)}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"msg": _mq_client_error_msg(exc, permission=True)},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         return Response(result)
 
 
@@ -197,7 +226,10 @@ class SQLQueryMqJobDetailView(views.APIView):
         except KeyError:
             return Response({"msg": "任务不存在"}, status=status.HTTP_404_NOT_FOUND)
         except PermissionError as exc:
-            return Response({"msg": str(exc)}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"msg": _mq_client_error_msg(exc, permission=True)},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         return Response(_public_mq_job_payload(job))
 
 
@@ -214,5 +246,8 @@ class SQLQueryMqJobCancelView(views.APIView):
         except KeyError:
             return Response({"msg": "任务不存在"}, status=status.HTTP_404_NOT_FOUND)
         except PermissionError as exc:
-            return Response({"msg": str(exc)}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"msg": _mq_client_error_msg(exc, permission=True)},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         return Response({"status": job.get("status")})
