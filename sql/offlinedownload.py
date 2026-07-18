@@ -38,7 +38,8 @@ SQL_COUNT_ENGINES = {
     "doris",
 }
 
-LINE_BASED_COMMAND_ENGINES = {"redis", "memcached", "mqtt", "rabbitmq"}
+LINE_BASED_COMMAND_ENGINES = {"redis", "memcached"}
+MQ_EXPORT_UNSUPPORTED = frozenset({"mqtt", "rabbitmq"})
 
 
 def get_single_export_statement(raw_sql, db_type):
@@ -70,6 +71,24 @@ class OffLineDownLoad(EngineBase):
         :param workflow: 工单实例
         :return: 下载结果
         """
+        instance = workflow.instance
+        raw_sql = workflow.sqlworkflowcontent.sql_content
+        if instance.db_type in MQ_EXPORT_UNSUPPORTED:
+            execute_result = ReviewSet(full_sql=raw_sql)
+            execute_result.rows = [
+                ReviewResult(
+                    stage="Execute failed",
+                    error=1,
+                    errlevel=2,
+                    stagestatus="异常终止",
+                    errormessage="MQTT/RabbitMQ 不支持离线导出",
+                    sql=raw_sql,
+                )
+            ]
+            execute_result.error = "MQTT/RabbitMQ 不支持离线导出"
+            execute_result.error_count = 1
+            return execute_result
+
         with tempfile.TemporaryDirectory() as temp_dir:
             # 获取系统配置
             config = SysConfig()
@@ -79,11 +98,10 @@ class OffLineDownLoad(EngineBase):
                 int(max_execution_time_str) if max_execution_time_str else 60
             )
             # 获取前端提交的 SQL 和其他工单信息
-            full_sql = workflow.sqlworkflowcontent.sql_content
+            full_sql = raw_sql
             full_sql = sqlparse.format(full_sql, strip_comments=True)
             full_sql = sqlparse.split(full_sql)[0]
             sql = full_sql.strip()
-            instance = workflow.instance
             execute_result = ReviewSet(full_sql=sql)
             check_engine = get_engine(instance=instance)
 
@@ -168,6 +186,20 @@ class OffLineDownLoad(EngineBase):
         db_name = getattr(workflow, "selected_db_name", workflow.db_name)
         check_result = ReviewSet(full_sql=full_sql)
         check_result.syntax_type = 3
+
+        if instance.db_type in MQ_EXPORT_UNSUPPORTED:
+            result = ReviewResult(
+                stage="自动审核失败",
+                errlevel=2,
+                stagestatus="检查未通过！",
+                errormessage="MQTT/RabbitMQ 不支持离线导出",
+                affected_rows=0,
+                sql=full_sql,
+            )
+            check_result.rows = [result]
+            check_result.error_count = 1
+            return check_result
+
         check_engine = get_engine(instance=instance)
         max_export_rows_str = config.get("max_export_rows", "10000")
         max_export_rows = int(max_export_rows_str) if max_export_rows_str else 10000
