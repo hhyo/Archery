@@ -109,9 +109,7 @@ class TestMqttEngine(TestCase):
 
     @patch("sql.engines.mqtt.threading.Event.wait", return_value=False)
     @patch("sql.engines.mqtt.mqtt.Client")
-    def test_test_connection_reports_connack_timeout(
-        self, mock_client_cls, _mock_wait
-    ):
+    def test_test_connection_reports_connack_timeout(self, mock_client_cls, _mock_wait):
         engine = MqttEngine(instance=self.ins)
 
         result = engine.test_connection()
@@ -291,9 +289,7 @@ class TestMqttEngine(TestCase):
         )
         workflow = MagicMock()
         workflow.db_name = "default"
-        workflow.sqlworkflowcontent.sql_content = (
-            'pub -t archery/test -m "hello world"'
-        )
+        workflow.sqlworkflowcontent.sql_content = 'pub -t archery/test -m "hello world"'
         engine = MqttEngine(instance=self.ins)
 
         result = engine.execute_workflow(workflow)

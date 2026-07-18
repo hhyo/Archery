@@ -9,7 +9,9 @@ def test_split_skips_blank_and_hash_comments():
 
 
 def test_mqtt_pub_strips_mqttx_prefix_and_ignores_host():
-    cmd = parse_mqtt_line('mqttx pub -h 1.2.3.4 -p 1883 -t archery/test -m "hello" -q 1')
+    cmd = parse_mqtt_line(
+        'mqttx pub -h 1.2.3.4 -p 1883 -t archery/test -m "hello" -q 1'
+    )
     assert cmd.action == "pub"
     assert cmd.args == {"topic": "archery/test", "payload": "hello", "qos": 1}
 

@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 """Cancelable async MQ query jobs backed by Django cache + django-q."""
+
 from __future__ import annotations
 
 import logging

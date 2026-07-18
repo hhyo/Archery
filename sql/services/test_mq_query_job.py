@@ -80,9 +80,7 @@ def test_create_rejects_non_async_actions(mqtt_instance, rabbitmq_instance, quer
             query_user, mqtt_instance.id, "default", "pub -t t -m hi"
         )
     with pytest.raises(ValueError, match="仅 get"):
-        svc.create_mq_query_job(
-            query_user, rabbitmq_instance.id, "/", "list queues"
-        )
+        svc.create_mq_query_job(query_user, rabbitmq_instance.id, "/", "list queues")
 
 
 @pytest.mark.django_db
@@ -188,9 +186,7 @@ def test_on_message_sets_column_list_while_partial(
         result.affected_rows = 1
         return result
 
-    monkeypatch.setattr(
-        "sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe
-    )
+    monkeypatch.setattr("sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe)
     svc.run_mq_query_job(job_id)
     assert mid["status"] == "partial"
     assert mid["column_list"] == ["topic", "payload", "qos", "retain"]
@@ -269,9 +265,7 @@ def test_cancel_sets_flag_and_preserves_rows(mqtt_instance, query_user, monkeypa
         result.affected_rows = 1
         return result
 
-    monkeypatch.setattr(
-        "sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe
-    )
+    monkeypatch.setattr("sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe)
     svc.run_mq_query_job(job_id)
     final = cache.get(key)
     assert final["status"] == "cancelled"
@@ -314,9 +308,7 @@ def test_run_mq_query_job_marks_done(mqtt_instance, query_user, monkeypatch):
         result.affected_rows = 2
         return result
 
-    monkeypatch.setattr(
-        "sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe
-    )
+    monkeypatch.setattr("sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe)
     svc.run_mq_query_job(job_id)
     job = svc.get_mq_query_job(query_user, job_id)
     assert job["status"] == "done"
@@ -325,7 +317,9 @@ def test_run_mq_query_job_marks_done(mqtt_instance, query_user, monkeypatch):
 
 
 @pytest.mark.django_db
-def test_get_rejects_other_user(mqtt_instance, query_user, django_user_model, monkeypatch):
+def test_get_rejects_other_user(
+    mqtt_instance, query_user, django_user_model, monkeypatch
+):
     monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
     job_id = svc.create_mq_query_job(
         query_user, mqtt_instance.id, "default", "sub -t demo"

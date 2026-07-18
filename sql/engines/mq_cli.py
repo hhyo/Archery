@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 """MQTTX / rabbitmqadmin CLI subset parser for MQTT and RabbitMQ engines."""
+
 from __future__ import annotations
 
 import shlex
@@ -41,7 +42,9 @@ RABBITMQ_CONN_FLAGS = frozenset(
 )
 
 MQTT_ACTIONS = frozenset({"pub", "sub", "help"})
-RABBITMQ_ACTIONS = frozenset({"get", "publish", "declare", "purge", "delete", "list", "help"})
+RABBITMQ_ACTIONS = frozenset(
+    {"get", "publish", "declare", "purge", "delete", "list", "help"}
+)
 
 
 @dataclass

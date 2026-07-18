@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Verify RabbitMQ (AMQP) and EMQX (MQTT) auth. Exit 0 on success."""
+
 import argparse
 import os
 import ssl
@@ -11,7 +12,9 @@ import paho.mqtt.client as mqtt
 import pika
 
 
-def verify_rabbitmq(host, port, user, password, vhost, tls=False, ca=None, cert=None, key=None):
+def verify_rabbitmq(
+    host, port, user, password, vhost, tls=False, ca=None, cert=None, key=None
+):
     creds = pika.PlainCredentials(user, password) if user else None
     params = pika.ConnectionParameters(
         host=host,
@@ -22,7 +25,11 @@ def verify_rabbitmq(host, port, user, password, vhost, tls=False, ca=None, cert=
         blocked_connection_timeout=10,
     )
     if tls:
-        context = ssl.create_default_context(cafile=ca) if ca else ssl.create_default_context()
+        context = (
+            ssl.create_default_context(cafile=ca)
+            if ca
+            else ssl.create_default_context()
+        )
         if cert and key:
             context.load_cert_chain(certfile=cert, keyfile=key)
         params.ssl_options = pika.SSLOptions(context, server_hostname=host)
@@ -74,15 +81,33 @@ def verify_mqtt(host, port, user, password, tls=False, ca=None, cert=None, key=N
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--amqp-host", default=os.getenv("ARCHERY_TEST_RABBITMQ_HOST", "127.0.0.1"))
-    p.add_argument("--amqp-port", type=int, default=int(os.getenv("ARCHERY_TEST_RABBITMQ_PORT", "5672")))
-    p.add_argument("--amqp-user", default=os.getenv("ARCHERY_TEST_RABBITMQ_USER", "root"))
-    p.add_argument("--amqp-password", default=os.getenv("ARCHERY_TEST_RABBITMQ_PASSWORD", ""))
+    p.add_argument(
+        "--amqp-host", default=os.getenv("ARCHERY_TEST_RABBITMQ_HOST", "127.0.0.1")
+    )
+    p.add_argument(
+        "--amqp-port",
+        type=int,
+        default=int(os.getenv("ARCHERY_TEST_RABBITMQ_PORT", "5672")),
+    )
+    p.add_argument(
+        "--amqp-user", default=os.getenv("ARCHERY_TEST_RABBITMQ_USER", "root")
+    )
+    p.add_argument(
+        "--amqp-password", default=os.getenv("ARCHERY_TEST_RABBITMQ_PASSWORD", "")
+    )
     p.add_argument("--vhost", default=os.getenv("ARCHERY_TEST_RABBITMQ_VHOST", "/"))
-    p.add_argument("--mqtt-host", default=os.getenv("ARCHERY_TEST_MQTT_HOST", "127.0.0.1"))
-    p.add_argument("--mqtt-port", type=int, default=int(os.getenv("ARCHERY_TEST_MQTT_PORT", "1883")))
+    p.add_argument(
+        "--mqtt-host", default=os.getenv("ARCHERY_TEST_MQTT_HOST", "127.0.0.1")
+    )
+    p.add_argument(
+        "--mqtt-port",
+        type=int,
+        default=int(os.getenv("ARCHERY_TEST_MQTT_PORT", "1883")),
+    )
     p.add_argument("--mqtt-user", default=os.getenv("ARCHERY_TEST_MQTT_USER", ""))
-    p.add_argument("--mqtt-password", default=os.getenv("ARCHERY_TEST_MQTT_PASSWORD", ""))
+    p.add_argument(
+        "--mqtt-password", default=os.getenv("ARCHERY_TEST_MQTT_PASSWORD", "")
+    )
     p.add_argument("--tls", action="store_true")
     p.add_argument("--ca", default=os.getenv("ARCHERY_TEST_MQ_CA", ""))
     p.add_argument("--cert", default=os.getenv("ARCHERY_TEST_MQ_CERT", ""))

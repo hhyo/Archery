@@ -126,9 +126,7 @@ class TestRabbitmqEngine(TestCase):
         mock_ch.basic_get.return_value = (method, MagicMock(), b"hello")
         engine = RabbitmqEngine(instance=self.ins)
 
-        result = engine.query(
-            db_name="/", sql="get queue=archery_test_queue count=1"
-        )
+        result = engine.query(db_name="/", sql="get queue=archery_test_queue count=1")
 
         mock_ch.basic_ack.assert_called_with(delivery_tag=1)
         self.assertEqual(

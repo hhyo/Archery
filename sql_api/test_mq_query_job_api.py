@@ -62,9 +62,7 @@ def test_create_mq_job_returns_job_id(monkeypatch, api_client, super_user):
         captured["sql_line"] = sql_line
         return {"job_id": "abc123"}
 
-    monkeypatch.setattr(
-        "sql_api.api_sqlquery.create_mq_query_job", fake_create
-    )
+    monkeypatch.setattr("sql_api.api_sqlquery.create_mq_query_job", fake_create)
 
     api_client.force_authenticate(user=super_user)
     response = api_client.post(
@@ -95,9 +93,7 @@ def test_create_mq_job_resolves_instance_name(
         captured["instance_id"] = instance_id
         return {"job_id": "named1"}
 
-    monkeypatch.setattr(
-        "sql_api.api_sqlquery.create_mq_query_job", fake_create
-    )
+    monkeypatch.setattr("sql_api.api_sqlquery.create_mq_query_job", fake_create)
 
     api_client.force_authenticate(user=super_user)
     response = api_client.post(
@@ -137,9 +133,7 @@ def test_create_mq_job_validation_error(api_client, super_user):
 
 
 @pytest.mark.django_db
-def test_get_mq_job_returns_payload_without_cancel(
-    monkeypatch, api_client, super_user
-):
+def test_get_mq_job_returns_payload_without_cancel(monkeypatch, api_client, super_user):
     job = {
         "job_id": "j1",
         "user_id": super_user.id,
@@ -175,9 +169,7 @@ def test_get_mq_job_not_found(monkeypatch, api_client, super_user):
     def raise_missing(user, job_id):
         raise KeyError(f"job not found: {job_id}")
 
-    monkeypatch.setattr(
-        "sql_api.api_sqlquery.get_mq_query_job", raise_missing
-    )
+    monkeypatch.setattr("sql_api.api_sqlquery.get_mq_query_job", raise_missing)
 
     api_client.force_authenticate(user=super_user)
     response = api_client.get(MQ_JOB_DETAIL.format(job_id="missing"))
@@ -208,9 +200,7 @@ def test_create_mq_job_service_value_error(monkeypatch, api_client, super_user):
     def raise_value(user, instance_id, db_name, sql_line):
         raise ValueError("仅 MQTT/RabbitMQ 支持异步查询任务")
 
-    monkeypatch.setattr(
-        "sql_api.api_sqlquery.create_mq_query_job", raise_value
-    )
+    monkeypatch.setattr("sql_api.api_sqlquery.create_mq_query_job", raise_value)
 
     api_client.force_authenticate(user=super_user)
     response = api_client.post(
@@ -267,9 +257,7 @@ def test_create_get_cancel_with_async_task_mocked(
     def fake_async_task(func_path, job_id, *args, **kwargs):
         queued.append((func_path, job_id))
 
-    monkeypatch.setattr(
-        "sql.services.mq_query_job.async_task", fake_async_task
-    )
+    monkeypatch.setattr("sql.services.mq_query_job.async_task", fake_async_task)
 
     api_client.force_authenticate(user=query_user)
     create_resp = api_client.post(

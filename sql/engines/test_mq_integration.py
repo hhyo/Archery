@@ -4,6 +4,7 @@
 Uses MQTTX / rabbitmqadmin subset syntax (same as engines).
 Requires brokers reachable and env vars; otherwise tests skip.
 """
+
 import os
 import socket
 import time
@@ -139,9 +140,7 @@ def _rabbitmq_roundtrip(engine):
         assert not read_result.error, read_result.error
         assert read_result.rows == [[queue, queue, payload]]
     finally:
-        engine.execute_workflow(
-            _workflow(engine.db_name, f"delete queue name={queue}")
-        )
+        engine.execute_workflow(_workflow(engine.db_name, f"delete queue name={queue}"))
 
 
 def _mqtt_roundtrip(engine):

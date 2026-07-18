@@ -217,9 +217,7 @@ class RabbitmqEngine(EngineBase):
             channel = conn.channel()
             started_at = time.monotonic()
             cancelled = False
-            while (
-                len(rows) < count and time.monotonic() - started_at < timeout_sec
-            ):
+            while len(rows) < count and time.monotonic() - started_at < timeout_sec:
                 if cancel_check and cancel_check():
                     cancelled = True
                     break
@@ -263,9 +261,7 @@ class RabbitmqEngine(EngineBase):
         parameters=None,
         **kwargs,
     ):
-        result = ResultSet(
-            full_sql=sql, column_list=["queue", "routing_key", "body"]
-        )
+        result = ResultSet(full_sql=sql, column_list=["queue", "routing_key", "body"])
         try:
             lines = split_mq_lines(sql)
             if not lines:

@@ -147,9 +147,7 @@ def _public_mq_job_payload(job: dict) -> dict:
 def _deny_without_query_submit(user):
     if user.is_superuser or user.has_perm("sql.query_submit"):
         return None
-    return Response(
-        {"msg": "无执行查询权限"}, status=status.HTTP_403_FORBIDDEN
-    )
+    return Response({"msg": "无执行查询权限"}, status=status.HTTP_403_FORBIDDEN)
 
 
 class SQLQueryMqJobListCreateView(views.APIView):

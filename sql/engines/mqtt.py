@@ -244,8 +244,7 @@ class MqttEngine(EngineBase):
             started_at = time.monotonic()
             cancelled = False
             while (
-                len(messages) < max_msgs
-                and time.monotonic() - started_at < timeout_sec
+                len(messages) < max_msgs and time.monotonic() - started_at < timeout_sec
             ):
                 if cancel_check and cancel_check():
                     cancelled = True
