@@ -29,3 +29,8 @@ static/
 local_settings.py
 nohup.out
 docs/superpowers/testdata/mq-certs/
+.codegraph/
+.gstack/
+.superpowers/
+scripts/mq_env/
+
