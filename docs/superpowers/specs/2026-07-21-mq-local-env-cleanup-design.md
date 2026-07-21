@@ -98,7 +98,7 @@ scripts/mq_env/
 |------|------|
 | `.superpowers/`（含已提交的 `sdd/*report.md`） | `git rm -r --cached` + ignore |
 | `scripts/mq_env/`（含已提交的 README / gen_certs / verify_auth） | `git rm -r --cached` + ignore |
-| `.codegraph/`、`.gstack/` | 仅本地；确认 ignore，确保未跟踪 |
+| `.codegraph/`、`.gstack/`、`.venv-mq/` | **从未提交过**，不需要 `git rm`；仅加入/确认 ignore（`.venv-mq` 可选，因其自带内部 ignore） |
 
 说明：
 
