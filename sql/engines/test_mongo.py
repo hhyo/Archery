@@ -250,6 +250,8 @@ class TestExecuteShellSql:
     def test_updateOne_with_upsert(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 0
         mock_result.modified_count = 1
         mock_coll.update_one.return_value = mock_result
 
@@ -264,6 +266,8 @@ class TestExecuteShellSql:
     def test_updateMany(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 5
         mock_result.modified_count = 5
         mock_coll.update_many.return_value = mock_result
 
@@ -276,6 +280,8 @@ class TestExecuteShellSql:
     def test_update_with_multi(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 3
         mock_result.modified_count = 3
         mock_coll.update_many.return_value = mock_result
 
@@ -289,6 +295,8 @@ class TestExecuteShellSql:
     def test_update_without_multi(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 1
         mock_result.modified_count = 1
         mock_coll.update_one.return_value = mock_result
 
@@ -302,6 +310,8 @@ class TestExecuteShellSql:
     def test_replaceOne(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 1
         mock_result.modified_count = 1
         mock_coll.replace_one.return_value = mock_result
 
@@ -314,6 +324,7 @@ class TestExecuteShellSql:
     def test_deleteOne(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 1
         mock_coll.delete_one.return_value = mock_result
 
@@ -326,6 +337,7 @@ class TestExecuteShellSql:
     def test_deleteMany(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 5
         mock_coll.delete_many.return_value = mock_result
 
@@ -338,6 +350,7 @@ class TestExecuteShellSql:
     def test_remove_justOne(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 1
         mock_coll.delete_one.return_value = mock_result
 
@@ -351,6 +364,7 @@ class TestExecuteShellSql:
     def test_remove_many(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 3
         mock_coll.delete_many.return_value = mock_result
 
@@ -559,6 +573,7 @@ class TestExecuteShellSql:
     def test_getCollection_syntax(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 2
         mock_coll.delete_many.return_value = mock_result
 
