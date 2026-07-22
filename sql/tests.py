@@ -432,7 +432,7 @@ class TestSignUp(TestCase):
         self.assertTrue(user)
         # 激活用户（模拟完成邮件验证）
         user.is_active = True
-        user.save()  
+        user.save()
         # 注册后登录
         r = self.client.post(
             "/authenticate/",
