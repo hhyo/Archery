@@ -508,8 +508,21 @@ def offline_file_download(request):
     :param request:
     :return:
     """
-    file_name = request.GET.get("file_name", " ")
     workflow_id = request.GET.get("workflow_id", " ")
+    if not str(workflow_id).isdigit():
+        return JsonResponse({"error": "参数错误，workflow_id必须为数字"}, status=400)
+
+    try:
+        workflow = SqlWorkflow.objects.get(id=workflow_id)
+        file_name = workflow.file_name
+        if not file_name:
+            return JsonResponse({"error": "该工单未生成下载文件"}, status=404)
+    except SqlWorkflow.DoesNotExist:
+        return JsonResponse({"error": "工单不存在"}, status=404)
+
+    if ".." in file_name or "/" in file_name or "\\" in file_name:
+        return JsonResponse({"error": "非法的文件名"}, status=400)
+
     action = "离线下载"
     extra_info = f"工单id：{workflow_id}，文件：{file_name}"
     config = SysConfig()
