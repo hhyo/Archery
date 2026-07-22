@@ -29,6 +29,7 @@
                         <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                         <optgroup id="optgroup-redis" label="Redis"></optgroup>
                         <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                        <optgroup id="optgroup-gaussdb" label="GaussDB"></optgroup>
                         <optgroup id="optgroup-doris" label="Doris"></optgroup>
                         <optgroup id="optgroup-tdengine" label="TDengine"></optgroup>
                         <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
@@ -113,6 +114,9 @@
 
         if (typeof pgsqlDiagnosticInfo !== "undefined" && Array.isArray(pgsqlDiagnosticInfo.fieldsProcesslist)) {
             processListTableInfos.push(pgsqlDiagnosticInfo?.fieldsProcesslist);
+        }
+        if (typeof gaussdbDiagnosticInfo !== "undefined" && Array.isArray(gaussdbDiagnosticInfo.fieldsProcesslist)) {
+            processListTableInfos.push(gaussdbDiagnosticInfo?.fieldsProcesslist);
         }
         if (typeof mysqlDiagnosticInfo !== "undefined" && Array.isArray(mysqlDiagnosticInfo.fieldsProcesslist)) {
             processListTableInfos.push(mysqlDiagnosticInfo?.fieldsProcesslist);
@@ -259,6 +263,8 @@
         ]
         let dorisTableInfo = ['doris',tablespaceListTableInfos[0][1]]
         tablespaceListTableInfos.push(dorisTableInfo)
+        let gaussdbTableInfo = ['gaussdb',tablespaceListTableInfos[0][1]]
+        tablespaceListTableInfos.push(gaussdbTableInfo)
         let clickhouseTableInfo = ['clickhouse',
             [{
                 title: '数据库',
@@ -624,6 +630,76 @@
                 }
             ]
         ]
+        lockListTableInfos.push([
+            'gaussdb',
+            [{
+                title: '等待PID',
+                field: 'blocked_pid',
+                sortable: true
+            }, {
+                title: '等待用户',
+                field: 'blocked_user',
+                sortable: true
+            }, {
+                title: '等待数据库',
+                field: 'blocked_database',
+                sortable: true
+            }, {
+                title: '等待SQL',
+                field: 'blocked_query',
+                formatter: function (value, row, index) {
+                    return truncateText(value, 30);
+                }
+            }, {
+                title: '等待SQL完整内容',
+                field: 'blocked_query',
+                visible: false
+            }, {
+                title: '等待开始时间',
+                field: 'blocked_query_start',
+                sortable: true
+            }, {
+                title: '阻塞PID',
+                field: 'blocking_pid',
+                sortable: true
+            }, {
+                title: '阻塞用户',
+                field: 'blocking_user',
+                sortable: true
+            }, {
+                title: '阻塞SQL',
+                field: 'blocking_query',
+                formatter: function (value, row, index) {
+                    return truncateText(value, 30);
+                }
+            }, {
+                title: '锁类型',
+                field: 'locktype',
+                sortable: true
+            }, {
+                title: '等待锁模式',
+                field: 'blocked_mode',
+                sortable: true
+            }, {
+                title: '持有锁模式',
+                field: 'blocking_mode',
+                sortable: true
+            }, {
+                title: '对象',
+                field: 'relation',
+                sortable: true
+            }],
+            function (index, row) {
+                var html = [];
+                if (row.blocked_query) {
+                    html.push('<div><strong>等待SQL</strong><br><span>' + formatSqlText(row.blocked_query) + '</span></div>');
+                }
+                if (row.blocking_query) {
+                    html.push('<div><strong>阻塞SQL</strong><br><span>' + formatSqlText(row.blocking_query) + '</span></div>');
+                }
+                return html.join('');
+            }
+        ])
 
         // 问题诊断--锁等待列表
         function get_trxandlocks_list() {
@@ -794,7 +870,7 @@
                 //获取用户实例列表
                 $(function () {
                     // 会话管理-支持的数据库类型
-                    supportedDbType = ['mysql', 'mongo', 'oracle', 'redis', 'pgsql', 'doris', 'tdengine', 'clickhouse']
+                    supportedDbType = ['mysql', 'mongo', 'oracle', 'redis', 'pgsql', 'gaussdb', 'doris', 'tdengine', 'clickhouse']
                     $.ajax({
                         type: "get",
                         url: "/api/v1/sqlquery/instances/",

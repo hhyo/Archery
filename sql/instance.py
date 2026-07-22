@@ -21,6 +21,76 @@ from .models import Instance, ParamTemplate, ParamHistory
 logger = logging.getLogger("default")
 
 
+GAUSSDB_PARAM_TEMPLATES = [
+    {
+        "variable_name": "statement_timeout",
+        "default_value": "0",
+        "editable": True,
+        "valid_values": "[0-2147483647]",
+        "description": "单条语句最大执行时间，单位毫秒；0 表示不限制。",
+    },
+    {
+        "variable_name": "lockwait_timeout",
+        "default_value": "1200000",
+        "editable": True,
+        "valid_values": "[0-2147483647]",
+        "description": "等待锁的超时时间，单位毫秒。",
+    },
+    {
+        "variable_name": "work_mem",
+        "default_value": "4MB",
+        "editable": True,
+        "valid_values": "内存大小，例如 4MB、64MB。",
+        "description": "排序、哈希等操作可使用的工作内存。",
+    },
+    {
+        "variable_name": "enable_seqscan",
+        "default_value": "on",
+        "editable": True,
+        "valid_values": "[on|off]",
+        "description": "控制优化器是否启用顺序扫描计划。",
+    },
+    {
+        "variable_name": "enable_indexscan",
+        "default_value": "on",
+        "editable": True,
+        "valid_values": "[on|off]",
+        "description": "控制优化器是否启用索引扫描计划。",
+    },
+    {
+        "variable_name": "max_connections",
+        "default_value": "5000",
+        "editable": False,
+        "valid_values": "需重启或通过实例参数组维护。",
+        "description": "实例最大连接数。",
+    },
+    {
+        "variable_name": "shared_buffers",
+        "default_value": "128MB",
+        "editable": False,
+        "valid_values": "需重启或通过实例参数组维护。",
+        "description": "数据库共享缓冲区大小。",
+    },
+]
+
+
+def ensure_builtin_param_templates(db_type):
+    """补齐内置参数模板，避免新引擎在参数页没有可展示项。"""
+    if db_type != "gaussdb":
+        return
+    for param in GAUSSDB_PARAM_TEMPLATES:
+        ParamTemplate.objects.get_or_create(
+            db_type=db_type,
+            variable_name=param["variable_name"],
+            defaults={
+                "default_value": param["default_value"],
+                "editable": param["editable"],
+                "valid_values": param["valid_values"],
+                "description": param["description"],
+            },
+        )
+
+
 @permission_required("sql.menu_instance_list", raise_exception=True)
 def lists(request):
     """获取实例列表"""
@@ -98,6 +168,7 @@ def param_list(request):
         logger.error(f"实例不存在：{instance_id}，异常详情：{e}")
         result = {"status": 1, "msg": "实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
+    ensure_builtin_param_templates(ins.db_type)
     # 获取已配置参数列表
     cnf_params = dict()
     for param in ParamTemplate.objects.filter(
@@ -193,6 +264,7 @@ def param_edit(request):
     engine = get_engine(instance=ins)
     variable_name = engine.escape_string(variable_name)
     variable_value = engine.escape_string(variable_value)
+    ensure_builtin_param_templates(ins.db_type)
     # 校验是否配置模板
     if not ParamTemplate.objects.filter(variable_name=variable_name).exists():
         result = {"status": 1, "msg": "请先在参数模板中配置该参数！", "data": []}

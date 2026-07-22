@@ -12,6 +12,8 @@
                         data-live-search="true">
                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
+                    <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                    <optgroup id="optgroup-gaussdb" label="GaussDB"></optgroup>
                 </select>
             </div>
             <div class="form-group">
@@ -1240,6 +1242,52 @@
                             }
                         }
                     ]
+                case 'gaussdb':
+                case 'pgsql':
+                    return [
+                        {
+                            title: '账号',
+                            field: 'user_host',
+                            formatter: function (value, row, index) {
+                                if (row.saved) {
+                                    return "<a target=\"_blank\" href=\"/admin/sql/instanceaccount/" + row.id + "/change/\">" + value + "</a>"
+                                } else {
+                                    return value
+                                }
+                            }
+                        }, {
+                            title: '帐号名',
+                            field: 'user',
+                            visible: false
+                        }, {
+                            title: '主机',
+                            field: 'host',
+                            visible: false
+                        }, {
+                            title: '超级用户',
+                            field: 'is_superuser',
+                            formatter: function (value, row, index) {
+                                return value ? '是' : '否'
+                            }
+                        }, {
+                            title: '可建库',
+                            field: 'can_create_db',
+                            formatter: function (value, row, index) {
+                                return value ? '是' : '否'
+                            }
+                        }, {
+                            title: '备注',
+                            field: 'remark'
+                        }, {
+                            title: '操作',
+                            field: '',
+                            formatter: function (value, row, index) {
+                                let btn_edit = "<button class=\"btn btn-info btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_edit_modal(this" + "\">编辑</button>\n";
+                                let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this" + "\">改密</button>\n";
+                                let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this" + "\">删除</button>\n";
+                                return btn_edit + btn_reset_passwd + btn_del_account
+                            }
+                        }]
                 default:
                     return []
             }
@@ -1253,6 +1301,8 @@
                 uniqueId = 'user_host';
             } else if (db_type === 'mongo') {
                 uniqueId = 'db_name_user';
+            } else if (db_type === 'gaussdb' || db_type === 'pgsql') {
+                uniqueId = 'user_host';
             }
             //初始化table
             $('#user-list').bootstrapTable('destroy').bootstrapTable({
@@ -1829,7 +1879,7 @@
                     url: "/api/v1/sqlquery/instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql', 'mongo']
+                        db_type: ['mysql', 'mongo', 'pgsql', 'gaussdb']
                     },
                     complete: function () {
                     },
@@ -1837,7 +1887,7 @@
                         if (data.status === 0) {
                             let result = data['data'];
                             $("optgroup[id^='optgroup']").empty();
-                            const supportDb = ['mysql', 'mongo']
+                            const supportDb = ['mysql', 'mongo', 'pgsql', 'gaussdb']
                             for (let i of result) {
                                 let instance = "<option value=\"" + i.id + "\" instance-id=" + i.id + " instance-type=" + i.db_type + ">" + i.instance_name + "</option>";
                                 if (supportDb.indexOf(i.db_type) !== -1) {

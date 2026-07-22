@@ -70,10 +70,11 @@ def table_info(request):
                 db_name=db_name, tb_name=tb_name
             )
 
-            # mysql和clickhouse数据库可以获取创建表格的SQL语句
-            if instance.db_type in ("mysql", "clickhouse"):
+            # mysql、clickhouse 和 gaussdb 数据库可以获取创建表格的SQL语句
+            if instance.db_type in ("mysql", "clickhouse", "gaussdb"):
+                quote = "`" if instance.db_type in ("mysql", "clickhouse") else ""
                 _create_sql = query_engine.query(
-                    db_name, "show create table `%s`;" % tb_name
+                    db_name, f"show create table {quote}{tb_name}{quote};"
                 )
                 data["create_sql"] = _create_sql.rows
             res = {"status": 0, "data": data}
@@ -91,16 +92,18 @@ def table_info(request):
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def view_list(request):
-    """数据字典获取视图列表（仅MySQL）"""
-    return _dict_list(request, db_type_required="mysql", engine_method="get_views_list")
+    """数据字典获取视图列表"""
+    return _dict_list(
+        request, db_type_required=("mysql", "gaussdb"), engine_method="get_views_list"
+    )
 
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def view_info(request):
-    """数据字典获取视图详情（仅MySQL）"""
+    """数据字典获取视图详情"""
     return _dict_detail(
         request,
-        db_type_required="mysql",
+        db_type_required=("mysql", "gaussdb"),
         engine_method="get_view_detail",
         name_param="view_name",
         engine_kwarg="view_name",
@@ -109,18 +112,20 @@ def view_info(request):
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def trigger_list(request):
-    """数据字典获取触发器列表（仅MySQL）"""
+    """数据字典获取触发器列表"""
     return _dict_list(
-        request, db_type_required="mysql", engine_method="get_triggers_list"
+        request,
+        db_type_required=("mysql", "gaussdb"),
+        engine_method="get_triggers_list",
     )
 
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def trigger_info(request):
-    """数据字典获取触发器详情（仅MySQL）"""
+    """数据字典获取触发器详情"""
     return _dict_detail(
         request,
-        db_type_required="mysql",
+        db_type_required=("mysql", "gaussdb"),
         engine_method="get_trigger_detail",
         name_param="trigger_name",
         engine_kwarg="trigger_name",
@@ -129,18 +134,20 @@ def trigger_info(request):
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def procedure_list(request):
-    """数据字典获取存储过程列表（仅MySQL）"""
+    """数据字典获取存储过程列表"""
     return _dict_list(
-        request, db_type_required="mysql", engine_method="get_procedures_list"
+        request,
+        db_type_required=("mysql", "gaussdb"),
+        engine_method="get_procedures_list",
     )
 
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def procedure_info(request):
-    """数据字典获取存储过程详情（仅MySQL）"""
+    """数据字典获取存储过程详情"""
     return _dict_detail(
         request,
-        db_type_required="mysql",
+        db_type_required=("mysql", "gaussdb"),
         engine_method="get_procedure_detail",
         name_param="proc_name",
         engine_kwarg="proc_name",

@@ -7,7 +7,6 @@ from django.forms import model_to_dict
 from sqlparse.tokens import Keyword
 import pandas as pd
 
-from sql.engines.goinception import GoInceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns
 import re
 import traceback
@@ -38,6 +37,8 @@ def data_masking(instance, db_name, sql, sql_result):
             ]
         else:
             # 通过goInception获取select list
+            from sql.engines.goinception import GoInceptionEngine
+
             inception_engine = GoInceptionEngine()
             select_list = inception_engine.query_data_masking(
                 instance=instance, db_name=db_name, sql=sql

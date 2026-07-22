@@ -16,6 +16,7 @@
                             <option value="mysql">MySQL</option>
                             <option value="goinception">goInception</option>
                             <option value="inception">Inception</option>
+                            <option value="gaussdb">GaussDB</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -106,13 +107,16 @@
 
         // 获取实例列表
         function load_instances() {
+            var db_type = $("#db_type").val();
+            var params = {};
+            if (db_type) {
+                params.db_type = [db_type];
+            }
             $.ajax({
                 type: "get",
-                url: "/group/user_all_instances/",
+                url: "/api/v1/sqlquery/instances/",
                 dataType: "json",
-                data: {
-                    db_type: [$("#db_type").val()]
-                },
+                data: params,
                 success: function (data) {
                     if (data.status === 0) {
                         let result = data['data'];
