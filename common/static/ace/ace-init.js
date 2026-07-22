@@ -36,7 +36,7 @@ ace.require("ace/ext/language_tools");
 //绑定查询快捷键
 editor.commands.addCommand({
     name: "alter",
-    bindKey: {win: "Ctrl-Enter", mac: "Command-Enter"},
+    bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
     exec: function (editor) {
         let pathname = window.location.pathname;
         if (pathname === "/sqlquery/") {
@@ -46,24 +46,45 @@ editor.commands.addCommand({
 });
 
 //设置自动提示代码
-var setCompleteData = function (data) {
+var archeryAutoCompleteData = {
+    database: [],
+    schema: [],
+    table: [],
+    column: []
+};
+var isCompleterAdded = false;
+
+var setCompleteData = function (data, type) {
     var langTools = ace.require("ace/ext/language_tools");
-    langTools.addCompleter({
-        getCompletions: function (editor, session, pos, prefix, callback) {
-            if (prefix.length === 0) {
-                return callback(null, []);
-            } else {
-                return callback(null, data);
+
+    if (type) {
+        archeryAutoCompleteData[type] = data;
+    }
+
+    if (!isCompleterAdded) {
+        langTools.addCompleter({
+            getCompletions: function (editor, session, pos, prefix, callback) {
+                if (prefix.length === 0) {
+                    return callback(null, []);
+                } else {
+                    var allData = archeryAutoCompleteData.database.concat(
+                        archeryAutoCompleteData.schema,
+                        archeryAutoCompleteData.table,
+                        archeryAutoCompleteData.column
+                    );
+                    return callback(null, allData);
+                }
             }
-        }
-    });
+        });
+        isCompleterAdded = true;
+    }
 };
 
 //增加数据库提示
 function setDbsCompleteData(result) {
-    var tables = [];
+    var dbs = [];
     for (var i = 0; i < result.length; i++) {
-        tables.push({
+        dbs.push({
             name: result[i],
             value: result[i],
             caption: result[i],
@@ -72,14 +93,14 @@ function setDbsCompleteData(result) {
         });
 
     }
-    setCompleteData(tables);
+    setCompleteData(dbs, "database");
 }
 
 //增加模式提示
 function setSchemasCompleteData(result) {
-    var tables = [];
+    var schemas = [];
     for (var i = 0; i < result.length; i++) {
-        tables.push({
+        schemas.push({
             name: result[i],
             value: result[i],
             caption: result[i],
@@ -88,7 +109,7 @@ function setSchemasCompleteData(result) {
         });
 
     }
-    setCompleteData(tables);
+    setCompleteData(schemas, "schema");
 }
 
 
@@ -109,15 +130,15 @@ function setTablesCompleteData(result) {
         });
 
     }
-    setCompleteData(tables);
+    setCompleteData(tables, "table");
 }
 
 //增加字段提示
 function setColumnsCompleteData(result) {
     if (result) {
-        var tables = [];
+        var columns = [];
         for (var i = 0; i < result.length; i++) {
-            tables.push({
+            columns.push({
                 name: result[i],
                 value: result[i],
                 caption: result[i],
@@ -126,7 +147,7 @@ function setColumnsCompleteData(result) {
             });
 
         }
-        setCompleteData(columns);
+        setCompleteData(columns, "column");
     } else {
         $.ajax({
             type: "get",
@@ -154,7 +175,7 @@ function setColumnsCompleteData(result) {
                             score: 100
                         })
                     }
-                    setCompleteData(columns);
+                    setCompleteData(columns, "column");
                 } else {
                     alert(data.msg);
                 }
@@ -165,6 +186,12 @@ function setColumnsCompleteData(result) {
 
 // 实例变更时修改language
 $("#instance_name").change(function () {
+    // 清空所有的自动补全数据
+    archeryAutoCompleteData.database = [];
+    archeryAutoCompleteData.schema = [];
+    archeryAutoCompleteData.table = [];
+    archeryAutoCompleteData.column = [];
+
     let optgroup = $('#instance_name :selected').parent().attr('label');
     if (optgroup === "MySQL") {
         editor.setTheme("ace/theme/" + "textmate");
@@ -208,3 +235,16 @@ $("#instance_name").change(function () {
         editor.session.setMode("ace/mode/" + "mysql");
     }
 });
+
+// 数据库变更时，清空表和字段的自动补全数据
+$("#db_name").change(function () {
+    archeryAutoCompleteData.table = [];
+    archeryAutoCompleteData.column = [];
+});
+
+// 模式(Schema)变更时，清空表和字段的自动补全数据
+$("#schema_name").change(function () {
+    archeryAutoCompleteData.table = [];
+    archeryAutoCompleteData.column = [];
+});
+
