@@ -7,10 +7,12 @@ import hashlib
 import shutil
 import datetime
 import xml.etree.ElementTree as ET
+from xml.sax.saxutils import escape
 import zipfile
 import sqlparse
 import time
 import traceback
+import gc
 
 import simplejson as json
 import pandas as pd
@@ -394,12 +396,13 @@ def save_json(file_path, result, columns):
     :param columns: 列名
     """
     with open(file_path, "w", encoding="utf-8") as json_file:
-        json.dump(
-            [dict(zip(columns, row)) for row in result],
-            json_file,
-            indent=2,
-            ensure_ascii=False,
-        )
+        json_file.write("[\n")
+        for i, row in enumerate(result):
+            if i > 0:
+                json_file.write(",\n")
+            row_dict = dict(zip(columns, row))
+            json_file.write("  " + json.dumps(row_dict, ensure_ascii=False))
+        json_file.write("\n]")
 
 
 def save_xml(file_path, result, columns):
@@ -409,29 +412,27 @@ def save_xml(file_path, result, columns):
     :param result: 查询结果
     :param columns: 列名
     """
-    root = ET.Element("tabledata")
-
-    # Create fields element
-    fields_elem = ET.SubElement(root, "fields")
-    for column in columns:
-        field_elem = ET.SubElement(fields_elem, "field")
-        field_elem.text = column
-
-    # Create data element
-    data_elem = ET.SubElement(root, "data")
-    for row_id, row in enumerate(result, start=1):
-        row_elem = ET.SubElement(data_elem, "row", id=str(row_id))
-        for col_idx, value in enumerate(row, start=1):
-            col_elem = ET.SubElement(row_elem, f"column-{col_idx}")
-            if value is None:
-                col_elem.text = "(null)"
-            elif isinstance(value, (datetime.date, datetime.datetime)):
-                col_elem.text = value.isoformat()
-            else:
-                col_elem.text = str(value)
-
-    tree = ET.ElementTree(root)
-    tree.write(file_path, encoding="utf-8", xml_declaration=True)
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write("<?xml version='1.0' encoding='utf-8'?>\n")
+        f.write("<tabledata>\n")
+        f.write("  <fields>\n")
+        for column in columns:
+            f.write(f"    <field>{escape(str(column))}</field>\n")
+        f.write("  </fields>\n")
+        f.write("  <data>\n")
+        for row_id, row in enumerate(result, start=1):
+            f.write(f'    <row id="{row_id}">\n')
+            for col_idx, value in enumerate(row, start=1):
+                if value is None:
+                    text = "(null)"
+                elif isinstance(value, (datetime.date, datetime.datetime)):
+                    text = value.isoformat()
+                else:
+                    text = escape(str(value))
+                f.write(f"      <column-{col_idx}>{text}</column-{col_idx}>\n")
+            f.write("    </row>\n")
+        f.write("  </data>\n")
+        f.write("</tabledata>\n")
 
 
 def save_xlsx(file_path, result, columns):
@@ -442,17 +443,20 @@ def save_xlsx(file_path, result, columns):
     :param columns: 列名
     """
     try:
-        df = pd.DataFrame(
-            [
-                [
+
+        def generate_rows():
+            for row in result:
+                yield [
                     str(value) if value is not None and value != "NULL" else ""
                     for value in row
                 ]
-                for row in result
-            ],
-            columns=columns,
-        )
+
+        df = pd.DataFrame(generate_rows(), columns=columns)
         df.to_excel(file_path, index=False, header=True)
+
+        # 显式删除大对象并强制垃圾回收
+        del df
+        gc.collect()
     except ValueError as e:
         raise ValueError(f"Excel最大支持行数为1048576,已超出!")
 
