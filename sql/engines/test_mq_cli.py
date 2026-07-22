@@ -108,3 +108,64 @@ def test_declare_queue_parses_durable():
     cmd = parse_rabbitmq_line("declare queue name=q1 durable=true")
     assert cmd.args["name"] == "q1"
     assert cmd.args["durable"] is True
+
+
+def test_declare_binding_official_keys():
+    cmd = parse_rabbitmq_line(
+        "declare binding source=ex destination=q routing_key=rk"
+    )
+    assert cmd.args["source"] == "ex"
+    assert cmd.args["destination"] == "q"
+    assert cmd.args["destination_type"] == "queue"
+    assert cmd.args["routing_key"] == "rk"
+
+
+def test_declare_binding_rejects_legacy_queue_exchange_keys():
+    with pytest.raises(ValueError, match="source"):
+        parse_rabbitmq_line(
+            "declare binding queue=q exchange=ex routing_key=rk"
+        )
+
+
+def test_declare_binding_rejects_exchange_destination_type():
+    with pytest.raises(ValueError):
+        parse_rabbitmq_line(
+            "declare binding source=a destination=b destination_type=exchange"
+        )
+
+
+def test_declare_queue_auto_delete():
+    cmd = parse_rabbitmq_line("declare queue name=q1 auto_delete=true")
+    assert cmd.args["auto_delete"] is True
+
+
+def test_declare_rejects_arguments():
+    with pytest.raises(ValueError):
+        parse_rabbitmq_line("declare queue name=q1 arguments={}")
+
+
+def test_delete_exchange_and_binding():
+    d = parse_rabbitmq_line("delete exchange name=ex1")
+    assert d.args["target"] == "exchange"
+    assert d.args["name"] == "ex1"
+    b = parse_rabbitmq_line(
+        "delete binding source=ex destination_type=queue destination=q properties_key=rk"
+    )
+    assert b.args["source"] == "ex"
+    assert b.args["destination"] == "q"
+    assert b.args["destination_type"] == "queue"
+    assert b.args["properties_key"] == "rk"
+
+
+def test_publish_amq_default_normalizes():
+    p = parse_rabbitmq_line(
+        "publish routing_key=q payload=hi exchange=amq.default"
+    )
+    assert p.args["exchange"] == ""
+
+
+def test_publish_rejects_properties():
+    with pytest.raises(ValueError):
+        parse_rabbitmq_line(
+            "publish routing_key=q payload=hi properties={}"
+        )

@@ -55,6 +55,23 @@ RABBITMQ_GET_ACKMODES = frozenset(
     }
 )
 RABBITMQ_GET_KEYS = frozenset({"queue", "count", "ackmode"})
+RABBITMQ_PUBLISH_KEYS = frozenset({"routing_key", "payload", "exchange"})
+RABBITMQ_DECLARE_QUEUE_KEYS = frozenset({"name", "durable", "auto_delete"})
+RABBITMQ_DECLARE_EXCHANGE_KEYS = frozenset(
+    {"name", "type", "durable", "auto_delete"}
+)
+RABBITMQ_DECLARE_BINDING_KEYS = frozenset(
+    {"source", "destination", "destination_type", "routing_key"}
+)
+RABBITMQ_DELETE_QUEUE_KEYS = frozenset({"name"})
+RABBITMQ_DELETE_EXCHANGE_KEYS = frozenset({"name"})
+RABBITMQ_DELETE_BINDING_KEYS = frozenset(
+    {"source", "destination", "destination_type", "properties_key"}
+)
+RABBITMQ_PURGE_KEYS = frozenset({"name"})
+RABBITMQ_BOOL_TRUE = frozenset({"true", "1", "yes"})
+RABBITMQ_BOOL_FALSE = frozenset({"false", "0", "no"})
+RABBITMQ_BOOL_VALUES = RABBITMQ_BOOL_TRUE | RABBITMQ_BOOL_FALSE
 
 
 @dataclass
@@ -197,6 +214,22 @@ def _parse_rabbitmq_kv_args(tokens: list[str], start: int) -> dict:
     return args
 
 
+def _reject_unknown_keys(args: dict, allowed: frozenset, label: str) -> None:
+    unknown = set(args) - allowed
+    if unknown:
+        bad = sorted(unknown)[0]
+        raise ValueError(f"unsupported {label} parameter: {bad}")
+
+
+def _parse_bool_arg(args: dict, key: str) -> None:
+    if key not in args:
+        return
+    val = str(args[key]).lower()
+    if val not in RABBITMQ_BOOL_VALUES:
+        raise ValueError(f"{key} must be true or false")
+    args[key] = val in RABBITMQ_BOOL_TRUE
+
+
 def parse_rabbitmq_line(line: str) -> MqCommand:
     tokens = shlex.split(line, posix=True)
     if not tokens:
@@ -228,25 +261,29 @@ def parse_rabbitmq_line(line: str) -> MqCommand:
         if sub_target not in {"queue", "exchange", "binding"}:
             raise ValueError(f"unknown declare target: {sub_target}")
         i += 1
-    elif action in {"purge", "delete"}:
+    elif action == "purge":
         if i >= len(tokens) or tokens[i] != "queue":
-            raise ValueError(f"{action} requires queue")
+            raise ValueError("purge requires queue")
         sub_target = "queue"
+        i += 1
+    elif action == "delete":
+        if i >= len(tokens) or tokens[i] not in {
+            "queue",
+            "exchange",
+            "binding",
+        }:
+            raise ValueError("delete requires queue, exchange, or binding")
+        sub_target = tokens[i]
         i += 1
 
     args = _parse_rabbitmq_kv_args(tokens, i)
-    if sub_target is not None:
-        args["target"] = sub_target
 
     if action == "get":
         if "queue" not in args:
             raise ValueError("get requires queue")
         if "requeue" in args:
             raise ValueError("requeue is not supported; use ackmode instead")
-        unknown = set(args) - RABBITMQ_GET_KEYS
-        if unknown:
-            bad = sorted(unknown)[0]
-            raise ValueError(f"unsupported get parameter: {bad}")
+        _reject_unknown_keys(args, RABBITMQ_GET_KEYS, "get")
         if "count" in args:
             args["count"] = int(args["count"])
         else:
@@ -256,29 +293,86 @@ def parse_rabbitmq_line(line: str) -> MqCommand:
             raise ValueError(f"invalid ackmode: {ackmode}")
         args["ackmode"] = ackmode
     elif action == "publish":
+        _reject_unknown_keys(args, RABBITMQ_PUBLISH_KEYS, "publish")
         if "routing_key" not in args:
             raise ValueError("publish requires routing_key")
         if "payload" not in args:
             raise ValueError("publish requires payload")
-        args.setdefault("exchange", "")
+        exchange = args.get("exchange", "")
+        if exchange == "amq.default":
+            exchange = ""
+        args["exchange"] = exchange
     elif action == "declare":
-        if sub_target == "queue" and "name" not in args:
-            raise ValueError("declare queue requires name")
-        if sub_target == "exchange":
+        if sub_target == "queue":
+            _reject_unknown_keys(args, RABBITMQ_DECLARE_QUEUE_KEYS, "declare queue")
+            if "name" not in args:
+                raise ValueError("declare queue requires name")
+        elif sub_target == "exchange":
+            _reject_unknown_keys(
+                args, RABBITMQ_DECLARE_EXCHANGE_KEYS, "declare exchange"
+            )
             if "name" not in args:
                 raise ValueError("declare exchange requires name")
             args.setdefault("type", "direct")
-        if sub_target == "binding":
-            for key in ("queue", "exchange", "routing_key"):
-                if key not in args:
-                    raise ValueError(f"declare binding requires {key}")
-        if "durable" in args:
-            val = args["durable"].lower()
-            if val not in {"true", "false", "1", "0", "yes", "no"}:
-                raise ValueError("durable must be true or false")
-            args["durable"] = val in {"true", "1", "yes"}
-    elif action in {"purge", "delete"}:
+        elif sub_target == "binding":
+            if "queue" in args or "exchange" in args:
+                raise ValueError(
+                    "declare binding uses source= and destination=, "
+                    "not queue=/exchange="
+                )
+            _reject_unknown_keys(
+                args, RABBITMQ_DECLARE_BINDING_KEYS, "declare binding"
+            )
+            if "source" not in args:
+                raise ValueError("declare binding requires source")
+            if "destination" not in args:
+                raise ValueError("declare binding requires destination")
+            destination_type = args.get("destination_type", "queue")
+            if destination_type != "queue":
+                raise ValueError(
+                    "declare binding destination_type must be queue"
+                )
+            args["destination_type"] = destination_type
+            args.setdefault("routing_key", "")
+        _parse_bool_arg(args, "durable")
+        _parse_bool_arg(args, "auto_delete")
+    elif action == "purge":
+        _reject_unknown_keys(args, RABBITMQ_PURGE_KEYS, "purge")
         if "name" not in args:
-            raise ValueError(f"{action} queue requires name")
+            raise ValueError("purge queue requires name")
+    elif action == "delete":
+        if sub_target == "queue":
+            _reject_unknown_keys(args, RABBITMQ_DELETE_QUEUE_KEYS, "delete queue")
+            if "name" not in args:
+                raise ValueError("delete queue requires name")
+        elif sub_target == "exchange":
+            _reject_unknown_keys(
+                args, RABBITMQ_DELETE_EXCHANGE_KEYS, "delete exchange"
+            )
+            if "name" not in args:
+                raise ValueError("delete exchange requires name")
+        elif sub_target == "binding":
+            if "queue" in args or "exchange" in args:
+                raise ValueError(
+                    "delete binding uses source= and destination=, "
+                    "not queue=/exchange="
+                )
+            _reject_unknown_keys(
+                args, RABBITMQ_DELETE_BINDING_KEYS, "delete binding"
+            )
+            if "source" not in args:
+                raise ValueError("delete binding requires source")
+            if "destination" not in args:
+                raise ValueError("delete binding requires destination")
+            destination_type = args.get("destination_type", "queue")
+            if destination_type != "queue":
+                raise ValueError(
+                    "delete binding destination_type must be queue"
+                )
+            args["destination_type"] = destination_type
+            args.setdefault("properties_key", "")
+
+    if sub_target is not None:
+        args["target"] = sub_target
 
     return MqCommand(engine="rabbitmq", action=action, args=args, raw_line=line)
