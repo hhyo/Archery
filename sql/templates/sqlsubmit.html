@@ -232,11 +232,8 @@
 
                                 <div id="rabbitmqHelpList" class="alert alert-info" style="display: none">
                                     <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · list</i></br>
-                                    <i> 分组说明：list 列出队列信息，对齐 rabbitmqadmin 的 list 子命令。本子集仅支持 <code>list queues</code>。</i></br>
-                                    <i> 本子集语法：<code>list queues</code>（无其它参数）。</i></br>
-                                    <i> Management API：本子集未集成 Management API，<code>list queues</code> 始终返回明确错误（<code>list queues 需要 RabbitMQ Management API，当前引擎未启用</code>），不会返回队列列表。</i></br>
-                                    <i> 可复制示例：</i>
-                                    <pre style="margin:0;white-space:pre-wrap;">list queues</pre>
+                                    <i> 分组说明：list 在完整 rabbitmqadmin 中用于列出队列等资源（需 Management API）。</i></br>
+                                    <i> 本子集未支持。</i>
                                 </div>
 
                                 <div id="rabbitmqHelpShow" class="alert alert-info" style="display: none">
@@ -249,9 +246,9 @@
                                     <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · declare</i></br>
                                     <i> 分组说明：declare 声明 queue / exchange / binding，对齐 rabbitmqadmin 的 declare 子命令。</i></br>
                                     <i> 本子集语法：</i></br>
-                                    <i> · <code>declare queue name=…</code> 声明队列，省略 <code>durable</code> 时按 broker/客户端默认（非持久化）；显式 <code>durable=true</code> 才持久化</i></br>
-                                    <i> · <code>declare exchange name=…</code> 声明交换机，<code>type</code> 默认 direct，可选 direct/topic/fanout/headers，省略 <code>durable</code> 时按 broker/客户端默认（非持久化）；显式 <code>durable=true</code> 才持久化</i></br>
-                                    <i> · <code>declare binding queue=… exchange=… routing_key=…</code> 声明绑定</i></br>
+                                    <i> · <code>declare queue name=…</code> 声明队列，可选 <code>durable</code> / <code>auto_delete</code>；省略时不传该参数（按 broker/客户端默认）</i></br>
+                                    <i> · <code>declare exchange name=… type=…</code> 声明交换机，<code>type</code> 默认 direct，可选 direct/topic/fanout/headers；可选 <code>durable</code> / <code>auto_delete</code></i></br>
+                                    <i> · <code>declare binding source=… destination=…</code> 声明绑定，可选 <code>routing_key</code>（缺省 <code>""</code>）、<code>destination_type</code>（仅 <code>queue</code>）</i></br>
                                     <i> 可复制示例（一行一条）：</i>
                                     <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q durable=true</pre>
@@ -259,16 +256,20 @@
                                     <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex type=direct</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex type=topic durable=true</pre>
-                                    <pre style="margin:0;white-space:pre-wrap;">declare binding queue=demo.q exchange=demo.ex routing_key=demo.q</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare binding source=demo.ex destination=demo.q routing_key=demo.q</pre>
                                     <i> 连接参数：命令中可写 <code>rabbitmqadmin</code>、<code>-H/--host</code>、<code>-P/--port</code>、<code>-u/--username</code>、<code>-p/--password</code> 等连接旗标，均会被忽略；实际连接使用所选 Instance。</i>
                                 </div>
 
                                 <div id="rabbitmqHelpDelete" class="alert alert-info" style="display: none">
                                     <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · delete</i></br>
-                                    <i> 分组说明：delete 删除队列，对齐 rabbitmqadmin 的 delete 子命令。本子集仅支持 <code>delete queue name=…</code>。</i></br>
-                                    <i> 本子集语法：<code>delete queue name=…</code>。</i></br>
-                                    <i> 可复制示例：</i>
+                                    <i> 分组说明：delete 删除 queue / exchange / binding，对齐 rabbitmqadmin 的 delete 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>delete queue name=…</code></i></br>
+                                    <i> · <code>delete exchange name=…</code></i></br>
+                                    <i> · <code>delete binding source=… destination=…</code>，可选 <code>destination_type</code>（仅 <code>queue</code>）、<code>properties_key</code>（缺省 <code>""</code>）</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
                                     <pre style="margin:0;white-space:pre-wrap;">delete queue name=demo.q</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">delete exchange name=demo.ex</pre>
                                 </div>
 
                                 <div id="rabbitmqHelpPublish" class="alert alert-info" style="display: none">
@@ -292,12 +293,13 @@
                                     <i> 分组说明：get 从指定队列拉取消息，异步执行，对齐 rabbitmqadmin 的 get 子命令。</i></br>
                                     <i> 本子集语法：</i></br>
                                     <i> · <code>queue=…</code> 队列名（必填）</i></br>
-                                    <i> · <code>count=…</code> 期望拉取条数，上限 100</i></br>
-                                    <i> ack 行为固定，本子集不提供 <code>ackmode</code>（完整 rabbitmqadmin 中 get 的 <code>ackmode</code> 本子集未支持）。</i></br>
+                                    <i> · <code>count=…</code> 期望拉取条数，缺省 1，上限 100</i></br>
+                                    <i> · <code>ackmode=…</code> 可选，缺省 <code>ack_requeue_true</code>；允许 <code>ack_requeue_true</code>（nack 回队）、<code>ack_requeue_false</code>（ack 出队）、<code>reject_requeue_true</code>、<code>reject_requeue_false</code></i></br>
                                     <i> 可复制示例（一行一条）：</i>
                                     <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=5</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1 ackmode=ack_requeue_false</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">rabbitmqadmin get queue=demo.q count=1</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">rabbitmqadmin -H 127.0.0.1 -P 5672 -u guest -p guest get queue=demo.q count=1</pre>
                                     <i> 连接参数：命令中的 <code>rabbitmqadmin</code>、<code>-H/--host</code>、<code>-P/--port</code>、<code>-u/--username</code>、<code>-p/--password</code> 等连接旗标会被忽略；实际连接使用所选 Instance。</i></br>

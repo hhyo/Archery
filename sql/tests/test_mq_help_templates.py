@@ -23,26 +23,27 @@ REQUIRED_SNIPPETS = [
     'pub --topic demo/test --message "hello" --qos 1',
     'mqttx pub -t demo/test -m "hello from archery"',
     'mqttx -h 127.0.0.1 -p 1883 pub -t demo/test -m "hi"',
-    # RabbitMQ examples
+    # RabbitMQ examples (rabbitmqadmin A-tier / official keys)
     "get queue=demo.q",
     "get queue=demo.q count=1",
     "get queue=demo.q count=5",
+    "get queue=demo.q count=1 ackmode=ack_requeue_false",
     "rabbitmqadmin get queue=demo.q count=1",
     "rabbitmqadmin -H 127.0.0.1 -P 5672 -u guest -p guest get queue=demo.q count=1",
-    "list queues",
     "declare queue name=demo.q",
     "declare queue name=demo.q durable=true",
     "declare queue name=demo.q durable=false",
     "declare exchange name=demo.ex",
     "declare exchange name=demo.ex type=direct",
     "declare exchange name=demo.ex type=topic durable=true",
-    "declare binding queue=demo.q exchange=demo.ex routing_key=demo.q",
+    "declare binding source=demo.ex destination=demo.q routing_key=demo.q",
     "publish routing_key=demo.q payload=hello",
     'publish routing_key=demo.q payload="hello from archery"',
     'publish routing_key=demo.q payload="hello" exchange=',
     'publish routing_key=demo.rk payload="hello" exchange=demo.ex',
     "purge queue name=demo.q",
     "delete queue name=demo.q",
+    "delete exchange name=demo.ex",
     # Timeout / config
     "mq_query_timeout_default",
     "mq_query_timeout_max",
@@ -55,6 +56,10 @@ REQUIRED_SNIPPETS = [
     "RabbitMQ帮助文档",
     "本子集未支持",
     "ackmode",
+    "ack_requeue_true",
+    "ack_requeue_false",
+    "reject_requeue_true",
+    "reject_requeue_false",
 ]
 
 
