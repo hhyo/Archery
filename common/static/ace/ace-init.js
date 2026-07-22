@@ -45,6 +45,13 @@ editor.commands.addCommand({
     }
 });
 
+// 监听输入，强制在输入点号时触发自动补全
+editor.commands.on("afterExec", function (e) {
+    if (e.command.name === "insertstring" && e.args === ".") {
+        editor.execCommand("startAutocomplete");
+    }
+});
+
 //设置自动提示代码
 var archeryAutoCompleteData = {
     database: [],
@@ -63,7 +70,103 @@ var setCompleteData = function (data, type) {
 
     if (!isCompleterAdded) {
         langTools.addCompleter({
+            // 增加点号作为触发字符
+            triggerCharacters: ['.'],
             getCompletions: function (editor, session, pos, prefix, callback) {
+                // 1. 获取光标之前的文本，判断是否是点号触发或点号后继续输入
+                var line = session.getLine(pos.row);
+                var textBeforeCursor = line.slice(0, pos.column);
+                var match = textBeforeCursor.match(/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]*)$/);
+
+                if (match) {
+                    var alias = match[1]; // 可能是别名，也可能是表名
+                    var fullSql = session.getValue();
+                    var tableName = null;
+
+                    // 2. 正则解析 SQL 获取表名与别名的映射 (from/join/逗号 表名 [as] 别名)
+                    var tableMatchRegex = /(?:from|join|,)\s+([a-zA-Z0-9_.\`]+)\s+(?:as\s+)?([a-zA-Z0-9_`]+)/gi;
+                    var m;
+                    while ((m = tableMatchRegex.exec(fullSql)) !== null) {
+                        var matchedAlias = m[2].replace(/`/g, '');
+                        if (matchedAlias === alias) {
+                            tableName = m[1].replace(/`/g, '');
+                            break;
+                        }
+                    }
+
+                    // 如果没找到对应的别名，可能用户直接使用了 "表名." 
+                    if (!tableName) {
+                        var tableDirectRegex = /(?:from|join|,)\s+([a-zA-Z0-9_.\`]+)/gi;
+                        while ((m = tableDirectRegex.exec(fullSql)) !== null) {
+                            var matchedTable = m[1].replace(/`/g, '');
+                            if (matchedTable === alias) {
+                                tableName = matchedTable;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (tableName) {
+                        // 处理可能带库名/模式名的情况 (如 db.table 取 table)
+                        if (tableName.indexOf('.') !== -1) {
+                            var parts = tableName.split('.');
+                            tableName = parts[parts.length - 1];
+                        }
+
+                        // 3. 尝试从已缓存的 column 数据中查找
+                        var cachedColumns = archeryAutoCompleteData.column.filter(function (c) {
+                            return c.meta === tableName;
+                        });
+
+                        if (cachedColumns.length > 0) {
+                            return callback(null, cachedColumns);
+                        } else {
+                            // 4. 缓存中没有，发起 Ajax 请求实时获取该表的字段
+                            var instance_name = $("#instance_name").val();
+                            var db_name = $("#db_name").val();
+                            if (!instance_name) return callback(null, []);
+
+                            $.ajax({
+                                type: "get",
+                                url: "/api/v1/sqlquery/resources/",
+                                dataType: "json",
+                                data: {
+                                    instance_name: instance_name,
+                                    db_name: db_name,
+                                    schema_name: $("#schema_name").val(),
+                                    tb_name: tableName,
+                                    resource_type: "column"
+                                },
+                                success: function (data) {
+                                    if (data.status === 0) {
+                                        var result = data.data;
+                                        var columns = [];
+                                        for (var i = 0; i < result.length; i++) {
+                                            columns.push({
+                                                name: result[i],
+                                                value: result[i],
+                                                caption: result[i],
+                                                meta: tableName,
+                                                score: 100
+                                            });
+                                        }
+                                        // 合并到缓存中，下次直接使用
+                                        archeryAutoCompleteData.column = archeryAutoCompleteData.column.concat(columns);
+                                        callback(null, columns);
+                                    } else {
+                                        callback(null, []);
+                                    }
+                                },
+                                error: function () {
+                                    callback(null, []);
+                                }
+                            });
+                            return; // 异步请求，直接返回等待 callback
+                        }
+                    }
+                }
+
+                // 默认的补全逻辑
                 if (prefix.length === 0) {
                     return callback(null, []);
                 } else {
