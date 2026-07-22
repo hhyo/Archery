@@ -5,7 +5,7 @@ ace.config.set('modePath', '/static/ace');
 ace.config.set('themePath', '/static/ace');
 
 //设置风格和语言（更多风格和语言，请到github上相应目录查看）
-var theme = "textmate";
+var theme = "github";
 var language = "text";
 editor.setTheme("ace/theme/" + theme);
 editor.session.setMode("ace/mode/" + language);
@@ -296,9 +296,11 @@ $("#instance_name").change(function () {
     archeryAutoCompleteData.column = [];
 
     let optgroup = $('#instance_name :selected').parent().attr('label');
-    if (optgroup === "MySQL") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "mysql");
+    let dbType = optgroup ? optgroup.toLowerCase() : "";
+
+    if (["mysql", "goinception", "doris"].includes(dbType)) {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/mysql");
         // 提示信息
         let pathname = window.location.pathname;
         if (pathname === "/submitsql/" && !editor.getValue()) {
@@ -306,12 +308,12 @@ $("#instance_name").change(function () {
             editor.clearSelection();
             editor.focus();  //获取焦点
         }
-    } else if (optgroup === "MsSQL") {
-        editor.setTheme("ace/theme/" + "sqlserver");
-        editor.session.setMode("ace/mode/" + "sqlserver");
-    } else if (optgroup === "Redis") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "text");
+    } else if (dbType === "mssql") {
+        editor.setTheme("ace/theme/sqlserver");
+        editor.session.setMode("ace/mode/sqlserver");
+    } else if (["redis", "memcached"].includes(dbType)) {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/text");
         editor.setOptions({
             enableSnippets: false,
         });
@@ -321,21 +323,30 @@ $("#instance_name").change(function () {
             editor.setValue("请在此输入命令，多个命令请换行填写，在提交时请删除此行说明");
             editor.focus();  //获取焦点
         }
-    } else if (optgroup === "PgSQL") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "pgsql");
-    } else if (optgroup === "Oracle") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "sql");
-    } else if (optgroup === "Mongo") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "mongodb");
+    } else if (dbType === "pgsql") {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/pgsql");
+    } else if (dbType === "oracle") {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/plsql");
+    } else if (dbType === "mongo") {
+        editor.setTheme("ace/theme/mongodb");
+        editor.session.setMode("ace/mode/mongodb");
         editor.setOptions({
             enableSnippets: false,
         });
+    } else if (["elasticsearch", "opensearch"].includes(dbType)) {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/json");
+        editor.setOptions({
+            enableSnippets: false,
+        });
+    } else if (["clickhouse", "phoenix", "odps", "tdengine", "cassandra"].includes(dbType)) {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/sql");
     } else {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "mysql");
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/sql");
     }
 });
 
