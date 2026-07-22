@@ -197,8 +197,12 @@ class PgSQLEngine(EngineBase):
                 pass
             cursor.execute("SET transaction ISOLATION LEVEL READ COMMITTED READ ONLY;")
             if schema_name:
+                from psycopg2 import sql as pg_sql
+
                 cursor.execute(
-                    "SET search_path TO %s;" % schema_name
+                    pg_sql.SQL("SET search_path TO {};").format(
+                        pg_sql.Identifier(schema_name)
+                    )
                 )
             cursor.execute(sql, parameters)
             # effect_row = cursor.rowcount

@@ -46,15 +46,18 @@ class GaussDBEngine(PgSQLEngine):
             )
         # GaussDB PBE 机制会拦截 explain 语句，返回参数化信息而非执行计划。
         # 使用 PREPARE + EXPLAIN EXECUTE 绕过。
+        # Only intercept bare EXPLAIN (no ANALYZE, FORMAT, etc.) to avoid
+        # breaking EXPLAIN ANALYZE / EXPLAIN (FORMAT JSON) which GaussDB handles natively.
         explain_match = re.match(
-            r'^\s*explain\s+(.*)', sql, re.I
+            r'^\s*explain\s+(select|with|insert|update|delete)\s+', sql, re.I
         )
-        if explain_match and not re.match(r'^\s*explain\s+execute\s+', sql, re.I):
+        if explain_match:
             inner_sql = explain_match.group(1).rstrip(';').strip()
             return self._explain_via_prepare(
                 db_name=db_name,
                 inner_sql=inner_sql,
                 close_conn=close_conn,
+                schema_name=kwargs.get("schema_name"),
             )
         return super().query(
             db_name=db_name,
@@ -65,7 +68,7 @@ class GaussDBEngine(PgSQLEngine):
             **kwargs,
         )
 
-    def _explain_via_prepare(self, db_name=None, inner_sql="", close_conn=True):
+    def _explain_via_prepare(self, db_name=None, inner_sql="", close_conn=True, schema_name=None):
         """通过 PREPARE + EXPLAIN EXECUTE 绕过 GaussDB PBE 机制获取执行计划。"""
         from sql.engines.models import ResultSet
         result_set = ResultSet(full_sql=f"explain {inner_sql};")
@@ -74,6 +77,13 @@ class GaussDBEngine(PgSQLEngine):
             conn = self.get_connection(db_name=db_name)
             conn.autocommit = True
             cursor = conn.cursor()
+            if schema_name:
+                from psycopg2 import sql as pg_sql
+                cursor.execute(
+                    pg_sql.SQL("SET search_path TO {};").format(
+                        pg_sql.Identifier(schema_name)
+                    )
+                )
             stmt_name = "archery_explain_tmp"
             # PREPARE
             cursor.execute(f"PREPARE {stmt_name} AS {inner_sql};")
@@ -181,9 +191,11 @@ class GaussDBEngine(PgSQLEngine):
             from information_schema.columns col
             left join pg_catalog.pg_class cls
                 on cls.relname = col.table_name
+                and cls.relnamespace = (
+                    select oid from pg_catalog.pg_namespace where nspname = col.table_schema
+                )
             left join pg_catalog.pg_namespace ns
                 on ns.oid = cls.relnamespace
-                and ns.nspname = col.table_schema
             left join pg_catalog.pg_description des
                 on des.objoid = cls.oid
                 and des.objsubid = col.ordinal_position
@@ -357,7 +369,7 @@ class GaussDBEngine(PgSQLEngine):
     def processlist(self, command_type, **kwargs):
         sql = """
             select
-                psa.pid,
+                psa.pid as id,
                 coalesce(blk.block_pids, '-') as block_pids,
                 psa.datname,
                 psa.usename,
@@ -722,7 +734,7 @@ class GaussDBEngine(PgSQLEngine):
                 action_orientation,
                 action_statement,
                 '' as definer,
-                created,
+                null as created,
                 '' as sql_mode,
                 '' as character_set_client,
                 '' as collation_connection
@@ -1008,13 +1020,20 @@ class GaussDBEngine(PgSQLEngine):
         if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", str(variable_name or "")):
             result_set.error = "invalid variable name"
             return result_set
-        sql = f"set {self._quote_identifier(variable_name)} to %(variable_value)s;"
-        result_set.full_sql = sql
+        # Check if the parameter requires a restart (postmaster context)
+        check_sql = "select context from pg_settings where name = %(name)s;"
+        alter_sql = f"ALTER SYSTEM SET {self._quote_identifier(variable_name)} = %(value)s;"
+        result_set.full_sql = alter_sql
         conn = None
         try:
             conn = self.get_connection(db_name=self.db_name or "postgres")
             cursor = conn.cursor()
-            cursor.execute(sql, {"variable_value": variable_value})
+            cursor.execute(check_sql, {"name": variable_name})
+            row = cursor.fetchone()
+            if row and row[0] == "postmaster":
+                result_set.error = f"参数 {variable_name} 需要重启实例才能生效，不支持在线修改"
+                return result_set
+            cursor.execute(alter_sql, {"value": variable_value})
             conn.commit()
             result_set.affected_rows = cursor.rowcount if cursor.rowcount > 0 else 0
         except Exception as e:
@@ -1047,6 +1066,8 @@ class GaussDBEngine(PgSQLEngine):
     def _split_table_name(table_name, schema_name=None):
         clean_name = table_name.strip().rstrip(";")
         parts = GaussDBEngine._split_qualified_name(clean_name)
+        # Fold unquoted identifiers to lowercase (PostgreSQL/openGauss behavior)
+        parts = [p.lower() if not (p.startswith('"') and p.endswith('"')) else p.strip('"') for p in parts]
         if len(parts) >= 2:
             schema_part, table_part = parts[-2], parts[-1]
             return schema_part, table_part
@@ -1210,7 +1231,13 @@ class GaussDBEngine(PgSQLEngine):
         source = str(source_sql or "").strip().rstrip(";")
         if len(normalized) >= 3 and normalized[0] == "CREATE":
             object_type = normalized[1]
-            object_name = words[2]
+            # Skip optional clauses like IF NOT EXISTS / OR REPLACE
+            name_idx = 2
+            while name_idx < len(normalized) and normalized[name_idx] in ("IF", "NOT", "EXISTS", "OR", "REPLACE", "TEMP", "TEMPORARY"):
+                name_idx += 1
+            if name_idx >= len(words):
+                return "GaussDB 暂不支持该语句的自动回滚生成。"
+            object_name = words[name_idx]
             if object_type == "SCHEMA":
                 return f"DROP SCHEMA IF EXISTS {object_name} CASCADE;"
             if object_type == "TABLE":

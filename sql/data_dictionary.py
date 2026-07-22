@@ -156,18 +156,20 @@ def procedure_info(request):
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def function_list(request):
-    """数据字典获取函数列表（仅MySQL）"""
+    """数据字典获取函数列表"""
     return _dict_list(
-        request, db_type_required="mysql", engine_method="get_functions_list"
+        request,
+        db_type_required=("mysql", "gaussdb"),
+        engine_method="get_functions_list",
     )
 
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def function_info(request):
-    """数据字典获取函数详情（仅MySQL）"""
+    """数据字典获取函数详情"""
     return _dict_detail(
         request,
-        db_type_required="mysql",
+        db_type_required=("mysql", "gaussdb"),
         engine_method="get_function_detail",
         name_param="func_name",
         engine_kwarg="func_name",
@@ -200,8 +202,10 @@ def _dict_list(request, db_type_required, engine_method):
     db_name = request.GET.get("db_name", "")
     db_type = request.GET.get("db_type", "")
 
-    if db_type_required and db_type != db_type_required:
-        res = {"status": 1, "msg": "仅MySQL支持该功能"}
+    if db_type_required and db_type not in (
+        db_type_required if isinstance(db_type_required, (tuple, list)) else (db_type_required,)
+    ):
+        res = {"status": 1, "msg": "该数据库类型不支持此功能"}
         return HttpResponse(
             json.dumps(res, cls=ExtendJSONEncoder, bigint_as_string=True),
             content_type="application/json",
@@ -235,8 +239,10 @@ def _dict_detail(request, db_type_required, engine_method, name_param, engine_kw
     obj_name = request.GET.get(name_param, "")
     db_type = request.GET.get("db_type", "")
 
-    if db_type_required and db_type != db_type_required:
-        res = {"status": 1, "msg": "仅MySQL支持该功能"}
+    if db_type_required and db_type not in (
+        db_type_required if isinstance(db_type_required, (tuple, list)) else (db_type_required,)
+    ):
+        res = {"status": 1, "msg": "该数据库类型不支持此功能"}
         return HttpResponse(
             json.dumps(res, cls=ExtendJSONEncoder, bigint_as_string=True),
             content_type="application/json",

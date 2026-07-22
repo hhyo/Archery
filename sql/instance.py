@@ -265,8 +265,11 @@ def param_edit(request):
     variable_name = engine.escape_string(variable_name)
     variable_value = engine.escape_string(variable_value)
     ensure_builtin_param_templates(ins.db_type)
-    # 校验是否配置模板
-    if not ParamTemplate.objects.filter(variable_name=variable_name).exists():
+    # 校验是否配置模板（需匹配 db_type 且 editable=True）
+    param_template = ParamTemplate.objects.filter(
+        db_type=ins.db_type, variable_name=variable_name, editable=True
+    ).first()
+    if not param_template:
         result = {"status": 1, "msg": "请先在参数模板中配置该参数！", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 获取当前运行参数值

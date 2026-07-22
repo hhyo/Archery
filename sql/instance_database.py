@@ -30,7 +30,7 @@ def databases(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mongo", "pgsql", "gaussdb"]
+            request.user, db_type=["mysql", "mongo", "gaussdb"]
         ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
@@ -81,7 +81,7 @@ def create(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mongo", "pgsql", "gaussdb"]
+            request.user, db_type=["mysql", "mongo", "gaussdb"]
         ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
@@ -108,6 +108,10 @@ def create(request):
             )  # mongo创建数据库，需要数据库存在数据才会显示数据库名称，这里创建一个archery-{db_name}的集合
         except Exception as e:
             exec_result.error = f"创建数据库失败, 错误信息：{str(e)}"
+
+    else:
+        exec_result = ResultSet()
+        exec_result.error = f"暂不支持 {instance.db_type} 类型的数据库创建"
 
     # 关闭连接
     engine.close()
@@ -145,7 +149,7 @@ def edit(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mongo", "pgsql", "gaussdb"]
+            request.user, db_type=["mysql", "mongo", "gaussdb"]
         ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
