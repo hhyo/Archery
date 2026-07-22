@@ -514,3 +514,179 @@ class TestRabbitmqEngine(TestCase):
             body="hello",
             mandatory=True,
         )
+
+    def test_validate_query_command_requires_queue_and_positive_count(self):
+        from sql.engines.mq_cli import MqCommand
+
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_query_command(
+                MqCommand(engine="rabbitmq", action="publish", args={}, raw_line="")
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_query_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="get",
+                    args={"count": 1},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_query_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="get",
+                    args={"queue": "q", "count": 0},
+                    raw_line="",
+                )
+            )
+
+    def test_validate_write_command_missing_required(self):
+        from sql.engines.mq_cli import MqCommand
+
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(engine="rabbitmq", action="get", args={}, raw_line="")
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="publish",
+                    args={"payload": "x"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="publish",
+                    args={"routing_key": "q"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="declare",
+                    args={"target": "queue"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="declare",
+                    args={"target": "exchange"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="declare",
+                    args={"target": "binding", "source": "ex"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="purge",
+                    args={"target": "queue"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="delete",
+                    args={"target": "queue"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="delete",
+                    args={"target": "exchange"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="delete",
+                    args={"target": "binding", "source": "ex"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="delete",
+                    args={"target": "fanout", "name": "x"},
+                    raw_line="",
+                )
+            )
+
+    def test_apply_get_ackmode_rejects_unknown(self):
+        channel = MagicMock()
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._apply_get_ackmode(channel, 1, "not_a_mode")
+
+    def test_exchange_declare_passes_auto_delete(self):
+        from sql.engines.mq_cli import parse_rabbitmq_line
+
+        channel = MagicMock()
+        cmd = parse_rabbitmq_line(
+            "declare exchange name=ex1 type=fanout auto_delete=true"
+        )
+        RabbitmqEngine._execute_write_command(channel, cmd)
+        channel.exchange_declare.assert_called_once_with(
+            exchange="ex1", exchange_type="fanout", auto_delete=True
+        )
+
+    def test_execute_write_rejects_unknown_declare_delete_target(self):
+        from sql.engines.mq_cli import MqCommand
+
+        channel = MagicMock()
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._execute_write_command(
+                channel,
+                MqCommand(
+                    engine="rabbitmq",
+                    action="declare",
+                    args={"target": "fanout", "name": "x"},
+                    raw_line="",
+                ),
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._execute_write_command(
+                channel,
+                MqCommand(
+                    engine="rabbitmq",
+                    action="delete",
+                    args={"target": "fanout", "name": "x"},
+                    raw_line="",
+                ),
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._execute_write_command(
+                channel,
+                MqCommand(
+                    engine="rabbitmq",
+                    action="help",
+                    args={},
+                    raw_line="",
+                ),
+            )

@@ -169,3 +169,78 @@ def test_publish_rejects_properties():
         parse_rabbitmq_line(
             "publish routing_key=q payload=hi properties={}"
         )
+
+
+def test_rabbitmq_empty_command_rejected():
+    with pytest.raises(ValueError, match="empty"):
+        parse_rabbitmq_line("")
+    with pytest.raises(ValueError, match="empty"):
+        parse_rabbitmq_line("rabbitmqadmin")
+    with pytest.raises(ValueError, match="empty"):
+        parse_rabbitmq_line("rabbitmqadmin -H 127.0.0.1")
+
+
+def test_rabbitmq_get_requires_queue_and_valid_ackmode():
+    with pytest.raises(ValueError, match="queue"):
+        parse_rabbitmq_line("get count=1")
+    with pytest.raises(ValueError, match="ackmode"):
+        parse_rabbitmq_line("get queue=q1 ackmode=bogus")
+
+
+def test_publish_requires_routing_key_and_payload():
+    with pytest.raises(ValueError, match="routing_key"):
+        parse_rabbitmq_line("publish payload=hi")
+    with pytest.raises(ValueError, match="payload"):
+        parse_rabbitmq_line("publish routing_key=q")
+
+
+def test_declare_missing_required_and_unknown_target():
+    with pytest.raises(ValueError, match="target"):
+        parse_rabbitmq_line("declare")
+    with pytest.raises(ValueError, match="unknown declare target"):
+        parse_rabbitmq_line("declare fanout name=x")
+    with pytest.raises(ValueError, match="name"):
+        parse_rabbitmq_line("declare queue durable=true")
+    with pytest.raises(ValueError, match="name"):
+        parse_rabbitmq_line("declare exchange type=direct")
+    with pytest.raises(ValueError, match="source"):
+        parse_rabbitmq_line("declare binding destination=q")
+    with pytest.raises(ValueError, match="destination"):
+        parse_rabbitmq_line("declare binding source=ex")
+
+
+def test_declare_bool_arg_must_be_true_or_false():
+    with pytest.raises(ValueError, match="durable"):
+        parse_rabbitmq_line("declare queue name=q1 durable=maybe")
+
+
+def test_purge_requires_queue_target_and_name():
+    with pytest.raises(ValueError, match="purge"):
+        parse_rabbitmq_line("purge")
+    with pytest.raises(ValueError, match="purge"):
+        parse_rabbitmq_line("purge exchange name=ex")
+    with pytest.raises(ValueError, match="name"):
+        parse_rabbitmq_line("purge queue")
+
+
+def test_delete_missing_required_and_legacy_binding_keys():
+    with pytest.raises(ValueError, match="delete requires"):
+        parse_rabbitmq_line("delete")
+    with pytest.raises(ValueError, match="delete requires"):
+        parse_rabbitmq_line("delete fanout name=x")
+    with pytest.raises(ValueError, match="name"):
+        parse_rabbitmq_line("delete queue")
+    with pytest.raises(ValueError, match="name"):
+        parse_rabbitmq_line("delete exchange")
+    with pytest.raises(ValueError, match="source"):
+        parse_rabbitmq_line(
+            "delete binding queue=q exchange=ex properties_key=rk"
+        )
+    with pytest.raises(ValueError, match="source"):
+        parse_rabbitmq_line("delete binding destination=q")
+    with pytest.raises(ValueError, match="destination"):
+        parse_rabbitmq_line("delete binding source=ex")
+    with pytest.raises(ValueError, match="destination_type"):
+        parse_rabbitmq_line(
+            "delete binding source=ex destination=q destination_type=exchange"
+        )
