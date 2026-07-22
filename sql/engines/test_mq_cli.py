@@ -32,12 +32,55 @@ def test_mqtt_rejects_unknown_flag():
 def test_rabbitmq_get_and_publish():
     g = parse_rabbitmq_line("rabbitmqadmin get queue=q1 count=3 -H 127.0.0.1")
     assert g.action == "get"
-    assert g.args == {"queue": "q1", "count": 3}
+    assert g.args == {"queue": "q1", "count": 3, "ackmode": "ack_requeue_true"}
     p = parse_rabbitmq_line('publish routing_key=q1 payload="hi" exchange=')
     assert p.action == "publish"
     assert p.args["routing_key"] == "q1"
     assert p.args["payload"] == "hi"
     assert p.args.get("exchange", "") == ""
+
+
+def test_rabbitmq_get_defaults_ackmode_and_count():
+    g = parse_rabbitmq_line("get queue=q1")
+    assert g.args["queue"] == "q1"
+    assert g.args["count"] == 1
+    assert g.args["ackmode"] == "ack_requeue_true"
+
+
+@pytest.mark.parametrize(
+    "ackmode",
+    [
+        "ack_requeue_true",
+        "ack_requeue_false",
+        "reject_requeue_true",
+        "reject_requeue_false",
+    ],
+)
+def test_rabbitmq_get_ackmodes(ackmode):
+    g = parse_rabbitmq_line(f"get queue=q1 count=2 ackmode={ackmode}")
+    assert g.args["ackmode"] == ackmode
+    assert g.args["count"] == 2
+
+
+def test_rabbitmq_get_rejects_requeue_flag():
+    with pytest.raises(ValueError, match="ackmode"):
+        parse_rabbitmq_line("get queue=q1 requeue=false")
+
+
+def test_rabbitmq_get_rejects_payload_file_and_encoding():
+    with pytest.raises(ValueError):
+        parse_rabbitmq_line("get queue=q1 payload_file=x")
+    with pytest.raises(ValueError):
+        parse_rabbitmq_line("get queue=q1 encoding=auto")
+
+
+def test_rabbitmq_list_and_close_unsupported():
+    with pytest.raises(ValueError):
+        parse_rabbitmq_line("list queues")
+    with pytest.raises(ValueError):
+        parse_rabbitmq_line("list exchanges")
+    with pytest.raises(ValueError):
+        parse_rabbitmq_line("close connection name=x")
 
 
 def test_old_dsl_rejected():
@@ -52,7 +95,7 @@ def test_rabbitmq_leading_conn_flags_ignored():
         "rabbitmqadmin -H 10.0.0.1 -P 15672 -u guest -p guest get queue=q1 count=2"
     )
     assert cmd.action == "get"
-    assert cmd.args == {"queue": "q1", "count": 2}
+    assert cmd.args == {"queue": "q1", "count": 2, "ackmode": "ack_requeue_true"}
 
 
 def test_mqtt_leading_conn_flags_ignored():

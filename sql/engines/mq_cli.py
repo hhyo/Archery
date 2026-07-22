@@ -45,6 +45,16 @@ MQTT_ACTIONS = frozenset({"pub", "sub", "help"})
 RABBITMQ_ACTIONS = frozenset(
     {"get", "publish", "declare", "purge", "delete", "list", "help"}
 )
+RABBITMQ_UNSUPPORTED_ACTIONS = frozenset({"list", "close"})
+RABBITMQ_GET_ACKMODES = frozenset(
+    {
+        "ack_requeue_true",
+        "ack_requeue_false",
+        "reject_requeue_true",
+        "reject_requeue_false",
+    }
+)
+RABBITMQ_GET_KEYS = frozenset({"queue", "count", "ackmode"})
 
 
 @dataclass
@@ -201,6 +211,10 @@ def parse_rabbitmq_line(line: str) -> MqCommand:
         raise ValueError("empty rabbitmq command")
 
     action = tokens[0]
+    if action in RABBITMQ_UNSUPPORTED_ACTIONS:
+        raise ValueError(
+            f"{action} 需要 RabbitMQ Management API，当前不支持"
+        )
     if action not in RABBITMQ_ACTIONS:
         raise ValueError(f"unknown rabbitmq action: {action}")
 
@@ -219,11 +233,6 @@ def parse_rabbitmq_line(line: str) -> MqCommand:
             raise ValueError(f"{action} requires queue")
         sub_target = "queue"
         i += 1
-    elif action == "list":
-        if i >= len(tokens) or tokens[i] != "queues":
-            raise ValueError("list requires queues")
-        sub_target = "queues"
-        i += 1
 
     args = _parse_rabbitmq_kv_args(tokens, i)
     if sub_target is not None:
@@ -232,10 +241,20 @@ def parse_rabbitmq_line(line: str) -> MqCommand:
     if action == "get":
         if "queue" not in args:
             raise ValueError("get requires queue")
+        if "requeue" in args:
+            raise ValueError("requeue is not supported; use ackmode instead")
+        unknown = set(args) - RABBITMQ_GET_KEYS
+        if unknown:
+            bad = sorted(unknown)[0]
+            raise ValueError(f"unsupported get parameter: {bad}")
         if "count" in args:
             args["count"] = int(args["count"])
         else:
             args["count"] = 1
+        ackmode = args.get("ackmode", "ack_requeue_true")
+        if ackmode not in RABBITMQ_GET_ACKMODES:
+            raise ValueError(f"invalid ackmode: {ackmode}")
+        args["ackmode"] = ackmode
     elif action == "publish":
         if "routing_key" not in args:
             raise ValueError("publish requires routing_key")
