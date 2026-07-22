@@ -259,6 +259,7 @@ def run_mq_query_job(job_id: str) -> None:
                 on_message=on_message,
                 db_name=job.get("db_name") or None,
                 full_sql=cmd.raw_line,
+                ackmode=cmd.args.get("ackmode", "ack_requeue_true"),
             )
         else:
             raise ValueError("仅 MQTT/RabbitMQ 支持异步查询任务")

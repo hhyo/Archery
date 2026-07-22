@@ -15,20 +15,23 @@ from .mq_cli import parse_rabbitmq_line, split_mq_lines
 logger = logging.getLogger("default")
 
 RABBITMQ_HELP_ROWS = [
-    ["get queue=<name> [count=N]"],
-    ["list queues"],
+    ["get queue=<name> [count=N] [ackmode=…]"],
     ["publish routing_key=… payload=… [exchange=…]"],
-    ["declare queue name=…"],
-    ["declare exchange name=… [type=…]"],
-    ["declare binding queue=… exchange=… routing_key=…"],
+    ["declare queue name=… [durable=…] [auto_delete=…]"],
+    ["declare exchange name=… type=… [durable=…] [auto_delete=…]"],
+    ["declare binding source=… destination=… [routing_key=…]"],
     ["purge queue name=…"],
     ["delete queue name=…"],
+    ["delete exchange name=…"],
+    [
+        "delete binding source=… destination=… "
+        "[destination_type=queue] [properties_key=…]"
+    ],
     ["help"],
 ]
 DEFAULT_QUERY_TIMEOUT_SEC = 60
 MAX_QUERY_TIMEOUT_SEC = 3600
 MAX_GET_COUNT = 100
-LIST_QUEUES_ERROR = "list queues 需要 RabbitMQ Management API，当前引擎未启用"
 
 
 class RabbitmqEngine(EngineBase):
@@ -131,13 +134,9 @@ class RabbitmqEngine(EngineBase):
 
     @classmethod
     def _validate_query_command(cls, cmd):
-        if cmd.action not in {"get", "list", "help"}:
+        if cmd.action not in {"get", "help"}:
             raise ValueError("禁止执行该命令！")
         if cmd.action == "help":
-            return
-        if cmd.action == "list":
-            if cmd.args.get("target") != "queues":
-                raise ValueError("list requires queues")
             return
         if "queue" not in cmd.args:
             raise ValueError("get requires queue")
@@ -161,12 +160,26 @@ class RabbitmqEngine(EngineBase):
             if target == "exchange" and "name" not in cmd.args:
                 raise ValueError("declare exchange requires name")
             if target == "binding":
-                for key in ("queue", "exchange", "routing_key"):
+                for key in ("source", "destination"):
                     if key not in cmd.args:
                         raise ValueError(f"declare binding requires {key}")
-        elif cmd.action in {"purge", "delete"}:
+        elif cmd.action == "purge":
             if cmd.args.get("target") != "queue" or "name" not in cmd.args:
-                raise ValueError(f"{cmd.action} queue requires name")
+                raise ValueError("purge queue requires name")
+        elif cmd.action == "delete":
+            target = cmd.args.get("target")
+            if target == "queue":
+                if "name" not in cmd.args:
+                    raise ValueError("delete queue requires name")
+            elif target == "exchange":
+                if "name" not in cmd.args:
+                    raise ValueError("delete exchange requires name")
+            elif target == "binding":
+                for key in ("source", "destination"):
+                    if key not in cmd.args:
+                        raise ValueError(f"delete binding requires {key}")
+            else:
+                raise ValueError("delete requires queue, exchange, or binding")
 
     @staticmethod
     def _clamp_timeout_sec(timeout_sec):
@@ -217,6 +230,7 @@ class RabbitmqEngine(EngineBase):
         close_conn=True,
         limit_num=0,
         full_sql="",
+        ackmode="ack_requeue_true",
     ):
         result = ResultSet(
             full_sql=full_sql, column_list=["queue", "routing_key", "body"]
@@ -236,7 +250,7 @@ class RabbitmqEngine(EngineBase):
                     queue=queue, auto_ack=False
                 )
                 if method is not None:
-                    channel.basic_ack(delivery_tag=method.delivery_tag)
+                    self._apply_get_ackmode(channel, method.delivery_tag, ackmode)
                     payload = (
                         body.decode("utf-8", errors="replace")
                         if isinstance(body, bytes)
@@ -263,6 +277,19 @@ class RabbitmqEngine(EngineBase):
                 conn.close()
         return result
 
+    @staticmethod
+    def _apply_get_ackmode(channel, delivery_tag, ackmode):
+        if ackmode == "ack_requeue_false":
+            channel.basic_ack(delivery_tag=delivery_tag)
+        elif ackmode == "ack_requeue_true":
+            channel.basic_nack(delivery_tag=delivery_tag, requeue=True)
+        elif ackmode == "reject_requeue_true":
+            channel.basic_reject(delivery_tag=delivery_tag, requeue=True)
+        elif ackmode == "reject_requeue_false":
+            channel.basic_reject(delivery_tag=delivery_tag, requeue=False)
+        else:
+            raise ValueError(f"invalid ackmode: {ackmode}")
+
     def query(
         self,
         db_name=None,
@@ -288,10 +315,6 @@ class RabbitmqEngine(EngineBase):
                 result.affected_rows = len(result.rows)
                 return result
 
-            if any(cmd.action == "list" for cmd in commands):
-                result.error = LIST_QUEUES_ERROR
-                return result
-
             timeout_sec = self._clamp_timeout_sec(
                 kwargs.get("timeout_sec", DEFAULT_QUERY_TIMEOUT_SEC)
             )
@@ -311,6 +334,7 @@ class RabbitmqEngine(EngineBase):
                     close_conn=close_conn,
                     limit_num=limit_num,
                     full_sql=cmd.raw_line,
+                    ackmode=cmd.args.get("ackmode", "ack_requeue_true"),
                 )
                 if get_result.error:
                     result.error = get_result.error
@@ -340,7 +364,7 @@ class RabbitmqEngine(EngineBase):
         for line, statement in enumerate(statements, start=1):
             try:
                 cmd = parse_rabbitmq_line(statement)
-                if cmd.action in {"get", "list", "help"}:
+                if cmd.action in {"get", "help"}:
                     errlevel = 2
                     status = "Audit failed"
                     message = "禁止使用查询命令！"
@@ -390,6 +414,8 @@ class RabbitmqEngine(EngineBase):
                 kwargs = {"queue": args["name"]}
                 if "durable" in args:
                     kwargs["durable"] = args["durable"]
+                if "auto_delete" in args:
+                    kwargs["auto_delete"] = args["auto_delete"]
                 channel.queue_declare(**kwargs)
             elif target == "exchange":
                 kwargs = {
@@ -398,19 +424,33 @@ class RabbitmqEngine(EngineBase):
                 }
                 if "durable" in args:
                     kwargs["durable"] = args["durable"]
+                if "auto_delete" in args:
+                    kwargs["auto_delete"] = args["auto_delete"]
                 channel.exchange_declare(**kwargs)
             elif target == "binding":
                 channel.queue_bind(
-                    queue=args["queue"],
-                    exchange=args["exchange"],
-                    routing_key=args["routing_key"],
+                    queue=args["destination"],
+                    exchange=args["source"],
+                    routing_key=args.get("routing_key", ""),
                 )
             else:
                 raise ValueError("禁止执行该命令！")
         elif action == "purge":
             channel.queue_purge(queue=args["name"])
         elif action == "delete":
-            channel.queue_delete(queue=args["name"])
+            target = args.get("target")
+            if target == "queue":
+                channel.queue_delete(queue=args["name"])
+            elif target == "exchange":
+                channel.exchange_delete(exchange=args["name"])
+            elif target == "binding":
+                channel.queue_unbind(
+                    queue=args["destination"],
+                    exchange=args["source"],
+                    routing_key=args.get("properties_key", ""),
+                )
+            else:
+                raise ValueError("禁止执行该命令！")
         else:
             raise ValueError("禁止执行该命令！")
 

@@ -109,7 +109,7 @@ def test_create_rejects_non_async_actions(mqtt_instance, rabbitmq_instance, quer
             query_user, mqtt_instance.id, "default", "pub -t t -m hi"
         )
     with pytest.raises(ValueError, match="仅 get"):
-        svc.create_mq_query_job(query_user, rabbitmq_instance.id, "/", "list queues")
+        svc.create_mq_query_job(query_user, rabbitmq_instance.id, "/", "help")
 
 
 @pytest.mark.django_db
@@ -399,3 +399,37 @@ def test_cancel_key_survives_stale_job_overwrite(
 
     assert cache.get(svc.cancel_cache_key(job_id)) is True
     assert svc._is_cancelled(job_id) is True
+
+
+@pytest.mark.django_db
+def test_run_mq_query_job_passes_ackmode_to_run_get(
+    rabbitmq_instance, query_user, monkeypatch
+):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    job_id = svc.create_mq_query_job(
+        query_user,
+        rabbitmq_instance.id,
+        "/",
+        "get queue=demo.q count=1 ackmode=ack_requeue_false",
+    )["job_id"]
+    captured = {}
+
+    def fake_run_get(self, queue, count, timeout_sec, **kwargs):
+        captured["queue"] = queue
+        captured["count"] = count
+        captured["ackmode"] = kwargs.get("ackmode")
+        result = ResultSet(
+            full_sql=kwargs.get("full_sql", ""),
+            column_list=["queue", "routing_key", "body"],
+        )
+        result.rows = [["demo.q", "rk", "hi"]]
+        result.affected_rows = 1
+        return result
+
+    monkeypatch.setattr("sql.engines.rabbitmq.RabbitmqEngine.run_get", fake_run_get)
+    svc.run_mq_query_job(job_id)
+    assert captured["queue"] == "demo.q"
+    assert captured["count"] == 1
+    assert captured["ackmode"] == "ack_requeue_false"
+    job = svc.get_mq_query_job(query_user, job_id)
+    assert job["status"] == "done"
