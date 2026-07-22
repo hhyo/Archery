@@ -157,8 +157,11 @@ class RabbitmqEngine(EngineBase):
             target = cmd.args.get("target")
             if target == "queue" and "name" not in cmd.args:
                 raise ValueError("declare queue requires name")
-            if target == "exchange" and "name" not in cmd.args:
-                raise ValueError("declare exchange requires name")
+            if target == "exchange":
+                if "name" not in cmd.args:
+                    raise ValueError("declare exchange requires name")
+                if "type" not in cmd.args:
+                    raise ValueError("declare exchange requires type")
             if target == "binding":
                 for key in ("source", "destination"):
                     if key not in cmd.args:
@@ -420,7 +423,7 @@ class RabbitmqEngine(EngineBase):
             elif target == "exchange":
                 kwargs = {
                     "exchange": args["name"],
-                    "exchange_type": args.get("type", "direct"),
+                    "exchange_type": args["type"],
                 }
                 if "durable" in args:
                     kwargs["durable"] = args["durable"]

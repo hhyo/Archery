@@ -203,10 +203,21 @@ def test_declare_missing_required_and_unknown_target():
         parse_rabbitmq_line("declare queue durable=true")
     with pytest.raises(ValueError, match="name"):
         parse_rabbitmq_line("declare exchange type=direct")
+    with pytest.raises(ValueError, match="type"):
+        parse_rabbitmq_line("declare exchange name=ex")
     with pytest.raises(ValueError, match="source"):
         parse_rabbitmq_line("declare binding destination=q")
     with pytest.raises(ValueError, match="destination"):
         parse_rabbitmq_line("declare binding source=ex")
+
+
+def test_declare_exchange_requires_type_and_preserves_it():
+    with pytest.raises(ValueError, match="type"):
+        parse_rabbitmq_line("declare exchange name=demo.ex")
+    cmd = parse_rabbitmq_line("declare exchange name=demo.ex type=topic")
+    assert cmd.args["name"] == "demo.ex"
+    assert cmd.args["type"] == "topic"
+    assert cmd.args["target"] == "exchange"
 
 
 def test_declare_bool_arg_must_be_true_or_false():

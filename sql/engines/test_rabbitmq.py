@@ -589,6 +589,15 @@ class TestRabbitmqEngine(TestCase):
                 MqCommand(
                     engine="rabbitmq",
                     action="declare",
+                    args={"target": "exchange", "name": "ex"},
+                    raw_line="",
+                )
+            )
+        with self.assertRaises(ValueError):
+            RabbitmqEngine._validate_write_command(
+                MqCommand(
+                    engine="rabbitmq",
+                    action="declare",
                     args={"target": "binding", "source": "ex"},
                     raw_line="",
                 )

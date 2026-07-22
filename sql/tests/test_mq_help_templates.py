@@ -33,7 +33,6 @@ REQUIRED_SNIPPETS = [
     "declare queue name=demo.q",
     "declare queue name=demo.q durable=true",
     "declare queue name=demo.q durable=false",
-    "declare exchange name=demo.ex",
     "declare exchange name=demo.ex type=direct",
     "declare exchange name=demo.ex type=topic durable=true",
     "declare binding source=demo.ex destination=demo.q routing_key=demo.q",

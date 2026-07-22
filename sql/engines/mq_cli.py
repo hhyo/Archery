@@ -313,7 +313,8 @@ def parse_rabbitmq_line(line: str) -> MqCommand:
             )
             if "name" not in args:
                 raise ValueError("declare exchange requires name")
-            args.setdefault("type", "direct")
+            if "type" not in args:
+                raise ValueError("declare exchange requires type")
         elif sub_target == "binding":
             if "queue" in args or "exchange" in args:
                 raise ValueError(

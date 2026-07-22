@@ -377,13 +377,12 @@
                                     <i> 分组说明：declare 声明 queue / exchange / binding，对齐 rabbitmqadmin 的 declare 子命令。</i></br>
                                     <i> 本子集语法：</i></br>
                                     <i> · <code>declare queue name=…</code> 声明队列，可选 <code>durable</code> / <code>auto_delete</code>；省略时不传该参数（按 broker/客户端默认）</i></br>
-                                    <i> · <code>declare exchange name=… type=…</code> 声明交换机，<code>type</code> 默认 direct，可选 direct/topic/fanout/headers；可选 <code>durable</code> / <code>auto_delete</code></i></br>
+                                    <i> · <code>declare exchange name=… type=…</code> 声明交换机，必填 <code>type</code>（direct/topic/fanout/headers）；可选 <code>durable</code> / <code>auto_delete</code></i></br>
                                     <i> · <code>declare binding source=… destination=…</code> 声明绑定，可选 <code>routing_key</code>（缺省 <code>""</code>）、<code>destination_type</code>（仅 <code>queue</code>）</i></br>
                                     <i> 可复制示例（一行一条）：</i>
                                     <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q durable=true</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q durable=false</pre>
-                                    <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex type=direct</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex type=topic durable=true</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">declare binding source=demo.ex destination=demo.q routing_key=demo.q</pre>
