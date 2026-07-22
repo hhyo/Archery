@@ -301,6 +301,24 @@ $("#instance_name").change(function () {
     if (["mysql", "goinception", "doris"].includes(dbType)) {
         editor.setTheme("ace/theme/textmate");
         editor.session.setMode("ace/mode/mysql");
+
+        let instance_name = $("#instance_name").val();
+        if (dbType === "mysql" && instance_name) {
+            $.ajax({
+                type: "get",
+                url: "/api/v1/sqlquery/resources/",
+                dataType: "json",
+                data: {
+                    instance_name: instance_name,
+                    resource_type: "server_info"
+                },
+                success: function (data) {
+                    if (data.status === 0 && data.data === "mariadb") {
+                        editor.session.setMode("ace/mode/mariadb");
+                    }
+                }
+            });
+        }
         // 提示信息
         let pathname = window.location.pathname;
         if (pathname === "/submitsql/" && !editor.getValue()) {

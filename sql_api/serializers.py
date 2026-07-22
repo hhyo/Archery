@@ -264,7 +264,8 @@ class ArchiveConfigSerializer(serializers.ModelSerializer):
 class InstanceResourceSerializer(serializers.Serializer):
     instance_id = serializers.IntegerField(label="实例id")
     resource_type = serializers.ChoiceField(
-        choices=["database", "schema", "table", "column"], label="资源类型"
+        choices=["database", "schema", "table", "column", "server_info"],
+        label="资源类型",
     )
     db_name = serializers.CharField(required=False, label="数据库名")
     schema_name = serializers.CharField(required=False, label="schema名")
@@ -334,7 +335,7 @@ class SqlQueryResourceQuerySerializer(serializers.Serializer):
     instance_id = serializers.IntegerField(required=False)
     instance_name = serializers.CharField(required=False, allow_blank=True)
     resource_type = serializers.ChoiceField(
-        choices=["database", "schema", "table", "column"]
+        choices=["database", "schema", "table", "column", "server_info"]
     )
     db_name = serializers.CharField(required=False, allow_blank=True)
     schema_name = serializers.CharField(required=False, allow_blank=True)
