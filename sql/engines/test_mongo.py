@@ -1246,7 +1246,9 @@ class TestQuery:
         )
         assert result.error is None
         assert result.affected_rows == 1
-        mock_coll.find.assert_called_once_with(filter={"a": 1}, projection={"name": 1}, sort=[("name", 1)], limit=5, skip=2)
+        mock_coll.find.assert_called_once_with(
+            filter={"a": 1}, projection={"name": 1}, sort=[("name", 1)], limit=5, skip=2
+        )
         mongo_engine.close.assert_not_called()
 
     def test_query_explain_filters_server_info_and_ok(self, mongo_engine):
