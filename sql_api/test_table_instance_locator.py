@@ -161,7 +161,7 @@ def test_instance_outside_resource_group_excluded(api_user, db_instance, monkeyp
 
     client = APIClient()
     client.force_authenticate(user=api_user)
-    r = client.post(_TABLE_INSTANCES_URL, {"table_name": "orders"}, format="json")
+    r = client.post(_TABLE_INSTANCES_URL, {"table_name": "orders", "db_type": "mysql"}, format="json")
 
     assert r.status_code == 200
     body = r.json()

@@ -356,7 +356,7 @@ class TestInstance(APITestCase):
         ]
         r = self.client.post(
             "/api/v1/instance/table-instances/",
-            {"table_name": "orders"},
+            {"table_name": "orders", "db_type": "mysql"},
             format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK)
@@ -380,7 +380,7 @@ class TestInstance(APITestCase):
         mock_resolve.side_effect = RuntimeError("boom")
         r = self.client.post(
             "/api/v1/instance/table-instances/",
-            {"table_name": "orders"},
+            {"table_name": "orders", "db_type": "mysql"},
             format="json",
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK)
@@ -700,7 +700,7 @@ class TestWorkflow(APITestCase):
     def test_submit_offline_export_uses_can_read_and_disables_backup(
         self, mock_pre_count_check
     ):
-        """测试数据导出工单使用can_read权限并强制不备份"""
+        """测试数据导出工单使用can_read权限并强���不备份"""
         can_read = InstanceTag.objects.create(
             tag_code="can_read", tag_name="支持查询", active=1
         )

@@ -38,7 +38,7 @@ def test_normal_user_can_access_query_api(api_client, normal_user, monkeypatch):
 
 @pytest.mark.django_db
 def test_normal_user_can_access_table_locator(api_client, normal_user, monkeypatch):
-    monkeypatch.setattr("sql_api.api_instance.user_instances", lambda user: [])
+    monkeypatch.setattr("sql_api.api_instance.user_instances", lambda user, **kwargs: [])
     monkeypatch.setattr(
         "sql_api.api_instance.resolve_table_instances", lambda **kwargs: []
     )
@@ -46,7 +46,7 @@ def test_normal_user_can_access_table_locator(api_client, normal_user, monkeypat
     api_client.force_authenticate(user=normal_user)
     response = api_client.post(
         "/api/v1/instance/table-instances/",
-        {"table_name": "orders"},
+        {"table_name": "orders", "db_type": "mysql"},
         format="json",
     )
 
