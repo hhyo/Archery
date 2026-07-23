@@ -216,13 +216,20 @@ def sign_up(request):
             """
 
             try:
-                MsgSender().send_email(
+                send_result = MsgSender().send_email(
                     "Archery 注册邮箱验证", html_content, [email], content_type="html"
                 )
+                if send_result != "success":
+                    logger.error(f"注册发送邮件失败: {send_result}")
+                    result["status"] = 1
+                    result["msg"] = "发送验证邮件失败, 请联系管理员检查邮件配置"
+                    return HttpResponse(
+                        json.dumps(result), content_type="application/json"
+                    )
             except Exception as e:
                 logger.error(f"注册发送邮件失败: {traceback.format_exc()}")
                 result["status"] = 1
-                result["msg"] = f"发送验证邮件失败, 请联系管理员检查邮件配置: {str(e)}"
+                result["msg"] = "发送验证邮件失败, 请联系管理员检查邮件配置"
                 return HttpResponse(json.dumps(result), content_type="application/json")
 
             Users.objects.create_user(
@@ -264,9 +271,22 @@ def verify_email(request):
     try:
         # 24小时有效期
         username = signer.unsign(token, max_age=86400)
+
+        from django.core.cache import cache
+
+        cache_key = f"email_activated_{token}"
+        if cache.get(cache_key):
+            return HttpResponse("激活链接已失效", status=400)
+
         user = Users.objects.get(username=username)
         user.is_active = 1
         user.save()
+
+        cache.set(cache_key, True, timeout=86400)
+
+        from django.utils.html import escape
+
+        escaped_username = escape(username)
 
         success_html = f"""
         <html>
@@ -286,7 +306,7 @@ def verify_email(request):
         <body>
             <div class="msg-box">
                 <h2>✓ 邮箱激活成功！</h2>
-                <p>您的账号 <b>{username}</b> 已成功激活并可正常登录。</p>
+                <p>您的账号 <b>{escaped_username}</b> 已成功激活并可正常登录。</p>
                 <p>3秒后将自动跳转到<a href="/login/">登录页面</a>...</p>
             </div>
         </body>
@@ -294,6 +314,11 @@ def verify_email(request):
         """
         return HttpResponse(success_html)
     except SignatureExpired:
+        try:
+            expired_username = signer.unsign(token)
+            Users.objects.filter(username=expired_username, is_active=0).delete()
+        except Exception as e:
+            logger.error(f"清理过期未激活用户失败: {e}")
         return HttpResponse("激活链接已过期，请重新注册", status=400)
     except BadSignature:
         return HttpResponse("激活链接无效", status=400)
