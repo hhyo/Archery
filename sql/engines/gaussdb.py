@@ -1067,8 +1067,6 @@ class GaussDBEngine(PgSQLEngine):
     def _split_table_name(table_name, schema_name=None):
         clean_name = table_name.strip().rstrip(";")
         parts = GaussDBEngine._split_qualified_name(clean_name)
-        # Fold unquoted identifiers to lowercase (PostgreSQL/openGauss behavior)
-        parts = [p.lower() if not (p.startswith('"') and p.endswith('"')) else p.strip('"') for p in parts]
         if len(parts) >= 2:
             schema_part, table_part = parts[-2], parts[-1]
             return schema_part, table_part
@@ -1094,8 +1092,37 @@ class GaussDBEngine(PgSQLEngine):
             else:
                 current.append(char)
             i += 1
-        parts.append("".join(current).strip())
-        return [part for part in parts if part]
+        last_part = "".join(current).strip()
+        if last_part:
+            parts.append(last_part)
+        # Fold unquoted identifiers to lowercase (PostgreSQL/openGauss behavior)
+        # Quoted identifiers retain their exact casing and have quotes removed.
+        result = []
+        was_in_quotes = [False]  # track per-part
+        # Re-parse to track quote state per part
+        current = []
+        in_quotes = False
+        i = 0
+        while i < len(name):
+            char = name[i]
+            if char == '"':
+                if in_quotes and i + 1 < len(name) and name[i + 1] == '"':
+                    current.append('"')
+                    i += 2
+                    continue
+                in_quotes = not in_quotes
+            elif char == "." and not in_quotes:
+                seg = "".join(current).strip()
+                if seg:
+                    result.append(seg.lower() if not seg.startswith('"') else seg.strip('"'))
+                current = []
+            else:
+                current.append(char)
+            i += 1
+        seg = "".join(current).strip()
+        if seg:
+            result.append(seg.lower() if not seg.startswith('"') else seg.strip('"'))
+        return result
 
     @staticmethod
     def _display_object_name(schema_name, object_name):
@@ -1123,7 +1150,7 @@ class GaussDBEngine(PgSQLEngine):
                 and routine_schema not like 'pkg_%%'
                 and routine_schema not like 'prvt_%%'
                 and routine_type = %(routine_type)s
-            order by routine_schema, routine_name;
+            order by routine_schema, routine_name, specific_name;
         """
         result = self.query(
             db_name=db_name, sql=sql, parameters={"routine_type": routine_type}
@@ -1163,14 +1190,13 @@ class GaussDBEngine(PgSQLEngine):
         )
         prokind = "p" if routine_type == "PROCEDURE" else "f"
         sql_create = """
-            select pg_get_functiondef(p.oid)
+            select pg_get_functiondef(p.oid), p.oid
             from pg_proc p
             join pg_namespace n on n.oid = p.pronamespace
             where n.nspname = %(schema_name)s
                 and p.proname = %(routine_name)s
                 and p.prokind = %(prokind)s
-            order by p.oid
-            limit 1;
+            order by p.oid;
         """
         create = self.query(
             db_name=db_name,

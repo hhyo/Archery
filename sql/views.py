@@ -608,8 +608,6 @@ def config(request):
         "mongo",
         "clickhouse",
         "redis",
-        "pgsql",
-        "gaussdb",
         "doris",
         "tdengine",
     ]
