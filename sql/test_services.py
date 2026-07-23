@@ -126,7 +126,6 @@ def test_list_instance_resources_invalid_resource_type(monkeypatch):
     assert "不支持的资源类型或者参数不完整" in result["msg"]
 
 
-
 @pytest.mark.django_db
 def test_list_instance_resources_server_info_success(monkeypatch):
     fake_engine = SimpleNamespace(

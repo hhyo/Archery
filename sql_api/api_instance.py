@@ -227,9 +227,11 @@ class InstanceResource(views.APIView):
                     fork_type = query_engine.server_fork_type.value
                 except AttributeError:
                     fork_type = "mysql"
+
                 class DummyResource:
                     error = None
                     rows = [fork_type]
+
                 resource = DummyResource()
             else:
                 raise serializers.ValidationError(
