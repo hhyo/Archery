@@ -255,10 +255,13 @@ class TableInstanceLookup(views.APIView):
             msg = "参数校验失败"
             if "table_name" in errors:
                 msg = f"参数table_name错误: {errors['table_name'][0]}"
+            elif "db_type" in errors:
+                msg = f"参数db_type错误: {errors['db_type'][0]}"
             return Response({"status": 1, "msg": msg, "count": 0, "data": []})
 
+        db_type = serializer.validated_data["db_type"]
         table_name = serializer.validated_data["table_name"]
-        instances = user_instances(request.user)
+        instances = user_instances(request.user, db_type=[db_type])
 
         try:
             data = resolve_table_instances(
