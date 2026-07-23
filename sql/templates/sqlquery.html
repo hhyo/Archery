@@ -84,6 +84,14 @@
                         </div>
                         <div class="col-md-3 column">
                             <div class="form-group" id="div-table-locator">
+                            <div class="form-group">
+                                <select id="table-locator-db-type" class="form-control selectpicker">
+                                    <option value="" selected="selected">请选择数据库类型</option>
+                                    {% for name, engine in engines.items %}
+                                        <option value="{{ name }}">{{ engine.name }}</option>
+                                    {%  endfor %}
+                                </select>
+                            </div>
                                 <input id="table-locator-input" type="text" class="form-control"
                                        placeholder="按表名定位实例（如 orders）" autocomplete="off"/>
                                 <div id="table-locator-loading" style="display:none">
@@ -1630,6 +1638,11 @@
         var _fillVersion = 0;   // 每次新的点击或搜索时自增，用于取消进行中的填充
 
         function locateTable() {
+            var dbType = $("#table-locator-db-type").val();
+            if (!dbType) {
+                alert("请选择数据库类型");
+                return;
+            }
             var tableName = $('#table-locator-input').val().trim();
             if (!tableName) {
                 $('#table-locator-results').empty();
@@ -1645,7 +1658,7 @@
                 url: '/api/v1/instance/table-instances/',
                 contentType: 'application/json',
                 dataType: 'json',
-                data: JSON.stringify({table_name: tableName}),
+                data: JSON.stringify({table_name: tableName,db_type: dbType}),
                 complete: function () {
                     $('#table-locator-loading').hide();
                     _locatorXHR = null;
