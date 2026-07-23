@@ -125,7 +125,9 @@ class TestRabbitmqEngine(TestCase):
             result.rows,
         )
         self.assertTrue(
-            any("source=" in row[0] and "destination=" in row[0] for row in result.rows),
+            any(
+                "source=" in row[0] and "destination=" in row[0] for row in result.rows
+            ),
             result.rows,
         )
         self.assertFalse(any("list queues" in row[0] for row in result.rows))
@@ -270,7 +272,10 @@ class TestRabbitmqEngine(TestCase):
         mock_conn.is_open = True
         mock_conn_cls.return_value = mock_conn
         method = MagicMock(delivery_tag=7, routing_key="rk")
-        mock_ch.basic_get.side_effect = [(method, MagicMock(), b"body"), (None, None, None)]
+        mock_ch.basic_get.side_effect = [
+            (method, MagicMock(), b"body"),
+            (None, None, None),
+        ]
         return mock_ch
 
     @patch("sql.engines.rabbitmq.pika.BlockingConnection")
@@ -390,9 +395,7 @@ class TestRabbitmqEngine(TestCase):
 
         result = engine.execute_workflow(workflow)
 
-        mock_ch.queue_declare.assert_called_once_with(
-            queue="myqueue", auto_delete=True
-        )
+        mock_ch.queue_declare.assert_called_once_with(queue="myqueue", auto_delete=True)
         mock_ch.exchange_declare.assert_called_once_with(
             exchange="myexchange", exchange_type="topic", durable=True
         )

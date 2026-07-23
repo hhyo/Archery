@@ -111,9 +111,7 @@ def test_declare_queue_parses_durable():
 
 
 def test_declare_binding_official_keys():
-    cmd = parse_rabbitmq_line(
-        "declare binding source=ex destination=q routing_key=rk"
-    )
+    cmd = parse_rabbitmq_line("declare binding source=ex destination=q routing_key=rk")
     assert cmd.args["source"] == "ex"
     assert cmd.args["destination"] == "q"
     assert cmd.args["destination_type"] == "queue"
@@ -122,9 +120,7 @@ def test_declare_binding_official_keys():
 
 def test_declare_binding_rejects_legacy_queue_exchange_keys():
     with pytest.raises(ValueError, match="source"):
-        parse_rabbitmq_line(
-            "declare binding queue=q exchange=ex routing_key=rk"
-        )
+        parse_rabbitmq_line("declare binding queue=q exchange=ex routing_key=rk")
 
 
 def test_declare_binding_rejects_exchange_destination_type():
@@ -158,17 +154,13 @@ def test_delete_exchange_and_binding():
 
 
 def test_publish_amq_default_normalizes():
-    p = parse_rabbitmq_line(
-        "publish routing_key=q payload=hi exchange=amq.default"
-    )
+    p = parse_rabbitmq_line("publish routing_key=q payload=hi exchange=amq.default")
     assert p.args["exchange"] == ""
 
 
 def test_publish_rejects_properties():
     with pytest.raises(ValueError):
-        parse_rabbitmq_line(
-            "publish routing_key=q payload=hi properties={}"
-        )
+        parse_rabbitmq_line("publish routing_key=q payload=hi properties={}")
 
 
 def test_rabbitmq_empty_command_rejected():
@@ -244,9 +236,7 @@ def test_delete_missing_required_and_legacy_binding_keys():
     with pytest.raises(ValueError, match="name"):
         parse_rabbitmq_line("delete exchange")
     with pytest.raises(ValueError, match="source"):
-        parse_rabbitmq_line(
-            "delete binding queue=q exchange=ex properties_key=rk"
-        )
+        parse_rabbitmq_line("delete binding queue=q exchange=ex properties_key=rk")
     with pytest.raises(ValueError, match="source"):
         parse_rabbitmq_line("delete binding destination=q")
     with pytest.raises(ValueError, match="destination"):
