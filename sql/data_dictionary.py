@@ -290,7 +290,7 @@ def export(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mssql", "oracle", "clickhouse"]
+            request.user, db_type=["mysql", "mssql", "oracle", "clickhouse", "gaussdb"]
         ).get(instance_name=instance_name)
         query_engine = get_engine(instance=instance)
     except Instance.DoesNotExist:

@@ -49,10 +49,10 @@ class GaussDBEngine(PgSQLEngine):
         # Only intercept bare EXPLAIN (no ANALYZE, FORMAT, etc.) to avoid
         # breaking EXPLAIN ANALYZE / EXPLAIN (FORMAT JSON) which GaussDB handles natively.
         explain_match = re.match(
-            r'^\s*explain\s+(select|with|insert|update|delete)\s+', sql, re.I
+            r'^\s*explain\s+(select|with|insert|update|delete)\b', sql, re.I
         )
         if explain_match:
-            inner_sql = explain_match.group(1).rstrip(';').strip()
+            inner_sql = re.sub(r'^\s*explain\s+', '', sql, flags=re.I).rstrip(';').strip()
             return self._explain_via_prepare(
                 db_name=db_name,
                 inner_sql=inner_sql,
@@ -130,8 +130,8 @@ class GaussDBEngine(PgSQLEngine):
         """获取 GaussDB 实例所有用户信息，返回 dict 格式的行。"""
         sql = """
         SELECT usename AS "user",
-               usename AS host,
-               usename AS user_host,
+               '%' AS host,
+               usename || '@%' AS user_host,
                usesysid AS user_id,
                usecreatedb AS can_create_db,
                usesuper AS is_superuser,
@@ -1027,6 +1027,7 @@ class GaussDBEngine(PgSQLEngine):
         conn = None
         try:
             conn = self.get_connection(db_name=self.db_name or "postgres")
+            conn.autocommit = True  # ALTER SYSTEM cannot run inside a transaction block
             cursor = conn.cursor()
             cursor.execute(check_sql, {"name": variable_name})
             row = cursor.fetchone()
