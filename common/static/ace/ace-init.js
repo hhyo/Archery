@@ -313,7 +313,7 @@ $("#instance_name").change(function () {
                     resource_type: "server_info"
                 },
                 success: function (data) {
-                    if (data.status === 0 && data.data === "mariadb") {
+                    if (data.status === 0 && data.data === "mariadb" && $("#instance_name").val() === instance_name) {
                         editor.session.setMode("ace/mode/mariadb");
                     }
                 }
