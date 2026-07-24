@@ -273,6 +273,11 @@
                                                    onclick="show_mqtt_help(this)"> <i> 其它 </i></label>
                                 </div>
 
+                                <div class="alert alert-warning" style="margin-bottom:5px">
+                                    <i class="ace-icon fa fa-info-circle"></i>
+                                    <i> 本页为「SQL 查询」：仅 <code>sub</code>（MQTT）/ <code>get</code>（RabbitMQ）与 <code>help</code> 在此执行；<code>pub</code>、<code>publish</code>、<code>declare</code>、<code>purge</code>、<code>delete</code> 等写命令请到「SQL 上线」工单提交。</i>
+                                </div>
+
                                 <div id="mqttHelpHelp" class="alert alert-info" style="display: none">
                                     <i class="ace-icon fa fa-hand-o-right"> MQTTX 子集 · help</i></br>
                                     <i> 分组说明：help 返回本子集支持的简短语法行，用于快速确认可用子命令。</i></br>
@@ -350,6 +355,11 @@
                                                    onclick="show_rabbitmq_help(this)"> <i> purge </i></label>
                                     <label> <input type="radio" value="close" name="rabbitmq_operate"
                                                    onclick="show_rabbitmq_help(this)"> <i> close </i></label>
+                                </div>
+
+                                <div class="alert alert-warning" style="margin-bottom:5px">
+                                    <i class="ace-icon fa fa-info-circle"></i>
+                                    <i> 本页为「SQL 查询」：仅 <code>get</code>（RabbitMQ）/ <code>sub</code>（MQTT）与 <code>help</code> 在此执行；<code>publish</code>、<code>declare</code>、<code>purge</code>、<code>delete</code> 等写命令请到「SQL 上线」工单提交。</i>
                                 </div>
 
                                 <div id="rabbitmqHelpHelp" class="alert alert-info" style="display: none">

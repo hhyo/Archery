@@ -634,3 +634,38 @@ def test_pre_start_cancellation_skips_engine(mqtt_instance, query_user, monkeypa
 
     assert called["run_subscribe"] is False
     assert cache.get(svc.job_cache_key(job_id))["status"] == "cancelled"
+
+
+# --- Codex review: passwords written into a command must not reach QueryLog ---
+
+
+@pytest.mark.django_db
+def test_query_log_redacts_mqtt_password(mqtt_instance, query_user, monkeypatch):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    job_id = svc.create_mq_query_job(
+        query_user, mqtt_instance.id, "default", "mqttx -P hunter2 sub -t demo -C 1"
+    )["job_id"]
+
+    def fake_run_subscribe(
+        self,
+        topic,
+        qos,
+        max_msgs,
+        timeout_sec,
+        cancel_check=None,
+        on_message=None,
+        **kwargs,
+    ):
+        result = ResultSet(
+            full_sql="", column_list=["topic", "payload", "qos", "retain"]
+        )
+        result.rows = [["demo", "hi", 0, False]]
+        result.affected_rows = 1
+        return result
+
+    monkeypatch.setattr("sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe)
+    svc.run_mq_query_job(job_id)
+
+    log = QueryLog.objects.latest("id")
+    assert "hunter2" not in log.sqllog
+    assert "***" in log.sqllog

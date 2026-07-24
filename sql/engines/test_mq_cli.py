@@ -1,7 +1,12 @@
 # -*- coding: UTF-8 -*-
 import pytest
 
-from sql.engines.mq_cli import parse_mqtt_line, parse_rabbitmq_line, split_mq_lines
+from sql.engines.mq_cli import (
+    parse_mqtt_line,
+    parse_rabbitmq_line,
+    redact_mq_credentials,
+    split_mq_lines,
+)
 
 
 def test_split_skips_blank_and_hash_comments():
@@ -301,3 +306,38 @@ def test_quoted_payload_ending_with_semicolon_preserved():
     # terminator, and must survive parsing.
     p = parse_rabbitmq_line('publish routing_key=q payload="hello;"')
     assert p.args["payload"] == "hello;"
+
+
+# --- Codex review: redact password connection flags from logged MQ lines ---
+
+
+def test_redact_mqtt_password_but_not_port():
+    out = redact_mq_credentials("mqttx -P secret sub -t demo", "mqtt")
+    assert "secret" not in out
+    assert "***" in out
+    # -p is the MQTT port, not the password: must NOT be redacted.
+    out_port = redact_mq_credentials("mqttx -p 1883 sub -t demo", "mqtt")
+    assert "1883" in out_port
+
+
+def test_redact_rabbitmq_password_but_not_port():
+    out = redact_mq_credentials("rabbitmqadmin -p secret get queue=q", "rabbitmq")
+    assert "secret" not in out
+    # -P is the RabbitMQ port, not the password: must NOT be redacted.
+    out_port = redact_mq_credentials("rabbitmqadmin -P 5672 get queue=q", "rabbitmq")
+    assert "5672" in out_port
+
+
+def test_redact_long_password_flag_and_equals_form():
+    out = redact_mq_credentials("mqttx --password s3cret sub -t t", "mqtt")
+    assert "s3cret" not in out
+    out_eq = redact_mq_credentials(
+        "rabbitmqadmin --password=s3cret get queue=q", "rabbitmq"
+    )
+    assert "s3cret" not in out_eq
+    assert "--password=***" in out_eq
+
+
+def test_redact_unknown_engine_masks_both_short_forms():
+    out = redact_mq_credentials("-p a -P b sub -t t", None)
+    assert "a" not in out.split() and "b" not in out.split()

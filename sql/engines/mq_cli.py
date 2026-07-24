@@ -140,6 +140,47 @@ def _strip_statement_terminator(line: str) -> str:
     return stripped
 
 
+def redact_mq_credentials(line: str, engine: str | None = None) -> str:
+    """Mask password flag values in an MQ CLI line for safe logging/display.
+
+    The parser ignores connection credentials (the instance's saved
+    credentials are used for execution), so this only keeps broker passwords
+    out of QueryLog / audit views (Codex review). ``-p``/``-P`` have opposite
+    meanings per engine (mqtt: -P=password/-p=port; rabbitmq: -p=password/
+    -P=port), so the engine selects which short flag is the password.
+    """
+    if engine == "mqtt":
+        password_flags = {"-P", "--password"}
+    elif engine == "rabbitmq":
+        password_flags = {"-p", "--password"}
+    else:
+        # Unknown engine: redact both short forms to be safe.
+        password_flags = {"-p", "-P", "--password"}
+    try:
+        tokens = shlex.split(line, posix=True)
+    except ValueError:
+        return line
+    redacted: list[str] = []
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok.startswith("--password="):
+            redacted.append("--password=***")
+            i += 1
+            continue
+        if tok in password_flags:
+            redacted.append(tok)
+            if i + 1 < len(tokens):
+                redacted.append("***")
+                i += 2
+            else:
+                i += 1
+            continue
+        redacted.append(tok)
+        i += 1
+    return " ".join(shlex.quote(t) for t in redacted)
+
+
 def _parse_kv(token: str) -> tuple[str, str] | None:
     if "=" not in token:
         return None

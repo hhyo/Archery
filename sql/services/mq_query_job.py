@@ -15,7 +15,11 @@ from django_q.tasks import async_task
 
 from common.config import SysConfig
 from sql.engines import get_engine
-from sql.engines.mq_cli import parse_mqtt_line, parse_rabbitmq_line
+from sql.engines.mq_cli import (
+    parse_mqtt_line,
+    parse_rabbitmq_line,
+    redact_mq_credentials,
+)
 from sql.engines.mqtt import MAX_SUBSCRIBE_COUNT, MqttEngine
 from sql.engines.rabbitmq import MAX_GET_COUNT, RabbitmqEngine
 from sql.models import Instance, QueryLog
@@ -221,7 +225,7 @@ def cancel_mq_query_job(user, job_id: str) -> dict:
     return _update_job(job_id, mark_cancel, ttl)
 
 
-def _write_query_log(job, instance_name, effect_row, cost_time) -> None:
+def _write_query_log(job, instance_name, effect_row, cost_time, db_type=None) -> None:
     """Mirror the sync path's QueryLog for async MQ reads (Codex #4).
 
     Without this, sub/get executed through the mq-jobs endpoint never reach
@@ -230,12 +234,16 @@ def _write_query_log(job, instance_name, effect_row, cost_time) -> None:
     """
     try:
         user = get_user_model().objects.filter(pk=job.get("user_id")).first()
+        # Redact any password connection flags the user wrote into the command
+        # (they are ignored for execution) so broker passwords do not leak into
+        # query history / audit views (Codex review).
+        sqllog = redact_mq_credentials(job.get("sql_line") or "", db_type)
         QueryLog.objects.create(
             username=user.username if user else str(job.get("user_id")),
             user_display=(getattr(user, "display", "") or "") if user else "",
             db_name=job.get("db_name") or "",
             instance_name=instance_name,
-            sqllog=job.get("sql_line") or "",
+            sqllog=sqllog,
             effect_row=effect_row,
             cost_time=str(cost_time),
             priv_check=True,
@@ -271,10 +279,12 @@ def run_mq_query_job(job_id: str) -> None:
     _save_job(job, ttl)
 
     instance_name = ""
+    db_type = ""
     query_started = time.monotonic()
     try:
         instance = Instance.objects.get(pk=job["instance_id"])
         instance_name = instance.instance_name
+        db_type = instance.db_type
         engine = get_engine(instance)
         line = job["sql_line"]
         timeout_sec = int(job.get("timeout_sec") or DEFAULT_TIMEOUT_SEC)
@@ -357,6 +367,7 @@ def run_mq_query_job(job_id: str) -> None:
             instance_name,
             effect_row=len(result.rows or []),
             cost_time=round(time.monotonic() - query_started, 3),
+            db_type=db_type,
         )
     except Exception as exc:
         logger.warning("mq query job failed: %s %s", job_id, exc)
@@ -378,4 +389,5 @@ def run_mq_query_job(job_id: str) -> None:
             instance_name,
             effect_row=0,
             cost_time=round(time.monotonic() - query_started, 3),
+            db_type=db_type,
         )
