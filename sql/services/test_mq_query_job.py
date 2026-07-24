@@ -470,9 +470,7 @@ def test_priv_limit_clamps_worker_count(rabbitmq_instance, query_user, monkeypat
 
     def fake_run_get(self, queue, count, timeout_sec, **kwargs):
         captured["count"] = count
-        result = ResultSet(
-            full_sql="", column_list=["queue", "routing_key", "body"]
-        )
+        result = ResultSet(full_sql="", column_list=["queue", "routing_key", "body"])
         result.rows = []
         result.affected_rows = 0
         return result
@@ -527,9 +525,7 @@ def test_failed_engine_preserves_cached_partial_rows(
     ):
         if on_message:
             on_message(["q", "rk", "partial-body"])
-        result = ResultSet(
-            full_sql="", column_list=["queue", "routing_key", "body"]
-        )
+        result = ResultSet(full_sql="", column_list=["queue", "routing_key", "body"])
         result.error = "channel closed"
         # result.rows stays the default [] (engine never assigned final rows)
         return result

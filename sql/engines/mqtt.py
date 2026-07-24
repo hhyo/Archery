@@ -251,7 +251,9 @@ class MqttEngine(EngineBase):
                 # (e.g. ACL) reports it through SUBACK, not on_message. Capture
                 # the failure so the wait loop can fail fast instead of idling
                 # until the full timeout (Codex #15).
-                codes = reason_codes if isinstance(reason_codes, list) else [reason_codes]
+                codes = (
+                    reason_codes if isinstance(reason_codes, list) else [reason_codes]
+                )
                 for code in codes:
                     is_failure = getattr(code, "is_failure", None)
                     if is_failure is None:
