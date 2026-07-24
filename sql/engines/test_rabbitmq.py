@@ -114,6 +114,17 @@ class TestRabbitmqEngine(TestCase):
         self.assertEqual(result.rows[0].errlevel, 2)
         self.assertEqual(result.rows[0].errormessage, "禁止使用查询命令！")
 
+    def test_execute_check_counts_errors(self):
+        """Codex #10: errlevel=2 rows must increment error_count."""
+        engine = RabbitmqEngine(instance=self.ins)
+        # `get` is a blocked query command; `publish` without payload is a parse error.
+        result = engine.execute_check(sql="get queue=q\npublish routing_key=q")
+        self.assertEqual(result.error_count, 2)
+        self.assertTrue(all(row.errlevel == 2 for row in result.rows))
+
+        clean = engine.execute_check(sql="declare queue name=q1")
+        self.assertEqual(clean.error_count, 0)
+
     def test_query_help(self):
         engine = RabbitmqEngine(instance=self.ins)
 
@@ -702,3 +713,61 @@ class TestRabbitmqEngine(TestCase):
                     raw_line="",
                 ),
             )
+
+    @patch("sql.engines.rabbitmq.pika.BlockingConnection")
+    def test_run_get_applies_ackmode_after_batch_not_interleaved(self, mock_conn_cls):
+        """Codex #7: requeue must happen after the batch is fetched, not before
+        the next basic_get (which would redeliver the same head message and
+        yield duplicates instead of distinct messages)."""
+        mock_conn = MagicMock()
+        mock_ch = MagicMock()
+        mock_conn.channel.return_value = mock_ch
+        mock_conn.is_open = True
+        mock_conn_cls.return_value = mock_conn
+
+        m1 = MagicMock(delivery_tag=1, routing_key="rk1")
+        m2 = MagicMock(delivery_tag=2, routing_key="rk2")
+        mock_ch.basic_get.side_effect = [
+            (m1, MagicMock(), b"one"),
+            (m2, MagicMock(), b"two"),
+        ]
+        engine = RabbitmqEngine(instance=self.ins)
+
+        result = engine.run_get(
+            queue="q", count=2, timeout_sec=60, ackmode="ack_requeue_true"
+        )
+
+        self.assertEqual(result.rows, [["q", "rk1", "one"], ["q", "rk2", "two"]])
+        # Every basic_get happens before any nack (batch-then-ack).
+        ops = [c[0] for c in mock_ch.method_calls]
+        last_get = max(i for i, op in enumerate(ops) if op == "basic_get")
+        first_nack = min(i for i, op in enumerate(ops) if op == "basic_nack")
+        self.assertLess(last_get, first_nack)
+        self.assertEqual(mock_ch.basic_nack.call_count, 2)
+
+    @patch("sql.engines.rabbitmq.pika.BlockingConnection")
+    def test_execute_workflow_connection_failure_records_first_command(
+        self, mock_conn_cls
+    ):
+        """Codex #13: a connection failure (before the loop assigns `statement`)
+        must still record the first command instead of sql=None and dropping it."""
+        mock_conn_cls.side_effect = ConnectionError("broker down")
+        workflow = MagicMock()
+        workflow.db_name = "/"
+        workflow.sqlworkflowcontent.sql_content = "\n".join(
+            [
+                "delete queue name=q1",
+                "delete queue name=q2",
+                "delete queue name=q3",
+            ]
+        )
+        engine = RabbitmqEngine(instance=self.ins)
+
+        result = engine.execute_workflow(workflow)
+
+        self.assertTrue(result.error)
+        self.assertEqual(len(result.rows), 3)
+        self.assertEqual(result.rows[0].sql, "delete queue name=q1")
+        self.assertEqual(result.rows[0].errlevel, 2)
+        self.assertEqual(result.rows[1].sql, "delete queue name=q2")
+        self.assertEqual(result.rows[2].sql, "delete queue name=q3")

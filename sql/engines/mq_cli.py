@@ -26,6 +26,12 @@ MQTT_CONN_FLAGS = frozenset(
     }
 )
 
+# MQTTX connection flags that take NO value. These must advance by a single
+# token; otherwise a valueless flag placed before the subcommand
+# (e.g. `mqttx --insecure sub -t demo`) would greedily consume `sub` as its
+# value and the command would be rejected.
+MQTT_VALUELESS_CONN_FLAGS = frozenset({"--insecure", "--ws"})
+
 RABBITMQ_CONN_FLAGS = frozenset(
     {
         "-H",
@@ -96,20 +102,42 @@ def _consume_flag_value(tokens: list[str], index: int) -> int:
     return index + 1
 
 
-def _skip_leading_conn_flags(tokens: list[str], conn_flags: frozenset) -> list[str]:
+def _skip_leading_conn_flags(
+    tokens: list[str],
+    conn_flags: frozenset,
+    valueless: frozenset = frozenset(),
+) -> list[str]:
     i = 0
     while i < len(tokens):
         tok = tokens[i]
+        if tok in valueless:
+            i += 1
+            continue
         if tok in conn_flags:
             i = _consume_flag_value(tokens, i)
             continue
         if tok.startswith("--") and "=" in tok:
             name = tok.split("=", 1)[0]
-            if name in conn_flags:
+            if name in conn_flags or name in valueless:
                 i += 1
                 continue
         break
     return tokens[i:]
+
+
+def _strip_statement_terminator(line: str) -> str:
+    """Drop a single trailing SQL terminator (`;`).
+
+    The query page conventions terminate statements with `;`, but MQ CLI lines
+    are passed to shlex verbatim. A trailing `;` would otherwise corrupt the
+    last argument (`delete queue name=orders;` targets a queue named `orders;`,
+    `get queue=q count=1;` fails integer parsing). Only a terminator outside
+    quotes is stripped — a line ending in a closing quote is left intact.
+    """
+    stripped = line.strip()
+    if stripped.endswith(";"):
+        stripped = stripped[:-1].rstrip()
+    return stripped
 
 
 def _parse_kv(token: str) -> tuple[str, str] | None:
@@ -126,6 +154,9 @@ def _parse_mqtt_flags(tokens: list[str], start: int, action: str) -> dict:
     i = start
     while i < len(tokens):
         tok = tokens[i]
+        if tok in MQTT_VALUELESS_CONN_FLAGS:
+            i += 1
+            continue
         if tok in MQTT_CONN_FLAGS:
             i = _consume_flag_value(tokens, i)
             continue
@@ -164,6 +195,7 @@ def _parse_mqtt_flags(tokens: list[str], start: int, action: str) -> dict:
 
 
 def parse_mqtt_line(line: str) -> MqCommand:
+    line = _strip_statement_terminator(line)
     tokens = shlex.split(line, posix=True)
     if not tokens:
         raise ValueError("empty mqtt command")
@@ -172,7 +204,9 @@ def parse_mqtt_line(line: str) -> MqCommand:
     if not tokens:
         raise ValueError("empty mqtt command")
 
-    tokens = _skip_leading_conn_flags(tokens, MQTT_CONN_FLAGS)
+    tokens = _skip_leading_conn_flags(
+        tokens, MQTT_CONN_FLAGS, MQTT_VALUELESS_CONN_FLAGS
+    )
     if not tokens:
         raise ValueError("empty mqtt command")
 
@@ -229,6 +263,7 @@ def _parse_bool_arg(args: dict, key: str) -> None:
 
 
 def parse_rabbitmq_line(line: str) -> MqCommand:
+    line = _strip_statement_terminator(line)
     tokens = shlex.split(line, posix=True)
     if not tokens:
         raise ValueError("empty rabbitmq command")

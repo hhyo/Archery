@@ -231,6 +231,7 @@ class MqttEngine(EngineBase):
         connected = False
         loop_started = False
         messages = []
+        subscribe_failure = {"reason": None}
         try:
             qos = self._validate_qos(qos)
 
@@ -245,18 +246,40 @@ class MqttEngine(EngineBase):
                 if on_message is not None:
                     on_message(row)
 
+            def _on_subscribe(_client, _userdata, _mid, reason_codes, _properties=None):
+                # A broker that accepts the connection but denies the topic
+                # (e.g. ACL) reports it through SUBACK, not on_message. Capture
+                # the failure so the wait loop can fail fast instead of idling
+                # until the full timeout (Codex #15).
+                codes = reason_codes if isinstance(reason_codes, list) else [reason_codes]
+                for code in codes:
+                    is_failure = getattr(code, "is_failure", None)
+                    if is_failure is None:
+                        value = getattr(code, "value", code)
+                        is_failure = isinstance(value, int) and value >= 0x80
+                    if is_failure:
+                        subscribe_failure["reason"] = str(code)
+                        break
+
             client = self.get_connection(db_name)
             client.on_message = _on_message
+            client.on_subscribe = _on_subscribe
             self._connect_and_wait(client)
             connected = True
             loop_started = True
-            client.subscribe(topic, qos=qos)
+            subscribe_rc, _mid = client.subscribe(topic, qos=qos)
+            if subscribe_rc != mqtt.MQTT_ERR_SUCCESS:
+                raise ConnectionError(f"MQTT 订阅请求失败，返回码：{subscribe_rc}")
 
             started_at = time.monotonic()
             cancelled = False
             while (
                 len(messages) < max_msgs and time.monotonic() - started_at < timeout_sec
             ):
+                if subscribe_failure["reason"]:
+                    raise ConnectionError(
+                        f"MQTT 订阅被拒绝：{subscribe_failure['reason']}"
+                    )
                 if cancel_check and cancel_check():
                     cancelled = True
                     break
@@ -379,6 +402,11 @@ class MqttEngine(EngineBase):
                     execute_time=0,
                 )
             )
+            if errlevel == 2:
+                # The submit page gates its warning confirmation on
+                # error_count; without this, invalid MQ workflows report zero
+                # errors and skip the confirmation (Codex #10).
+                check_result.error_count += 1
         return check_result
 
     @staticmethod
@@ -400,7 +428,10 @@ class MqttEngine(EngineBase):
         connected = False
         loop_started = False
         line = 1
-        statement = None
+        # Initialize to the first command so a connection failure (raised
+        # before the loop assigns `statement`) still records it instead of
+        # sql=None and dropping it from the pending rows (Codex #13).
+        statement = statements[0] if statements else None
         try:
             client = self.get_connection(workflow.db_name)
             self._connect_and_wait(client)

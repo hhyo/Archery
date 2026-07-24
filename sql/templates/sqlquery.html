@@ -1358,12 +1358,55 @@
             return lines;
         }
 
+        // Connection-flag sets mirror sql/engines/mq_cli.py so async routing
+        // agrees with the backend parser. Codex #1: a leading connection flag
+        // (e.g. `mqttx -h 127.0.0.1 -p 1883 sub …`, the form shown in the help
+        // tabs) must not stop a sub/get from being routed to the async
+        // mq-jobs path — otherwise the page sends it to sync /execute/, which
+        // rejects it, so the documented examples fail.
+        var MQTT_CONN_FLAGS = {
+            '-h': 1, '--host': 1, '-p': 1, '--port': 1, '-u': 1, '--username': 1,
+            '-P': 1, '--password': 1, '--ca': 1, '--cert': 1, '--key': 1,
+            '--protocol': 1, '--ws-path': 1
+        };
+        var MQTT_VALUELESS_FLAGS = {'--insecure': 1, '--ws': 1};
+        var RABBITMQ_CONN_FLAGS = {
+            '-H': 1, '--host': 1, '-P': 1, '--port': 1, '-u': 1, '--username': 1,
+            '-p': 1, '--password': 1, '-V': 1, '--vhost': 1
+        };
+
+        function mqActionToken(line, dbType) {
+            var toks = String(line || '').trim().split(/\s+/);
+            if (toks.length && (toks[0] === 'mqttx' || toks[0] === 'rabbitmqadmin')) {
+                toks = toks.slice(1);
+            }
+            var valued = dbType === 'mqtt' ? MQTT_CONN_FLAGS : RABBITMQ_CONN_FLAGS;
+            var valueless = dbType === 'mqtt' ? MQTT_VALUELESS_FLAGS : {};
+            var i = 0;
+            while (i < toks.length) {
+                var tok = toks[i];
+                if (valueless[tok]) { i += 1; continue; }
+                if (valued[tok]) {
+                    i += 1;
+                    if (i < toks.length && toks[i].charAt(0) !== '-') { i += 1; }
+                    continue;
+                }
+                if (tok.indexOf('--') === 0 && tok.indexOf('=') > 0) {
+                    var name = tok.split('=')[0];
+                    if (valued[name] || valueless[name]) { i += 1; continue; }
+                }
+                break;
+            }
+            return (toks[i] || '').toLowerCase();
+        }
+
         function isMqAsyncLine(line, dbType) {
+            var action = mqActionToken(line, dbType);
             if (dbType === 'mqtt') {
-                return /^(mqttx\s+)?sub\b/i.test(line);
+                return action === 'sub';
             }
             if (dbType === 'rabbitmq') {
-                return /^(rabbitmqadmin\s+)?get\b/i.test(line);
+                return action === 'get';
             }
             return false;
         }
@@ -1397,7 +1440,6 @@
             var n = tabN;
             if (job.error || job.status === 'failed') {
                 $("#query_result" + n).bootstrapTable('destroy').bootstrapTable({
-                    escape: false,
                     columns: [{field: 'error', title: 'Error'}],
                     data: [{error: job.error || '任务失败'}]
                 });

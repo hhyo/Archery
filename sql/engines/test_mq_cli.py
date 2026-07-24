@@ -245,3 +245,59 @@ def test_delete_missing_required_and_legacy_binding_keys():
         parse_rabbitmq_line(
             "delete binding source=ex destination=q destination_type=exchange"
         )
+
+
+# --- Codex #2: valueless MQTT connection flags must not eat the subcommand ---
+
+
+def test_mqtt_valueless_flag_before_subcommand_not_consumed():
+    cmd = parse_mqtt_line("mqttx --insecure sub -t archery/test")
+    assert cmd.action == "sub"
+    assert cmd.args["topic"] == "archery/test"
+
+
+def test_mqtt_valueless_ws_flag_before_subcommand():
+    cmd = parse_mqtt_line("mqttx --ws sub -t archery/test -C 3")
+    assert cmd.action == "sub"
+    assert cmd.args["topic"] == "archery/test"
+    assert cmd.args["count"] == 3
+
+
+def test_mqtt_valueless_flag_mixed_with_valued_conn_flags():
+    cmd = parse_mqtt_line("mqttx -h 1.2.3.4 --insecure -p 1883 sub -t t")
+    assert cmd.action == "sub"
+    assert cmd.args["topic"] == "t"
+
+
+def test_mqtt_valueless_flag_after_subcommand_ignored():
+    cmd = parse_mqtt_line("sub -t archery/test --insecure")
+    assert cmd.action == "sub"
+    assert cmd.args["topic"] == "archery/test"
+
+
+# --- Codex #14: a trailing SQL terminator (;) must be stripped before parsing ---
+
+
+def test_mqtt_strips_trailing_statement_terminator():
+    cmd = parse_mqtt_line("sub -t archery/test;")
+    assert cmd.action == "sub"
+    assert cmd.args["topic"] == "archery/test"
+
+
+def test_rabbitmq_strips_trailing_statement_terminator():
+    g = parse_rabbitmq_line("get queue=q1 count=1;")
+    assert g.action == "get"
+    assert g.args["queue"] == "q1"
+    assert g.args["count"] == 1
+
+
+def test_rabbitmq_delete_strips_terminator_from_name():
+    d = parse_rabbitmq_line("delete queue name=orders;")
+    assert d.args["name"] == "orders"
+
+
+def test_quoted_payload_ending_with_semicolon_preserved():
+    # A ';' inside quotes (line ends with the closing quote) is payload, not a
+    # terminator, and must survive parsing.
+    p = parse_rabbitmq_line('publish routing_key=q payload="hello;"')
+    assert p.args["payload"] == "hello;"

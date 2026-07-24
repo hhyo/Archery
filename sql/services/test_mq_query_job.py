@@ -7,7 +7,7 @@ from django.contrib.auth.models import Permission
 from django.core.cache import cache
 
 from sql.engines.models import ResultSet
-from sql.models import Instance, InstanceTag
+from sql.models import Instance, InstanceTag, QueryLog
 from sql.services import mq_query_job as svc
 
 
@@ -433,3 +433,174 @@ def test_run_mq_query_job_passes_ackmode_to_run_get(
     assert captured["ackmode"] == "ack_requeue_false"
     job = svc.get_mq_query_job(query_user, job_id)
     assert job["status"] == "done"
+
+
+# --- Codex #3: mq_query_timeout_max is clamped to the 3600s hard cap ---
+
+
+@pytest.mark.django_db
+def test_timeout_max_clamped_to_hard_cap(
+    mqtt_instance, query_user, monkeypatch, setup_sys_config
+):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    setup_sys_config.set("mq_query_timeout_default", "86400")
+    setup_sys_config.set("mq_query_timeout_max", "86400")
+    job_id = svc.create_mq_query_job(
+        query_user, mqtt_instance.id, "default", "sub -t t"
+    )["job_id"]
+    assert cache.get(svc.job_cache_key(job_id))["timeout_sec"] == 3600
+
+
+# --- Codex #5: worker clamps fetched count to the privilege limit ---
+
+
+@pytest.mark.django_db
+def test_priv_limit_clamps_worker_count(rabbitmq_instance, query_user, monkeypatch):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "sql.services.mq_query_job.query_priv_check",
+        lambda *a, **k: {"status": 0, "msg": "ok", "data": {"limit_num": 3}},
+    )
+    job_id = svc.create_mq_query_job(
+        query_user, rabbitmq_instance.id, "/", "get queue=q count=10"
+    )["job_id"]
+    assert cache.get(svc.job_cache_key(job_id))["limit_num"] == 3
+
+    captured = {}
+
+    def fake_run_get(self, queue, count, timeout_sec, **kwargs):
+        captured["count"] = count
+        result = ResultSet(
+            full_sql="", column_list=["queue", "routing_key", "body"]
+        )
+        result.rows = []
+        result.affected_rows = 0
+        return result
+
+    monkeypatch.setattr("sql.engines.rabbitmq.RabbitmqEngine.run_get", fake_run_get)
+    svc.run_mq_query_job(job_id)
+    assert captured["count"] == 3  # clamped from 10 to the privilege limit
+
+
+@pytest.mark.django_db
+def test_create_passes_requested_count_to_priv_check(
+    rabbitmq_instance, query_user, monkeypatch
+):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    captured = {}
+
+    def fake_priv_check(user, instance, db_name, sql, limit_num):
+        captured["limit_num_arg"] = limit_num
+        return {"status": 0, "msg": "ok", "data": {"limit_num": 0}}
+
+    monkeypatch.setattr("sql.services.mq_query_job.query_priv_check", fake_priv_check)
+    svc.create_mq_query_job(
+        query_user, rabbitmq_instance.id, "/", "get queue=q count=7"
+    )
+    assert captured["limit_num_arg"] == 7
+
+
+# --- Codex #8: engine error must not wipe incremental cached rows ---
+
+
+@pytest.mark.django_db
+def test_failed_engine_preserves_cached_partial_rows(
+    rabbitmq_instance, query_user, monkeypatch
+):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    job_id = svc.create_mq_query_job(
+        query_user,
+        rabbitmq_instance.id,
+        "/",
+        "get queue=q count=3 ackmode=ack_requeue_false",
+    )["job_id"]
+    key = svc.job_cache_key(job_id)
+
+    def fake_run_get(
+        self,
+        queue,
+        count,
+        timeout_sec,
+        cancel_check=None,
+        on_message=None,
+        **kwargs,
+    ):
+        if on_message:
+            on_message(["q", "rk", "partial-body"])
+        result = ResultSet(
+            full_sql="", column_list=["queue", "routing_key", "body"]
+        )
+        result.error = "channel closed"
+        # result.rows stays the default [] (engine never assigned final rows)
+        return result
+
+    monkeypatch.setattr("sql.engines.rabbitmq.RabbitmqEngine.run_get", fake_run_get)
+    svc.run_mq_query_job(job_id)
+    final = cache.get(key)
+    assert final["status"] == "failed"
+    assert final["rows"] == [["q", "rk", "partial-body"]]
+
+
+# --- Codex #12: privilege check uses the engine's effective db/vhost ---
+
+
+@pytest.mark.django_db
+def test_db_name_normalized_before_priv_check(
+    rabbitmq_instance, mqtt_instance, query_user, monkeypatch
+):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    captured = {}
+
+    def fake_priv_check(user, instance, db_name, sql, limit_num):
+        captured["db_name"] = db_name
+        return {"status": 0, "msg": "ok", "data": {"limit_num": 0}}
+
+    monkeypatch.setattr("sql.services.mq_query_job.query_priv_check", fake_priv_check)
+
+    # rabbitmq: omitted db_name -> "/" (engine default vhost)
+    svc.create_mq_query_job(query_user, rabbitmq_instance.id, "", "get queue=q")
+    assert captured["db_name"] == "/"
+
+    # mqtt: omitted db_name -> "default"
+    svc.create_mq_query_job(query_user, mqtt_instance.id, "", "sub -t t")
+    assert captured["db_name"] == "default"
+
+
+# --- Codex #4: completed async MQ reads are written to QueryLog ---
+
+
+@pytest.mark.django_db
+def test_async_job_writes_query_log(mqtt_instance, query_user, monkeypatch):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    job_id = svc.create_mq_query_job(
+        query_user, mqtt_instance.id, "default", "sub -t demo -C 1"
+    )["job_id"]
+
+    def fake_run_subscribe(
+        self,
+        topic,
+        qos,
+        max_msgs,
+        timeout_sec,
+        cancel_check=None,
+        on_message=None,
+        **kwargs,
+    ):
+        if on_message:
+            on_message(["demo", "hi", 0, False])
+        result = ResultSet(
+            full_sql="", column_list=["topic", "payload", "qos", "retain"]
+        )
+        result.rows = [["demo", "hi", 0, False]]
+        result.affected_rows = 1
+        return result
+
+    monkeypatch.setattr("sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe)
+    before = QueryLog.objects.count()
+    svc.run_mq_query_job(job_id)
+    assert QueryLog.objects.count() == before + 1
+    log = QueryLog.objects.latest("id")
+    assert log.sqllog == "sub -t demo -C 1"
+    assert log.instance_name == "mqtt_ins"
+    assert log.effect_row == 1
+    assert log.username == query_user.username

@@ -240,6 +240,7 @@ class RabbitmqEngine(EngineBase):
         )
         conn = None
         rows = []
+        delivery_tags = []
         try:
             conn = self.get_connection(db_name)
             channel = conn.channel()
@@ -253,7 +254,6 @@ class RabbitmqEngine(EngineBase):
                     queue=queue, auto_ack=False
                 )
                 if method is not None:
-                    self._apply_get_ackmode(channel, method.delivery_tag, ackmode)
                     payload = (
                         body.decode("utf-8", errors="replace")
                         if isinstance(body, bytes)
@@ -261,6 +261,7 @@ class RabbitmqEngine(EngineBase):
                     )
                     row = [queue, method.routing_key, payload]
                     rows.append(row)
+                    delivery_tags.append(method.delivery_tag)
                     if on_message is not None:
                         on_message(row)
                 else:
@@ -268,6 +269,14 @@ class RabbitmqEngine(EngineBase):
 
             if limit_num > 0:
                 rows = rows[:limit_num]
+                delivery_tags = delivery_tags[:limit_num]
+            # Apply the ackmode only AFTER the whole batch is fetched.
+            # Requeueing each delivery before the next basic_get made that same
+            # head message eligible again, so count>1 with ack_requeue_true /
+            # reject_requeue_true returned duplicates instead of a batch of
+            # distinct messages (Codex #7).
+            for delivery_tag in delivery_tags:
+                self._apply_get_ackmode(channel, delivery_tag, ackmode)
             result.rows = rows
             result.affected_rows = len(rows)
             if not rows and not cancelled:
@@ -392,6 +401,11 @@ class RabbitmqEngine(EngineBase):
                     execute_time=0,
                 )
             )
+            if errlevel == 2:
+                # The submit page gates its warning confirmation on
+                # error_count; without this, invalid MQ workflows report zero
+                # errors and skip the confirmation (Codex #10).
+                check_result.error_count += 1
         return check_result
 
     @staticmethod
@@ -464,7 +478,10 @@ class RabbitmqEngine(EngineBase):
         execute_result = ReviewSet(full_sql=sql)
         conn = None
         line = 1
-        statement = None
+        # Initialize to the first command so a connection failure (raised
+        # before the loop assigns `statement`) still records it instead of
+        # sql=None and dropping it from the pending rows (Codex #13).
+        statement = statements[0] if statements else None
         try:
             conn = self.get_connection(db_name=workflow.db_name)
             channel = conn.channel()

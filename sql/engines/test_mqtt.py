@@ -132,6 +132,7 @@ class TestMqttEngine(TestCase):
     def test_subscribe_caps_message_count(self, mock_client_cls, _mock_monotonic):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
+        mock_client.subscribe.return_value = (0, 1)
 
         def deliver_messages(*_args, **_kwargs):
             mock_client.on_connect(mock_client, None, None, 0, None)
@@ -158,6 +159,7 @@ class TestMqttEngine(TestCase):
     def test_subscribe_uses_defaults(self, mock_client_cls, _mock_monotonic):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
+        mock_client.subscribe.return_value = (0, 1)
         mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
             mock_client, None, None, 0, None
         )
@@ -174,6 +176,7 @@ class TestMqttEngine(TestCase):
     def test_subscribe_collects_messages_and_decodes_payload(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
+        mock_client.subscribe.return_value = (0, 1)
 
         def deliver_message(*_args, **_kwargs):
             mock_client.on_connect(mock_client, None, None, 0, None)
@@ -337,6 +340,7 @@ class TestMqttEngine(TestCase):
     ):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
+        mock_client.subscribe.return_value = (0, 1)
         mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
             mock_client, None, None, 0, None
         )
@@ -361,3 +365,88 @@ class TestMqttEngine(TestCase):
         self.assertEqual(result.error, None)
         self.assertEqual(result.rows, [])
         self.assertEqual(seen, [])
+
+    # --- Codex #10: errlevel=2 rows must increment error_count ---
+
+    def test_execute_check_counts_errors(self):
+        engine = MqttEngine(instance=self.ins)
+        result = engine.execute_check(
+            sql="sub -t archery/test\npub -t archery/test -m hi -q 9"
+        )
+        self.assertEqual(result.error_count, 2)
+        self.assertTrue(all(row.errlevel == 2 for row in result.rows))
+
+        clean = engine.execute_check(sql='pub -t archery/test -m "hi"')
+        self.assertEqual(clean.error_count, 0)
+
+    # --- Codex #13: connection failure must record the first command ---
+
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_execute_workflow_connection_failure_records_first_command(
+        self, mock_client_cls
+    ):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        reason_code = MagicMock(is_failure=True)
+        reason_code.__str__.return_value = "Not authorized"
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, reason_code, None
+        )
+        workflow = MagicMock()
+        workflow.db_name = "default"
+        workflow.sqlworkflowcontent.sql_content = "\n".join(
+            ['pub -t a -m "1"', 'pub -t b -m "2"', 'pub -t c -m "3"']
+        )
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.execute_workflow(workflow)
+
+        self.assertTrue(result.error)
+        self.assertEqual(len(result.rows), 3)
+        self.assertEqual(result.rows[0].sql, 'pub -t a -m "1"')
+        self.assertEqual(result.rows[0].errlevel, 2)
+        self.assertEqual(result.rows[1].sql, 'pub -t b -m "2"')
+        self.assertEqual(result.rows[2].sql, 'pub -t c -m "3"')
+
+    # --- Codex #15: SUBACK denial must fail fast, not wait out the timeout ---
+
+    @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 0.01, 0.02, 60])
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_run_subscribe_fails_fast_when_subscription_rejected(
+        self, mock_client_cls, _mock_monotonic
+    ):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        mock_client.subscribe.return_value = (0, 1)
+
+        def connect_and_deny(*_args, **_kwargs):
+            mock_client.on_connect(mock_client, None, None, 0, None)
+            denied = MagicMock(is_failure=True)
+            denied.__str__.return_value = "Not authorized"
+            mock_client.on_subscribe(mock_client, None, 1, [denied], None)
+
+        mock_client.loop_start.side_effect = connect_and_deny
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.run_subscribe(
+            topic="archery/test", qos=0, max_msgs=10, timeout_sec=60
+        )
+
+        self.assertIn("订阅被拒绝", result.error)
+        self.assertEqual(result.rows, [])
+
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_run_subscribe_raises_when_subscribe_request_fails(self, mock_client_cls):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        mock_client.subscribe.return_value = (mqtt.MQTT_ERR_NO_CONN, 1)
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, 0, None
+        )
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.run_subscribe(
+            topic="archery/test", qos=0, max_msgs=1, timeout_sec=60
+        )
+
+        self.assertIn("订阅请求失败", result.error)

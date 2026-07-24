@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 import uuid
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django_q.tasks import async_task
 
@@ -16,7 +18,7 @@ from sql.engines import get_engine
 from sql.engines.mq_cli import parse_mqtt_line, parse_rabbitmq_line
 from sql.engines.mqtt import MAX_SUBSCRIBE_COUNT, MqttEngine
 from sql.engines.rabbitmq import MAX_GET_COUNT, RabbitmqEngine
-from sql.models import Instance
+from sql.models import Instance, QueryLog
 from sql.query_privileges import query_priv_check
 from sql.utils.resource_group import user_instances
 
@@ -69,7 +71,14 @@ def _enqueue_mq_query_job(job_id: str, timeout_sec: int | None = None) -> None:
 
 
 def _resolve_timeout_sec() -> tuple[int, int]:
-    """Return (timeout_sec, cache_ttl) from SysConfig, clamped to [1, max]."""
+    """Return (timeout_sec, cache_ttl) from SysConfig, clamped to [1, hard cap].
+
+    The UI help tabs advertise ``mq_query_timeout_max`` as a 3600-second hard
+    cap and the synchronous engine path clamps to MAX_QUERY_TIMEOUT_SEC=3600,
+    so bound the configured max by DEFAULT_TIMEOUT_MAX_SEC here too; a mis-set
+    value (e.g. 86400) must not let async jobs occupy workers for a day
+    (Codex #3).
+    """
     config = SysConfig()
     try:
         default = int(config.get("mq_query_timeout_default", DEFAULT_TIMEOUT_SEC))
@@ -79,8 +88,7 @@ def _resolve_timeout_sec() -> tuple[int, int]:
         max_sec = int(config.get("mq_query_timeout_max", DEFAULT_TIMEOUT_MAX_SEC))
     except (TypeError, ValueError):
         max_sec = DEFAULT_TIMEOUT_MAX_SEC
-    if max_sec < 1:
-        max_sec = 1
+    max_sec = max(1, min(max_sec, DEFAULT_TIMEOUT_MAX_SEC))
     timeout_sec = max(1, min(default, max_sec))
     ttl = max(max_sec + 600, JOB_CACHE_TTL)
     return timeout_sec, ttl
@@ -151,15 +159,26 @@ def create_mq_query_job(user, instance_id, db_name, sql_line) -> dict:
         if cmd.action != "sub":
             raise ValueError("仅 sub 支持异步任务")
         MqttEngine._validate_query_command(cmd)
+        requested_count = int(cmd.args.get("count", 10))
+        # Mirror MqttEngine.get_all_databases so the privilege check runs
+        # against the same database name the engine will use (Codex #12).
+        effective_db = db_name or instance.db_name or "default"
     else:
         cmd = parse_rabbitmq_line(line)
         if cmd.action != "get":
             raise ValueError("仅 get 支持异步任务")
         RabbitmqEngine._validate_query_command(cmd)
+        requested_count = int(cmd.args.get("count", 1))
+        # Mirror RabbitmqEngine._vhost so the privilege check and the engine
+        # agree on the vhost instead of checking "" but running on "/" (Codex #12).
+        effective_db = db_name or instance.db_name or "/"
 
-    priv = query_priv_check(user, instance, db_name or "", line, 0)
+    # Pass the requested count so query_priv_check returns the caller's
+    # effective row limit; the worker enforces it (Codex #5).
+    priv = query_priv_check(user, instance, effective_db, line, requested_count)
     if priv.get("status") != 0:
         raise PermissionError(priv.get("msg") or "无查询权限")
+    limit_num = int(priv.get("data", {}).get("limit_num") or 0)
 
     timeout_sec, ttl = _resolve_timeout_sec()
     job_id = uuid.uuid4().hex
@@ -167,7 +186,7 @@ def create_mq_query_job(user, instance_id, db_name, sql_line) -> dict:
         "job_id": job_id,
         "user_id": user.id,
         "instance_id": instance.id,
-        "db_name": db_name or "",
+        "db_name": effective_db,
         "sql_line": line,
         "status": "pending",
         "column_list": [],
@@ -176,6 +195,7 @@ def create_mq_query_job(user, instance_id, db_name, sql_line) -> dict:
         "error": "",
         "cancel": False,
         "timeout_sec": timeout_sec,
+        "limit_num": limit_num,
     }
     _save_job(job, ttl)
     _enqueue_mq_query_job(job_id, timeout_sec=timeout_sec)
@@ -201,6 +221,31 @@ def cancel_mq_query_job(user, job_id: str) -> dict:
     return _update_job(job_id, mark_cancel, ttl)
 
 
+def _write_query_log(job, instance_name, effect_row, cost_time) -> None:
+    """Mirror the sync path's QueryLog for async MQ reads (Codex #4).
+
+    Without this, sub/get executed through the mq-jobs endpoint never reach
+    execute_sql_query, so they are absent from query history/audit. Logging
+    must never break the job itself.
+    """
+    try:
+        user = get_user_model().objects.filter(pk=job.get("user_id")).first()
+        QueryLog.objects.create(
+            username=user.username if user else str(job.get("user_id")),
+            user_display=(getattr(user, "display", "") or "") if user else "",
+            db_name=job.get("db_name") or "",
+            instance_name=instance_name,
+            sqllog=job.get("sql_line") or "",
+            effect_row=effect_row,
+            cost_time=str(cost_time),
+            priv_check=True,
+            hit_rule=False,
+            masking=False,
+        )
+    except Exception as exc:
+        logger.warning("MQ 查询日志写入失败：%s", exc)
+
+
 def run_mq_query_job(job_id: str) -> None:
     key = job_cache_key(job_id)
     job = cache.get(key)
@@ -212,11 +257,15 @@ def run_mq_query_job(job_id: str) -> None:
     job["status"] = "running"
     _save_job(job, ttl)
 
+    instance_name = ""
+    query_started = time.monotonic()
     try:
         instance = Instance.objects.get(pk=job["instance_id"])
+        instance_name = instance.instance_name
         engine = get_engine(instance)
         line = job["sql_line"]
         timeout_sec = int(job.get("timeout_sec") or DEFAULT_TIMEOUT_SEC)
+        limit_num = int(job.get("limit_num") or 0)
 
         def cancel_check():
             return _is_cancelled(job_id)
@@ -236,6 +285,9 @@ def run_mq_query_job(job_id: str) -> None:
         if instance.db_type == "mqtt":
             cmd = parse_mqtt_line(line)
             max_msgs = min(int(cmd.args.get("count", 10)), MAX_SUBSCRIBE_COUNT)
+            # Enforce the caller's query-privilege row limit (Codex #5).
+            if limit_num > 0:
+                max_msgs = min(max_msgs, limit_num)
             column_list = MQTT_COLUMN_LIST
             result = engine.run_subscribe(
                 topic=cmd.args["topic"],
@@ -250,6 +302,10 @@ def run_mq_query_job(job_id: str) -> None:
         elif instance.db_type == "rabbitmq":
             cmd = parse_rabbitmq_line(line)
             count = min(int(cmd.args.get("count", 1)), MAX_GET_COUNT)
+            # Clamp the fetched (and, with ack_requeue_false, removed) message
+            # count to the caller's query-privilege limit (Codex #5).
+            if limit_num > 0:
+                count = min(count, limit_num)
             column_list = RABBITMQ_COLUMN_LIST
             result = engine.run_get(
                 queue=cmd.args["queue"],
@@ -266,10 +322,12 @@ def run_mq_query_job(job_id: str) -> None:
 
         def finalize(current):
             current["column_list"] = list(result.column_list or [])
-            # Prefer engine rows as authoritative; fall back to incremental cache rows.
-            current["rows"] = list(
-                result.rows if result.rows is not None else current.get("rows") or []
-            )
+            # Prefer engine rows as authoritative. On an engine error the
+            # ResultSet keeps its default empty list, so fall back to the
+            # incremental cached rows instead of wiping partial rows that
+            # on_message already stored (with ack_requeue_false those rows may
+            # already have been removed from the queue) (Codex #8).
+            current["rows"] = list(result.rows or current.get("rows") or [])
             current["warning"] = result.warning or ""
             current["error"] = result.error or ""
             if _is_cancelled(job_id, current):
@@ -281,6 +339,12 @@ def run_mq_query_job(job_id: str) -> None:
                 current["status"] = "done"
 
         _update_job(job_id, finalize, ttl)
+        _write_query_log(
+            job,
+            instance_name,
+            effect_row=len(result.rows or []),
+            cost_time=round(time.monotonic() - query_started, 3),
+        )
     except Exception as exc:
         logger.warning("mq query job failed: %s %s", job_id, exc)
 
@@ -296,3 +360,9 @@ def run_mq_query_job(job_id: str) -> None:
             _update_job(job_id, mark_failed, ttl)
         except KeyError:
             pass
+        _write_query_log(
+            job,
+            instance_name,
+            effect_row=0,
+            cost_time=round(time.monotonic() - query_started, 3),
+        )

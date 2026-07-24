@@ -179,9 +179,12 @@ class InstanceAdmin(admin.ModelAdmin):
     list_filter = ("db_type", "type", "instance_tag")
 
     def formfield_for_dbfield(self, db_field, **kwargs):
-        if db_field.name in ["password", "client_key"]:
+        if db_field.name in ["password"]:
             kwargs["widget"] = PasswordInput(render_value=True)
-        elif db_field.name in ["client_cert", "ca_cert"]:
+        elif db_field.name in ["client_cert", "ca_cert", "client_key"]:
+            # client_key is a multi-line PEM: a single-line PasswordInput lets
+            # the browser strip newlines and corrupt the key, breaking mTLS for
+            # admin-created instances. A Textarea preserves the PEM (Codex #6).
             kwargs["widget"] = Textarea()
         return super(InstanceAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
