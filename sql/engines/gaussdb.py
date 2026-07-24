@@ -61,6 +61,7 @@ class GaussDBEngine(PgSQLEngine):
                 inner_sql=inner_sql,
                 close_conn=close_conn,
                 schema_name=kwargs.get("schema_name"),
+                max_execution_time=kwargs.get("max_execution_time", 0),
             )
         return super().query(
             db_name=db_name,
@@ -71,7 +72,7 @@ class GaussDBEngine(PgSQLEngine):
             **kwargs,
         )
 
-    def _explain_via_prepare(self, db_name=None, inner_sql="", close_conn=True, schema_name=None):
+    def _explain_via_prepare(self, db_name=None, inner_sql="", close_conn=True, schema_name=None, max_execution_time=0):
         """通过 PREPARE + EXPLAIN EXECUTE 绕过 GaussDB PBE 机制获取执行计划。"""
         from sql.engines.models import ResultSet
         result_set = ResultSet(full_sql=f"explain {inner_sql};")
@@ -87,6 +88,11 @@ class GaussDBEngine(PgSQLEngine):
                         pg_sql.Identifier(schema_name)
                     )
                 )
+            if max_execution_time:
+                try:
+                    cursor.execute("SET statement_timeout TO %s;", (int(max_execution_time),))
+                except Exception:
+                    pass
             stmt_name = f"archery_explain_{id(inner_sql) & 0xffffff}"
             # PREPARE
             cursor.execute(f"PREPARE {stmt_name} AS {inner_sql};")
