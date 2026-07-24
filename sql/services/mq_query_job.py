@@ -254,6 +254,19 @@ def run_mq_query_job(job_id: str) -> None:
         return
 
     _, ttl = _resolve_timeout_sec()
+    # Honor cancellation requested before the worker started (user hit Stop or
+    # left the page between create and enqueue pickup). Without this, the worker
+    # would still open a broker connection / subscribe and could append rows to
+    # a job the user already cancelled (Codex review).
+    if _is_cancelled(job_id, job):
+
+        def mark_cancelled(current):
+            current["cancel"] = True
+            current["status"] = "cancelled"
+
+        _update_job(job_id, mark_cancelled, ttl)
+        return
+
     job["status"] = "running"
     _save_job(job, ttl)
 

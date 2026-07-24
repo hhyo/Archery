@@ -317,7 +317,9 @@ def test_cancel_sets_flag_and_preserves_rows(mqtt_instance, query_user, monkeypa
     final = cache.get(key)
     assert final["status"] == "cancelled"
     assert final["rows"] == [["demo", "payload-1", 0, False]]
-    assert calls["cancel_checks"] == 1
+    # Cancelled before the worker started: the engine is skipped entirely (no
+    # broker connection / subscribe), so its cancel_check is never invoked.
+    assert calls["cancel_checks"] == 0
 
 
 @pytest.mark.django_db
@@ -600,3 +602,35 @@ def test_async_job_writes_query_log(mqtt_instance, query_user, monkeypatch):
     assert log.instance_name == "mqtt_ins"
     assert log.effect_row == 1
     assert log.username == query_user.username
+
+
+# --- Codex review: cancellation requested before the worker starts is honored ---
+
+
+@pytest.mark.django_db
+def test_pre_start_cancellation_skips_engine(mqtt_instance, query_user, monkeypatch):
+    """A job cancelled before the worker picks it up must finalize as cancelled
+    without opening a broker connection / subscribing."""
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    job_id = svc.create_mq_query_job(
+        query_user, mqtt_instance.id, "default", "sub -t demo"
+    )["job_id"]
+
+    # User cancels before the worker runs.
+    svc.cancel_mq_query_job(query_user, job_id)
+
+    called = {"run_subscribe": False}
+
+    def fake_run_subscribe(self, *args, **kwargs):
+        called["run_subscribe"] = True
+        result = ResultSet(
+            full_sql="", column_list=["topic", "payload", "qos", "retain"]
+        )
+        result.rows = [["demo", "x", 0, False]]
+        return result
+
+    monkeypatch.setattr("sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe)
+    svc.run_mq_query_job(job_id)
+
+    assert called["run_subscribe"] is False
+    assert cache.get(svc.job_cache_key(job_id))["status"] == "cancelled"

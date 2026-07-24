@@ -108,15 +108,22 @@ def execute_sql_query(
         limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
         sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
 
-        query_engine.get_connection(db_name=db_name)
-        thread_id = query_engine.thread_id
         max_execution_time = int(config.get("max_execution_time", 60))
-        if thread_id:
-            schedule_name = f"query-{time.time()}"
-            run_date = datetime.datetime.now() + datetime.timedelta(
-                seconds=max_execution_time
-            )
-            add_kill_conn_schedule(schedule_name, run_date, instance.id, thread_id)
+        # MQ engines open their own connection per command, and the only
+        # sync-allowed MQ query is `help`, which needs no broker connection.
+        # Skip the pre-connection so help does not leak a broker connection or
+        # fail when the broker is down (Codex review).
+        if getattr(instance, "db_type", None) in ("mqtt", "rabbitmq"):
+            thread_id = None
+        else:
+            query_engine.get_connection(db_name=db_name)
+            thread_id = query_engine.thread_id
+            if thread_id:
+                schedule_name = f"query-{time.time()}"
+                run_date = datetime.datetime.now() + datetime.timedelta(
+                    seconds=max_execution_time
+                )
+                add_kill_conn_schedule(schedule_name, run_date, instance.id, thread_id)
         with FuncTimer() as timer:
             seconds_behind_master = query_engine.seconds_behind_master
             query_result = query_engine.query(
