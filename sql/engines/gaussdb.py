@@ -143,6 +143,8 @@ class GaussDBEngine(PgSQLEngine):
         if not result.error and result.rows and result.column_list:
             cols = result.column_list
             result.rows = [dict(zip(cols, row)) for row in result.rows]
+            for row in result.rows:
+                row["saved"] = False
         return result
 
     def query_check(self, db_name=None, sql=""):
@@ -1035,6 +1037,11 @@ class GaussDBEngine(PgSQLEngine):
                 result_set.error = f"参数 {variable_name} 需要重启实例才能生效，不支持在线修改"
                 return result_set
             cursor.execute(alter_sql, {"value": variable_value})
+            # Reload config so the change takes effect immediately (for non-postmaster params)
+            try:
+                cursor.execute("SELECT pg_reload_conf();")
+            except Exception:
+                pass  # reload is best-effort; some params may need restart
             conn.commit()
             result_set.affected_rows = cursor.rowcount if cursor.rowcount > 0 else 0
         except Exception as e:

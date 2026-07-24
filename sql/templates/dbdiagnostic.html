@@ -871,7 +871,7 @@
                 //获取用户实例列表
                 $(function () {
                     // 会话管理-支持的数据库类型 (GaussDB diagnostic JS not yet defined)
-                    supportedDbType = ['mysql', 'mongo', 'oracle', 'redis', 'pgsql', 'doris', 'tdengine', 'clickhouse']
+                    supportedDbType = ['mysql', 'mongo', 'oracle', 'redis', 'pgsql', 'gaussdb', 'doris', 'tdengine', 'clickhouse']
                     $.ajax({
                         type: "get",
                         url: "/api/v1/sqlquery/instances/",

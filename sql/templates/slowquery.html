@@ -509,7 +509,8 @@
         function slowquery_review_history() {
             var db_type = sessionStorage.getItem('slow_query_db_type') || 'mysql';
             var is_redis = db_type === 'redis';
-            if (is_redis) {
+            var is_gaussdb = db_type === 'gaussdb';
+            if (is_redis || is_gaussdb) {
                 $("#sqladvisor-toolbar").hide();
             } else {
                 $("#sqladvisor-toolbar").show();
