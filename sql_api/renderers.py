@@ -53,6 +53,7 @@ class SimpleJSONRenderer(JSONRenderer):
             allow_nan=not self.strict,
             separators=separators,
             default=self.default,
+            int_as_string_bitcount=53,
         )
         # Keep DRF's default escaping so JSON stays safe if embedded into script content.
         ret = ret.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
