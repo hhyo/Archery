@@ -84,7 +84,7 @@ class GaussDBEngine(PgSQLEngine):
                         pg_sql.Identifier(schema_name)
                     )
                 )
-            stmt_name = "archery_explain_tmp"
+            stmt_name = f"archery_explain_{id(inner_sql) & 0xffffff}"
             # PREPARE
             cursor.execute(f"PREPARE {stmt_name} AS {inner_sql};")
             # EXPLAIN EXECUTE
@@ -1081,33 +1081,12 @@ class GaussDBEngine(PgSQLEngine):
 
     @staticmethod
     def _split_qualified_name(name):
-        parts = []
-        current = []
-        in_quotes = False
-        i = 0
-        while i < len(name):
-            char = name[i]
-            if char == '"':
-                if in_quotes and i + 1 < len(name) and name[i + 1] == '"':
-                    current.append('"')
-                    i += 2
-                    continue
-                in_quotes = not in_quotes
-            elif char == "." and not in_quotes:
-                parts.append("".join(current).strip())
-                current = []
-            else:
-                current.append(char)
-            i += 1
-        last_part = "".join(current).strip()
-        if last_part:
-            parts.append(last_part)
-        # Fold unquoted identifiers to lowercase (PostgreSQL/openGauss behavior)
-        # Quoted identifiers retain their exact casing and have quotes removed.
+        """Split a qualified name by '.', respecting double-quoted identifiers.
+        Unquoted parts are folded to lowercase (PostgreSQL/openGauss behavior).
+        Quoted parts retain their exact casing with quotes removed."""
         result = []
-        was_in_quotes = [False]  # track per-part
-        # Re-parse to track quote state per part
         current = []
+        had_quotes = False
         in_quotes = False
         i = 0
         while i < len(name):
@@ -1118,17 +1097,19 @@ class GaussDBEngine(PgSQLEngine):
                     i += 2
                     continue
                 in_quotes = not in_quotes
+                had_quotes = True
             elif char == "." and not in_quotes:
                 seg = "".join(current).strip()
                 if seg:
-                    result.append(seg.lower() if not seg.startswith('"') else seg.strip('"'))
+                    result.append(seg if had_quotes else seg.lower())
                 current = []
+                had_quotes = False
             else:
                 current.append(char)
             i += 1
         seg = "".join(current).strip()
         if seg:
-            result.append(seg.lower() if not seg.startswith('"') else seg.strip('"'))
+            result.append(seg if had_quotes else seg.lower())
         return result
 
     @staticmethod
@@ -1175,8 +1156,8 @@ class GaussDBEngine(PgSQLEngine):
                 routine_schema,
                 data_type as return_type,
                 '' as definer,
-                created,
-                last_altered,
+                null as created,
+                null as last_altered,
                 '' as sql_mode,
                 security_type,
                 '' as routine_comment
