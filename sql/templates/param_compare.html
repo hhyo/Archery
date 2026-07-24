@@ -107,10 +107,12 @@
         // 获取实例列表
         function load_instances() {
             var db_type = $("#db_type").val();
-            var params = {};
-            if (db_type) {
-                params.db_type = [db_type];
+            if (!db_type) {
+                $("#instance_id1").empty();
+                $("#instance_id2").empty();
+                return;
             }
+            var params = { db_type: [db_type] };
             $.ajax({
                 type: "get",
                 url: "/api/v1/sqlquery/instances/",

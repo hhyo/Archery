@@ -12,7 +12,6 @@
                         data-live-search="true">
                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
-                    <optgroup id="optgroup-gaussdb" label="GaussDB"></optgroup>
                 </select>
             </div>
             <div class="form-group">
@@ -1878,7 +1877,7 @@
                     url: "/api/v1/sqlquery/instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql', 'mongo', 'gaussdb']
+                        db_type: ['mysql', 'mongo']
                     },
                     complete: function () {
                     },
@@ -1886,7 +1885,7 @@
                         if (data.status === 0) {
                             let result = data['data'];
                             $("optgroup[id^='optgroup']").empty();
-                            const supportDb = ['mysql', 'mongo', 'gaussdb']
+                            const supportDb = ['mysql', 'mongo']
                             for (let i of result) {
                                 let instance = "<option value=\"" + i.id + "\" instance-id=" + i.id + " instance-type=" + i.db_type + ">" + i.instance_name + "</option>";
                                 if (supportDb.indexOf(i.db_type) !== -1) {

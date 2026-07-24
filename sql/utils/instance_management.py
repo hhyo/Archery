@@ -3,7 +3,9 @@ from sql.models import InstanceAccount
 # NOTE: PgSQL/GaussDB only support read-only account listing.
 # Write operations (create/delete/reset) are not implemented in the engine.
 # Remove from this list once write operations are added, or keep as read-only.
-SUPPORTED_MANAGEMENT_DB_TYPE = ["mysql", "mongo", "gaussdb"]
+SUPPORTED_MANAGEMENT_DB_TYPE = ["mysql", "mongo"]
+# GaussDB account listing is read-only; write operations (create/delete/reset)
+# are not implemented. Add "gaussdb" to the list above once write ops are implemented.
 
 
 def get_instanceaccount_unique_value(db_type: str, account: InstanceAccount) -> str:

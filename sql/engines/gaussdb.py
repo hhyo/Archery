@@ -8,7 +8,10 @@ configuration, UI grouping, permission checks and future dialect differences.
 """
 
 import re
+import logging
 import sqlparse
+
+logger = logging.getLogger("default")
 
 from .models import ResultSet
 from .pgsql import PgSQLEngine
@@ -101,6 +104,11 @@ class GaussDBEngine(PgSQLEngine):
         except Exception as e:
             result_set.error = str(e)
         finally:
+            if 'cursor' in dir() and cursor:
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
             if conn and close_conn:
                 conn.close()
         return result_set
@@ -302,6 +310,8 @@ class GaussDBEngine(PgSQLEngine):
         )
         table_comment = ""
         column_comments = {}
+        if comments.error:
+            logger.warning("Failed to query comments for %s.%s: %s", schema_name, clean_table_name, comments.error)
         if not comments.error:
             for table_desc, column_name, column_desc in comments.rows:
                 table_comment = table_comment or table_desc or ""
@@ -328,6 +338,8 @@ class GaussDBEngine(PgSQLEngine):
             if is_nullable == "NO":
                 column_def += " NOT NULL"
             column_defs.append(column_def)
+        if constraints.error:
+            logger.warning("Failed to query constraints for %s.%s: %s", schema_name, clean_table_name, constraints.error)
         if not constraints.error:
             for constraint_name, constraint_type, constraint_def in constraints.rows:
                 if constraint_type == "p":
@@ -700,7 +712,7 @@ class GaussDBEngine(PgSQLEngine):
             parameters={"schema_name": schema_name, "view_name": clean_view_name},
         )
         return {
-            "meta_data": {"column_list": meta.column_list, "rows": meta.rows[0] if meta.rows else []},
+            "meta_data": {"column_list": meta.column_list, "rows": meta.rows[0] if meta.rows else ()},
             "desc": self.get_table_desc_data(db_name=db_name, tb_name=view_name),
             "view_definition": meta.rows[0][1] if meta.rows else "",
         }
@@ -1045,8 +1057,6 @@ class GaussDBEngine(PgSQLEngine):
             conn.commit()
             result_set.affected_rows = cursor.rowcount if cursor.rowcount > 0 else 0
         except Exception as e:
-            if conn:
-                conn.rollback()
             result_set.error = str(e)
         finally:
             self.close()
@@ -1196,7 +1206,7 @@ class GaussDBEngine(PgSQLEngine):
             },
         )
         return {
-            "meta_data": {"column_list": meta.column_list, "rows": meta.rows[0] if meta.rows else []},
+            "meta_data": {"column_list": meta.column_list, "rows": meta.rows[0] if meta.rows else ()},
             "create_sql": create.rows,
         }
 
@@ -1228,7 +1238,10 @@ class GaussDBEngine(PgSQLEngine):
         count_result = super().query(
             db_name=self.db_name or "postgres", sql=count_sql, parameters=parameters
         )
-        total = count_result.rows[0][0] if count_result.rows and not count_result.error else 0
+        if count_result.error:
+            self.close()
+            return {"total": 0, "rows": [], "error": count_result.error}
+        total = count_result.rows[0][0] if count_result.rows else 0
         return {"total": total, "rows": rows_result.to_dict()}
 
     def _build_metadata_rollback_sql(self, source_sql):
