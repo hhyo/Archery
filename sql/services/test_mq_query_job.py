@@ -412,7 +412,7 @@ def test_run_mq_query_job_passes_ackmode_to_run_get(
         query_user,
         rabbitmq_instance.id,
         "/",
-        "get queue=demo.q count=1 ackmode=ack_requeue_false",
+        "get queue=demo.q count=1 ackmode=reject_requeue_true",
     )["job_id"]
     captured = {}
 
@@ -432,7 +432,7 @@ def test_run_mq_query_job_passes_ackmode_to_run_get(
     svc.run_mq_query_job(job_id)
     assert captured["queue"] == "demo.q"
     assert captured["count"] == 1
-    assert captured["ackmode"] == "ack_requeue_false"
+    assert captured["ackmode"] == "reject_requeue_true"
     job = svc.get_mq_query_job(query_user, job_id)
     assert job["status"] == "done"
 
@@ -512,7 +512,7 @@ def test_failed_engine_preserves_cached_partial_rows(
         query_user,
         rabbitmq_instance.id,
         "/",
-        "get queue=q count=3 ackmode=ack_requeue_false",
+        "get queue=q count=3 ackmode=ack_requeue_true",
     )["job_id"]
     key = svc.job_cache_key(job_id)
 
@@ -669,3 +669,24 @@ def test_query_log_redacts_mqtt_password(mqtt_instance, query_user, monkeypatch)
     log = QueryLog.objects.latest("id")
     assert "hunter2" not in log.sqllog
     assert "***" in log.sqllog
+
+
+# --- Codex review: read-only query jobs must not use destructive ackmodes ---
+
+
+@pytest.mark.django_db
+def test_create_rejects_destructive_ackmode(rabbitmq_instance, query_user, monkeypatch):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    for ackmode in ("ack_requeue_false", "reject_requeue_false"):
+        with pytest.raises(ValueError, match="回队模式"):
+            svc.create_mq_query_job(
+                query_user,
+                rabbitmq_instance.id,
+                "/",
+                f"get queue=q ackmode={ackmode}",
+            )
+    # requeue modes are still allowed on the query path
+    job_id = svc.create_mq_query_job(
+        query_user, rabbitmq_instance.id, "/", "get queue=q ackmode=ack_requeue_true"
+    )["job_id"]
+    assert job_id

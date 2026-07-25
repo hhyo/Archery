@@ -172,6 +172,15 @@ def create_mq_query_job(user, instance_id, db_name, sql_line) -> dict:
         if cmd.action != "get":
             raise ValueError("仅 get 支持异步任务")
         RabbitmqEngine._validate_query_command(cmd)
+        # A query (can_read) job must not remove messages from the queue. The
+        # no-requeue ackmodes acknowledge/reject destructively — a write
+        # operation — so reject them on the read-only query path; deleting
+        # messages must go through the workflow / can_write route (Codex review).
+        if cmd.args.get("ackmode", "ack_requeue_true") in (
+            "ack_requeue_false",
+            "reject_requeue_false",
+        ):
+            raise ValueError("查询任务仅支持回队模式")
         requested_count = int(cmd.args.get("count", 1))
         # Mirror RabbitmqEngine._vhost so the privilege check and the engine
         # agree on the vhost instead of checking "" but running on "/" (Codex #12).

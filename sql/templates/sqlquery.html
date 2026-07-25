@@ -433,7 +433,7 @@
                                     <i> 本子集语法：</i></br>
                                     <i> · <code>queue=…</code> 队列名（必填）</i></br>
                                     <i> · <code>count=…</code> 期望拉取条数，缺省 1，上限 100</i></br>
-                                    <i> · <code>ackmode=…</code> 可选，缺省 <code>ack_requeue_true</code>；允许 <code>ack_requeue_true</code>（nack 回队）、<code>ack_requeue_false</code>（ack 出队）、<code>reject_requeue_true</code>、<code>reject_requeue_false</code></i></br>
+                                    <i> · <code>ackmode=…</code> 可选，缺省 <code>ack_requeue_true</code>；查询页仅允许回队模式 <code>ack_requeue_true</code>（nack 回队）、<code>reject_requeue_true</code>。出队模式 <code>ack_requeue_false</code> / <code>reject_requeue_false</code> 会删除消息，属写操作，查询任务不支持，请走 SQL 上线工单。</i></br>
                                     <i> 可复制示例（一行一条）：</i>
                                     <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1</pre>

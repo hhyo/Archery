@@ -150,6 +150,8 @@ _MQ_VALUE_ERROR_CLIENT_MSG = {
     "sql_line 不能为空": "sql_line 不能为空",
     "仅 sub 支持异步任务": "仅 sub 支持异步任务",
     "仅 get 支持异步任务": "仅 get 支持异步任务",
+    "查询任务仅支持回队模式": "查询任务仅支持回队模式（ack_requeue_true / "
+    "reject_requeue_true）；出队/删除消息属于写操作，请通过 SQL 上线工单执行",
 }
 _MQ_PERMISSION_CLIENT_MSG = "无权访问该查询任务"
 _MQ_GENERIC_CLIENT_MSG = "请求无效"

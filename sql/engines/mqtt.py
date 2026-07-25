@@ -23,6 +23,9 @@ MQTT_HELP_ROWS = [
 DEFAULT_QUERY_TIMEOUT_SEC = 60
 MAX_QUERY_TIMEOUT_SEC = 3600
 MAX_SUBSCRIBE_COUNT = 100
+# Bound for wait_for_publish so a broker that stalls the QoS 1/2 handshake
+# cannot block a workflow worker forever (Codex review).
+PUBLISH_TIMEOUT_SEC = 10
 
 
 class MqttEngine(EngineBase):
@@ -232,6 +235,7 @@ class MqttEngine(EngineBase):
         loop_started = False
         messages = []
         subscribe_failure = {"reason": None}
+        disconnect_reason = {"reason": None}
         try:
             qos = self._validate_qos(qos)
 
@@ -263,9 +267,20 @@ class MqttEngine(EngineBase):
                         subscribe_failure["reason"] = str(code)
                         break
 
+            def _on_disconnect(_client, _userdata, *args):
+                # Broker dropped the connection after connect/subscribe. Capture
+                # it so the wait loop fails the result instead of idling to a
+                # timeout and reporting a bogus success (Codex review). paho v2
+                # passes (disconnect_flags, reason_code, properties); older
+                # versions pass a numeric rc — stringify whatever we get.
+                disconnect_reason["reason"] = (
+                    " ".join(str(a) for a in args) or "连接已断开"
+                )
+
             client = self.get_connection(db_name)
             client.on_message = _on_message
             client.on_subscribe = _on_subscribe
+            client.on_disconnect = _on_disconnect
             self._connect_and_wait(client)
             connected = True
             loop_started = True
@@ -281,6 +296,10 @@ class MqttEngine(EngineBase):
                 if subscribe_failure["reason"]:
                     raise ConnectionError(
                         f"MQTT 订阅被拒绝：{subscribe_failure['reason']}"
+                    )
+                if disconnect_reason["reason"]:
+                    raise ConnectionError(
+                        f"MQTT 订阅期间连接断开：{disconnect_reason['reason']}"
                     )
                 if cancel_check and cancel_check():
                     cancelled = True
@@ -419,7 +438,14 @@ class MqttEngine(EngineBase):
             qos=cmd.args.get("qos", 0),
             retain=False,
         )
-        publish_info.wait_for_publish()
+        # Bound the wait so a broker that stops completing the QoS 1/2
+        # handshake cannot block the workflow worker indefinitely (Codex review).
+        try:
+            publish_info.wait_for_publish(timeout=PUBLISH_TIMEOUT_SEC)
+        except (RuntimeError, ValueError) as exc:
+            raise ValueError(f"MQTT 发布超时或失败：{exc}") from exc
+        if not publish_info.is_published():
+            raise ValueError(f"MQTT 发布未完成，返回码：{publish_info.rc}")
 
     def execute_workflow(self, workflow):
         """执行 MQTT 上线工单。"""

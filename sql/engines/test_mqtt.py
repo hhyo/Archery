@@ -450,3 +450,47 @@ class TestMqttEngine(TestCase):
         )
 
         self.assertIn("订阅请求失败", result.error)
+
+    # --- Codex review: a stalled QoS publish must not hang the worker ---
+
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_execute_workflow_publish_timeout_records_failure(self, mock_client_cls):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        mock_client.loop_start.side_effect = lambda: mock_client.on_connect(
+            mock_client, None, None, 0, None
+        )
+        publish_info = MagicMock()
+        publish_info.wait_for_publish.side_effect = RuntimeError("timed out")
+        mock_client.publish.return_value = publish_info
+        workflow = MagicMock()
+        workflow.db_name = "default"
+        workflow.sqlworkflowcontent.sql_content = 'pub -t archery/test -m "hi" -q 1'
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.execute_workflow(workflow)
+
+        self.assertTrue(result.error)
+        self.assertEqual(result.rows[0].errlevel, 2)
+
+    # --- Codex review: a mid-subscribe disconnect must fail, not look successful ---
+
+    @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 0.01, 0.02, 60])
+    @patch("sql.engines.mqtt.mqtt.Client")
+    def test_run_subscribe_fails_on_disconnect(self, mock_client_cls, _mock_monotonic):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        mock_client.subscribe.return_value = (0, 1)
+
+        def connect_then_disconnect(*_a, **_k):
+            mock_client.on_connect(mock_client, None, None, 0, None)
+            mock_client.on_disconnect(mock_client, None, 0, 7, None)
+
+        mock_client.loop_start.side_effect = connect_then_disconnect
+        engine = MqttEngine(instance=self.ins)
+
+        result = engine.run_subscribe(
+            topic="archery/test", qos=0, max_msgs=5, timeout_sec=60
+        )
+
+        self.assertIn("断开", result.error)
