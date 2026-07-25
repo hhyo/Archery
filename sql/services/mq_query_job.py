@@ -94,7 +94,17 @@ def _resolve_timeout_sec() -> tuple[int, int]:
         max_sec = DEFAULT_TIMEOUT_MAX_SEC
     max_sec = max(1, min(max_sec, DEFAULT_TIMEOUT_MAX_SEC))
     timeout_sec = max(1, min(default, max_sec))
-    ttl = max(max_sec + 600, JOB_CACHE_TTL)
+    # The cache entry must survive not only the job's own run but also the
+    # worst-case wait in the django-q queue before a worker picks it up. With
+    # `workers` workers and a `queue_limit`-deep queue of max-duration jobs,
+    # the last queued job can wait ~ceil(queue_limit / workers) full job
+    # durations; without this budget its entry expires while still queued and
+    # the worker reports it missing while the page keeps polling (Codex review).
+    per_task = max_sec + 60
+    q_workers = max(int(settings.Q_CLUSTER.get("workers", 4) or 4), 1)
+    q_limit = max(int(settings.Q_CLUSTER.get("queue_limit", 0) or 0), 0)
+    queue_wait_budget = ((q_limit + q_workers - 1) // q_workers) * per_task
+    ttl = max(max_sec + 600, queue_wait_budget + max_sec + 600, JOB_CACHE_TTL)
     return timeout_sec, ttl
 
 
@@ -119,7 +129,10 @@ def _load_job(job_id: str) -> dict:
 def _save_job(job: dict, ttl: int | None = None) -> dict:
     if ttl is None:
         _, ttl = _resolve_timeout_sec()
-    cache.set(job_cache_key(job["job_id"]), job, ttl)
+    if not cache.set(job_cache_key(job["job_id"]), job, ttl):
+        # A rejected write (e.g. a snapshot exceeding the cache item limit)
+        # would otherwise leave polling clients with a stale state (Codex review).
+        logger.warning("MQ 任务缓存写入失败：job_id=%s", job.get("job_id"))
     return job
 
 
@@ -136,7 +149,8 @@ def _update_job(job_id: str, mutator, ttl: int | None = None) -> dict:
     if not current:
         raise KeyError(f"job not found: {job_id}")
     mutator(current)
-    cache.set(key, current, ttl)
+    if not cache.set(key, current, ttl):
+        logger.warning("MQ 任务缓存写入失败：job_id=%s", job_id)
     return current
 
 

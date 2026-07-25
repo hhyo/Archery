@@ -79,7 +79,7 @@ class TestMqttEngine(TestCase):
                 result = engine.execute_check(sql=command)
                 self.assertEqual(result.rows[0].errlevel, 2)
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_test_connection(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -97,7 +97,7 @@ class TestMqttEngine(TestCase):
         mock_client.disconnect.assert_called_once()
         self.assertFalse(result.error)
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_test_connection_reports_bad_credentials(self, mock_client_cls):
         self.ins.user = "bad-user"
         self.ins.password = "bad-password"
@@ -116,7 +116,7 @@ class TestMqttEngine(TestCase):
         self.assertEqual(result.rows, [])
 
     @patch("sql.engines.mqtt.threading.Event.wait", return_value=False)
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_test_connection_reports_connack_timeout(self, mock_client_cls, _mock_wait):
         engine = MqttEngine(instance=self.ins)
 
@@ -128,7 +128,7 @@ class TestMqttEngine(TestCase):
         mock_client_cls.return_value.disconnect.assert_called_once()
 
     @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 61])
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_subscribe_caps_message_count(self, mock_client_cls, _mock_monotonic):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -155,7 +155,7 @@ class TestMqttEngine(TestCase):
         self.assertEqual(result.error, None)
 
     @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 60])
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_subscribe_uses_defaults(self, mock_client_cls, _mock_monotonic):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -172,7 +172,7 @@ class TestMqttEngine(TestCase):
         self.assertIn("超时", result.warning)
         self.assertIn("60", result.warning)
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_subscribe_collects_messages_and_decodes_payload(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -194,7 +194,7 @@ class TestMqttEngine(TestCase):
         mock_client.loop_stop.assert_called_once()
         mock_client.disconnect.assert_called_once()
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_client_uses_version2_and_credentials(self, mock_client_cls):
         self.ins.user = "mqtt-user"
         self.ins.password = "mqtt-password"
@@ -214,7 +214,7 @@ class TestMqttEngine(TestCase):
         )
 
     @patch("sql.engines.mqtt.ssl.create_default_context")
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_tls_configures_ca_client_cert_and_verification(
         self, mock_client_cls, mock_create_context
     ):
@@ -241,7 +241,7 @@ class TestMqttEngine(TestCase):
         self.assertEqual(context.verify_mode, 0)
         mock_client_cls.return_value.tls_set_context.assert_called_once_with(context)
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_client_cert_and_key_must_be_configured_together(self, mock_client_cls):
         self.ins.is_ssl = True
         self.ins.client_cert = "CERT PEM"
@@ -253,7 +253,7 @@ class TestMqttEngine(TestCase):
         self.assertIn("必须同时配置", result.error)
         mock_client_cls.assert_not_called()
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_client_cert_and_key_are_validated_without_ssl(self, mock_client_cls):
         self.ins.is_ssl = False
         self.ins.client_cert = "CERT PEM"
@@ -265,7 +265,7 @@ class TestMqttEngine(TestCase):
         self.assertIn("必须同时配置", result.error)
         mock_client_cls.assert_not_called()
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_query_reports_bad_credentials(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -291,7 +291,7 @@ class TestMqttEngine(TestCase):
         self.assertIn(["pub -t <topic> -m <payload> [-q N]"], result.rows)
         self.assertIn(["help"], result.rows)
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_execute_workflow_publishes(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -312,7 +312,7 @@ class TestMqttEngine(TestCase):
         mock_client.disconnect.assert_called_once()
         self.assertEqual(result.rows[0].errlevel, 0)
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_execute_workflow_publishes_with_qos(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -334,7 +334,7 @@ class TestMqttEngine(TestCase):
         self.assertEqual(result.rows[0].errlevel, 0)
 
     @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 0.01, 0.02, 60])
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_run_subscribe_honors_cancel_check_and_on_message(
         self, mock_client_cls, _mock_monotonic
     ):
@@ -381,7 +381,7 @@ class TestMqttEngine(TestCase):
 
     # --- Codex #13: connection failure must record the first command ---
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_execute_workflow_connection_failure_records_first_command(
         self, mock_client_cls
     ):
@@ -411,7 +411,7 @@ class TestMqttEngine(TestCase):
     # --- Codex #15: SUBACK denial must fail fast, not wait out the timeout ---
 
     @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 0.01, 0.02, 60])
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_run_subscribe_fails_fast_when_subscription_rejected(
         self, mock_client_cls, _mock_monotonic
     ):
@@ -435,7 +435,7 @@ class TestMqttEngine(TestCase):
         self.assertIn("订阅被拒绝", result.error)
         self.assertEqual(result.rows, [])
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_run_subscribe_raises_when_subscribe_request_fails(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -453,7 +453,7 @@ class TestMqttEngine(TestCase):
 
     # --- Codex review: a stalled QoS publish must not hang the worker ---
 
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_execute_workflow_publish_timeout_records_failure(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -476,7 +476,7 @@ class TestMqttEngine(TestCase):
     # --- Codex review: a mid-subscribe disconnect must fail, not look successful ---
 
     @patch("sql.engines.mqtt.time.monotonic", side_effect=[0, 0.01, 0.02, 60])
-    @patch("sql.engines.mqtt.mqtt.Client")
+    @patch("sql.engines.mqtt._SniMqttClient")
     def test_run_subscribe_fails_on_disconnect(self, mock_client_cls, _mock_monotonic):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -494,3 +494,22 @@ class TestMqttEngine(TestCase):
         )
 
         self.assertIn("断开", result.error)
+
+    # --- Codex review: TLS SNI must use the broker host through a tunnel ---
+
+    def test_sni_client_uses_broker_host_for_tls_handshake(self):
+        from sql.engines.mqtt import _SniMqttClient
+
+        client = _SniMqttClient(
+            mqtt.CallbackAPIVersion.VERSION2, tls_server_hostname="broker.example.com"
+        )
+        client._host = "127.0.0.1"  # tunnel endpoint used for the TCP connection
+        seen = {}
+        with patch.object(
+            mqtt.Client,
+            "_ssl_wrap_socket",
+            lambda self, sock: seen.setdefault("host", self._host),
+        ):
+            client._ssl_wrap_socket(object())
+        self.assertEqual(seen["host"], "broker.example.com")
+        self.assertEqual(client._host, "127.0.0.1")  # restored after the handshake

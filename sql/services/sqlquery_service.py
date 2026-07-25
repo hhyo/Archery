@@ -11,7 +11,12 @@ from django.db import close_old_connections, connection
 from common.config import SysConfig
 from common.utils.timer import FuncTimer
 from sql.engines import get_engine
-from sql.engines.mq_cli import parse_mqtt_line, parse_rabbitmq_line, split_mq_lines
+from sql.engines.mq_cli import (
+    parse_mqtt_line,
+    parse_rabbitmq_line,
+    redact_mq_credentials,
+    split_mq_lines,
+)
 from sql.models import Instance, QueryLog
 from sql.query_privileges import query_priv_check
 from sql.utils.resource_group import user_instances
@@ -189,12 +194,24 @@ def execute_sql_query(
         else:
             effect_row = 0
 
+        # Redact any broker password the user typed into an MQ command before
+        # persisting to the audit log, mirroring the async job path. The
+        # connection credentials are ignored for execution (the instance's
+        # saved credentials are used), so they must not leak into query
+        # history / audit views (security review).
+        if getattr(instance, "db_type", None) in ("mqtt", "rabbitmq"):
+            sqllog = "\n".join(
+                redact_mq_credentials(line, instance.db_type)
+                for line in split_mq_lines(sql_content)
+            )
+        else:
+            sqllog = sql_content
         QueryLog.objects.create(
             username=user.username,
             user_display=user.display,
             db_name=db_name,
             instance_name=instance.instance_name,
-            sqllog=sql_content,
+            sqllog=sqllog,
             effect_row=effect_row,
             cost_time=query_result.query_time,
             priv_check=priv_check,
@@ -202,6 +219,14 @@ def execute_sql_query(
             masking=query_result.is_masked,
         )
     except Exception as e:
+        try:
+            if getattr(instance, "db_type", None) in ("mqtt", "rabbitmq"):
+                sql_content = "\n".join(
+                    redact_mq_credentials(line, instance.db_type)
+                    for line in split_mq_lines(sql_content)
+                )
+        except Exception:
+            pass
         logger.error(
             "查询异常报错，查询语句：%s，错误信息：%s",
             sql_content,

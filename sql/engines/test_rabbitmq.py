@@ -771,3 +771,36 @@ class TestRabbitmqEngine(TestCase):
         self.assertEqual(result.rows[0].errlevel, 2)
         self.assertEqual(result.rows[1].sql, "delete queue name=q2")
         self.assertEqual(result.rows[2].sql, "delete queue name=q3")
+
+    def test_get_connection_uses_external_credentials_for_cert_only(self):
+        """Codex: a cert-only instance (no user) must use SASL EXTERNAL, not the
+        default PLAIN guest credentials."""
+        from pika.credentials import ExternalCredentials
+
+        self.ins.user = ""
+        self.ins.password = ""
+        self.ins.client_cert = "CERT PEM"
+        self.ins.client_key = "KEY PEM"
+        engine = RabbitmqEngine(instance=self.ins)
+        with patch("sql.engines.rabbitmq.pika.BlockingConnection"), patch(
+            "sql.engines.rabbitmq.pika.ConnectionParameters"
+        ) as mock_params:
+            engine.get_connection()
+        self.assertIsInstance(
+            mock_params.call_args.kwargs["credentials"], ExternalCredentials
+        )
+
+    @patch("sql.engines.rabbitmq.pika.SSLOptions")
+    @patch("sql.engines.rabbitmq.ssl.create_default_context")
+    def test_ssl_options_uses_instance_host_for_sni(self, mock_ctx, mock_ssl_options):
+        """Codex: TLS SNI / cert hostname must be the original broker host, not
+        the SSH-tunnel-rewritten endpoint."""
+        self.ins.is_ssl = True
+        self.ins.host = "broker.example.com"
+        engine = RabbitmqEngine(instance=self.ins)
+        engine.host = "127.0.0.1"  # simulate a tunnel-rewritten host
+
+        engine._ssl_options()
+
+        args, _kwargs = mock_ssl_options.call_args
+        self.assertEqual(args[1], "broker.example.com")

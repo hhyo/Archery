@@ -690,3 +690,17 @@ def test_create_rejects_destructive_ackmode(rabbitmq_instance, query_user, monke
         query_user, rabbitmq_instance.id, "/", "get queue=q ackmode=ack_requeue_true"
     )["job_id"]
     assert job_id
+
+
+# --- Codex review: pending job cache TTL must cover django-q queue delay ---
+
+
+@pytest.mark.django_db
+def test_ttl_covers_queue_delay(setup_sys_config, settings):
+    settings.Q_CLUSTER = {**dict(settings.Q_CLUSTER), "workers": 4, "queue_limit": 50}
+    setup_sys_config.set("mq_query_timeout_default", "3600")
+    setup_sys_config.set("mq_query_timeout_max", "3600")
+    _, ttl = svc._resolve_timeout_sec()
+    # The entry must outlive ~ceil(50/4)=13 queued max-duration jobs plus the
+    # job's own run and a polling buffer, not just a single job run.
+    assert ttl >= 13 * (3600 + 60) + 3600 + 600

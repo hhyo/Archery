@@ -2,10 +2,12 @@
 import pytest
 
 from sql.engines.mq_cli import (
+    MAX_MESSAGE_BYTES,
     parse_mqtt_line,
     parse_rabbitmq_line,
     redact_mq_credentials,
     split_mq_lines,
+    truncate_payload,
 )
 
 
@@ -341,3 +343,16 @@ def test_redact_long_password_flag_and_equals_form():
 def test_redact_unknown_engine_masks_both_short_forms():
     out = redact_mq_credentials("-p a -P b sub -t t", None)
     assert "a" not in out.split() and "b" not in out.split()
+
+
+# --- Codex review: bound message payloads before caching job snapshots ---
+
+
+def test_truncate_payload_caps_large_messages():
+    assert truncate_payload("hello") == "hello"
+    big = "x" * (MAX_MESSAGE_BYTES + 100)
+    out = truncate_payload(big)
+    assert out.endswith("...[truncated]")
+    assert len(out.encode("utf-8")) <= MAX_MESSAGE_BYTES + len("...[truncated]")
+    # non-string payloads pass through untouched
+    assert truncate_payload(None) is None

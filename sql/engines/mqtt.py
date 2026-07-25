@@ -11,7 +11,7 @@ import paho.mqtt.client as mqtt
 from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
-from .mq_cli import parse_mqtt_line, split_mq_lines
+from .mq_cli import parse_mqtt_line, split_mq_lines, truncate_payload
 
 logger = logging.getLogger("default")
 
@@ -26,6 +26,33 @@ MAX_SUBSCRIBE_COUNT = 100
 # Bound for wait_for_publish so a broker that stalls the QoS 1/2 handshake
 # cannot block a workflow worker forever (Codex review).
 PUBLISH_TIMEOUT_SEC = 10
+
+
+class _SniMqttClient(mqtt.Client):
+    """mqtt.Client with an explicit TLS server hostname (SNI).
+
+    paho derives the TLS SNI / cert-hostname from the connect host. For
+    instances reached through an SSH tunnel that host is the local tunnel
+    endpoint (e.g. 127.0.0.1), not the broker hostname in the certificate, so
+    validation fails. Override only the server name used during the TLS
+    handshake; the TCP connection still goes to the (tunnel) connect host
+    (Codex review). Delegates all wrapping/verification to paho.
+    """
+
+    def __init__(self, *args, tls_server_hostname=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._archery_tls_server_hostname = tls_server_hostname
+
+    def _ssl_wrap_socket(self, tcp_sock):
+        override = getattr(self, "_archery_tls_server_hostname", None)
+        if not override or override == self._host:
+            return super()._ssl_wrap_socket(tcp_sock)
+        original = self._host
+        self._host = override
+        try:
+            return super()._ssl_wrap_socket(tcp_sock)
+        finally:
+            self._host = original
 
 
 class MqttEngine(EngineBase):
@@ -85,7 +112,9 @@ class MqttEngine(EngineBase):
 
     def get_connection(self, db_name=None):
         context = self._ssl_context()
-        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        client = _SniMqttClient(
+            mqtt.CallbackAPIVersion.VERSION2, tls_server_hostname=self.instance.host
+        )
         if self.user:
             client.username_pw_set(self.user, self.password or "")
         if context is not None:
@@ -245,6 +274,7 @@ class MqttEngine(EngineBase):
                 payload = message.payload
                 if isinstance(payload, bytes):
                     payload = payload.decode("utf-8", errors="replace")
+                payload = truncate_payload(payload)
                 row = [message.topic, payload, message.qos, message.retain]
                 messages.append(row)
                 if on_message is not None:

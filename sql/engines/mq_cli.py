@@ -181,6 +181,22 @@ def redact_mq_credentials(line: str, engine: str | None = None) -> str:
     return " ".join(shlex.quote(t) for t in redacted)
 
 
+# Bound for a single decoded message payload kept in the job cache, so one
+# large broker message cannot exceed the cache backend's item limit or exhaust
+# Redis (Codex review).
+MAX_MESSAGE_BYTES = 1024 * 1024
+
+
+def truncate_payload(value, max_bytes: int = MAX_MESSAGE_BYTES):
+    """Cap a decoded message payload at ``max_bytes`` (UTF-8)."""
+    if not isinstance(value, str):
+        return value
+    encoded = value.encode("utf-8", errors="replace")
+    if len(encoded) <= max_bytes:
+        return value
+    return encoded[:max_bytes].decode("utf-8", errors="ignore") + "...[truncated]"
+
+
 def _parse_kv(token: str) -> tuple[str, str] | None:
     if "=" not in token:
         return None

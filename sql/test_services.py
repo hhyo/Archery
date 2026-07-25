@@ -446,3 +446,67 @@ def test_execute_sql_query_success_and_querylog_created(monkeypatch):
     assert result["data"]["seconds_behind_master"] == 0
     assert created["instance_name"] == "ins"
     assert created["effect_row"] == 5
+
+
+def test_execute_sql_query_redacts_mq_password_in_querylog(monkeypatch):
+    """Security review: a broker password typed into an MQ command must not be
+    persisted to QueryLog.sqllog on the sync path (mirrors the async path)."""
+    query_result = _fake_query_result(error=None, affected_rows=1)
+    cmd = "rabbitmqadmin -p hunter2 help"
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": cmd,
+            "has_star": False,
+        },
+        filter_sql=lambda **kwargs: cmd,
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        thread_id=None,
+        seconds_behind_master=0,
+    )
+
+    created = {}
+    monkeypatch.setattr(
+        sqlquery_service,
+        "user_instances",
+        lambda user: SimpleNamespace(
+            get=lambda **kwargs: SimpleNamespace(
+                id=1, instance_name="ins", db_type="rabbitmq"
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig({"disable_star": False, "data_masking": False}),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects,
+        "create",
+        lambda **kwargs: created.update(kwargs),
+    )
+    monkeypatch.setattr(sqlquery_service.connection, "connection", None)
+
+    result = sqlquery_service.execute_sql_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance_name="ins",
+        db_name="db",
+        sql_content=cmd,
+        limit_num=10,
+    )
+
+    assert result["status"] == 0
+    assert "hunter2" not in created["sqllog"]
+    assert "***" in created["sqllog"]

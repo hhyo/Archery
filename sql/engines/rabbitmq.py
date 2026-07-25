@@ -6,11 +6,12 @@ import tempfile
 import time
 
 import pika
+from pika.credentials import ExternalCredentials
 
 from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
-from .mq_cli import parse_rabbitmq_line, split_mq_lines
+from .mq_cli import parse_rabbitmq_line, split_mq_lines, truncate_payload
 
 logger = logging.getLogger("default")
 
@@ -83,7 +84,11 @@ class RabbitmqEngine(EngineBase):
                 temp_paths.extend((cert_path, key_path))
                 context.load_cert_chain(certfile=cert_path, keyfile=key_path)
 
-            return pika.SSLOptions(context, self.host)
+            # Use the original instance host as the TLS server name (SNI /
+            # hostname validation). With an SSH tunnel, self.host is the local
+            # tunnel endpoint (e.g. 127.0.0.1) while the certificate is issued
+            # to the broker hostname (Codex review).
+            return pika.SSLOptions(context, self.instance.host)
         finally:
             for path in temp_paths:
                 try:
@@ -103,6 +108,12 @@ class RabbitmqEngine(EngineBase):
             parameters["credentials"] = pika.PlainCredentials(
                 self.user, self.password or ""
             )
+        elif self.instance.client_cert and self.instance.client_key:
+            # Certificate-only auth (SASL EXTERNAL): a client certificate is
+            # configured but no username/password. Without explicit credentials
+            # pika would fall back to PLAIN guest, which a cert-only listener
+            # rejects (Codex review).
+            parameters["credentials"] = ExternalCredentials()
         ssl_options = self._ssl_options()
         if ssl_options:
             parameters["ssl_options"] = ssl_options
@@ -259,6 +270,7 @@ class RabbitmqEngine(EngineBase):
                         if isinstance(body, bytes)
                         else body
                     )
+                    payload = truncate_payload(payload)
                     row = [queue, method.routing_key, payload]
                     rows.append(row)
                     delivery_tags.append(method.delivery_tag)
