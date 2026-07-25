@@ -303,12 +303,12 @@
                                     <i> 本子集语法：</i></br>
                                     <i> · <code>queue=…</code> 队列名（必填）</i></br>
                                     <i> · <code>count=…</code> 期望拉取条数，缺省 1，上限 100</i></br>
-                                    <i> · <code>ackmode=…</code> 可选，缺省 <code>ack_requeue_true</code>；允许 <code>ack_requeue_true</code>（nack 回队）、<code>ack_requeue_false</code>（ack 出队）、<code>reject_requeue_true</code>、<code>reject_requeue_false</code></i></br>
+                                    <i> · <code>ackmode=…</code> 可选，缺省 <code>ack_requeue_true</code>；仅允许回队模式 <code>ack_requeue_true</code>（nack 回队）、<code>reject_requeue_true</code>。出队模式 <code>ack_requeue_false</code> / <code>reject_requeue_false</code> 会删除消息，属写操作，本平台的 get（查询页与上线工单）均不支持。</i></br>
                                     <i> 可复制示例（一行一条）：</i>
                                     <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=5</pre>
-                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1 ackmode=ack_requeue_false</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1 ackmode=reject_requeue_true</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">rabbitmqadmin get queue=demo.q count=1</pre>
                                     <pre style="margin:0;white-space:pre-wrap;">rabbitmqadmin -H 127.0.0.1 -P 5672 -u guest -p guest get queue=demo.q count=1</pre>
                                     <i> 连接参数：命令中的 <code>rabbitmqadmin</code>、<code>-H/--host</code>、<code>-P/--port</code>、<code>-u/--username</code>、<code>-p/--password</code> 等连接旗标会被忽略；实际连接使用所选 Instance。</i></br>

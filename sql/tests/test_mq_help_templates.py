@@ -27,7 +27,7 @@ REQUIRED_SNIPPETS = [
     "get queue=demo.q",
     "get queue=demo.q count=1",
     "get queue=demo.q count=5",
-    "get queue=demo.q count=1 ackmode=ack_requeue_false",
+    "get queue=demo.q count=1 ackmode=reject_requeue_true",
     "rabbitmqadmin get queue=demo.q count=1",
     "rabbitmqadmin -H 127.0.0.1 -P 5672 -u guest -p guest get queue=demo.q count=1",
     "declare queue name=demo.q",
