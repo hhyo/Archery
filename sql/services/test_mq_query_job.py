@@ -704,3 +704,64 @@ def test_ttl_covers_queue_delay(setup_sys_config, settings):
     # The entry must outlive ~ceil(50/4)=13 queued max-duration jobs plus the
     # job's own run and a polling buffer, not just a single job run.
     assert ttl >= 13 * (3600 + 60) + 3600 + 600
+
+
+# --- Codex #R: privilege is re-checked when the worker starts the job ---
+
+
+@pytest.mark.django_db
+def test_run_rechecks_privilege_and_fails_if_revoked(
+    mqtt_instance, query_user, monkeypatch
+):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    job_id = svc.create_mq_query_job(
+        query_user, mqtt_instance.id, "default", "sub -t demo"
+    )["job_id"]
+    # Privilege expires / is revoked before the worker picks the job up.
+    monkeypatch.setattr(
+        "sql.services.mq_query_job.query_priv_check",
+        lambda *a, **k: {"status": 2, "msg": "你无该数据库的查询权限", "data": {}},
+    )
+    called = {"run_subscribe": False}
+
+    def fake_run_subscribe(self, *args, **kwargs):
+        called["run_subscribe"] = True
+        result = ResultSet(
+            full_sql="", column_list=["topic", "payload", "qos", "retain"]
+        )
+        result.rows = []
+        return result
+
+    monkeypatch.setattr("sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe)
+    svc.run_mq_query_job(job_id)
+
+    assert called["run_subscribe"] is False
+    assert cache.get(svc.job_cache_key(job_id))["status"] == "failed"
+
+
+# --- Codex #S/#9: a duplicate (re-queued) delivery must not execute twice ---
+
+
+@pytest.mark.django_db
+def test_run_is_idempotent_under_duplicate_delivery(
+    mqtt_instance, query_user, monkeypatch
+):
+    monkeypatch.setattr(svc, "_enqueue_mq_query_job", lambda *a, **k: None)
+    job_id = svc.create_mq_query_job(
+        query_user, mqtt_instance.id, "default", "sub -t demo"
+    )["job_id"]
+    calls = {"n": 0}
+
+    def fake_run_subscribe(self, *args, **kwargs):
+        calls["n"] += 1
+        result = ResultSet(
+            full_sql="", column_list=["topic", "payload", "qos", "retain"]
+        )
+        result.rows = []
+        result.affected_rows = 0
+        return result
+
+    monkeypatch.setattr("sql.engines.mqtt.MqttEngine.run_subscribe", fake_run_subscribe)
+    svc.run_mq_query_job(job_id)  # first delivery: acquires the lock, runs
+    svc.run_mq_query_job(job_id)  # duplicate delivery: lock held, bails out
+    assert calls["n"] == 1

@@ -258,13 +258,11 @@ Q_CLUSTER = {
     "workers": env("Q_CLUISTER_WORKERS", default=4),
     "recycle": 500,
     "timeout": env("Q_CLUISTER_TIMEOUT", default=60),
-    # django-q re-queues a task once it runs longer than `retry`; with the
-    # default retry=60 an async MQ job (per-task timeout = wait + 60, up to
-    # 3660s since mq_query_timeout_max is hard-capped at 3600) would be
-    # duplicated mid-run — racing the cache and, with ack_requeue_false,
-    # removing extra RabbitMQ messages. Keep retry above the max per-task
-    # timeout (Codex #9).
-    "retry": env("Q_CLUSTER_RETRY", default=4200),
+    # NOTE: do NOT raise the cluster `retry` to accommodate long MQ jobs — it is
+    # cluster-wide and would delay the retry of every other task (SQL workflows,
+    # notifications, …) by ~70 minutes after a worker failure. Long MQ jobs are
+    # instead protected against django-q re-queue / duplicate execution by an
+    # atomic idempotency lock in run_mq_query_job (Codex #9 / #S).
     "compress": True,
     "cpu_affinity": 1,
     "save_limit": 0,

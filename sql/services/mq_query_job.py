@@ -45,6 +45,10 @@ def cancel_cache_key(job_id: str) -> str:
     return f"{CACHE_KEY_PREFIX}{job_id}:cancel"
 
 
+def job_lock_key(job_id: str) -> str:
+    return f"{CACHE_KEY_PREFIX}{job_id}:lock"
+
+
 def _enqueue_mq_query_job(job_id: str, timeout_sec: int | None = None) -> None:
     """Enqueue job without blocking the create HTTP request.
 
@@ -285,6 +289,16 @@ def run_mq_query_job(job_id: str) -> None:
         return
 
     _, ttl = _resolve_timeout_sec()
+    # Atomic idempotency guard: ensure only one worker executes a given job.
+    # A long MQ wait (up to mq_query_timeout_max) exceeds the short cluster
+    # retry we keep for everyone else, so django-q may re-queue the task while
+    # it is still running; without this lock a second worker would run the same
+    # job and, with ack_requeue_false, ack/remove the same messages twice.
+    # cache.add is atomic — it succeeds only if the key is absent — and the
+    # lock outlives the longest possible job so it never expires mid-run
+    # (Codex #9 / #S).
+    if not cache.add(job_lock_key(job_id), True, DEFAULT_TIMEOUT_MAX_SEC + 600):
+        return
     # Honor cancellation requested before the worker started (user hit Stop or
     # left the page between create and enqueue pickup). Without this, the worker
     # would still open a broker connection / subscribe and could append rows to
@@ -312,6 +326,28 @@ def run_mq_query_job(job_id: str) -> None:
         line = job["sql_line"]
         timeout_sec = int(job.get("timeout_sec") or DEFAULT_TIMEOUT_SEC)
         limit_num = int(job.get("limit_num") or 0)
+
+        # Re-authorize at execution time. A job may wait in the queue (now for
+        # hours, given the queue-delay TTL) until after the user's privilege
+        # expires or is revoked; re-check the user, readable-instance access and
+        # query privilege immediately before touching the broker so a revoked
+        # user cannot still receive broker messages (Codex #R).
+        user = get_user_model().objects.filter(pk=job["user_id"]).first()
+        if user is None or not user.is_active:
+            raise PermissionError("用户不存在或已停用")
+        if (
+            not user_instances(user, tag_codes=["can_read"])
+            .filter(pk=instance.pk)
+            .exists()
+        ):
+            raise PermissionError("已失去该实例的查询权限")
+        recheck = query_priv_check(
+            user, instance, job.get("db_name") or "", line, limit_num
+        )
+        if recheck.get("status") != 0:
+            raise PermissionError(recheck.get("msg") or "查询权限已失效")
+        # Use the freshly-evaluated limit; it can only tighten since submission.
+        limit_num = int(recheck.get("data", {}).get("limit_num") or 0) or limit_num
 
         def cancel_check():
             return _is_cancelled(job_id)
