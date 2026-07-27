@@ -273,7 +273,6 @@ class TestParamList:
             }
         ]
 
-
     @patch("sql.instance.get_engine")
     def test_param_list_seeds_builtin_gaussdb_templates(
         self, mock_get_engine, client_with_super_user, gaussdb_instance

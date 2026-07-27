@@ -192,7 +192,9 @@ class PgSQLEngine(EngineBase):
             max_execution_time = kwargs.get("max_execution_time", 0)
             cursor = conn.cursor()
             try:
-                cursor.execute("SET statement_timeout TO %s;", (int(max_execution_time),))
+                cursor.execute(
+                    "SET statement_timeout TO %s;", (int(max_execution_time),)
+                )
             except:
                 pass
             cursor.execute("SET transaction ISOLATION LEVEL READ COMMITTED READ ONLY;")

@@ -211,7 +211,15 @@ class TestGaussDB(unittest.TestCase):
             ResultSet(
                 rows=[
                     ("id", "integer", None, 32, 0, "NO", None),
-                    ("name", "character varying", 32, None, None, "YES", "'n/a'::varchar"),
+                    (
+                        "name",
+                        "character varying",
+                        32,
+                        None,
+                        None,
+                        "YES",
+                        "'n/a'::varchar",
+                    ),
                 ]
             ),
             ResultSet(
@@ -287,11 +295,15 @@ class TestGaussDB(unittest.TestCase):
         engine = GaussDBEngine(instance=self.instance)
 
         self.assertEqual(
-            engine._build_metadata_rollback_sql("alter table t_user add column age int;"),
+            engine._build_metadata_rollback_sql(
+                "alter table t_user add column age int;"
+            ),
             "ALTER TABLE t_user DROP COLUMN IF EXISTS age;",
         )
         self.assertEqual(
-            engine._build_metadata_rollback_sql("alter table t_user rename to t_user_old;"),
+            engine._build_metadata_rollback_sql(
+                "alter table t_user rename to t_user_old;"
+            ),
             "ALTER TABLE t_user_old RENAME TO t_user;",
         )
         self.assertEqual(

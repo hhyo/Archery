@@ -192,7 +192,9 @@ class TestQueryPrivilegesApply(TestCase):
         self.assertEqual(data["status"], 1)
         self.assertEqual(data["msg"], "仅 MySQL 支持表级查询权限申请")
         self.assertFalse(
-            QueryPrivilegesApply.objects.filter(title="gaussdb table privilege").exists()
+            QueryPrivilegesApply.objects.filter(
+                title="gaussdb table privilege"
+            ).exists()
         )
 
     def test_query_priv_apply_list_with_query_review_perm(self):

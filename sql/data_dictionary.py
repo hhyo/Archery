@@ -203,7 +203,9 @@ def _dict_list(request, db_type_required, engine_method):
     db_type = request.GET.get("db_type", "")
 
     if db_type_required and db_type not in (
-        db_type_required if isinstance(db_type_required, (tuple, list)) else (db_type_required,)
+        db_type_required
+        if isinstance(db_type_required, (tuple, list))
+        else (db_type_required,)
     ):
         res = {"status": 1, "msg": "该数据库类型不支持此功能"}
         return HttpResponse(
@@ -240,7 +242,9 @@ def _dict_detail(request, db_type_required, engine_method, name_param, engine_kw
     db_type = request.GET.get("db_type", "")
 
     if db_type_required and db_type not in (
-        db_type_required if isinstance(db_type_required, (tuple, list)) else (db_type_required,)
+        db_type_required
+        if isinstance(db_type_required, (tuple, list))
+        else (db_type_required,)
     ):
         res = {"status": 1, "msg": "该数据库类型不支持此功能"}
         return HttpResponse(

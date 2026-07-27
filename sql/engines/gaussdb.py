@@ -52,10 +52,12 @@ class GaussDBEngine(PgSQLEngine):
         # Only intercept bare EXPLAIN (no ANALYZE, FORMAT, etc.) to avoid
         # breaking EXPLAIN ANALYZE / EXPLAIN (FORMAT JSON) which GaussDB handles natively.
         explain_match = re.match(
-            r'^\s*explain\s+(select|with|insert|update|delete)\b', sql, re.I
+            r"^\s*explain\s+(select|with|insert|update|delete)\b", sql, re.I
         )
         if explain_match:
-            inner_sql = re.sub(r'^\s*explain\s+', '', sql, flags=re.I).rstrip(';').strip()
+            inner_sql = (
+                re.sub(r"^\s*explain\s+", "", sql, flags=re.I).rstrip(";").strip()
+            )
             return self._explain_via_prepare(
                 db_name=db_name,
                 inner_sql=inner_sql,
@@ -72,9 +74,17 @@ class GaussDBEngine(PgSQLEngine):
             **kwargs,
         )
 
-    def _explain_via_prepare(self, db_name=None, inner_sql="", close_conn=True, schema_name=None, max_execution_time=0):
+    def _explain_via_prepare(
+        self,
+        db_name=None,
+        inner_sql="",
+        close_conn=True,
+        schema_name=None,
+        max_execution_time=0,
+    ):
         """通过 PREPARE + EXPLAIN EXECUTE 绕过 GaussDB PBE 机制获取执行计划。"""
         from sql.engines.models import ResultSet
+
         result_set = ResultSet(full_sql=f"explain {inner_sql};")
         conn = None
         try:
@@ -83,6 +93,7 @@ class GaussDBEngine(PgSQLEngine):
             cursor = conn.cursor()
             if schema_name:
                 from psycopg2 import sql as pg_sql
+
                 cursor.execute(
                     pg_sql.SQL("SET search_path TO {};").format(
                         pg_sql.Identifier(schema_name)
@@ -90,7 +101,9 @@ class GaussDBEngine(PgSQLEngine):
                 )
             if max_execution_time:
                 try:
-                    cursor.execute("SET statement_timeout TO %s;", (int(max_execution_time),))
+                    cursor.execute(
+                        "SET statement_timeout TO %s;", (int(max_execution_time),)
+                    )
                 except Exception:
                     pass
             stmt_name = f"archery_explain_{id(inner_sql) & 0xffffff}"
@@ -110,7 +123,7 @@ class GaussDBEngine(PgSQLEngine):
         except Exception as e:
             result_set.error = str(e)
         finally:
-            if 'cursor' in dir() and cursor:
+            if "cursor" in dir() and cursor:
                 try:
                     cursor.close()
                 except Exception:
@@ -317,7 +330,12 @@ class GaussDBEngine(PgSQLEngine):
         table_comment = ""
         column_comments = {}
         if comments.error:
-            logger.warning("Failed to query comments for %s.%s: %s", schema_name, clean_table_name, comments.error)
+            logger.warning(
+                "Failed to query comments for %s.%s: %s",
+                schema_name,
+                clean_table_name,
+                comments.error,
+            )
         if not comments.error:
             for table_desc, column_name, column_desc in comments.rows:
                 table_comment = table_comment or table_desc or ""
@@ -345,7 +363,12 @@ class GaussDBEngine(PgSQLEngine):
                 column_def += " NOT NULL"
             column_defs.append(column_def)
         if constraints.error:
-            logger.warning("Failed to query constraints for %s.%s: %s", schema_name, clean_table_name, constraints.error)
+            logger.warning(
+                "Failed to query constraints for %s.%s: %s",
+                schema_name,
+                clean_table_name,
+                constraints.error,
+            )
         if not constraints.error:
             for constraint_name, constraint_type, constraint_def in constraints.rows:
                 if constraint_type == "p":
@@ -609,7 +632,10 @@ class GaussDBEngine(PgSQLEngine):
             sql=sql,
             parameters={"schema_name": schema_name, "table_name": clean_table_name},
         )
-        return {"column_list": meta_data.column_list, "rows": meta_data.rows[0] if meta_data.rows else []}
+        return {
+            "column_list": meta_data.column_list,
+            "rows": meta_data.rows[0] if meta_data.rows else [],
+        }
 
     def get_table_desc_data(self, db_name, tb_name, **kwargs):
         schema_name, clean_table_name = self._split_table_name(tb_name)
@@ -718,7 +744,10 @@ class GaussDBEngine(PgSQLEngine):
             parameters={"schema_name": schema_name, "view_name": clean_view_name},
         )
         return {
-            "meta_data": {"column_list": meta.column_list, "rows": meta.rows[0] if meta.rows else ()},
+            "meta_data": {
+                "column_list": meta.column_list,
+                "rows": meta.rows[0] if meta.rows else (),
+            },
             "desc": self.get_table_desc_data(db_name=db_name, tb_name=view_name),
             "view_definition": meta.rows[0][1] if meta.rows else "",
         }
@@ -767,19 +796,26 @@ class GaussDBEngine(PgSQLEngine):
             sql=sql,
             parameters={"schema_name": schema_name, "trigger_name": clean_trigger_name},
         )
-        return {"column_list": data.column_list, "rows": data.rows[0] if data.rows else []}
+        return {
+            "column_list": data.column_list,
+            "rows": data.rows[0] if data.rows else [],
+        }
 
     def get_procedures_list(self, db_name, **kwargs):
         return self._get_routines_list(db_name=db_name, routine_type="PROCEDURE")
 
     def get_procedure_detail(self, db_name, proc_name, **kwargs):
-        return self._get_routine_detail(db_name=db_name, routine_name=proc_name, routine_type="PROCEDURE")
+        return self._get_routine_detail(
+            db_name=db_name, routine_name=proc_name, routine_type="PROCEDURE"
+        )
 
     def get_functions_list(self, db_name, **kwargs):
         return self._get_routines_list(db_name=db_name, routine_type="FUNCTION")
 
     def get_function_detail(self, db_name, func_name, **kwargs):
-        return self._get_routine_detail(db_name=db_name, routine_name=func_name, routine_type="FUNCTION")
+        return self._get_routine_detail(
+            db_name=db_name, routine_name=func_name, routine_type="FUNCTION"
+        )
 
     def get_tables_metas_data(self, db_name, **kwargs):
         tables = []
@@ -812,7 +848,10 @@ class GaussDBEngine(PgSQLEngine):
             table_metas.append(
                 {
                     "ENGINE_KEYS": engine_keys,
-                    "TABLE_INFO": {"TABLE_NAME": table_name, "TABLE_COMMENT": table_comment},
+                    "TABLE_INFO": {
+                        "TABLE_NAME": table_name,
+                        "TABLE_COMMENT": table_comment,
+                    },
                     "COLUMNS": tuple(columns),
                 }
             )
@@ -843,7 +882,9 @@ class GaussDBEngine(PgSQLEngine):
         }
         order_by = sort_map.get(sort_name, "MySQLTotalExecutionCounts")
         order = "asc" if str(sort_order).lower() == "asc" else "desc"
-        where_clause, parameters = self._slowquery_filters(start_time, end_time, db_name, search)
+        where_clause, parameters = self._slowquery_filters(
+            start_time, end_time, db_name, search
+        )
         parameters.update({"limit": limit, "offset": offset})
         sql = f"""
             with base as (
@@ -911,7 +952,9 @@ class GaussDBEngine(PgSQLEngine):
         }
         order_by = sort_map.get(sort_name, "ParseRowCounts")
         order = "asc" if str(sort_order).lower() == "asc" else "desc"
-        where_clause, parameters = self._slowquery_filters(start_time, end_time, db_name, search)
+        where_clause, parameters = self._slowquery_filters(
+            start_time, end_time, db_name, search
+        )
         if sql_id:
             where_clause += """
                 and coalesce(unique_query_id::text, md5(coalesce(query, ''))) = %(sql_id)s
@@ -1016,7 +1059,9 @@ class GaussDBEngine(PgSQLEngine):
         rollback_sql = []
         for item in list_execute_result:
             source_sql = item.get("sql", "") if isinstance(item, dict) else ""
-            rollback_sql.append([source_sql, self._build_metadata_rollback_sql(source_sql)])
+            rollback_sql.append(
+                [source_sql, self._build_metadata_rollback_sql(source_sql)]
+            )
         return rollback_sql
 
     def get_variables(self, variables=None):
@@ -1042,7 +1087,9 @@ class GaussDBEngine(PgSQLEngine):
             return result_set
         # Check if the parameter requires a restart (postmaster context)
         check_sql = "select context from pg_settings where name = %(name)s;"
-        alter_sql = f"ALTER SYSTEM SET {self._quote_identifier(variable_name)} = %(value)s;"
+        alter_sql = (
+            f"ALTER SYSTEM SET {self._quote_identifier(variable_name)} = %(value)s;"
+        )
         result_set.full_sql = alter_sql
         conn = None
         try:
@@ -1052,7 +1099,9 @@ class GaussDBEngine(PgSQLEngine):
             cursor.execute(check_sql, {"name": variable_name})
             row = cursor.fetchone()
             if row and row[0] == "postmaster":
-                result_set.error = f"参数 {variable_name} 需要重启实例才能生效，不支持在线修改"
+                result_set.error = (
+                    f"参数 {variable_name} 需要重启实例才能生效，不支持在线修改"
+                )
                 return result_set
             cursor.execute(alter_sql, {"value": variable_value})
             # Reload config so the change takes effect immediately (for non-postmaster params)
@@ -1078,7 +1127,10 @@ class GaussDBEngine(PgSQLEngine):
 
     @staticmethod
     def _format_column_type(data_type, char_length, numeric_precision, numeric_scale):
-        if data_type in ("character varying", "character", "varchar", "char") and char_length:
+        if (
+            data_type in ("character varying", "character", "varchar", "char")
+            and char_length
+        ):
             return f"{data_type}({char_length})"
         if data_type == "numeric" and numeric_precision:
             if numeric_scale is not None:
@@ -1212,7 +1264,10 @@ class GaussDBEngine(PgSQLEngine):
             },
         )
         return {
-            "meta_data": {"column_list": meta.column_list, "rows": meta.rows[0] if meta.rows else ()},
+            "meta_data": {
+                "column_list": meta.column_list,
+                "rows": meta.rows[0] if meta.rows else (),
+            },
             "create_sql": create.rows,
         }
 
@@ -1258,7 +1313,8 @@ class GaussDBEngine(PgSQLEngine):
         tokens = [
             token
             for token in statement.tokens
-            if not token.is_whitespace and token.ttype is not sqlparse.tokens.Punctuation
+            if not token.is_whitespace
+            and token.ttype is not sqlparse.tokens.Punctuation
         ]
         words = [token.value for token in tokens]
         normalized = [word.upper() for word in words]
@@ -1267,7 +1323,15 @@ class GaussDBEngine(PgSQLEngine):
             object_type = normalized[1]
             # Skip optional clauses like IF NOT EXISTS / OR REPLACE
             name_idx = 2
-            while name_idx < len(normalized) and normalized[name_idx] in ("IF", "NOT", "EXISTS", "OR", "REPLACE", "TEMP", "TEMPORARY"):
+            while name_idx < len(normalized) and normalized[name_idx] in (
+                "IF",
+                "NOT",
+                "EXISTS",
+                "OR",
+                "REPLACE",
+                "TEMP",
+                "TEMPORARY",
+            ):
                 name_idx += 1
             if name_idx >= len(words):
                 return "GaussDB 暂不支持该语句的自动回滚生成。"
@@ -1303,5 +1367,9 @@ class GaussDBEngine(PgSQLEngine):
         )
         if alter_rename_column:
             table_name, old_column, new_column = alter_rename_column.groups()
-            return f"ALTER TABLE {table_name} RENAME COLUMN {new_column} TO {old_column};"
-        return "GaussDB 暂不支持该语句的自动行级回滚；请使用数据库备份/PITR或人工补偿SQL。"
+            return (
+                f"ALTER TABLE {table_name} RENAME COLUMN {new_column} TO {old_column};"
+            )
+        return (
+            "GaussDB 暂不支持该语句的自动行级回滚；请使用数据库备份/PITR或人工补偿SQL。"
+        )
