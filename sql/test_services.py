@@ -127,6 +127,51 @@ def test_list_instance_resources_invalid_resource_type(monkeypatch):
 
 
 @pytest.mark.django_db
+def test_list_instance_resources_server_info_success(monkeypatch):
+    fake_engine = SimpleNamespace(
+        escape_string=lambda s: s,
+        server_fork_type=SimpleNamespace(value="mariadb"),
+    )
+    monkeypatch.setattr(
+        resource_service,
+        "_resolve_instance_for_user",
+        lambda *args, **kwargs: SimpleNamespace(id=1),
+    )
+    monkeypatch.setattr(resource_service, "get_engine", lambda instance: fake_engine)
+
+    result = resource_service.list_instance_resources(
+        user=SimpleNamespace(),
+        resource_type="server_info",
+        instance_name="ins",
+    )
+
+    assert result["status"] == 0
+    assert result["data"] == "mariadb"
+
+
+@pytest.mark.django_db
+def test_list_instance_resources_server_info_fallback(monkeypatch):
+    fake_engine = SimpleNamespace(
+        escape_string=lambda s: s,
+    )
+    monkeypatch.setattr(
+        resource_service,
+        "_resolve_instance_for_user",
+        lambda *args, **kwargs: SimpleNamespace(id=1),
+    )
+    monkeypatch.setattr(resource_service, "get_engine", lambda instance: fake_engine)
+
+    result = resource_service.list_instance_resources(
+        user=SimpleNamespace(),
+        resource_type="server_info",
+        instance_name="ins",
+    )
+
+    assert result["status"] == 0
+    assert result["data"] == "mysql"
+
+
+@pytest.mark.django_db
 def test_describe_table_structure_returns_not_found_when_no_permission(monkeypatch):
     monkeypatch.setattr(
         resource_service,

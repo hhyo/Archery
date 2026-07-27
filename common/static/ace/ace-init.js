@@ -5,7 +5,7 @@ ace.config.set('modePath', '/static/ace');
 ace.config.set('themePath', '/static/ace');
 
 //设置风格和语言（更多风格和语言，请到github上相应目录查看）
-var theme = "textmate";
+var theme = "github";
 var language = "text";
 editor.setTheme("ace/theme/" + theme);
 editor.session.setMode("ace/mode/" + language);
@@ -36,7 +36,7 @@ ace.require("ace/ext/language_tools");
 //绑定查询快捷键
 editor.commands.addCommand({
     name: "alter",
-    bindKey: {win: "Ctrl-Enter", mac: "Command-Enter"},
+    bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
     exec: function (editor) {
         let pathname = window.location.pathname;
         if (pathname === "/sqlquery/") {
@@ -45,25 +45,149 @@ editor.commands.addCommand({
     }
 });
 
+// 监听输入，强制在输入点号时触发自动补全
+editor.commands.on("afterExec", function (e) {
+    if (e.command.name === "insertstring" && e.args === ".") {
+        editor.execCommand("startAutocomplete");
+    }
+});
+
 //设置自动提示代码
-var setCompleteData = function (data) {
+var archeryAutoCompleteData = {
+    database: [],
+    schema: [],
+    table: [],
+    column: []
+};
+var isCompleterAdded = false;
+
+var setCompleteData = function (data, type) {
     var langTools = ace.require("ace/ext/language_tools");
-    langTools.addCompleter({
-        getCompletions: function (editor, session, pos, prefix, callback) {
-            if (prefix.length === 0) {
-                return callback(null, []);
-            } else {
-                return callback(null, data);
+
+    if (type) {
+        archeryAutoCompleteData[type] = data;
+    }
+
+    if (!isCompleterAdded) {
+        langTools.addCompleter({
+            // 增加点号作为触发字符
+            triggerCharacters: ['.'],
+            getCompletions: function (editor, session, pos, prefix, callback) {
+                // 1. 获取光标之前的文本，判断是否是点号触发或点号后继续输入
+                var line = session.getLine(pos.row);
+                var textBeforeCursor = line.slice(0, pos.column);
+                var match = textBeforeCursor.match(/([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]*)$/);
+
+                if (match) {
+                    var alias = match[1]; // 可能是别名，也可能是表名
+                    var fullSql = session.getValue();
+                    var tableName = null;
+
+                    // 2. 正则解析 SQL 获取表名与别名的映射 (from/join/逗号 表名 [as] 别名)
+                    var tableMatchRegex = /(?:from|join|,)\s+([a-zA-Z0-9_.\`]+)\s+(?:as\s+)?([a-zA-Z0-9_`]+)/gi;
+                    var m;
+                    while ((m = tableMatchRegex.exec(fullSql)) !== null) {
+                        var matchedAlias = m[2].replace(/`/g, '');
+                        if (matchedAlias === alias) {
+                            tableName = m[1].replace(/`/g, '');
+                            break;
+                        }
+                    }
+
+                    // 如果没找到对应的别名，可能用户直接使用了 "表名." 
+                    if (!tableName) {
+                        var tableDirectRegex = /(?:from|join|,)\s+([a-zA-Z0-9_.\`]+)/gi;
+                        while ((m = tableDirectRegex.exec(fullSql)) !== null) {
+                            var matchedTable = m[1].replace(/`/g, '');
+                            if (matchedTable === alias) {
+                                tableName = matchedTable;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (tableName) {
+                        // 处理可能带库名/模式名的情况 (如 db.table 取 table)
+                        if (tableName.indexOf('.') !== -1) {
+                            var parts = tableName.split('.');
+                            tableName = parts[parts.length - 1];
+                        }
+
+                        // 3. 尝试从已缓存的 column 数据中查找
+                        var cachedColumns = archeryAutoCompleteData.column.filter(function (c) {
+                            return c.meta === tableName;
+                        });
+
+                        if (cachedColumns.length > 0) {
+                            return callback(null, cachedColumns);
+                        } else {
+                            // 4. 缓存中没有，发起 Ajax 请求实时获取该表的字段
+                            var instance_name = $("#instance_name").val();
+                            var db_name = $("#db_name").val();
+                            if (!instance_name) return callback(null, []);
+
+                            $.ajax({
+                                type: "get",
+                                url: "/api/v1/sqlquery/resources/",
+                                dataType: "json",
+                                data: {
+                                    instance_name: instance_name,
+                                    db_name: db_name,
+                                    schema_name: $("#schema_name").val(),
+                                    tb_name: tableName,
+                                    resource_type: "column"
+                                },
+                                success: function (data) {
+                                    if (data.status === 0) {
+                                        var result = data.data;
+                                        var columns = [];
+                                        for (var i = 0; i < result.length; i++) {
+                                            columns.push({
+                                                name: result[i],
+                                                value: result[i],
+                                                caption: result[i],
+                                                meta: tableName,
+                                                score: 100
+                                            });
+                                        }
+                                        // 合并到缓存中，下次直接使用
+                                        archeryAutoCompleteData.column = archeryAutoCompleteData.column.concat(columns);
+                                        callback(null, columns);
+                                    } else {
+                                        callback(null, []);
+                                    }
+                                },
+                                error: function () {
+                                    callback(null, []);
+                                }
+                            });
+                            return; // 异步请求，直接返回等待 callback
+                        }
+                    }
+                }
+
+                // 默认的补全逻辑
+                if (prefix.length === 0) {
+                    return callback(null, []);
+                } else {
+                    var allData = archeryAutoCompleteData.database.concat(
+                        archeryAutoCompleteData.schema,
+                        archeryAutoCompleteData.table,
+                        archeryAutoCompleteData.column
+                    );
+                    return callback(null, allData);
+                }
             }
-        }
-    });
+        });
+        isCompleterAdded = true;
+    }
 };
 
 //增加数据库提示
 function setDbsCompleteData(result) {
-    var tables = [];
+    var dbs = [];
     for (var i = 0; i < result.length; i++) {
-        tables.push({
+        dbs.push({
             name: result[i],
             value: result[i],
             caption: result[i],
@@ -72,14 +196,14 @@ function setDbsCompleteData(result) {
         });
 
     }
-    setCompleteData(tables);
+    setCompleteData(dbs, "database");
 }
 
 //增加模式提示
 function setSchemasCompleteData(result) {
-    var tables = [];
+    var schemas = [];
     for (var i = 0; i < result.length; i++) {
-        tables.push({
+        schemas.push({
             name: result[i],
             value: result[i],
             caption: result[i],
@@ -88,7 +212,7 @@ function setSchemasCompleteData(result) {
         });
 
     }
-    setCompleteData(tables);
+    setCompleteData(schemas, "schema");
 }
 
 
@@ -109,15 +233,15 @@ function setTablesCompleteData(result) {
         });
 
     }
-    setCompleteData(tables);
+    setCompleteData(tables, "table");
 }
 
 //增加字段提示
 function setColumnsCompleteData(result) {
     if (result) {
-        var tables = [];
+        var columns = [];
         for (var i = 0; i < result.length; i++) {
-            tables.push({
+            columns.push({
                 name: result[i],
                 value: result[i],
                 caption: result[i],
@@ -126,7 +250,7 @@ function setColumnsCompleteData(result) {
             });
 
         }
-        setCompleteData(columns);
+        setCompleteData(columns, "column");
     } else {
         $.ajax({
             type: "get",
@@ -154,7 +278,7 @@ function setColumnsCompleteData(result) {
                             score: 100
                         })
                     }
-                    setCompleteData(columns);
+                    setCompleteData(columns, "column");
                 } else {
                     alert(data.msg);
                 }
@@ -165,10 +289,36 @@ function setColumnsCompleteData(result) {
 
 // 实例变更时修改language
 $("#instance_name").change(function () {
+    // 清空所有的自动补全数据
+    archeryAutoCompleteData.database = [];
+    archeryAutoCompleteData.schema = [];
+    archeryAutoCompleteData.table = [];
+    archeryAutoCompleteData.column = [];
+
     let optgroup = $('#instance_name :selected').parent().attr('label');
-    if (optgroup === "MySQL") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "mysql");
+    let dbType = optgroup ? optgroup.toLowerCase() : "";
+
+    if (["mysql", "goinception", "doris"].includes(dbType)) {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/mysql");
+
+        let instance_name = $("#instance_name").val();
+        if (dbType === "mysql" && instance_name) {
+            $.ajax({
+                type: "get",
+                url: "/api/v1/sqlquery/resources/",
+                dataType: "json",
+                data: {
+                    instance_name: instance_name,
+                    resource_type: "server_info"
+                },
+                success: function (data) {
+                    if (data.status === 0 && data.data === "mariadb" && $("#instance_name").val() === instance_name) {
+                        editor.session.setMode("ace/mode/mariadb");
+                    }
+                }
+            });
+        }
         // 提示信息
         let pathname = window.location.pathname;
         if (pathname === "/submitsql/" && !editor.getValue()) {
@@ -176,12 +326,12 @@ $("#instance_name").change(function () {
             editor.clearSelection();
             editor.focus();  //获取焦点
         }
-    } else if (optgroup === "MsSQL") {
-        editor.setTheme("ace/theme/" + "sqlserver");
-        editor.session.setMode("ace/mode/" + "sqlserver");
-    } else if (optgroup === "Redis") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "text");
+    } else if (dbType === "mssql") {
+        editor.setTheme("ace/theme/sqlserver");
+        editor.session.setMode("ace/mode/sqlserver");
+    } else if (["redis", "memcached"].includes(dbType)) {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/text");
         editor.setOptions({
             enableSnippets: false,
         });
@@ -191,20 +341,42 @@ $("#instance_name").change(function () {
             editor.setValue("请在此输入命令，多个命令请换行填写，在提交时请删除此行说明");
             editor.focus();  //获取焦点
         }
-    } else if (optgroup === "PgSQL") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "pgsql");
-    } else if (optgroup === "Oracle") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "sql");
-    } else if (optgroup === "Mongo") {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "mongodb");
+    } else if (dbType === "pgsql") {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/pgsql");
+    } else if (dbType === "oracle") {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/plsql");
+    } else if (dbType === "mongo") {
+        editor.setTheme("ace/theme/mongodb");
+        editor.session.setMode("ace/mode/mongodb");
         editor.setOptions({
             enableSnippets: false,
         });
+    } else if (["elasticsearch", "opensearch"].includes(dbType)) {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/json");
+        editor.setOptions({
+            enableSnippets: false,
+        });
+    } else if (["clickhouse", "phoenix", "odps", "tdengine", "cassandra"].includes(dbType)) {
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/sql");
     } else {
-        editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode("ace/mode/" + "mysql");
+        editor.setTheme("ace/theme/textmate");
+        editor.session.setMode("ace/mode/sql");
     }
 });
+
+// 数据库变更时，清空表和字段的自动补全数据
+$("#db_name").change(function () {
+    archeryAutoCompleteData.table = [];
+    archeryAutoCompleteData.column = [];
+});
+
+// 模式(Schema)变更时，清空表和字段的自动补全数据
+$("#schema_name").change(function () {
+    archeryAutoCompleteData.table = [];
+    archeryAutoCompleteData.column = [];
+});
+
