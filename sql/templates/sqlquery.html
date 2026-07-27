@@ -259,6 +259,207 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="mqtt_help" role="tabpanel"
+                             class="form-group tab-pane fade in table-responsive">
+                            <div class="col-sm-12">
+                                <div class="radio i-checks">
+                                    <label> <input type="radio" value="help" name="mqtt_operate"
+                                                   onclick="show_mqtt_help(this)"> <i> help </i></label>
+                                    <label> <input type="radio" value="sub" name="mqtt_operate" checked
+                                                   onclick="show_mqtt_help(this)"> <i> sub </i></label>
+                                    <label> <input type="radio" value="pub" name="mqtt_operate"
+                                                   onclick="show_mqtt_help(this)"> <i> pub </i></label>
+                                    <label> <input type="radio" value="other" name="mqtt_operate"
+                                                   onclick="show_mqtt_help(this)"> <i> 其它 </i></label>
+                                </div>
+
+                                <div class="alert alert-warning" style="margin-bottom:5px">
+                                    <i class="ace-icon fa fa-info-circle"></i>
+                                    <i> 本页为「SQL 查询」：仅 <code>sub</code>（MQTT）/ <code>get</code>（RabbitMQ）与 <code>help</code> 在此执行；<code>pub</code>、<code>publish</code>、<code>declare</code>、<code>purge</code>、<code>delete</code> 等写命令请到「SQL 上线」工单提交。</i>
+                                </div>
+
+                                <div id="mqttHelpHelp" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> MQTTX 子集 · help</i></br>
+                                    <i> 分组说明：help 返回本子集支持的简短语法行，用于快速确认可用子命令。</i></br>
+                                    <i> 本子集语法：help（无参数）。</i></br>
+                                    <i> 可复制示例：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">help</pre>
+                                </div>
+
+                                <div id="mqttHelpSub" class="alert alert-info" style="display: block">
+                                    <i class="ace-icon fa fa-hand-o-right"> MQTTX 子集 · sub</i></br>
+                                    <i> 分组说明：sub 订阅指定 topic 并异步接收消息，对齐 MQTTX 的 sub 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>-t/--topic</code> 订阅主题（必填）</i></br>
+                                    <i> · <code>-q/--qos</code> QoS 等级，默认 0</i></br>
+                                    <i> · <code>-C/--count</code> 期望接收条数，缺省 10，上限 100</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -C 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -C 10</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -q 0 -C 5</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -q 1 -C 5</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -q 2 -C 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub --topic demo/test --count 3</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">mqttx sub -t demo/test -C 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">mqttx -h 127.0.0.1 -p 1883 sub -t demo/test -C 1</pre>
+                                    <i> 连接参数：命令中可写 <code>mqttx</code>、<code>-h/--host</code>、<code>-p/--port</code>、<code>-u/--username</code>、<code>-P/--password</code> 等连接旗标，均会被忽略；实际连接使用所选 Instance。</i></br>
+                                    <i> 超时 / 异步：sub 在查询页异步执行，收满 <code>-C</code> 指定条数、超时或取消时结束。等待时长由 SysConfig 控制：<code>mq_query_timeout_default</code>（默认 60 秒）、<code>mq_query_timeout_max</code>（硬顶 3600 秒）。本子集不提供 CLI 等待超时旗标。</i></br>
+                                    <i> 完整 CLI 中常见但本子集未实现：MQTTX sub 的其余选项（如 <code>--format</code>、<code>--file</code> 等）本子集未支持。</i>
+                                </div>
+
+                                <div id="mqttHelpPub" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> MQTTX 子集 · pub</i></br>
+                                    <i> 分组说明：pub 向指定 topic 发布一条消息，同步执行，对齐 MQTTX 的 pub 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>-t/--topic</code> 发布主题（必填）</i></br>
+                                    <i> · <code>-m/--message</code> 消息内容（必填）</i></br>
+                                    <i> · <code>-q/--qos</code> QoS 等级，默认 0</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub -t demo/test -m hello</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub -t demo/test -m "hello from archery"</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub -t demo/test -m "hello" -q 0</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub -t demo/test -m "hello" -q 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub --topic demo/test --message "hello" --qos 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">mqttx pub -t demo/test -m "hello from archery"</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">mqttx -h 127.0.0.1 -p 1883 pub -t demo/test -m "hi"</pre>
+                                    <i> 连接参数：与 sub 相同，命令中的连接旗标会被忽略，实际连接使用所选 Instance。</i></br>
+                                    <i> 超时 / 异步：pub 同步执行，不适用等待超时。</i>
+                                </div>
+
+                                <div id="mqttHelpOther" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> MQTTX 子集 · 其它</i></br>
+                                    <i> 本子集仅支持 help / sub / pub；未列出的 MQTTX 子命令与选项本子集不可用。</i>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="rabbitmq_help" role="tabpanel"
+                             class="form-group tab-pane fade in table-responsive">
+                            <div class="col-sm-12">
+                                <div class="radio i-checks">
+                                    <label> <input type="radio" value="help" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> help </i></label>
+                                    <label> <input type="radio" value="list" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> list </i></label>
+                                    <label> <input type="radio" value="show" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> show </i></label>
+                                    <label> <input type="radio" value="declare" name="rabbitmq_operate" checked
+                                                   onclick="show_rabbitmq_help(this)"> <i> declare </i></label>
+                                    <label> <input type="radio" value="delete" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> delete </i></label>
+                                    <label> <input type="radio" value="publish" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> publish </i></label>
+                                    <label> <input type="radio" value="get" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> get </i></label>
+                                    <label> <input type="radio" value="purge" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> purge </i></label>
+                                    <label> <input type="radio" value="close" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> close </i></label>
+                                </div>
+
+                                <div class="alert alert-warning" style="margin-bottom:5px">
+                                    <i class="ace-icon fa fa-info-circle"></i>
+                                    <i> 本页为「SQL 查询」：仅 <code>get</code>（RabbitMQ）/ <code>sub</code>（MQTT）与 <code>help</code> 在此执行；<code>publish</code>、<code>declare</code>、<code>purge</code>、<code>delete</code> 等写命令请到「SQL 上线」工单提交。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpHelp" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · help</i></br>
+                                    <i> 分组说明：help 返回本子集支持的简短语法行，用于快速确认可用子命令。</i></br>
+                                    <i> 本子集语法：help（无参数）。</i></br>
+                                    <i> 可复制示例：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">help</pre>
+                                </div>
+
+                                <div id="rabbitmqHelpList" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · list</i></br>
+                                    <i> 分组说明：list 在完整 rabbitmqadmin 中用于列出队列等资源（需 Management API）。</i></br>
+                                    <i> 本子集未支持。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpShow" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · show</i></br>
+                                    <i> 分组说明：show 在完整 rabbitmqadmin 中用于展示节点/概览等运行信息。</i></br>
+                                    <i> 本子集未支持。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpDeclare" class="alert alert-info" style="display: block">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · declare</i></br>
+                                    <i> 分组说明：declare 声明 queue / exchange / binding，对齐 rabbitmqadmin 的 declare 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>declare queue name=…</code> 声明队列，可选 <code>durable</code> / <code>auto_delete</code>；省略时不传该参数（按 broker/客户端默认）</i></br>
+                                    <i> · <code>declare exchange name=… type=…</code> 声明交换机，必填 <code>type</code>（direct/topic/fanout/headers）；可选 <code>durable</code> / <code>auto_delete</code></i></br>
+                                    <i> · <code>declare binding source=… destination=…</code> 声明绑定，可选 <code>routing_key</code>（缺省 <code>""</code>）、<code>destination_type</code>（仅 <code>queue</code>）</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q durable=true</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q durable=false</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex type=direct</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex type=topic durable=true</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare binding source=demo.ex destination=demo.q routing_key=demo.q</pre>
+                                    <i> 连接参数：命令中可写 <code>rabbitmqadmin</code>、<code>-H/--host</code>、<code>-P/--port</code>、<code>-u/--username</code>、<code>-p/--password</code> 等连接旗标，均会被忽略；实际连接使用所选 Instance。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpDelete" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · delete</i></br>
+                                    <i> 分组说明：delete 删除 queue / exchange / binding，对齐 rabbitmqadmin 的 delete 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>delete queue name=…</code></i></br>
+                                    <i> · <code>delete exchange name=…</code></i></br>
+                                    <i> · <code>delete binding source=… destination=…</code>，可选 <code>destination_type</code>（仅 <code>queue</code>）、<code>properties_key</code>（缺省 <code>""</code>）</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">delete queue name=demo.q</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">delete exchange name=demo.ex</pre>
+                                </div>
+
+                                <div id="rabbitmqHelpPublish" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · publish</i></br>
+                                    <i> 分组说明：publish 向指定 routing_key 发布一条消息，同步执行，对齐 rabbitmqadmin 的 publish 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>routing_key=…</code> 路由键（必填）</i></br>
+                                    <i> · <code>payload=…</code> 消息内容（必填）</i></br>
+                                    <i> · <code>exchange=…</code> 交换机，缺省为 <code>""</code>（默认交换机）</i></br>
+                                    <i> 不可路由：若消息无法路由到任何队列（如 routing_key 无匹配绑定），将返回明确失败提示。</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">publish routing_key=demo.q payload=hello</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">publish routing_key=demo.q payload="hello from archery"</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">publish routing_key=demo.q payload="hello" exchange=</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">publish routing_key=demo.rk payload="hello" exchange=demo.ex</pre>
+                                    <i> 超时 / 异步：publish 同步执行，不适用等待超时。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpGet" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · get</i></br>
+                                    <i> 分组说明：get 从指定队列拉取消息，异步执行，对齐 rabbitmqadmin 的 get 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>queue=…</code> 队列名（必填）</i></br>
+                                    <i> · <code>count=…</code> 期望拉取条数，缺省 1，上限 100</i></br>
+                                    <i> · <code>ackmode=…</code> 可选，缺省 <code>ack_requeue_true</code>；仅允许回队模式 <code>ack_requeue_true</code>（nack 回队）、<code>reject_requeue_true</code>。出队模式 <code>ack_requeue_false</code> / <code>reject_requeue_false</code> 会删除消息，属写操作，本平台的 get（查询页与上线工单）均不支持。</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=5</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1 ackmode=reject_requeue_true</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">rabbitmqadmin get queue=demo.q count=1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">rabbitmqadmin -H 127.0.0.1 -P 5672 -u guest -p guest get queue=demo.q count=1</pre>
+                                    <i> 连接参数：命令中的 <code>rabbitmqadmin</code>、<code>-H/--host</code>、<code>-P/--port</code>、<code>-u/--username</code>、<code>-p/--password</code> 等连接旗标会被忽略；实际连接使用所选 Instance。</i></br>
+                                    <i> 超时 / 异步：get 在查询页异步执行，收满 <code>count</code> 指定条数、超时或取消时结束；空队列干等至超时。等待时长由 SysConfig 控制：<code>mq_query_timeout_default</code>（默认 60 秒）、<code>mq_query_timeout_max</code>（硬顶 3600 秒）。本子集不提供 CLI 等待超时旗标。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpPurge" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · purge</i></br>
+                                    <i> 分组说明：purge 清空指定队列中的消息，对齐 rabbitmqadmin 的 purge 子命令。本子集仅支持 <code>purge queue name=…</code>。</i></br>
+                                    <i> 本子集语法：<code>purge queue name=…</code>。</i></br>
+                                    <i> 可复制示例：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">purge queue name=demo.q</pre>
+                                </div>
+
+                                <div id="rabbitmqHelpClose" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · close</i></br>
+                                    <i> 分组说明：close 在完整 rabbitmqadmin 中用于关闭连接。</i></br>
+                                    <i> 本子集未支持。</i>
+                                </div>
+                            </div>
+                        </div>
                         <div id="sql_log_result" role="tabpanel"
                              class="form-group tab-pane fade in active table-responsive">
                             <table id="sql-log" data-toggle="table" class="form-group table table-condensed"
@@ -574,6 +775,93 @@
             $("#nav-tabs a:last").tab('show');
         }
 
+        // 添加MQTT帮助页
+        function mqtt_help_tab_add() {
+            mqtt_help_tab_remove();
+            var li = document.createElement("li");
+            li.setAttribute("id", "mqtt_help_tab");
+            li.setAttribute("role", "presentation");
+            var href_a = document.createElement("a");
+            href_a.setAttribute("href", "#mqtt_help");
+            href_a.setAttribute("role", "tab");
+            href_a.setAttribute("data-toggle", "tab");
+            href_a.innerHTML = "MQTT帮助文档";
+            li.appendChild(href_a);
+            $("#nav-tabs").prepend(li);
+            // 不调用 tab('show')，避免抢占异步结果 Tab（spec §5.3）
+        }
+
+        // 删除MQTT帮助页
+        function mqtt_help_tab_remove() {
+            $("#mqtt_help_tab").remove();
+        }
+
+        // MQTT帮助分组切换
+        function show_mqtt_help(o) {
+            var pages = ["mqttHelpHelp", "mqttHelpSub", "mqttHelpPub", "mqttHelpOther"];
+            pages.forEach(function (id) {
+                document.getElementById(id).style.display = "none";
+            });
+            var map = {
+                help: "mqttHelpHelp",
+                sub: "mqttHelpSub",
+                pub: "mqttHelpPub",
+                other: "mqttHelpOther"
+            };
+            var target = map[o.value];
+            if (target) {
+                document.getElementById(target).style.display = "block";
+            }
+        }
+
+        // 添加RabbitMQ帮助页
+        function rabbitmq_help_tab_add() {
+            rabbitmq_help_tab_remove();
+            var li = document.createElement("li");
+            li.setAttribute("id", "rabbitmq_help_tab");
+            li.setAttribute("role", "presentation");
+            var href_a = document.createElement("a");
+            href_a.setAttribute("href", "#rabbitmq_help");
+            href_a.setAttribute("role", "tab");
+            href_a.setAttribute("data-toggle", "tab");
+            href_a.innerHTML = "RabbitMQ帮助文档";
+            li.appendChild(href_a);
+            $("#nav-tabs").prepend(li);
+            // 不调用 tab('show')，避免抢占异步结果 Tab（spec §5.3）
+        }
+
+        // 删除RabbitMQ帮助页
+        function rabbitmq_help_tab_remove() {
+            $("#rabbitmq_help_tab").remove();
+        }
+
+        // RabbitMQ帮助分组切换
+        function show_rabbitmq_help(o) {
+            var pages = [
+                "rabbitmqHelpHelp", "rabbitmqHelpList", "rabbitmqHelpShow",
+                "rabbitmqHelpDeclare", "rabbitmqHelpDelete", "rabbitmqHelpPublish",
+                "rabbitmqHelpGet", "rabbitmqHelpPurge", "rabbitmqHelpClose"
+            ];
+            pages.forEach(function (id) {
+                document.getElementById(id).style.display = "none";
+            });
+            var map = {
+                help: "rabbitmqHelpHelp",
+                list: "rabbitmqHelpList",
+                show: "rabbitmqHelpShow",
+                declare: "rabbitmqHelpDeclare",
+                delete: "rabbitmqHelpDelete",
+                publish: "rabbitmqHelpPublish",
+                get: "rabbitmqHelpGet",
+                purge: "rabbitmqHelpPurge",
+                close: "rabbitmqHelpClose"
+            };
+            var target = map[o.value];
+            if (target) {
+                document.getElementById(target).style.display = "block";
+            }
+        }
+
         //添加执行结果页面
         function tab_add(tab_title) {
             var tab_number = sessionStorage.getItem('tab_num');
@@ -700,8 +988,12 @@
             }
         );
 
-        //先做表单验证，验证成功再成功提交查询请求
+        //先做表单验证，验证成功再成功提交查询请求；MQ 异步任务进行中时点击为停止/取消
         $("#btn-sqlquery").click(function () {
+                if ($(this).data('mq-running')) {
+                    cancelAllMqJobs();
+                    return;
+                }
                 dosqlquery();
             }
         );
@@ -726,6 +1018,10 @@
         
         //先做表单验证，验证成功再成功提交执行计划查看
         $("#btn-explain").click(function () {
+                if (isMqEngine(getSelectedDbType())) {
+                    alert('MQTT/RabbitMQ 不支持执行计划');
+                    return false;
+                }
                 if (sqlquery_validate()) {
                     const inputButton = $('input[type=button]')
                     inputButton.addClass('disabled');
@@ -1047,9 +1343,354 @@
             }
         }
 
+        // ---- MQ 异步查询（mqtt sub / rabbitmq get）：创建 job、轮询增量、离开页取消 ----
+        var mqJobs = {};
+        var mqPollTimers = {};
+
+        function getSelectedDbType() {
+            var id = ($('#instance_name :selected').parent().attr('id') || '');
+            return id.replace(/^optgroup-/, '');
+        }
+
+        function isMqEngine(dbType) {
+            return dbType === 'mqtt' || dbType === 'rabbitmq';
+        }
+
+        function splitMqEditorLines(sql) {
+            var lines = [];
+            String(sql || '').split(/\r?\n/).forEach(function (line) {
+                var s = line.trim();
+                if (!s || s.charAt(0) === '#') {
+                    return;
+                }
+                lines.push(s);
+            });
+            return lines;
+        }
+
+        // Connection-flag sets mirror sql/engines/mq_cli.py so async routing
+        // agrees with the backend parser. Codex #1: a leading connection flag
+        // (e.g. `mqttx -h 127.0.0.1 -p 1883 sub …`, the form shown in the help
+        // tabs) must not stop a sub/get from being routed to the async
+        // mq-jobs path — otherwise the page sends it to sync /execute/, which
+        // rejects it, so the documented examples fail.
+        var MQTT_CONN_FLAGS = {
+            '-h': 1, '--host': 1, '-p': 1, '--port': 1, '-u': 1, '--username': 1,
+            '-P': 1, '--password': 1, '--ca': 1, '--cert': 1, '--key': 1,
+            '--protocol': 1, '--ws-path': 1
+        };
+        var MQTT_VALUELESS_FLAGS = {'--insecure': 1, '--ws': 1};
+        var RABBITMQ_CONN_FLAGS = {
+            '-H': 1, '--host': 1, '-P': 1, '--port': 1, '-u': 1, '--username': 1,
+            '-p': 1, '--password': 1, '-V': 1, '--vhost': 1
+        };
+
+        function mqActionToken(line, dbType) {
+            var toks = String(line || '').trim().split(/\s+/);
+            if (toks.length && (toks[0] === 'mqttx' || toks[0] === 'rabbitmqadmin')) {
+                toks = toks.slice(1);
+            }
+            var valued = dbType === 'mqtt' ? MQTT_CONN_FLAGS : RABBITMQ_CONN_FLAGS;
+            var valueless = dbType === 'mqtt' ? MQTT_VALUELESS_FLAGS : {};
+            var i = 0;
+            while (i < toks.length) {
+                var tok = toks[i];
+                if (valueless[tok]) { i += 1; continue; }
+                if (valued[tok]) {
+                    i += 1;
+                    if (i < toks.length && toks[i].charAt(0) !== '-') { i += 1; }
+                    continue;
+                }
+                if (tok.indexOf('--') === 0 && tok.indexOf('=') > 0) {
+                    var name = tok.split('=')[0];
+                    if (valued[name] || valueless[name]) { i += 1; continue; }
+                }
+                break;
+            }
+            return (toks[i] || '').toLowerCase();
+        }
+
+        function isMqAsyncLine(line, dbType) {
+            var action = mqActionToken(line, dbType);
+            if (dbType === 'mqtt') {
+                return action === 'sub';
+            }
+            if (dbType === 'rabbitmq') {
+                return action === 'get';
+            }
+            return false;
+        }
+
+        function setMqStopMode(on) {
+            var $btn = $('#btn-sqlquery');
+            if (on) {
+                $btn.data('mq-running', true);
+                $btn.removeClass('disabled btn-success').addClass('btn-danger');
+                $btn.prop('disabled', false);
+                $btn.val('停止');
+            } else {
+                $btn.data('mq-running', false);
+                $btn.removeClass('btn-danger disabled').addClass('btn-success');
+                $btn.val('SQL查询');
+            }
+        }
+
+        function finishMqQuerySession() {
+            setMqStopMode(false);
+            $('input[type=button]').removeClass('disabled');
+            $('input[type=button]').prop('disabled', false);
+            optgroup_control();
+        }
+
+        function hasActiveMqJobs() {
+            return Object.keys(mqJobs).length > 0;
+        }
+
+        function display_mq_job_result(job, tabN) {
+            var n = tabN;
+            if (job.error || job.status === 'failed') {
+                $("#query_result" + n).bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    columns: [{field: 'error', title: 'Error'}],
+                    data: [{error: job.error || '任务失败'}]
+                });
+                $("#time" + n).text(job.status || 'failed');
+                $("#masking_time" + n).text('-');
+                return;
+            }
+            var columns = [];
+            var columnList = job.column_list || [];
+            $.each(columnList, function (i, column) {
+                columns.push({
+                    "field": i,
+                    "title": column,
+                    "sortable": true,
+                    formatter: function (value) {
+                        if (value instanceof Array || value instanceof Object) {
+                            return JSON.stringify(value);
+                        }
+                        return value;
+                    }
+                });
+            });
+            if (columns.length === 0) {
+                columns = [{"field": "msg", "title": "Status"}];
+                var statusMsg = job.status || 'pending';
+                if (job.warning) {
+                    statusMsg += ' | ' + job.warning;
+                }
+                $("#query_result" + n).bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    data: [{"msg": statusMsg}],
+                    columns: columns,
+                    locale: 'zh-CN'
+                });
+            } else {
+                $("#query_result" + n).bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    data: job.rows || [],
+                    columns: columns,
+                    undefinedText: '(null)',
+                    showColumns: true,
+                    striped: true,
+                    pagination: true,
+                    pageSize: 30,
+                    pageList: [30, 50, 100, 500, 1000],
+                    search: true,
+                    strictSearch: false,
+                    locale: 'zh-CN'
+                });
+            }
+            var timeLabel = job.status || '';
+            if (job.warning) {
+                timeLabel += (timeLabel ? ' | ' : '') + job.warning;
+            }
+            $("#time" + n).text(timeLabel);
+            $("#masking_time" + n).text('-');
+        }
+
+        function cancelMqJob(jobId, keepalive) {
+            var opts = {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {'X-CSRFToken': getCookie('csrftoken')}
+            };
+            if (keepalive) {
+                opts.keepalive = true;
+            }
+            try {
+                fetch('/api/v1/sqlquery/mq-jobs/' + jobId + '/cancel/', opts);
+            } catch (e) {
+                // 页面卸载时忽略
+            }
+        }
+
+        function cancelAllMqJobs() {
+            Object.keys(mqJobs).forEach(function (jobId) {
+                cancelMqJob(jobId, false);
+            });
+        }
+
+        function onPageLeaveCancelMqJobs() {
+            Object.keys(mqJobs).forEach(function (jobId) {
+                if (mqPollTimers[jobId]) {
+                    clearInterval(mqPollTimers[jobId]);
+                    delete mqPollTimers[jobId];
+                }
+                cancelMqJob(jobId, true);
+            });
+            mqJobs = {};
+            mqPollTimers = {};
+        }
+
+        window.addEventListener('pagehide', onPageLeaveCancelMqJobs);
+        window.addEventListener('beforeunload', onPageLeaveCancelMqJobs);
+
+        function startMqPoll(jobId) {
+            function tick() {
+                if (!mqJobs[jobId]) {
+                    return;
+                }
+                $.ajax({
+                    type: "get",
+                    url: "/api/v1/sqlquery/mq-jobs/" + jobId + "/",
+                    dataType: "json"
+                }).done(function (job) {
+                    if (!mqJobs[jobId]) {
+                        return;
+                    }
+                    var meta = mqJobs[jobId];
+                    var rowCount = (job.rows || []).length;
+                    var refreshStatuses = {
+                        partial: true,
+                        done: true,
+                        cancelled: true,
+                        failed: true
+                    };
+                    if (refreshStatuses[job.status]) {
+                        if (rowCount !== meta.lastRows ||
+                            job.status !== meta.lastRenderedStatus ||
+                            (job.warning || '') !== (meta.lastWarning || '')) {
+                            meta.lastRows = rowCount;
+                            meta.lastRenderedStatus = job.status;
+                            meta.lastWarning = job.warning || '';
+                            display_mq_job_result(job, meta.tabN);
+                        }
+                    }
+                    meta.status = job.status;
+                    if (job.status === 'done' || job.status === 'cancelled' || job.status === 'failed') {
+                        if (mqPollTimers[jobId]) {
+                            clearInterval(mqPollTimers[jobId]);
+                            delete mqPollTimers[jobId];
+                        }
+                        delete mqJobs[jobId];
+                        if (!hasActiveMqJobs()) {
+                            finishMqQuerySession();
+                        }
+                    }
+                }).fail(function () {
+                    // 轮询短暂失败时继续，由用户停止或离开页取消
+                });
+            }
+
+            if (mqPollTimers[jobId]) {
+                clearInterval(mqPollTimers[jobId]);
+            }
+            mqPollTimers[jobId] = setInterval(tick, 500);
+            tick();
+        }
+
+        function createAndPollMqJob(line) {
+            return $.ajax({
+                type: "post",
+                url: "/api/v1/sqlquery/mq-jobs/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val() || "",
+                    sql_line: line
+                }
+            }).done(function (data) {
+                if (!data.job_id) {
+                    alert(data.msg || '创建任务失败');
+                    return;
+                }
+                tab_add();
+                var tabN = sessionStorage.getItem('tab_num');
+                mqJobs[data.job_id] = {
+                    tabN: tabN,
+                    sql_line: line,
+                    status: 'pending',
+                    lastRows: -1,
+                    lastRenderedStatus: '',
+                    lastWarning: ''
+                };
+                setMqStopMode(true);
+                display_mq_job_result({
+                    status: 'pending',
+                    column_list: [],
+                    rows: [],
+                    sql_line: line,
+                    warning: ''
+                }, tabN);
+                startMqPoll(data.job_id);
+            }).fail(function (xhr) {
+                var msg = (xhr.responseJSON && (xhr.responseJSON.msg || xhr.responseJSON.detail)) ||
+                    xhr.statusText || '创建任务失败';
+                alert(msg);
+            });
+        }
+
+        function sqlquerySyncAjax(sqlContent) {
+            return $.ajax({
+                type: "post",
+                url: "/api/v1/sqlquery/execute/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val(),
+                    schema_name: $("#schema_name").val(),
+                    tb_name: $("#table_name").val(),
+                    sql_content: sqlContent,
+                    limit_num: $("#limit_num").val()
+                }
+            });
+        }
+
+        function runMqQueryLines(lines, dbType) {
+            var i = 0;
+
+            function next() {
+                if (i >= lines.length) {
+                    if (!hasActiveMqJobs()) {
+                        finishMqQuerySession();
+                    }
+                    return;
+                }
+                var line = lines[i++];
+                if (isMqAsyncLine(line, dbType)) {
+                    createAndPollMqJob(line).always(function () {
+                        next();
+                    });
+                } else {
+                    sqlquerySyncAjax(line).done(function (data) {
+                        var target = $("#instance_name").val() + "/" + $("#db_name").val();
+                        display_data(data, target);
+                    }).fail(function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }).always(function () {
+                        next();
+                    });
+                }
+            }
+
+            next();
+        }
+
         //将数据通过ajax提交给后端进行检查
         function sqlquery(sql) {
             var optgroup = $('#instance_name :selected').parent().attr('label');
+            var dbType = getSelectedDbType();
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             var sqlContent;
             if (select_sqlContent) {
@@ -1104,31 +1745,29 @@
                     sqlContent = 'explain ' + sqlContent
                 }
             }
-            //提交请求
-            $.ajax({
-                type: "post",
-                url: "/api/v1/sqlquery/execute/",
-                dataType: "json",
-                data: {
-                    instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val(),
-                    schema_name: $("#schema_name").val(),
-                    tb_name: $("#table_name").val(),
-                    sql_content: sqlContent,
-                    limit_num: $("#limit_num").val()
-                },
-                complete: function () {
-                    $('input[type=button]').removeClass('disabled');
-                    $('input[type=button]').prop('disabled', false);
-                    optgroup_control();
-                },
-                success: function (data) {
-                    var target = $("#instance_name").val()+"/"+$("#db_name").val();
-                    display_data(data, target);
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+
+            // MQTT / RabbitMQ：按行分流（sub/get 异步轮询，其它行同步）
+            if (isMqEngine(dbType)) {
+                var lines = splitMqEditorLines(sqlContent);
+                if (lines.length === 0) {
+                    alert('没有可执行的命令');
+                    finishMqQuerySession();
+                    return;
                 }
+                runMqQueryLines(lines, dbType);
+                return;
+            }
+
+            //提交请求（非 MQ 引擎保持原同步路径）
+            sqlquerySyncAjax(sqlContent).done(function (data) {
+                var target = $("#instance_name").val()+"/"+$("#db_name").val();
+                display_data(data, target);
+            }).fail(function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown);
+            }).always(function () {
+                $('input[type=button]').removeClass('disabled');
+                $('input[type=button]').prop('disabled', false);
+                optgroup_control();
             });
         }
 
@@ -1241,6 +1880,8 @@
             showFormat: true,
             showExplain: true,
             showRedisHelp: false,
+            showMqttHelp: false,
+            showRabbitmqHelp: false,
             showMongoHint: false,
         }
         const createDisplayConfig = function(extraArgs = null) {
@@ -1253,6 +1894,20 @@
             "Redis": createDisplayConfig({showTableName: true, showSchemaName: false,
                 showRedisHelp: true,
                 showFormat: false, showExplain: false}),
+            "MQTT": createDisplayConfig({
+                showTableName: false,
+                showSchemaName: false,
+                showMqttHelp: true,
+                showFormat: false,
+                showExplain: false
+            }),
+            "RabbitMQ": createDisplayConfig({
+                showTableName: false,
+                showSchemaName: false,
+                showRabbitmqHelp: true,
+                showFormat: false,
+                showExplain: false
+            }),
             "PgSQL": createDisplayConfig({showSchemaName: true}),
             "Mongo": createDisplayConfig({showFormat: false, showMongoHint: true}),
             "Phoenix": createDisplayConfig({showExplain: false}),
@@ -1264,7 +1919,9 @@
         function optgroup_control(change) {
             let optgroup = $('#instance_name :selected').parent().attr('label');
             let displayConfig = engineDisplayConfig[optgroup] || defaultDisplayConfig
-            if (displayConfig.showExplain) {
+            var mqEngine = isMqEngine(getSelectedDbType());
+            $("#btn-explain").toggle(!mqEngine);
+            if (!mqEngine && displayConfig.showExplain) {
                 $("#btn-explain").attr('disabled', false);
             } else {
                 $("#btn-explain").attr('disabled', true);
@@ -1289,6 +1946,16 @@
                     redis_help_tab_add();
                 } else {
                     redis_help_tab_remove();
+                }
+                if (displayConfig.showMqttHelp) {
+                    mqtt_help_tab_add();
+                } else {
+                    mqtt_help_tab_remove();
+                }
+                if (displayConfig.showRabbitmqHelp) {
+                    rabbitmq_help_tab_add();
+                } else {
+                    rabbitmq_help_tab_remove();
                 }
                 if (displayConfig.showMongoHint) {
                     $("#mongo-hint-info").show();

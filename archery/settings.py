@@ -64,6 +64,8 @@ env = environ.Env(
             "opensearch",
             "memcached",
             "tdengine",
+            "mqtt",
+            "rabbitmq",
         ],
     ),
     ENABLED_NOTIFIERS=(
@@ -117,6 +119,8 @@ AVAILABLE_ENGINES = {
     "opensearch": {"path": "sql.engines.elasticsearch:OpenSearchEngine"},
     "memcached": {"path": "sql.engines.memcached:MemcachedEngine"},
     "tdengine": {"path": "sql.engines.tdengine:TDengineEngine"},
+    "mqtt": {"path": "sql.engines.mqtt:MqttEngine"},
+    "rabbitmq": {"path": "sql.engines.rabbitmq:RabbitmqEngine"},
 }
 
 ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")
@@ -254,6 +258,11 @@ Q_CLUSTER = {
     "workers": env("Q_CLUISTER_WORKERS", default=4),
     "recycle": 500,
     "timeout": env("Q_CLUISTER_TIMEOUT", default=60),
+    # NOTE: do NOT raise the cluster `retry` to accommodate long MQ jobs — it is
+    # cluster-wide and would delay the retry of every other task (SQL workflows,
+    # notifications, …) by ~70 minutes after a worker failure. Long MQ jobs are
+    # instead protected against django-q re-queue / duplicate execution by an
+    # atomic idempotency lock in run_mq_query_job (Codex #9 / #S).
     "compress": True,
     "cpu_affinity": 1,
     "save_limit": 0,

@@ -345,6 +345,55 @@ def test_execute_sql_query_bad_query_rejected(monkeypatch):
 
 
 @pytest.mark.django_db
+def test_execute_sql_query_rejects_sync_mq_sub_get(monkeypatch):
+    """MQTT sub / RabbitMQ get must use mq-jobs, not sync execute."""
+    called = {"query": 0}
+
+    def fake_engine_for(db_type):
+        return SimpleNamespace(
+            query_check=lambda **kwargs: {
+                "bad_query": False,
+                "msg": "",
+                "filtered_sql": kwargs.get("sql", ""),
+                "has_star": False,
+            },
+            query=lambda *a, **k: called.__setitem__("query", called["query"] + 1),
+        )
+
+    for db_type, sql in (
+        ("mqtt", "sub -t demo/topic -C 1"),
+        ("rabbitmq", "get queue=q count=1"),
+    ):
+        called["query"] = 0
+        monkeypatch.setattr(
+            sqlquery_service,
+            "user_instances",
+            lambda user, db_type=db_type: SimpleNamespace(
+                get=lambda **kwargs: SimpleNamespace(
+                    id=1, instance_name="ins", db_type=db_type
+                )
+            ),
+        )
+        monkeypatch.setattr(sqlquery_service, "SysConfig", lambda: _FakeConfig())
+        monkeypatch.setattr(
+            sqlquery_service,
+            "get_engine",
+            lambda instance, db_type=db_type: fake_engine_for(db_type),
+        )
+
+        result = sqlquery_service.execute_sql_query(
+            user=SimpleNamespace(username="u", display="U"),
+            instance_name="ins",
+            db_name="db",
+            sql_content=sql,
+            limit_num=10,
+        )
+        assert result["status"] == 1, db_type
+        assert "mq-jobs" in result["msg"], db_type
+        assert called["query"] == 0, db_type
+
+
+@pytest.mark.django_db
 def test_execute_sql_query_priv_check_failed(monkeypatch):
     fake_engine = SimpleNamespace(
         query_check=lambda **kwargs: {
@@ -442,3 +491,67 @@ def test_execute_sql_query_success_and_querylog_created(monkeypatch):
     assert result["data"]["seconds_behind_master"] == 0
     assert created["instance_name"] == "ins"
     assert created["effect_row"] == 5
+
+
+def test_execute_sql_query_redacts_mq_password_in_querylog(monkeypatch):
+    """Security review: a broker password typed into an MQ command must not be
+    persisted to QueryLog.sqllog on the sync path (mirrors the async path)."""
+    query_result = _fake_query_result(error=None, affected_rows=1)
+    cmd = "rabbitmqadmin -p hunter2 help"
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": cmd,
+            "has_star": False,
+        },
+        filter_sql=lambda **kwargs: cmd,
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        thread_id=None,
+        seconds_behind_master=0,
+    )
+
+    created = {}
+    monkeypatch.setattr(
+        sqlquery_service,
+        "user_instances",
+        lambda user: SimpleNamespace(
+            get=lambda **kwargs: SimpleNamespace(
+                id=1, instance_name="ins", db_type="rabbitmq"
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig({"disable_star": False, "data_masking": False}),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects,
+        "create",
+        lambda **kwargs: created.update(kwargs),
+    )
+    monkeypatch.setattr(sqlquery_service.connection, "connection", None)
+
+    result = sqlquery_service.execute_sql_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance_name="ins",
+        db_name="db",
+        sql_content=cmd,
+        limit_num=10,
+    )
+
+    assert result["status"] == 0
+    assert "hunter2" not in created["sqllog"]
+    assert "***" in created["sqllog"]

@@ -198,7 +198,11 @@ class InstanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Instance
         fields = "__all__"
-        extra_kwargs = {"password": {"write_only": True}}
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "client_key": {"write_only": True},
+            "client_cert": {"write_only": True},
+        }
 
 
 class InstanceDetailSerializer(serializers.ModelSerializer):
@@ -207,6 +211,8 @@ class InstanceDetailSerializer(serializers.ModelSerializer):
         fields = "__all__"
         extra_kwargs = {
             "password": {"write_only": True},
+            "client_key": {"write_only": True},
+            "client_cert": {"write_only": True},
             "instance_name": {"required": False},
             "type": {"required": False},
             "db_type": {"required": False},
@@ -392,6 +398,20 @@ class SqlQueryFavoriteSerializer(serializers.Serializer):
 
     def validate_star(self, value):
         return str(value).lower() == "true"
+
+
+class MqQueryJobCreateSerializer(serializers.Serializer):
+    instance_id = serializers.IntegerField(required=False)
+    instance_name = serializers.CharField(required=False, allow_blank=True)
+    db_name = serializers.CharField(required=False, allow_blank=True, default="")
+    sql_line = serializers.CharField()
+
+    def validate(self, attrs):
+        if not attrs.get("instance_id") and not attrs.get("instance_name"):
+            raise serializers.ValidationError(
+                "instance_id 或 instance_name 必须提供一个"
+            )
+        return attrs
 
 
 class ExecuteCheckSerializer(serializers.Serializer):

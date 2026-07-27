@@ -121,6 +121,219 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-12 column" id="mq-help-panel-wrap" style="display: none">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    帮助文档
+                </div>
+                <div class="panel-body">
+                    <ul id="mq-help-nav-tabs" class="nav nav-tabs" role="tablist"></ul>
+                    <div id="mq-help-tab-content" class="tab-content">
+                        <div id="mqtt_help" role="tabpanel"
+                             class="form-group tab-pane fade in table-responsive">
+                            <div class="col-sm-12">
+                                <div class="radio i-checks">
+                                    <label> <input type="radio" value="help" name="mqtt_operate"
+                                                   onclick="show_mqtt_help(this)"> <i> help </i></label>
+                                    <label> <input type="radio" value="sub" name="mqtt_operate" checked
+                                                   onclick="show_mqtt_help(this)"> <i> sub </i></label>
+                                    <label> <input type="radio" value="pub" name="mqtt_operate"
+                                                   onclick="show_mqtt_help(this)"> <i> pub </i></label>
+                                    <label> <input type="radio" value="other" name="mqtt_operate"
+                                                   onclick="show_mqtt_help(this)"> <i> 其它 </i></label>
+                                </div>
+
+                                <div class="alert alert-warning" style="margin-bottom:5px">
+                                    <i class="ace-icon fa fa-info-circle"></i>
+                                    <i> 本页为「SQL 上线」工单：仅执行写命令（<code>pub</code>）；<code>sub</code>（MQTT）/ <code>get</code>（RabbitMQ）与查询请到「SQL 查询」页执行。</i>
+                                </div>
+
+                                <div id="mqttHelpHelp" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> MQTTX 子集 · help</i></br>
+                                    <i> 分组说明：help 返回本子集支持的简短语法行，用于快速确认可用子命令。</i></br>
+                                    <i> 本子集语法：help（无参数）。</i></br>
+                                    <i> 可复制示例：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">help</pre>
+                                </div>
+
+                                <div id="mqttHelpSub" class="alert alert-info" style="display: block">
+                                    <i class="ace-icon fa fa-hand-o-right"> MQTTX 子集 · sub</i></br>
+                                    <i> 分组说明：sub 订阅指定 topic 并异步接收消息，对齐 MQTTX 的 sub 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>-t/--topic</code> 订阅主题（必填）</i></br>
+                                    <i> · <code>-q/--qos</code> QoS 等级，默认 0</i></br>
+                                    <i> · <code>-C/--count</code> 期望接收条数，缺省 10，上限 100</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -C 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -C 10</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -q 0 -C 5</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -q 1 -C 5</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub -t demo/test -q 2 -C 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">sub --topic demo/test --count 3</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">mqttx sub -t demo/test -C 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">mqttx -h 127.0.0.1 -p 1883 sub -t demo/test -C 1</pre>
+                                    <i> 连接参数：命令中可写 <code>mqttx</code>、<code>-h/--host</code>、<code>-p/--port</code>、<code>-u/--username</code>、<code>-P/--password</code> 等连接旗标，均会被忽略；实际连接使用所选 Instance。</i></br>
+                                    <i> 超时 / 异步：sub 在查询页异步执行，收满 <code>-C</code> 指定条数、超时或取消时结束。等待时长由 SysConfig 控制：<code>mq_query_timeout_default</code>（默认 60 秒）、<code>mq_query_timeout_max</code>（硬顶 3600 秒）。本子集不提供 CLI 等待超时旗标。</i></br>
+                                    <i> 完整 CLI 中常见但本子集未实现：MQTTX sub 的其余选项（如 <code>--format</code>、<code>--file</code> 等）本子集未支持。</i>
+                                </div>
+
+                                <div id="mqttHelpPub" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> MQTTX 子集 · pub</i></br>
+                                    <i> 分组说明：pub 向指定 topic 发布一条消息，同步执行，对齐 MQTTX 的 pub 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>-t/--topic</code> 发布主题（必填）</i></br>
+                                    <i> · <code>-m/--message</code> 消息内容（必填）</i></br>
+                                    <i> · <code>-q/--qos</code> QoS 等级，默认 0</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub -t demo/test -m hello</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub -t demo/test -m "hello from archery"</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub -t demo/test -m "hello" -q 0</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub -t demo/test -m "hello" -q 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">pub --topic demo/test --message "hello" --qos 1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">mqttx pub -t demo/test -m "hello from archery"</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">mqttx -h 127.0.0.1 -p 1883 pub -t demo/test -m "hi"</pre>
+                                    <i> 连接参数：与 sub 相同，命令中的连接旗标会被忽略，实际连接使用所选 Instance。</i></br>
+                                    <i> 超时 / 异步：pub 同步执行，不适用等待超时。</i>
+                                </div>
+
+                                <div id="mqttHelpOther" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> MQTTX 子集 · 其它</i></br>
+                                    <i> 本子集仅支持 help / sub / pub；未列出的 MQTTX 子命令与选项本子集不可用。</i>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="rabbitmq_help" role="tabpanel"
+                             class="form-group tab-pane fade in table-responsive">
+                            <div class="col-sm-12">
+                                <div class="radio i-checks">
+                                    <label> <input type="radio" value="help" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> help </i></label>
+                                    <label> <input type="radio" value="list" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> list </i></label>
+                                    <label> <input type="radio" value="show" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> show </i></label>
+                                    <label> <input type="radio" value="declare" name="rabbitmq_operate" checked
+                                                   onclick="show_rabbitmq_help(this)"> <i> declare </i></label>
+                                    <label> <input type="radio" value="delete" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> delete </i></label>
+                                    <label> <input type="radio" value="publish" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> publish </i></label>
+                                    <label> <input type="radio" value="get" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> get </i></label>
+                                    <label> <input type="radio" value="purge" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> purge </i></label>
+                                    <label> <input type="radio" value="close" name="rabbitmq_operate"
+                                                   onclick="show_rabbitmq_help(this)"> <i> close </i></label>
+                                </div>
+
+                                <div class="alert alert-warning" style="margin-bottom:5px">
+                                    <i class="ace-icon fa fa-info-circle"></i>
+                                    <i> 本页为「SQL 上线」工单：仅执行写命令（<code>publish</code>、<code>declare</code>、<code>purge</code>、<code>delete</code>）；<code>get</code>（RabbitMQ）/ <code>sub</code>（MQTT）查询请到「SQL 查询」页执行。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpHelp" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · help</i></br>
+                                    <i> 分组说明：help 返回本子集支持的简短语法行，用于快速确认可用子命令。</i></br>
+                                    <i> 本子集语法：help（无参数）。</i></br>
+                                    <i> 可复制示例：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">help</pre>
+                                </div>
+
+                                <div id="rabbitmqHelpList" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · list</i></br>
+                                    <i> 分组说明：list 在完整 rabbitmqadmin 中用于列出队列等资源（需 Management API）。</i></br>
+                                    <i> 本子集未支持。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpShow" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · show</i></br>
+                                    <i> 分组说明：show 在完整 rabbitmqadmin 中用于展示节点/概览等运行信息。</i></br>
+                                    <i> 本子集未支持。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpDeclare" class="alert alert-info" style="display: block">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · declare</i></br>
+                                    <i> 分组说明：declare 声明 queue / exchange / binding，对齐 rabbitmqadmin 的 declare 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>declare queue name=…</code> 声明队列，可选 <code>durable</code> / <code>auto_delete</code>；省略时不传该参数（按 broker/客户端默认）</i></br>
+                                    <i> · <code>declare exchange name=… type=…</code> 声明交换机，必填 <code>type</code>（direct/topic/fanout/headers）；可选 <code>durable</code> / <code>auto_delete</code></i></br>
+                                    <i> · <code>declare binding source=… destination=…</code> 声明绑定，可选 <code>routing_key</code>（缺省 <code>""</code>）、<code>destination_type</code>（仅 <code>queue</code>）</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q durable=true</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare queue name=demo.q durable=false</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex type=direct</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare exchange name=demo.ex type=topic durable=true</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">declare binding source=demo.ex destination=demo.q routing_key=demo.q</pre>
+                                    <i> 连接参数：命令中可写 <code>rabbitmqadmin</code>、<code>-H/--host</code>、<code>-P/--port</code>、<code>-u/--username</code>、<code>-p/--password</code> 等连接旗标，均会被忽略；实际连接使用所选 Instance。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpDelete" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · delete</i></br>
+                                    <i> 分组说明：delete 删除 queue / exchange / binding，对齐 rabbitmqadmin 的 delete 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>delete queue name=…</code></i></br>
+                                    <i> · <code>delete exchange name=…</code></i></br>
+                                    <i> · <code>delete binding source=… destination=…</code>，可选 <code>destination_type</code>（仅 <code>queue</code>）、<code>properties_key</code>（缺省 <code>""</code>）</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">delete queue name=demo.q</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">delete exchange name=demo.ex</pre>
+                                </div>
+
+                                <div id="rabbitmqHelpPublish" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · publish</i></br>
+                                    <i> 分组说明：publish 向指定 routing_key 发布一条消息，同步执行，对齐 rabbitmqadmin 的 publish 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>routing_key=…</code> 路由键（必填）</i></br>
+                                    <i> · <code>payload=…</code> 消息内容（必填）</i></br>
+                                    <i> · <code>exchange=…</code> 交换机，缺省为 <code>""</code>（默认交换机）</i></br>
+                                    <i> 不可路由：若消息无法路由到任何队列（如 routing_key 无匹配绑定），将返回明确失败提示。</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">publish routing_key=demo.q payload=hello</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">publish routing_key=demo.q payload="hello from archery"</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">publish routing_key=demo.q payload="hello" exchange=</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">publish routing_key=demo.rk payload="hello" exchange=demo.ex</pre>
+                                    <i> 超时 / 异步：publish 同步执行，不适用等待超时。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpGet" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · get</i></br>
+                                    <i> 分组说明：get 从指定队列拉取消息，异步执行，对齐 rabbitmqadmin 的 get 子命令。</i></br>
+                                    <i> 本子集语法：</i></br>
+                                    <i> · <code>queue=…</code> 队列名（必填）</i></br>
+                                    <i> · <code>count=…</code> 期望拉取条数，缺省 1，上限 100</i></br>
+                                    <i> · <code>ackmode=…</code> 可选，缺省 <code>ack_requeue_true</code>；仅允许回队模式 <code>ack_requeue_true</code>（nack 回队）、<code>reject_requeue_true</code>。出队模式 <code>ack_requeue_false</code> / <code>reject_requeue_false</code> 会删除消息，属写操作，本平台的 get（查询页与上线工单）均不支持。</i></br>
+                                    <i> 可复制示例（一行一条）：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=5</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">get queue=demo.q count=1 ackmode=reject_requeue_true</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">rabbitmqadmin get queue=demo.q count=1</pre>
+                                    <pre style="margin:0;white-space:pre-wrap;">rabbitmqadmin -H 127.0.0.1 -P 5672 -u guest -p guest get queue=demo.q count=1</pre>
+                                    <i> 连接参数：命令中的 <code>rabbitmqadmin</code>、<code>-H/--host</code>、<code>-P/--port</code>、<code>-u/--username</code>、<code>-p/--password</code> 等连接旗标会被忽略；实际连接使用所选 Instance。</i></br>
+                                    <i> 超时 / 异步：get 在查询页异步执行，收满 <code>count</code> 指定条数、超时或取消时结束；空队列干等至超时。等待时长由 SysConfig 控制：<code>mq_query_timeout_default</code>（默认 60 秒）、<code>mq_query_timeout_max</code>（硬顶 3600 秒）。本子集不提供 CLI 等待超时旗标。</i>
+                                </div>
+
+                                <div id="rabbitmqHelpPurge" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · purge</i></br>
+                                    <i> 分组说明：purge 清空指定队列中的消息，对齐 rabbitmqadmin 的 purge 子命令。本子集仅支持 <code>purge queue name=…</code>。</i></br>
+                                    <i> 本子集语法：<code>purge queue name=…</code>。</i></br>
+                                    <i> 可复制示例：</i>
+                                    <pre style="margin:0;white-space:pre-wrap;">purge queue name=demo.q</pre>
+                                </div>
+
+                                <div id="rabbitmqHelpClose" class="alert alert-info" style="display: none">
+                                    <i class="ace-icon fa fa-hand-o-right"> rabbitmqadmin 子集 · close</i></br>
+                                    <i> 分组说明：close 在完整 rabbitmqadmin 中用于关闭连接。</i></br>
+                                    <i> 本子集未支持。</i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="col-md-12 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -301,6 +514,97 @@
     </script>
     <!--ace -->
     <script>
+        // 添加MQTT帮助页
+        function mqtt_help_tab_add() {
+            mqtt_help_tab_remove();
+            var li = document.createElement("li");
+            li.setAttribute("id", "mqtt_help_tab");
+            li.setAttribute("role", "presentation");
+            var href_a = document.createElement("a");
+            href_a.setAttribute("href", "#mqtt_help");
+            href_a.setAttribute("role", "tab");
+            href_a.setAttribute("data-toggle", "tab");
+            href_a.innerHTML = "MQTT帮助文档";
+            li.appendChild(href_a);
+            $("#mq-help-nav-tabs").prepend(li);
+            $("#mq-help-panel-wrap").show();
+            // 上线页无异步结果 Tab 冲突，可直接激活帮助 Tab（spec §5.3）
+            $(href_a).tab('show');
+        }
+
+        // 删除MQTT帮助页
+        function mqtt_help_tab_remove() {
+            $("#mqtt_help_tab").remove();
+        }
+
+        // MQTT帮助分组切换
+        function show_mqtt_help(o) {
+            var pages = ["mqttHelpHelp", "mqttHelpSub", "mqttHelpPub", "mqttHelpOther"];
+            pages.forEach(function (id) {
+                document.getElementById(id).style.display = "none";
+            });
+            var map = {
+                help: "mqttHelpHelp",
+                sub: "mqttHelpSub",
+                pub: "mqttHelpPub",
+                other: "mqttHelpOther"
+            };
+            var target = map[o.value];
+            if (target) {
+                document.getElementById(target).style.display = "block";
+            }
+        }
+
+        // 添加RabbitMQ帮助页
+        function rabbitmq_help_tab_add() {
+            rabbitmq_help_tab_remove();
+            var li = document.createElement("li");
+            li.setAttribute("id", "rabbitmq_help_tab");
+            li.setAttribute("role", "presentation");
+            var href_a = document.createElement("a");
+            href_a.setAttribute("href", "#rabbitmq_help");
+            href_a.setAttribute("role", "tab");
+            href_a.setAttribute("data-toggle", "tab");
+            href_a.innerHTML = "RabbitMQ帮助文档";
+            li.appendChild(href_a);
+            $("#mq-help-nav-tabs").prepend(li);
+            $("#mq-help-panel-wrap").show();
+            // 上线页无异步结果 Tab 冲突，可直接激活帮助 Tab（spec §5.3）
+            $(href_a).tab('show');
+        }
+
+        // 删除RabbitMQ帮助页
+        function rabbitmq_help_tab_remove() {
+            $("#rabbitmq_help_tab").remove();
+        }
+
+        // RabbitMQ帮助分组切换
+        function show_rabbitmq_help(o) {
+            var pages = [
+                "rabbitmqHelpHelp", "rabbitmqHelpList", "rabbitmqHelpShow",
+                "rabbitmqHelpDeclare", "rabbitmqHelpDelete", "rabbitmqHelpPublish",
+                "rabbitmqHelpGet", "rabbitmqHelpPurge", "rabbitmqHelpClose"
+            ];
+            pages.forEach(function (id) {
+                document.getElementById(id).style.display = "none";
+            });
+            var map = {
+                help: "rabbitmqHelpHelp",
+                list: "rabbitmqHelpList",
+                show: "rabbitmqHelpShow",
+                declare: "rabbitmqHelpDeclare",
+                delete: "rabbitmqHelpDelete",
+                publish: "rabbitmqHelpPublish",
+                get: "rabbitmqHelpGet",
+                purge: "rabbitmqHelpPurge",
+                close: "rabbitmqHelpClose"
+            };
+            var target = map[o.value];
+            if (target) {
+                document.getElementById(target).style.display = "block";
+            }
+        }
+
         // 实例变更获取数据库补全提示
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
@@ -314,6 +618,20 @@
                 $("#mongo-hint-info").show();
             } else {
                 $("#mongo-hint-info").hide();
+            }
+            // MQTT / RabbitMQ 帮助文档 Tab
+            if (optgroup === "MQTT") {
+                mqtt_help_tab_add();
+            } else {
+                mqtt_help_tab_remove();
+            }
+            if (optgroup === "RabbitMQ") {
+                rabbitmq_help_tab_add();
+            } else {
+                rabbitmq_help_tab_remove();
+            }
+            if (optgroup !== "MQTT" && optgroup !== "RabbitMQ") {
+                $("#mq-help-panel-wrap").hide();
             }
             //将数据通过ajax提交给获取db_name
             $.ajax({

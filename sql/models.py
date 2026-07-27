@@ -156,6 +156,8 @@ DB_TYPE_CHOICES = (
     ("opensearch", "OpenSearch"),
     ("memcached", "Memcached"),
     ("tdengine", "TDengine"),
+    ("mqtt", "MQTT"),
+    ("rabbitmq", "RabbitMQ"),
 )
 
 
@@ -226,6 +228,15 @@ class Instance(models.Model, PasswordMixin):
     )
     is_ssl = models.BooleanField("是否启用SSL", default=False)
     verify_ssl = models.BooleanField("是否验证服务端SSL证书", default=True)
+    client_cert = fields.EncryptedTextField(
+        verbose_name="客户端证书", blank=True, null=True, default=""
+    )
+    client_key = fields.EncryptedTextField(
+        verbose_name="客户端密钥", blank=True, null=True, default=""
+    )
+    ca_cert = fields.EncryptedTextField(
+        verbose_name="CA证书", blank=True, null=True, default=""
+    )
     db_name = models.CharField("数据库", max_length=64, default="", blank=True)
     show_db_name_regex = models.CharField(
         "显示的数据库列表正则",

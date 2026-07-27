@@ -40,6 +40,8 @@
 | OpenSearch | √ | ×  | √  | × | × | × | × | × | × | × |
 | Memcached  | √ | ×  | √  | × | × | × | × | × | × | × |
 | TDengine   | √ | √  | √  | × | × | × | √ | × | × | × |
+| MQTT       | √ | ×  | √  | × | × | × | × | × | × | × |
+| RabbitMQ   | √ | ×  | √  | × | × | × | × | × | × | × |
 
 
 
@@ -98,6 +100,8 @@ pytest -q sql common sql_api
 - ODPS Connector [pyodps](https://github.com/aliyun/aliyun-odps-python-sdk)
 - ClickHouse Connector [clickhouse-driver](https://github.com/mymarilyn/clickhouse-driver)
 - TDengine Connector [tdengine-driver](https://github.com/taosdata/taos-connector-python)
+- MQTT Connector [paho-mqtt](https://github.com/eclipse/paho.mqtt.python)
+- RabbitMQ Connector [pika](https://github.com/pika/pika)
 - SQL解析/切分/类型判断 [sqlparse](https://github.com/andialbrecht/sqlparse)
 - MySQL Binlog解析/回滚 [python-mysql-replication](https://github.com/noplay/python-mysql-replication)
 - LDAP [django-auth-ldap](https://github.com/django-auth-ldap/django-auth-ldap)

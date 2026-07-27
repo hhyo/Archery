@@ -1,9 +1,15 @@
 import logging
 
 from drf_spectacular.utils import extend_schema
-from rest_framework import permissions, serializers, views
+from rest_framework import permissions, status, views
 from rest_framework.response import Response
 
+from sql.models import Instance
+from sql.services.mq_query_job import (
+    cancel_mq_query_job,
+    create_mq_query_job,
+    get_mq_query_job,
+)
 from sql.services.querylog_service import list_query_logs, update_favorite
 from sql.services.resource_service import (
     describe_table_structure,
@@ -11,9 +17,11 @@ from sql.services.resource_service import (
     list_user_accessible_instances,
 )
 from sql.services.sqlquery_service import execute_sql_query
+from sql.utils.resource_group import user_instances
 
 from .renderers import SimpleJSONRenderer
 from .serializers import (
+    MqQueryJobCreateSerializer,
     SqlQueryExecuteSerializer,
     SqlQueryFavoriteSerializer,
     SqlQueryDescribeTableSerializer,
@@ -122,3 +130,123 @@ class SQLQueryFavoritesView(views.APIView):
         serializer.is_valid(raise_exception=True)
         data = update_favorite(user=request.user, **serializer.validated_data)
         return Response(data)
+
+
+def _resolve_mq_instance_id(user, instance_id=None, instance_name=None):
+    if instance_id:
+        return instance_id
+    return user_instances(user).get(instance_name=instance_name).id
+
+
+def _public_mq_job_payload(job: dict) -> dict:
+    payload = dict(job)
+    payload.pop("cancel", None)
+    return payload
+
+
+# Client-facing literals only — never return str(exc) (CodeQL stack-trace exposure).
+_MQ_VALUE_ERROR_CLIENT_MSG = {
+    "仅 MQTT/RabbitMQ 支持异步查询任务": "仅 MQTT/RabbitMQ 支持异步查询任务",
+    "sql_line 不能为空": "sql_line 不能为空",
+    "仅 sub 支持异步任务": "仅 sub 支持异步任务",
+    "仅 get 支持异步任务": "仅 get 支持异步任务",
+    "查询任务仅支持回队模式": "查询任务仅支持回队模式（ack_requeue_true / "
+    "reject_requeue_true）；出队/删除消息属于写操作，请通过 SQL 上线工单执行",
+}
+_MQ_PERMISSION_CLIENT_MSG = "无权访问该查询任务"
+_MQ_GENERIC_CLIENT_MSG = "请求无效"
+
+
+def _mq_value_error_client_msg(exc: ValueError) -> str:
+    """Map known ValueError args to fixed client strings; never echo str(exc)."""
+    arg0 = exc.args[0] if exc.args else None
+    if isinstance(arg0, str) and arg0 in _MQ_VALUE_ERROR_CLIENT_MSG:
+        return _MQ_VALUE_ERROR_CLIENT_MSG[arg0]
+    logger.warning("mq job api error: %s", exc, exc_info=True)
+    return _MQ_GENERIC_CLIENT_MSG
+
+
+def _deny_without_query_submit(user):
+    if user.is_superuser or user.has_perm("sql.query_submit"):
+        return None
+    return Response({"msg": "无执行查询权限"}, status=status.HTTP_403_FORBIDDEN)
+
+
+class SQLQueryMqJobListCreateView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(summary="创建 MQ 异步查询任务")
+    def post(self, request):
+        denied = _deny_without_query_submit(request.user)
+        if denied is not None:
+            return denied
+        serializer = MqQueryJobCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        try:
+            instance_id = _resolve_mq_instance_id(
+                user=request.user,
+                instance_id=data.get("instance_id"),
+                instance_name=data.get("instance_name"),
+            )
+            result = create_mq_query_job(
+                user=request.user,
+                instance_id=instance_id,
+                db_name=data.get("db_name") or "",
+                sql_line=data["sql_line"],
+            )
+        except Instance.DoesNotExist:
+            return Response(
+                {"msg": "实例不存在或无权限"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        except ValueError as exc:
+            return Response(
+                {"msg": _mq_value_error_client_msg(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except PermissionError:
+            return Response(
+                {"msg": _MQ_PERMISSION_CLIENT_MSG},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return Response(result)
+
+
+class SQLQueryMqJobDetailView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(summary="查询 MQ 异步任务状态")
+    def get(self, request, job_id):
+        denied = _deny_without_query_submit(request.user)
+        if denied is not None:
+            return denied
+        try:
+            job = get_mq_query_job(user=request.user, job_id=job_id)
+        except KeyError:
+            return Response({"msg": "任务不存在"}, status=status.HTTP_404_NOT_FOUND)
+        except PermissionError:
+            return Response(
+                {"msg": _MQ_PERMISSION_CLIENT_MSG},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return Response(_public_mq_job_payload(job))
+
+
+class SQLQueryMqJobCancelView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(summary="取消 MQ 异步查询任务")
+    def post(self, request, job_id):
+        denied = _deny_without_query_submit(request.user)
+        if denied is not None:
+            return denied
+        try:
+            job = cancel_mq_query_job(user=request.user, job_id=job_id)
+        except KeyError:
+            return Response({"msg": "任务不存在"}, status=status.HTTP_404_NOT_FOUND)
+        except PermissionError:
+            return Response(
+                {"msg": _MQ_PERMISSION_CLIENT_MSG},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return Response({"status": job.get("status")})
