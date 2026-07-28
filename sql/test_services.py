@@ -442,3 +442,566 @@ def test_execute_sql_query_success_and_querylog_created(monkeypatch):
     assert result["data"]["seconds_behind_master"] == 0
     assert created["instance_name"] == "ins"
     assert created["effect_row"] == 5
+
+
+@pytest.mark.django_db
+def test_execute_sql_query_none_params(monkeypatch):
+    monkeypatch.setattr(
+        sqlquery_service,
+        "user_instances",
+        lambda user: SimpleNamespace(
+            get=lambda **kwargs: SimpleNamespace(
+                id=1, instance_name="ins", db_type="MySQL"
+            )
+        ),
+    )
+    result = sqlquery_service.execute_sql_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance_name="ins",
+        db_name=None,
+        sql_content="select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 1
+    assert "页面提交参数可能为空" in result["msg"]
+
+
+@pytest.mark.django_db
+def test_execute_sql_query_is_multi_redis(monkeypatch):
+    monkeypatch.setattr(
+        sqlquery_service,
+        "user_instances",
+        lambda user: SimpleNamespace(
+            get=lambda **kwargs: SimpleNamespace(
+                id=1, instance_name="ins", db_type="Redis"
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "_execute_single_query",
+        lambda **kwargs: {"status": 0, "msg": "ok", "data": {}},
+    )
+
+    result = sqlquery_service.execute_sql_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance_name="ins",
+        db_name="db",
+        sql_content="set a 1\nget a",
+        limit_num=10,
+        is_multi=True,
+    )
+    assert result["status"] == 0
+    assert len(result["data"]) == 2
+
+
+@pytest.mark.django_db
+def test_execute_sql_query_is_multi_sqlparse(monkeypatch):
+    monkeypatch.setattr(
+        sqlquery_service,
+        "user_instances",
+        lambda user: SimpleNamespace(
+            get=lambda **kwargs: SimpleNamespace(
+                id=1, instance_name="ins", db_type="MySQL"
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "_execute_single_query",
+        lambda **kwargs: {"status": 0, "msg": "ok", "data": {}},
+    )
+
+    result = sqlquery_service.execute_sql_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance_name="ins",
+        db_name="db",
+        sql_content="select 1; select 2;",
+        limit_num=10,
+        is_multi=True,
+    )
+    assert result["status"] == 0
+    assert len(result["data"]) == 2
+
+
+@pytest.mark.django_db
+def test_execute_sql_query_is_multi_empty(monkeypatch):
+    monkeypatch.setattr(
+        sqlquery_service,
+        "user_instances",
+        lambda user: SimpleNamespace(
+            get=lambda **kwargs: SimpleNamespace(
+                id=1, instance_name="ins", db_type="MySQL"
+            )
+        ),
+    )
+
+    result = sqlquery_service.execute_sql_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance_name="ins",
+        db_name="db",
+        sql_content="   ",
+        limit_num=10,
+        is_multi=True,
+    )
+    assert result["status"] == 1
+    assert "SQL内容不能为空" in result["msg"]
+
+
+@pytest.mark.django_db
+def test_execute_single_query_has_star_disabled(monkeypatch):
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "has star",
+            "filtered_sql": "select *",
+            "has_star": True,
+        }
+    )
+    monkeypatch.setattr(
+        sqlquery_service, "SysConfig", lambda: _FakeConfig({"disable_star": True})
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="select *",
+        limit_num=10,
+    )
+    assert result["status"] == 1
+    assert result["msg"] == "has star"
+
+
+@pytest.mark.django_db
+def test_execute_single_query_thread_id_kill_conn(monkeypatch):
+    query_result = _fake_query_result(error=None, affected_rows=5)
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": "select 1",
+            "has_star": False,
+        },
+        filter_sql=lambda **kwargs: "select 1 limit 10",
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        thread_id=12345,
+        seconds_behind_master=0,
+    )
+
+    schedules = []
+
+    def mock_add(name, run_date, instance_id, thread_id):
+        schedules.append(name)
+
+    def mock_del(name):
+        schedules.remove(name)
+
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig(
+            {"disable_star": False, "data_masking": False, "max_execution_time": 60}
+        ),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(sqlquery_service, "add_kill_conn_schedule", mock_add)
+    monkeypatch.setattr(sqlquery_service, "del_schedule", mock_del)
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects, "create", lambda **kwargs: None
+    )
+    monkeypatch.setattr(sqlquery_service.connection, "connection", None)
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 0
+    assert len(schedules) == 0
+
+
+@pytest.mark.django_db
+def test_execute_single_query_query_result_error(monkeypatch):
+    query_result = _fake_query_result(error="Query execution error", affected_rows=5)
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": "select 1",
+            "has_star": False,
+        },
+        filter_sql=lambda **kwargs: "select 1 limit 10",
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        thread_id=None,
+        seconds_behind_master=0,
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig({"disable_star": False, "data_masking": False}),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects, "create", lambda **kwargs: None
+    )
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 1
+    assert result["msg"] == "Query execution error"
+
+
+@pytest.mark.django_db
+def test_execute_single_query_data_masking_success(monkeypatch):
+    query_result = _fake_query_result(error=None, affected_rows=5)
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": "select 1",
+            "has_star": False,
+        },
+        filter_sql=lambda **kwargs: "select 1 limit 10",
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        query_masking=lambda *args, **kwargs: SimpleNamespace(
+            error=None,
+            mask_time=0,
+            mask_result="masked",
+            __dict__={"mask_result": "masked", "error": None},
+        ),
+        thread_id=None,
+        seconds_behind_master=0,
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig({"disable_star": False, "data_masking": True}),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects, "create", lambda **kwargs: None
+    )
+    monkeypatch.setattr(sqlquery_service.connection, "connection", None)
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 0
+    assert result["data"]["mask_result"] == "masked"
+
+
+@pytest.mark.django_db
+def test_execute_single_query_data_masking_error_check_true(monkeypatch):
+    query_result = _fake_query_result(error=None, affected_rows=5)
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": "select 1",
+            "has_star": False,
+        },
+        filter_sql=lambda **kwargs: "select 1 limit 10",
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        query_masking=lambda *args, **kwargs: SimpleNamespace(
+            error="Masking failed", mask_time=0
+        ),
+        thread_id=None,
+        seconds_behind_master=0,
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig(
+            {"disable_star": False, "data_masking": True, "query_check": True}
+        ),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects, "create", lambda **kwargs: None
+    )
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 1
+    assert "Masking failed" in result["msg"]
+
+
+@pytest.mark.django_db
+def test_execute_single_query_data_masking_error_check_false(monkeypatch):
+    query_result = _fake_query_result(error=None, affected_rows=5)
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": "select 1",
+            "has_star": False,
+        },
+        filter_sql=lambda **kwargs: "select 1 limit 10",
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        query_masking=lambda *args, **kwargs: SimpleNamespace(
+            error="Masking failed", mask_time=0
+        ),
+        thread_id=None,
+        seconds_behind_master=0,
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig(
+            {"disable_star": False, "data_masking": True, "query_check": False}
+        ),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects, "create", lambda **kwargs: None
+    )
+    monkeypatch.setattr(sqlquery_service.connection, "connection", None)
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 0
+    assert result["data"]["rows"] == [[1]]
+
+
+@pytest.mark.django_db
+def test_execute_single_query_data_masking_exception_check_true(monkeypatch):
+    query_result = _fake_query_result(error=None, affected_rows=5)
+
+    def throw_exception(*args, **kwargs):
+        raise Exception("Masking crash")
+
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": "select 1",
+            "has_star": False,
+        },
+        filter_sql=lambda **kwargs: "select 1 limit 10",
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        query_masking=throw_exception,
+        thread_id=None,
+        seconds_behind_master=0,
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig(
+            {"disable_star": False, "data_masking": True, "query_check": True}
+        ),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects, "create", lambda **kwargs: None
+    )
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 1
+    assert "Masking crash" in result["msg"]
+
+
+@pytest.mark.django_db
+def test_execute_single_query_data_masking_exception_check_false(monkeypatch):
+    query_result = _fake_query_result(error=None, affected_rows=5)
+
+    def throw_exception(*args, **kwargs):
+        raise Exception("Masking crash")
+
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": "select 1",
+            "has_star": False,
+        },
+        filter_sql=lambda **kwargs: "select 1 limit 10",
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        query_masking=throw_exception,
+        thread_id=None,
+        seconds_behind_master=0,
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig(
+            {"disable_star": False, "data_masking": True, "query_check": False}
+        ),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects, "create", lambda **kwargs: None
+    )
+    monkeypatch.setattr(sqlquery_service.connection, "connection", None)
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 0
+    assert result["data"]["rows"] == [[1]]
+
+
+@pytest.mark.django_db
+def test_execute_single_query_top_level_exception(monkeypatch):
+    def throw_exception(*args, **kwargs):
+        raise Exception("Top level crash")
+
+    monkeypatch.setattr(sqlquery_service, "SysConfig", throw_exception)
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 1
+    assert "Top level crash" in result["msg"]
+
+
+@pytest.mark.django_db
+def test_execute_single_query_explain_limit_num(monkeypatch):
+    query_result = _fake_query_result(error=None, affected_rows=5)
+    fake_engine = SimpleNamespace(
+        query_check=lambda **kwargs: {
+            "bad_query": False,
+            "msg": "",
+            "filtered_sql": "explain select 1",
+            "has_star": False,
+        },
+        filter_sql=lambda sql, limit_num: f"{sql} limit {limit_num}",
+        get_connection=lambda **kwargs: None,
+        query=lambda *args, **kwargs: query_result,
+        thread_id=None,
+        seconds_behind_master=0,
+    )
+    monkeypatch.setattr(
+        sqlquery_service,
+        "SysConfig",
+        lambda: _FakeConfig({"disable_star": False, "data_masking": False}),
+    )
+    monkeypatch.setattr(sqlquery_service, "get_engine", lambda instance: fake_engine)
+    monkeypatch.setattr(
+        sqlquery_service,
+        "query_priv_check",
+        lambda *args, **kwargs: {
+            "status": 0,
+            "msg": "ok",
+            "data": {"limit_num": 10, "priv_check": True},
+        },
+    )
+    monkeypatch.setattr(
+        sqlquery_service.QueryLog.objects, "create", lambda **kwargs: None
+    )
+    monkeypatch.setattr(sqlquery_service.connection, "connection", None)
+
+    result = sqlquery_service._execute_single_query(
+        user=SimpleNamespace(username="u", display="U"),
+        instance=SimpleNamespace(id=1, instance_name="ins"),
+        db_name="db",
+        sql_content="explain select 1",
+        limit_num=10,
+    )
+    assert result["status"] == 0
