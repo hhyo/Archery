@@ -1129,7 +1129,7 @@
                 },
                 success: function (data) {
                     var target = $("#instance_name").val()+"/"+$("#db_name").val();
-                    if (Array.isArray(data.data)) {
+                    if (data.status === 0 && Array.isArray(data.data) && data.data.length > 0) {
                         for (let i = 0; i < data.data.length; i++) {
                             let item = data.data[i];
                             let singleData = { status: item.status, msg: item.msg, data: item.data };
