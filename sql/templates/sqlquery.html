@@ -624,9 +624,9 @@
 
             //激活添加的tab
             if (!no_show) {
-                $("#tab-content .tab-pane").removeClass("show active");
-                $("#nav-tabs .nav-link").removeClass("active");
-                $("#nav-tabs .nav-link:last").tab('show');
+                $("#tab-content .tab-pane").removeClass("in active");
+                $("#nav-tabs li").removeClass("active");
+                $("#nav-tabs a:last").tab('show');
             }
 
         }
