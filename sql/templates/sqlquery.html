@@ -575,7 +575,7 @@
         }
 
         //添加执行结果页面
-        function tab_add(tab_title) {
+        function tab_add(tab_title, no_show=false) {
             var tab_number = sessionStorage.getItem('tab_num');
 
             //增加执行结果tab页
@@ -623,7 +623,11 @@
             $("#tab-content").append(div);//div添加到div
 
             //激活添加的tab
-            $("#nav-tabs a:last").tab('show')
+            if (!no_show) {
+                $("#tab-content .tab-pane").removeClass("show active");
+                $("#nav-tabs .nav-link").removeClass("active");
+                $("#nav-tabs .nav-link:last").tab('show');
+            }
 
         }
 
@@ -791,7 +795,7 @@
         }
 
         // 展示数据
-        function display_data(data, target='') {
+        function display_data(data, target='', force_new_tab=false) {
             var result = data.data;
             var query_str = target+'|'+result['full_sql'];
             //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
@@ -820,7 +824,7 @@
                     }
                 }
                 // 执行结果页默认不新增
-                else if (active_li_title.match(/^执行结果\d$/)) {
+                else if (!force_new_tab && active_li_title.match(/^执行结果\d$/)) {
                     n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
@@ -1020,7 +1024,7 @@
 
             } else {
                 //查询报错失败信息
-                if (active_li_title.match(/^执行结果\d$/)) {
+                if (!force_new_tab && active_li_title.match(/^执行结果\d$/)) {
                     n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
@@ -1115,7 +1119,8 @@
                     schema_name: $("#schema_name").val(),
                     tb_name: $("#table_name").val(),
                     sql_content: sqlContent,
-                    limit_num: $("#limit_num").val()
+                    limit_num: $("#limit_num").val(),
+                    is_multi: true
                 },
                 complete: function () {
                     $('input[type=button]').removeClass('disabled');
@@ -1124,7 +1129,15 @@
                 },
                 success: function (data) {
                     var target = $("#instance_name").val()+"/"+$("#db_name").val();
-                    display_data(data, target);
+                    if (Array.isArray(data.data)) {
+                        for (let i = 0; i < data.data.length; i++) {
+                            let item = data.data[i];
+                            let singleData = { status: item.status, msg: item.msg, data: item.data };
+                            display_data(singleData, target, i > 0);
+                        }
+                    } else {
+                        display_data(data, target);
+                    }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
