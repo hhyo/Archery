@@ -77,6 +77,14 @@ def list_instance_resources(
             resource = query_engine.get_all_columns_by_tb(
                 db_name=db_name, tb_name=tb_name, schema_name=schema_name
             )
+        elif resource_type == "server_info":
+            try:
+                fork_type = query_engine.server_fork_type.value
+            except AttributeError:
+                fork_type = "mysql"
+
+            result["data"] = fork_type
+            return result
         else:
             raise TypeError("不支持的资源类型或者参数不完整！")
     except Exception as msg:
