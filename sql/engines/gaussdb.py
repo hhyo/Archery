@@ -1378,8 +1378,10 @@ class GaussDBEngine(PgSQLEngine):
                 "IF",
                 "NOT",
                 "EXISTS",
+                "IF NOT EXISTS",
                 "OR",
                 "REPLACE",
+                "OR REPLACE",
                 "TEMP",
                 "TEMPORARY",
             ):
