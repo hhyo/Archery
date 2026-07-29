@@ -192,8 +192,10 @@ class TestGaussDB(unittest.TestCase):
                     ("name", "character varying", 32, None, None, "YES", None),
                 ]
             ),
-            ResultSet(rows=[]),
-            ResultSet(rows=[]),
+            ResultSet(rows=[]),  # constraints
+            ResultSet(rows=[]),  # comments
+            ResultSet(rows=[]),  # secondary indexes
+            ResultSet(rows=[]),  # partition key
         ]
         engine = GaussDBEngine(instance=self.instance)
 
@@ -235,6 +237,8 @@ class TestGaussDB(unittest.TestCase):
                     ("user table", "name", "user's name"),
                 ]
             ),
+            ResultSet(rows=[]),  # secondary indexes (none in this test)
+            ResultSet(rows=[]),  # partition key (non-partitioned table)
         ]
         engine = GaussDBEngine(instance=self.instance)
 

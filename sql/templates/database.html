@@ -303,9 +303,14 @@
                         $('#btn-create-database').addClass('disabled');
                         $('#btn-create-database').prop('disabled', true);
                     } else if ($("#instance").val()) {
-                        $("#btn-create-database").removeClass('disabled');
-                        $("#btn-create-database").prop('disabled', false);
-
+                        var selected_type = $("#instance").find("option:selected").attr("instance-type");
+                        if (selected_type === 'gaussdb') {
+                            $('#btn-create-database').addClass('disabled');
+                            $('#btn-create-database').prop('disabled', true);
+                        } else {
+                            $("#btn-create-database").removeClass('disabled');
+                            $("#btn-create-database").prop('disabled', false);
+                        }
                     }
                 },
                 onLoadError: onLoadErrorCallback,

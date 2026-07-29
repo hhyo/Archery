@@ -293,6 +293,7 @@
             var db_type = sessionStorage.getItem('slow_query_db_type') || 'mysql';
             if (instance_name) {
                 var is_redis = db_type === 'redis';
+                var is_gaussdb = db_type === 'gaussdb';
                 var sortName = is_redis ? "TotalExecutionCounts" : "MySQLTotalExecutionCounts";
                 var columns = is_redis ? [{
                         title: '日志统计时间',
@@ -466,6 +467,7 @@
                                 }
                             }
                         });
+                        if (!is_redis && !is_gaussdb) {
                         var report_params = {checksum: row.SQLId};
                         if (is_redis) {
                             report_params.instance_name = $("#instance_name").val();
@@ -488,6 +490,7 @@
                                 alert(errorThrown);
                             }
                         });
+                        }
                         return html.join('');
                     },
                     columns: columns,

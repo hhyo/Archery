@@ -324,7 +324,7 @@ class GaussDBEngine(PgSQLEngine):
         comments = super().query(
             db_name=db_name,
             sql=comment_sql,
-            close_conn=close_conn,
+            close_conn=False,
             parameters={"schema_name": schema_name, "table_name": clean_table_name},
         )
         table_comment = ""
@@ -378,12 +378,59 @@ class GaussDBEngine(PgSQLEngine):
                         f"    CONSTRAINT {self._quote_identifier(constraint_name)} {constraint_def}"
                     )
 
+        index_sql = """
+            select indexdef
+            from pg_indexes
+            where schemaname = %(schema_name)s
+                and tablename = %(table_name)s
+                and indexname not in (
+                    select con.conname
+                    from pg_constraint con
+                    join pg_class cls on cls.oid = con.conrelid
+                    join pg_namespace ns on ns.oid = cls.relnamespace
+                    where ns.nspname = %(schema_name)s
+                        and cls.relname = %(table_name)s
+                        and con.contype in ('p', 'u')
+                )
+            order by indexname;
+        """
+        indexes = super().query(
+            db_name=db_name,
+            sql=index_sql,
+            close_conn=False,
+            parameters={"schema_name": schema_name, "table_name": clean_table_name},
+        )
+
+        partition_sql = """
+            select pg_get_partkeydef(cls.oid)
+            from pg_class cls
+            join pg_namespace ns on ns.oid = cls.relnamespace
+            join pg_partitioned_table pt on pt.partrelid = cls.oid
+            where ns.nspname = %(schema_name)s
+                and cls.relname = %(table_name)s;
+        """
+        partitions = super().query(
+            db_name=db_name,
+            sql=partition_sql,
+            close_conn=close_conn,
+            parameters={"schema_name": schema_name, "table_name": clean_table_name},
+        )
+
         create_sql = (
             f"CREATE TABLE {self._quote_identifier(schema_name)}."
             f"{self._quote_identifier(clean_table_name)} (\n"
             + ",\n".join(column_defs)
-            + "\n);"
+            + "\n)"
         )
+        if not partitions.error and partitions.rows:
+            partkey = partitions.rows[0][0]
+            if partkey:
+                create_sql += f"\nPARTITION BY {partkey}"
+        create_sql += ";"
+        if not indexes.error:
+            for (indexdef,) in indexes.rows:
+                if indexdef:
+                    create_sql += f"\n{indexdef};"
         comment_sqls = []
         if table_comment:
             comment_sqls.append(
@@ -668,7 +715,11 @@ class GaussDBEngine(PgSQLEngine):
                 and kcu.table_schema = col.table_schema
                 and kcu.table_name = col.table_name
                 and kcu.column_name = col.column_name
-            left join pg_catalog.pg_class cls on cls.relname = col.table_name
+            left join pg_catalog.pg_class cls
+                on cls.relname = col.table_name
+                and cls.relnamespace = (
+                    select oid from pg_catalog.pg_namespace where nspname = col.table_schema
+                )
             left join pg_catalog.pg_namespace ns
                 on ns.oid = cls.relnamespace and ns.nspname = col.table_schema
             left join pg_catalog.pg_description des
@@ -968,7 +1019,7 @@ class GaussDBEngine(PgSQLEngine):
                 '''' || coalesce(user_name::text, '') || '''@''' || coalesce(client_addr::text, '') || '''' as "HostAddress",
                 coalesce(query, '') as "SQLText",
                 1 as "TotalExecutionCounts",
-                round(greatest(coalesce(extract(epoch from finish_time - start_time), 0), 0)::numeric, 6) as "QueryTimePct95",
+                0 as "QueryTimePct95",
                 round(greatest(coalesce(extract(epoch from finish_time - start_time), 0), 0)::numeric, 6) as "QueryTimes",
                 round((coalesce(lock_time, 0) / 1000000.0)::numeric, 6) as "LockTimes",
                 coalesce(n_tuples_fetched, 0) as "ParseRowCounts",
@@ -1344,6 +1395,22 @@ class GaussDBEngine(PgSQLEngine):
                 return f"DROP VIEW IF EXISTS {object_name};"
             if object_type == "INDEX":
                 return f"DROP INDEX IF EXISTS {object_name};"
+        alter_add_constraint = re.match(
+            r"^\s*alter\s+table\s+(.+?)\s+add\s+(?:constraint|primary\s+key|unique|foreign\s+key)\b",
+            source,
+            re.I | re.S,
+        )
+        if alter_add_constraint:
+            table_name = alter_add_constraint.group(1)
+            constraint_name_match = re.match(
+                r"^\s*alter\s+table\s+(.+?)\s+add\s+constraint\s+(\"?[^\s\"]+\"?)\b",
+                source,
+                re.I | re.S,
+            )
+            if constraint_name_match:
+                constraint_name = constraint_name_match.group(2)
+                return f"ALTER TABLE {table_name} DROP CONSTRAINT IF EXISTS {constraint_name};"
+            return "GaussDB 暂不支持该语句的自动回滚生成。"
         alter_add_column = re.match(
             r"^\s*alter\s+table\s+(.+?)\s+add\s+(?:column\s+)?(\"?[^\s\"]+\"?)\s+",
             source,
