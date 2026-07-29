@@ -341,8 +341,8 @@ def param_compare(request):
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
 
-    # 校验引擎支持参数对比（仅 mysql / goinception 实现了 get_variables）
-    _variable_supported_db_types = {"mysql", "goinception"}
+    # 校验引擎支持参数对比（mysql / goinception / gaussdb 实现了 get_variables）
+    _variable_supported_db_types = {"mysql", "goinception", "gaussdb"}
     if ins1.db_type not in _variable_supported_db_types:
         result = {
             "status": 1,

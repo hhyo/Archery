@@ -188,8 +188,18 @@ class TestGaussDB(unittest.TestCase):
         mock_query.side_effect = [
             ResultSet(
                 rows=[
-                    ("id", "integer", None, 32, 0, "NO", None),
-                    ("name", "character varying", 32, None, None, "YES", None),
+                    ("id", "integer", None, 32, 0, "NO", None, None, "int4"),
+                    (
+                        "name",
+                        "character varying",
+                        32,
+                        None,
+                        None,
+                        "YES",
+                        None,
+                        None,
+                        "varchar",
+                    ),
                 ]
             ),
             ResultSet(rows=[]),  # constraints
@@ -212,7 +222,7 @@ class TestGaussDB(unittest.TestCase):
         mock_query.side_effect = [
             ResultSet(
                 rows=[
-                    ("id", "integer", None, 32, 0, "NO", None),
+                    ("id", "integer", None, 32, 0, "NO", None, None, "int4"),
                     (
                         "name",
                         "character varying",
@@ -221,6 +231,8 @@ class TestGaussDB(unittest.TestCase):
                         None,
                         "YES",
                         "'n/a'::varchar",
+                        None,
+                        "varchar",
                     ),
                 ]
             ),
@@ -644,7 +656,7 @@ class TestGaussDB(unittest.TestCase):
     def test_get_table_index_data(self, mock_query):
         mock_query.return_value = ResultSet(
             column_list=["列名", "索引名", "唯一性"],
-            rows=[("", "idx_name", 1)],
+            rows=[("name", "idx_name", 1)],
         )
         engine = GaussDBEngine(instance=self.instance)
         result = engine.get_table_index_data(db_name="biz", tb_name="t_user")
@@ -1055,8 +1067,10 @@ class TestGaussDB(unittest.TestCase):
                     "num_scale",
                     "is_nullable",
                     "column_default",
+                    "udt_schema",
+                    "udt_name",
                 ],
-                rows=[("id", "integer", None, 32, 0, "NO", None)],
+                rows=[("id", "integer", None, 32, 0, "NO", None, None, "int4")],
             ),
             ResultSet(rows=[("pk_t", "p", 'PRIMARY KEY ("id")')]),
             ResultSet(rows=[]),  # no comments
@@ -1114,3 +1128,58 @@ class TestGaussDB(unittest.TestCase):
         engine = GaussDBEngine(instance=self.instance)
         result = engine.get_table_index_data(db_name="biz", tb_name="t_user")
         self.assertEqual(len(result["rows"]), 2)
+
+    # ---- query_check accepts CTE ----
+
+    def test_query_check_accepts_cte(self):
+        engine = GaussDBEngine(instance=self.instance)
+        result = engine.query_check(
+            db_name="biz_db",
+            sql="WITH recent AS (SELECT * FROM t) SELECT * FROM recent",
+        )
+        self.assertFalse(result["bad_query"])
+
+    # ---- execute_check rejects transaction control ----
+
+    @patch("sql.engines.pgsql.SysConfig")
+    def test_execute_check_rejects_commit(self, mock_sys_config):
+        mock_sys_config.return_value.get.return_value = ""
+        engine = GaussDBEngine(instance=self.instance)
+        result = engine.execute_check(
+            db_name="biz_db", sql="create table t(id int); commit;"
+        )
+        self.assertEqual(result.error_count, 1)
+
+    # ---- _format_column_type ----
+
+    def test_format_column_type_integer_no_precision(self):
+        # integer(32,0) is invalid; should just return "integer"
+        result = GaussDBEngine._format_column_type("integer", None, 32, 0)
+        self.assertEqual(result, "integer")
+
+    def test_format_column_type_numeric_with_precision(self):
+        result = GaussDBEngine._format_column_type("numeric", None, 10, 2)
+        self.assertEqual(result, "numeric(10,2)")
+
+    def test_format_column_type_user_defined(self):
+        result = GaussDBEngine._format_column_type(
+            "USER-DEFINED", None, None, None, "my_enum"
+        )
+        self.assertEqual(result, "my_enum")
+
+    def test_format_column_type_array(self):
+        result = GaussDBEngine._format_column_type("ARRAY", None, None, None, "_int4")
+        self.assertEqual(result, "int4[]")
+
+    # ---- get_all_databases_summary includes postgres ----
+
+    @patch.object(GaussDBEngine, "query")
+    def test_get_all_databases_summary_includes_postgres(self, mock_query):
+        mock_query.return_value = ResultSet(
+            column_list=["db_name", "charset", "collation"],
+            rows=[("postgres", "UTF8", "C"), ("biz_db", "UTF8", "en_US.utf8")],
+        )
+        engine = GaussDBEngine(instance=self.instance)
+        result = engine.get_all_databases_summary()
+        db_names = [row["db_name"] for row in result.rows]
+        self.assertIn("postgres", db_names)

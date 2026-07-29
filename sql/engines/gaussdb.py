@@ -21,8 +21,13 @@ class GaussDBEngine(PgSQLEngine):
     test_query = "SELECT 1"
 
     name = "GaussDB"
-
     info = "GaussDB/openGauss engine"
+
+    # Statements that must not appear inside an Archery-managed transaction
+    _REJECT_STMT_RE = re.compile(
+        r"^\s*(commit|rollback|begin|start\s+transaction|set\s+transaction)\b",
+        re.I,
+    )
 
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name or "postgres"
@@ -139,7 +144,7 @@ class GaussDBEngine(PgSQLEngine):
                pg_encoding_to_char(encoding) AS charset,
                datcollate AS collation
         FROM pg_database
-        WHERE datname NOT IN ('template0', 'template1', 'postgres', 'information_schema');
+        WHERE datname NOT IN ('template0', 'template1', 'information_schema');
         """
         result = self.query(sql=sql)
         if not result.error and result.rows and result.column_list:
@@ -175,13 +180,31 @@ class GaussDBEngine(PgSQLEngine):
         return result
 
     def query_check(self, db_name=None, sql=""):
-        """查询语句检查，允许 show create table 语法。"""
+        """查询语句检查，允许 show create table 和 WITH/CTE 语法。"""
         result = super().query_check(db_name=db_name, sql=sql)
-        if result.get("bad_query") and re.match(
-            r"^\s*show\s+create\s+table\s+", sql, re.I
-        ):
-            result["bad_query"] = False
-            result["msg"] = ""
+        if result.get("bad_query"):
+            if re.match(r"^\s*show\s+create\s+table\s+", sql, re.I):
+                result["bad_query"] = False
+                result["msg"] = ""
+            elif re.match(r"^\s*with\b", sql, re.I):
+                result["bad_query"] = False
+                result["msg"] = ""
+        return result
+
+    def execute_check(self, db_name=None, sql=""):
+        """Reject transaction-control statements that would break Archery's
+        transaction management (e.g. explicit COMMIT/ROLLBACK in a workflow)."""
+        result = super().execute_check(db_name=db_name, sql=sql)
+        if not result.error_count:
+            for row in result.rows:
+                stmt = row.sql.strip() if hasattr(row, "sql") else ""
+                if stmt and self._REJECT_STMT_RE.match(stmt):
+                    row.stagestatus = "驳回不支持语句"
+                    row.errorlevel = "Error"
+                    row.errormessage = (
+                        "事务控制语句(COMMIT/ROLLBACK/BEGIN)不允许在工单中执行"
+                    )
+                    result.error_count += 1
         return result
 
     @property
@@ -253,7 +276,9 @@ class GaussDBEngine(PgSQLEngine):
                 col.numeric_precision,
                 col.numeric_scale,
                 col.is_nullable,
-                col.column_default
+                col.column_default,
+                col.udt_schema,
+                col.udt_name
             from information_schema.columns col
             where col.table_schema = %(schema_name)s
                 and col.table_name = %(table_name)s
@@ -352,9 +377,11 @@ class GaussDBEngine(PgSQLEngine):
                 numeric_scale,
                 is_nullable,
                 column_default,
+                udt_schema,
+                udt_name,
             ) = row
             column_type = self._format_column_type(
-                data_type, char_length, numeric_precision, numeric_scale
+                data_type, char_length, numeric_precision, numeric_scale, udt_name
             )
             column_def = f"    {self._quote_identifier(column_name)} {column_type}"
             if column_default:
@@ -692,9 +719,9 @@ class GaussDBEngine(PgSQLEngine):
                 case
                     when col.character_maximum_length is not null
                         then col.data_type || '(' || col.character_maximum_length || ')'
-                    when col.numeric_precision is not null and col.numeric_scale is not null
+                    when col.data_type in ('numeric', 'decimal') and col.numeric_precision is not null and col.numeric_scale is not null
                         then col.data_type || '(' || col.numeric_precision || ',' || col.numeric_scale || ')'
-                    when col.numeric_precision is not null
+                    when col.data_type in ('numeric', 'decimal') and col.numeric_precision is not null
                         then col.data_type || '(' || col.numeric_precision || ')'
                     else col.data_type
                 end as "列类型",
@@ -739,18 +766,26 @@ class GaussDBEngine(PgSQLEngine):
         schema_name, clean_table_name = self._split_table_name(tb_name)
         sql = """
             select
-                '' as "列名",
-                indexname as "索引名",
-                case when indexdef ilike '%%unique%%' then 0 else 1 end as "唯一性",
-                1 as "列序列",
+                att.attname as "列名",
+                idx.relname as "索引名",
+                case when i.indisunique then 0 else 1 end as "唯一性",
+                i.indkey[i.ord] as "列序列",
                 0 as "基数",
                 '' as "是否为空",
-                split_part(indexdef, ' USING ', 2) as "索引类型",
-                indexdef as "备注"
-            from pg_indexes
-            where schemaname = %(schema_name)s
-                and tablename = %(table_name)s
-            order by indexname;
+                am.amname as "索引类型",
+                pg_get_indexdef(i.indexrelid, i.ord, true) as "备注"
+            from pg_index i
+            join pg_class idx on idx.oid = i.indexrelid
+            join pg_class tbl on tbl.oid = i.indrelid
+            join pg_namespace ns on ns.oid = tbl.relnamespace
+            join pg_am am on am.oid = idx.relam
+            join generate_subscripts(i.indkey, 1) as i(ord) on true
+            join pg_attribute att
+                on att.attrelid = tbl.oid
+                and att.attnum = i.indkey[i.ord]
+            where ns.nspname = %(schema_name)s
+                and tbl.relname = %(table_name)s
+            order by idx.relname, i.ord;
         """
         index_data = self.query(
             db_name=db_name,
@@ -1177,16 +1212,28 @@ class GaussDBEngine(PgSQLEngine):
         return "'" + str(value).replace("'", "''") + "'"
 
     @staticmethod
-    def _format_column_type(data_type, char_length, numeric_precision, numeric_scale):
+    def _format_column_type(
+        data_type, char_length, numeric_precision, numeric_scale, udt_name=None
+    ):
         if (
             data_type in ("character varying", "character", "varchar", "char")
             and char_length
         ):
             return f"{data_type}({char_length})"
-        if data_type == "numeric" and numeric_precision:
+        # Only numeric/decimal types should have precision/scale;
+        # integer family (integer, bigint, smallint) has numeric_precision
+        # but appending it produces invalid syntax like integer(32,0)
+        if data_type in ("numeric", "decimal") and numeric_precision:
             if numeric_scale is not None:
                 return f"{data_type}({numeric_precision},{numeric_scale})"
             return f"{data_type}({numeric_precision})"
+        # Handle USER-DEFINED types (enum, domain, composite) and ARRAY
+        if data_type == "USER-DEFINED" and udt_name:
+            return udt_name
+        if data_type == "ARRAY" and udt_name:
+            # udt_name for arrays looks like '_int4' → strip leading '_'
+            elem = udt_name.lstrip("_")
+            return f"{elem}[]"
         return data_type
 
     @staticmethod
@@ -1414,7 +1461,7 @@ class GaussDBEngine(PgSQLEngine):
                 return f"ALTER TABLE {table_name} DROP CONSTRAINT IF EXISTS {constraint_name};"
             return "GaussDB 暂不支持该语句的自动回滚生成。"
         alter_add_column = re.match(
-            r"^\s*alter\s+table\s+(.+?)\s+add\s+(?:column\s+)?(\"?[^\s\"]+\"?)\s+",
+            r"^\s*alter\s+table\s+(.+?)\s+add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?(\"?[^\s\"]+\"?)\s+",
             source,
             re.I | re.S,
         )
