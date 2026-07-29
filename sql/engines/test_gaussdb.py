@@ -478,6 +478,15 @@ class TestGaussDB(unittest.TestCase):
         result = engine._build_metadata_rollback_sql("drop table t_user")
         self.assertIn("暂不支持", result)
 
+    def test_build_rollback_rename_table_with_schema(self):
+        engine = GaussDBEngine(instance=self.instance)
+        result = engine._build_metadata_rollback_sql(
+            "alter table public.foo rename to bar"
+        )
+        self.assertIn("public.bar", result)
+        self.assertIn("foo", result)
+        self.assertNotIn("public.foo", result.split("RENAME TO")[1])
+
     # ---- get_all_databases_summary ----
 
     @patch.object(GaussDBEngine, "query")
@@ -1129,15 +1138,15 @@ class TestGaussDB(unittest.TestCase):
         result = engine.get_table_index_data(db_name="biz", tb_name="t_user")
         self.assertEqual(len(result["rows"]), 2)
 
-    # ---- query_check accepts CTE ----
+    # ---- query_check does NOT accept CTE (masking bypass risk) ----
 
-    def test_query_check_accepts_cte(self):
+    def test_query_check_rejects_cte(self):
         engine = GaussDBEngine(instance=self.instance)
         result = engine.query_check(
             db_name="biz_db",
             sql="WITH recent AS (SELECT * FROM t) SELECT * FROM recent",
         )
-        self.assertFalse(result["bad_query"])
+        self.assertTrue(result["bad_query"])
 
     # ---- execute_check rejects transaction control ----
 

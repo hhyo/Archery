@@ -180,31 +180,31 @@ class GaussDBEngine(PgSQLEngine):
         return result
 
     def query_check(self, db_name=None, sql=""):
-        """查询语句检查，允许 show create table 和 WITH/CTE 语法。"""
+        """查询语句检查，允许 show create table 语法。
+        Note: CTE/WITH queries are not explicitly allowed here because the
+        inherited query_masking only handles SELECT-prefix statements,
+        so accepting WITH would create a data masking bypass."""
         result = super().query_check(db_name=db_name, sql=sql)
-        if result.get("bad_query"):
-            if re.match(r"^\s*show\s+create\s+table\s+", sql, re.I):
-                result["bad_query"] = False
-                result["msg"] = ""
-            elif re.match(r"^\s*with\b", sql, re.I):
-                result["bad_query"] = False
-                result["msg"] = ""
+        if result.get("bad_query") and re.match(
+            r"^\s*show\s+create\s+table\s+", sql, re.I
+        ):
+            result["bad_query"] = False
+            result["msg"] = ""
         return result
 
     def execute_check(self, db_name=None, sql=""):
         """Reject transaction-control statements that would break Archery's
         transaction management (e.g. explicit COMMIT/ROLLBACK in a workflow)."""
         result = super().execute_check(db_name=db_name, sql=sql)
-        if not result.error_count:
-            for row in result.rows:
-                stmt = row.sql.strip() if hasattr(row, "sql") else ""
-                if stmt and self._REJECT_STMT_RE.match(stmt):
-                    row.stagestatus = "驳回不支持语句"
-                    row.errorlevel = "Error"
-                    row.errormessage = (
-                        "事务控制语句(COMMIT/ROLLBACK/BEGIN)不允许在工单中执行"
-                    )
-                    result.error_count += 1
+        for row in result.rows:
+            stmt = row.sql.strip() if hasattr(row, "sql") else ""
+            if stmt and self._REJECT_STMT_RE.match(stmt):
+                row.stagestatus = "驳回不支持语句"
+                row.errlevel = 2
+                row.errormessage = (
+                    "事务控制语句(COMMIT/ROLLBACK/BEGIN)不允许在工单中执行"
+                )
+                result.error_count += 1
         return result
 
     @property
@@ -999,16 +999,19 @@ class GaussDBEngine(PgSQLEngine):
                     round(avg(rows_examined)::numeric, 0) as "ParseRowAvg",
                     round(avg(rows_sent)::numeric, 0) as "ReturnRowAvg"
                 from base
-                group by sql_id
+                group by sql_id, db_name
             )
             select * from agg
             order by "{order_by}" {order}
             offset %(offset)s limit %(limit)s;
         """
         count_sql = f"""
-            select count(distinct coalesce(unique_query_id::text, md5(coalesce(query, ''))))
-            from dbe_perf.statement_history
-            {where_clause};
+            select count(*) from (
+                select 1
+                from dbe_perf.statement_history
+                {where_clause}
+                group by coalesce(unique_query_id::text, md5(coalesce(query, ''))), coalesce(db_name::text, '')
+            ) sub;
         """
         return self._slowquery_response(sql, count_sql, parameters)
 
@@ -1475,6 +1478,12 @@ class GaussDBEngine(PgSQLEngine):
         )
         if alter_rename_table:
             old_name, new_name = alter_rename_table.groups()
+            # Preserve schema: ALTER TABLE public.foo RENAME TO bar
+            # → ALTER TABLE public.bar RENAME TO foo (not ALTER TABLE bar RENAME TO public.foo)
+            if "." in old_name:
+                schema = old_name.rsplit(".", 1)[0]
+                new_base = new_name.rsplit(".", 1)[-1]
+                return f"ALTER TABLE {schema}.{new_base} RENAME TO {old_name.rsplit('.', 1)[-1]};"
             return f"ALTER TABLE {new_name} RENAME TO {old_name};"
         alter_rename_column = re.match(
             r"^\s*alter\s+table\s+(.+?)\s+rename\s+column\s+(.+?)\s+to\s+(.+?)\s*$",
