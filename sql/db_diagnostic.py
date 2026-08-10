@@ -94,7 +94,7 @@ def kill_session(request):
 
     engine = get_engine(instance=instance)
     r = None
-    if instance.db_type in ["mysql", "doris", "clickhouse"]:
+    if instance.db_type in ["mysql", "doris", "clickhouse", "gaussdb"]:
         r = engine.kill(json.loads(thread_ids))
     elif instance.db_type == "mongo":
         r = engine.kill_op(json.loads(thread_ids))
@@ -170,7 +170,7 @@ def trxandlocks(request):
     query_engine = get_engine(instance=instance)
     if instance.db_type == "mysql":
         query_result = query_engine.trxandlocks()
-    elif instance.db_type == "oracle":
+    elif instance.db_type in ["oracle", "gaussdb"]:
         query_result = query_engine.lock_info()
     else:
         result = {

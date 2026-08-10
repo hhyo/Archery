@@ -10,7 +10,13 @@ from pytest_django.asserts import assertRedirects
 import sql.query_privileges
 from common.config import SysConfig
 from common.utils.const import WorkflowAction, WorkflowStatus
-from sql.models import Instance, ResourceGroup, QueryPrivilegesApply, QueryPrivileges
+from sql.models import (
+    Instance,
+    InstanceTag,
+    ResourceGroup,
+    QueryPrivilegesApply,
+    QueryPrivileges,
+)
 from sql.tests import User
 from sql.utils.workflow_audit import AuditV2
 
@@ -27,7 +33,7 @@ class TestQueryPrivilegesApply(TestCase):
             type="slave",
             db_type="mysql",
             host=settings.DATABASES["default"]["HOST"],
-            port=settings.DATABASES["default"]["PORT"],
+            port=settings.DATABASES["default"]["PORT"] or 0,
             user=settings.DATABASES["default"]["USER"],
             password=settings.DATABASES["default"]["PASSWORD"],
         )
@@ -153,6 +159,42 @@ class TestQueryPrivilegesApply(TestCase):
                 "create_time",
                 "group_name",
             ],
+        )
+
+    def test_query_priv_apply_rejects_table_priv_for_gaussdb(self):
+        """测试 GaussDB 实例不允许绕过页面直接申请表级权限"""
+        tag = InstanceTag.objects.create(tag_code="can_read", tag_name="可读")
+        self.slave.db_type = "gaussdb"
+        self.slave.save(update_fields=["db_type"])
+        self.slave.resource_group.add(self.group)
+        self.slave.instance_tag.add(tag)
+        self.user.resource_group.add(self.group)
+        self.user.user_permissions.add(
+            Permission.objects.get(codename="query_applypriv")
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            path="/query/applyforprivileges/",
+            data={
+                "title": "gaussdb table privilege",
+                "group_name": self.group.group_name,
+                "instance_name": self.slave.instance_name,
+                "priv_type": "2",
+                "db_name": self.db_name,
+                "table_list[]": ["sql_users"],
+                "valid_date": date.today() + timedelta(days=1),
+                "limit_num": "10",
+            },
+        )
+        data = json.loads(response.content.decode())
+
+        self.assertEqual(data["status"], 1)
+        self.assertEqual(data["msg"], "仅 MySQL 支持表级查询权限申请")
+        self.assertFalse(
+            QueryPrivilegesApply.objects.filter(
+                title="gaussdb table privilege"
+            ).exists()
         )
 
     def test_query_priv_apply_list_with_query_review_perm(self):
@@ -310,7 +352,7 @@ class TestQueryPrivilegesCheck(TestCase):
             type="slave",
             db_type="mysql",
             host=settings.DATABASES["default"]["HOST"],
-            port=settings.DATABASES["default"]["PORT"],
+            port=settings.DATABASES["default"]["PORT"] or 0,
             user=settings.DATABASES["default"]["USER"],
             password=settings.DATABASES["default"]["PASSWORD"],
         )
@@ -706,7 +748,7 @@ class TestQueryPrivModify(TestCase):
             type="slave",
             db_type="mysql",
             host=settings.DATABASES["default"]["HOST"],
-            port=settings.DATABASES["default"]["PORT"],
+            port=settings.DATABASES["default"]["PORT"] or 0,
             user=settings.DATABASES["default"]["USER"],
             password=settings.DATABASES["default"]["PASSWORD"],
         )
