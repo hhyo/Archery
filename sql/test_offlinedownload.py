@@ -917,8 +917,10 @@ class TestOfflineDownload(TestCase):
         mock_storage_instance.exists.return_value = False  # 文件不存在
 
         # 创建请求对象
+        self.workflow.file_name = "missing.zip"
+        self.workflow.save()
         request = HttpRequest()
-        request.GET = {"file_name": "missing.zip", "workflow_id": "123"}
+        request.GET = {"workflow_id": str(self.workflow.id)}
         request.method = "GET"
         request.user = self.superuser
 
@@ -934,7 +936,8 @@ class TestOfflineDownload(TestCase):
         self.assertIsNotNone(audit_entry)
         self.assertEqual(audit_entry.action, "离线下载")
         self.assertIn(
-            "工单id：123，文件：missing.zip，error:文件不存在", audit_entry.extra_info
+            f"工单id：{self.workflow.id}，文件：missing.zip，error:文件不存在",
+            audit_entry.extra_info,
         )
         self.assertEqual(audit_entry.user_id, self.superuser.id)
 
@@ -963,8 +966,10 @@ class TestOfflineDownload(TestCase):
         mock_storage_instance.open.return_value = BytesIO(b"zip-data")
         mock_storage_instance.size.return_value = 8
 
+        self.workflow.file_name = "export.zip"
+        self.workflow.save()
         request = HttpRequest()
-        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.GET = {"workflow_id": str(self.workflow.id)}
         request.method = "GET"
         request.user = self.superuser
 
@@ -992,8 +997,10 @@ class TestOfflineDownload(TestCase):
         mock_storage_instance.exists.return_value = True
         mock_storage_instance.url.return_value = "https://example.com/export.zip"
 
+        self.workflow.file_name = "export.zip"
+        self.workflow.save()
         request = HttpRequest()
-        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.GET = {"workflow_id": str(self.workflow.id)}
         request.method = "GET"
         request.user = self.superuser
 
@@ -1018,8 +1025,10 @@ class TestOfflineDownload(TestCase):
         mock_storage_instance.exists.return_value = True
         mock_storage_instance.open.side_effect = Exception("open failed")
 
+        self.workflow.file_name = "export.zip"
+        self.workflow.save()
         request = HttpRequest()
-        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.GET = {"workflow_id": str(self.workflow.id)}
         request.method = "GET"
         request.user = self.superuser
 
@@ -1046,8 +1055,10 @@ class TestOfflineDownload(TestCase):
         mock_storage_instance.exists.return_value = True
         mock_storage_instance.url.side_effect = Exception("url failed")
 
+        self.workflow.file_name = "export.zip"
+        self.workflow.save()
         request = HttpRequest()
-        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.GET = {"workflow_id": str(self.workflow.id)}
         request.method = "GET"
         request.user = self.superuser
 
@@ -1069,8 +1080,10 @@ class TestOfflineDownload(TestCase):
         mock_storage.return_value = mock_storage_instance
         mock_storage_instance.exists.side_effect = Exception("exists failed")
 
+        self.workflow.file_name = "export.zip"
+        self.workflow.save()
         request = HttpRequest()
-        request.GET = {"file_name": "export.zip", "workflow_id": "123"}
+        request.GET = {"workflow_id": str(self.workflow.id)}
         request.method = "GET"
         request.user = self.superuser
 
@@ -1092,8 +1105,10 @@ class TestOfflineDownload(TestCase):
         mock_storage.return_value = mock_storage_instance
         mock_storage_instance.exists.return_value = False
 
+        self.workflow.file_name = "missing.zip"
+        self.workflow.save()
         request = HttpRequest()
-        request.GET = {"file_name": "missing.zip", "workflow_id": "123"}
+        request.GET = {"workflow_id": str(self.workflow.id)}
         request.method = "HEAD"
         request.user = self.superuser
 
