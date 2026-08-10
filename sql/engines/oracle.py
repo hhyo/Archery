@@ -37,10 +37,14 @@ class OracleEngine(EngineBase):
             return self.conn
         if self.sid:
             dsn = oracledb.makedsn(self.host, self.port, self.sid)
-            self.conn = oracledb.connect(self.user, self.password, dsn=dsn)
+            self.conn = oracledb.connect(
+                user=self.user, password=self.password, dsn=dsn
+            )
         elif self.service_name:
             dsn = oracledb.makedsn(self.host, self.port, service_name=self.service_name)
-            self.conn = oracledb.connect(self.user, self.password, dsn=dsn)
+            self.conn = oracledb.connect(
+                user=self.user, password=self.password, dsn=dsn
+            )
         else:
             raise ValueError("sid 和 dsn 均未填写, 请联系管理页补充该实例配置.")
         return self.conn
