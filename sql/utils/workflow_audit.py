@@ -298,7 +298,7 @@ class AuditV2:
         # dml免审批的级数
         auto_dml_level = int(self.sys_config.get("auto_dml_level", 0))
         # 只对DML处理免审批级数
-        if self.workflow.syntax_type == 2 and auto_dml_level > 0:
+        if getattr(self.workflow, "syntax_type", 0) == 2 and auto_dml_level > 0:
             dml_max_rows = int(self.sys_config.get("auto_dml_max_affected_rows", 10000))
             if self.all_affected_rows <= dml_max_rows:
                 n = auto_dml_level
