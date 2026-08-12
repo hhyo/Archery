@@ -364,6 +364,19 @@ class TestExecuteSql(TestCase):
             db_name="some_db",
             syntax_type=1,
         )
+        self.wf_executing = SqlWorkflow.objects.create(
+            workflow_name="some_name",
+            group_id=1,
+            group_name="g1",
+            engineer_display="",
+            audit_auth_groups="some_group",
+            create_time=datetime.datetime.now(),
+            status="workflow_executing",
+            is_backup=True,
+            instance=self.ins,
+            db_name="some_db",
+            syntax_type=1,
+        )
         SqlWorkflowContent.objects.create(
             workflow=self.wf,
             sql_content="some_sql",
@@ -407,6 +420,24 @@ class TestExecuteSql(TestCase):
             operation_info="系统定时执行工单",
             operator="",
             operator_display="系统",
+        )
+
+    @patch("sql.utils.execute_sql.Audit")
+    @patch("sql.engines.mysql.MysqlEngine.execute_workflow")
+    @patch("sql.engines.get_engine")
+    def test_execute_in_executing(self, _get_engine, _execute_workflow, _audit):
+        _audit.detail_by_workflow_id.return_value.audit_id = 1
+        result = execute(self.wf_executing.id)
+        _audit.add_log.assert_called_with(
+            audit_id=1,
+            operation_type=5,
+            operation_type_desc="执行工单发生异常",
+            operation_info="请检查工单执行情况",
+            operator="",
+            operator_display="系统",
+        )
+        assert result.error == (
+            f"任务[{self.wf_executing.id}]被重试。可能是执行时发生超时，请检查数据库会话及执行状态,或联系管理员",
         )
 
     @patch("sql.utils.execute_sql.notify_for_execute")
