@@ -609,7 +609,7 @@ class WorkflowAuditListSerializer(serializers.ModelSerializer):
         model = WorkflowAudit
         exclude = [
             "group_id",
-            "workflow_id",
+            #"workflow_id",
             "workflow_remark",
             "next_audit",
             "create_user",
