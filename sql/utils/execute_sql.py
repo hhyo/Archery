@@ -112,9 +112,12 @@ def execute_callback(task):
 
     # DDL工单结束后清空实例资源缓存
     if workflow.syntax_type == 1:
-        r = get_redis_connection("default")
-        for key in r.scan_iter(match="*insRes*", count=2000):
-            r.delete(key)
+        try:
+            r = get_redis_connection("default")
+            for key in r.scan_iter(match="*insRes*", count=2000):
+                r.delete(key)
+        except NotImplementedError:
+            logger.debug("当前缓存后端不支持Redis扫描，跳过实例资源缓存清理")
 
     # 开启了Execute阶段通知参数才发送消息通知
     sys_config = SysConfig()

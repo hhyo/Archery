@@ -14,6 +14,7 @@
                         <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                         <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                         <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
+                        <optgroup id="optgroup-gaussdb" label="GaussDB"></optgroup>
                     </select>
                 </div>
                 <div class="form-group">
@@ -617,7 +618,7 @@
                     url: "/api/v1/sqlquery/instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql', 'mssql', 'oracle', 'clickhouse']
+                        db_type: ['mysql', 'mssql', 'oracle', 'clickhouse', 'gaussdb']
                     },
                     complete: function () {
                         if ($('#instance_name').val()) {
@@ -633,6 +634,7 @@
                             $("#optgroup-mssql").empty();
                             $("#optgroup-oracle").empty();
                             $("#optgroup-clickhouse").empty();
+                            $("#optgroup-gaussdb").empty();
                             console.log(instance_result);
                             for (let i = 0; i < result.length; i++) {
                                 let instance_name = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
@@ -644,6 +646,8 @@
                                     $("#optgroup-oracle").append(instance_name);
                                 } else if (result[i]['db_type'] === 'clickhouse') {
                                     $("#optgroup-clickhouse").append(instance_name);
+                                } else if (result[i]['db_type'] === 'gaussdb') {
+                                    $("#optgroup-gaussdb").append(instance_name);
                                 }
                             }
                             $('#instance_name').selectpicker('render');
@@ -666,8 +670,14 @@
             var _ins_name = $("#instance_name").val();
             var _ind = instance_result.findIndex((value)=>value.instance_name==_ins_name);
             var _db_type = _ind >= 0 ? instance_result[_ind]['db_type'] : '';
-            if (_db_type === 'mysql') {
+            if (_db_type === 'mysql' || _db_type === 'gaussdb') {
                 $('#obj_type option').prop('disabled', false);
+                if (_db_type === 'gaussdb') {
+                    $('#obj_type option[value="event"]').prop('disabled', true);
+                    if ($('#obj_type').val() === 'event') {
+                        $('#obj_type').val('table');
+                    }
+                }
             } else {
                 // 非MySQL仅显示“表”
                 $('#obj_type option').each(function () {
@@ -737,8 +747,14 @@
         function getObjectList() {
             var obj_type = $('#obj_type').val() || 'table';
             var db_type = getCurrentDbType();
-            // 非MySQL实例强制重置为 table
-            if (db_type && db_type !== 'mysql' && obj_type !== 'table') {
+            // 非 MySQL/GaussDB 实例强制重置为 table；GaussDB 不支持 MySQL event。
+            if (
+                db_type
+                && (
+                    (db_type !== 'mysql' && db_type !== 'gaussdb' && obj_type !== 'table')
+                    || (db_type === 'gaussdb' && obj_type === 'event')
+                )
+            ) {
                 $('#obj_type').val('table');
                 $('#obj_type').selectpicker('refresh');
                 obj_type = 'table';
@@ -791,7 +807,7 @@
                                         '<td><a href="javascript:;" onclick="showTableInfo(\'' + instance_name + '\',\'' + db_name + '\',\'' + result[k][i][0] + '\')" >' +
                                         '<code class="xref">' + result[k][i][0] + '</code>' +
                                         '</a></td>' +
-                                        '<td>' + result[k][i][1] + '</td>' +
+                                        '<td>' + (result[k][i][1] == null ? '' : result[k][i][1]) + '</td>' +
                                         '</tr>';
                                     // console.log(indexTableStr);
                                     $('#indexTable').append(indexTableStr);
@@ -836,7 +852,8 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
-                        if (inst_db_type === 'mysql') {
+                        var tableRenderType = inst_db_type === 'gaussdb' ? 'mysql' : inst_db_type;
+                        if (inst_db_type === 'mysql' || inst_db_type === 'gaussdb') {
                             showModalBody('mysql');
 
                             $("#create-table-sql").bootstrapTable('destroy').bootstrapTable({
@@ -889,7 +906,7 @@
                                 "sortable": true
                             });
                         });
-                        $("#field-list-" + inst_db_type).bootstrapTable('destroy').bootstrapTable({
+                        $("#field-list-" + tableRenderType).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['desc']['rows'],
                             columns: columns_field,
@@ -917,7 +934,7 @@
                                 "sortable": true
                             });
                         });
-                        $("#index-list-" + inst_db_type).bootstrapTable('destroy').bootstrapTable({
+                        $("#index-list-" + tableRenderType).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['index']['rows'],
                             columns: columns_index,
@@ -1063,7 +1080,7 @@
                     instance_name: ins_name,
                     db_name: db_name,
                     view_name: view_name,
-                    db_type: 'mysql'
+                    db_type: getCurrentDbType()
                 },
                 success: function (data) {
                     if (data.status === 0) {
@@ -1119,7 +1136,7 @@
                     instance_name: ins_name,
                     db_name: db_name,
                     trigger_name: trigger_name,
-                    db_type: 'mysql'
+                    db_type: getCurrentDbType()
                 },
                 success: function (data) {
                     if (data.status === 0) {
@@ -1182,7 +1199,7 @@
                     instance_name: ins_name,
                     db_name: db_name,
                     proc_name: proc_name,
-                    db_type: 'mysql'
+                    db_type: getCurrentDbType()
                 },
                 success: function (data) {
                     if (data.status === 0) {
@@ -1223,7 +1240,7 @@
                     instance_name: ins_name,
                     db_name: db_name,
                     func_name: func_name,
-                    db_type: 'mysql'
+                    db_type: getCurrentDbType()
                 },
                 success: function (data) {
                     if (data.status === 0) {

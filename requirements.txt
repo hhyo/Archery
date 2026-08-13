@@ -1,4 +1,4 @@
-Django>=4.2
+Django>=4.2,<5.1.0
 mysqlclient==2.*
 requests==2.31.0
 simplejson==3.17.2

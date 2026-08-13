@@ -1,5 +1,5 @@
 pytest
-pytest-django
+pytest-django<4.9.0
 pytest-mock
 pytest-cov
 codecov

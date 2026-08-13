@@ -70,10 +70,11 @@ def table_info(request):
                 db_name=db_name, tb_name=tb_name
             )
 
-            # mysql和clickhouse数据库可以获取创建表格的SQL语句
-            if instance.db_type in ("mysql", "clickhouse"):
+            # mysql、clickhouse 和 gaussdb 数据库可以获取创建表格的SQL语句
+            if instance.db_type in ("mysql", "clickhouse", "gaussdb"):
+                quote = "`" if instance.db_type in ("mysql", "clickhouse") else ""
                 _create_sql = query_engine.query(
-                    db_name, "show create table `%s`;" % tb_name
+                    db_name, f"show create table {quote}{tb_name}{quote};"
                 )
                 data["create_sql"] = _create_sql.rows
             res = {"status": 0, "data": data}
@@ -91,16 +92,18 @@ def table_info(request):
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def view_list(request):
-    """数据字典获取视图列表（仅MySQL）"""
-    return _dict_list(request, db_type_required="mysql", engine_method="get_views_list")
+    """数据字典获取视图列表"""
+    return _dict_list(
+        request, db_type_required=("mysql", "gaussdb"), engine_method="get_views_list"
+    )
 
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def view_info(request):
-    """数据字典获取视图详情（仅MySQL）"""
+    """数据字典获取视图详情"""
     return _dict_detail(
         request,
-        db_type_required="mysql",
+        db_type_required=("mysql", "gaussdb"),
         engine_method="get_view_detail",
         name_param="view_name",
         engine_kwarg="view_name",
@@ -109,18 +112,20 @@ def view_info(request):
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def trigger_list(request):
-    """数据字典获取触发器列表（仅MySQL）"""
+    """数据字典获取触发器列表"""
     return _dict_list(
-        request, db_type_required="mysql", engine_method="get_triggers_list"
+        request,
+        db_type_required=("mysql", "gaussdb"),
+        engine_method="get_triggers_list",
     )
 
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def trigger_info(request):
-    """数据字典获取触发器详情（仅MySQL）"""
+    """数据字典获取触发器详情"""
     return _dict_detail(
         request,
-        db_type_required="mysql",
+        db_type_required=("mysql", "gaussdb"),
         engine_method="get_trigger_detail",
         name_param="trigger_name",
         engine_kwarg="trigger_name",
@@ -129,18 +134,20 @@ def trigger_info(request):
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def procedure_list(request):
-    """数据字典获取存储过程列表（仅MySQL）"""
+    """数据字典获取存储过程列表"""
     return _dict_list(
-        request, db_type_required="mysql", engine_method="get_procedures_list"
+        request,
+        db_type_required=("mysql", "gaussdb"),
+        engine_method="get_procedures_list",
     )
 
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def procedure_info(request):
-    """数据字典获取存储过程详情（仅MySQL）"""
+    """数据字典获取存储过程详情"""
     return _dict_detail(
         request,
-        db_type_required="mysql",
+        db_type_required=("mysql", "gaussdb"),
         engine_method="get_procedure_detail",
         name_param="proc_name",
         engine_kwarg="proc_name",
@@ -149,18 +156,20 @@ def procedure_info(request):
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def function_list(request):
-    """数据字典获取函数列表（仅MySQL）"""
+    """数据字典获取函数列表"""
     return _dict_list(
-        request, db_type_required="mysql", engine_method="get_functions_list"
+        request,
+        db_type_required=("mysql", "gaussdb"),
+        engine_method="get_functions_list",
     )
 
 
 @permission_required("sql.menu_data_dictionary", raise_exception=True)
 def function_info(request):
-    """数据字典获取函数详情（仅MySQL）"""
+    """数据字典获取函数详情"""
     return _dict_detail(
         request,
-        db_type_required="mysql",
+        db_type_required=("mysql", "gaussdb"),
         engine_method="get_function_detail",
         name_param="func_name",
         engine_kwarg="func_name",
@@ -193,8 +202,12 @@ def _dict_list(request, db_type_required, engine_method):
     db_name = request.GET.get("db_name", "")
     db_type = request.GET.get("db_type", "")
 
-    if db_type_required and db_type != db_type_required:
-        res = {"status": 1, "msg": "仅MySQL支持该功能"}
+    if db_type_required and db_type not in (
+        db_type_required
+        if isinstance(db_type_required, (tuple, list))
+        else (db_type_required,)
+    ):
+        res = {"status": 1, "msg": "该数据库类型不支持此功能"}
         return HttpResponse(
             json.dumps(res, cls=ExtendJSONEncoder, bigint_as_string=True),
             content_type="application/json",
@@ -228,8 +241,12 @@ def _dict_detail(request, db_type_required, engine_method, name_param, engine_kw
     obj_name = request.GET.get(name_param, "")
     db_type = request.GET.get("db_type", "")
 
-    if db_type_required and db_type != db_type_required:
-        res = {"status": 1, "msg": "仅MySQL支持该功能"}
+    if db_type_required and db_type not in (
+        db_type_required
+        if isinstance(db_type_required, (tuple, list))
+        else (db_type_required,)
+    ):
+        res = {"status": 1, "msg": "该数据库类型不支持此功能"}
         return HttpResponse(
             json.dumps(res, cls=ExtendJSONEncoder, bigint_as_string=True),
             content_type="application/json",
@@ -277,7 +294,7 @@ def export(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mssql", "oracle", "clickhouse"]
+            request.user, db_type=["mysql", "mssql", "oracle", "clickhouse", "gaussdb"]
         ).get(instance_name=instance_name)
         query_engine = get_engine(instance=instance)
     except Instance.DoesNotExist:

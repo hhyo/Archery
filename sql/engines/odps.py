@@ -109,7 +109,7 @@ class ODPSEngine(EngineBase):
 
         # 存在limit，替换limit; 不存在，添加limit
         if re.search("limit", sql):
-            sql = re.sub("limit.+(\d+)", "limit " + str(limit_num), sql)
+            sql = re.sub(r"limit.+(\d+)", "limit " + str(limit_num), sql)
         else:
             if sql.strip()[-1] == ";":
                 sql = sql[:-1]
