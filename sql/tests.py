@@ -1796,7 +1796,7 @@ class TestDataDictionary(TestCase):
         }
         r = self.client.get(path="/data_dictionary/view_list/", data=data)
         self.assertDictEqual(
-            json.loads(r.content), {"status": 1, "msg": "仅MySQL支持该功能"}
+            json.loads(r.content), {"status": 1, "msg": "该数据库类型不支持此功能"}
         )
 
     @patch("sql.data_dictionary.get_engine")
@@ -1937,7 +1937,7 @@ class TestDataDictionary(TestCase):
         }
         r = self.client.get(path="/data_dictionary/event_info/", data=data)
         self.assertDictEqual(
-            json.loads(r.content), {"status": 1, "msg": "仅MySQL支持该功能"}
+            json.loads(r.content), {"status": 1, "msg": "该数据库类型不支持此功能"}
         )
 
     def test_export_instance_does_not_exist(self):

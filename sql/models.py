@@ -144,6 +144,7 @@ DB_TYPE_CHOICES = (
     ("mssql", "MsSQL"),
     ("redis", "Redis"),
     ("pgsql", "PgSQL"),
+    ("gaussdb", "GaussDB"),
     ("oracle", "Oracle"),
     ("mongo", "Mongo"),
     ("phoenix", "Phoenix"),

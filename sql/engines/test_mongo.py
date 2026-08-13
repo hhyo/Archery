@@ -250,6 +250,8 @@ class TestExecuteShellSql:
     def test_updateOne_with_upsert(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 0
         mock_result.modified_count = 1
         mock_coll.update_one.return_value = mock_result
 
@@ -264,6 +266,8 @@ class TestExecuteShellSql:
     def test_updateMany(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 5
         mock_result.modified_count = 5
         mock_coll.update_many.return_value = mock_result
 
@@ -276,6 +280,8 @@ class TestExecuteShellSql:
     def test_update_with_multi(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 3
         mock_result.modified_count = 3
         mock_coll.update_many.return_value = mock_result
 
@@ -289,6 +295,8 @@ class TestExecuteShellSql:
     def test_update_without_multi(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 1
         mock_result.modified_count = 1
         mock_coll.update_one.return_value = mock_result
 
@@ -302,6 +310,8 @@ class TestExecuteShellSql:
     def test_replaceOne(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 1
         mock_result.modified_count = 1
         mock_coll.replace_one.return_value = mock_result
 
@@ -314,6 +324,7 @@ class TestExecuteShellSql:
     def test_deleteOne(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 1
         mock_coll.delete_one.return_value = mock_result
 
@@ -326,6 +337,7 @@ class TestExecuteShellSql:
     def test_deleteMany(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 5
         mock_coll.delete_many.return_value = mock_result
 
@@ -338,6 +350,7 @@ class TestExecuteShellSql:
     def test_remove_justOne(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 1
         mock_coll.delete_one.return_value = mock_result
 
@@ -351,6 +364,7 @@ class TestExecuteShellSql:
     def test_remove_many(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 3
         mock_coll.delete_many.return_value = mock_result
 
@@ -559,6 +573,7 @@ class TestExecuteShellSql:
     def test_getCollection_syntax(self, mongo_engine):
         mock_coll = self._mock_collection(mongo_engine)
         mock_result = MagicMock()
+        mock_result.acknowledged = True
         mock_result.deleted_count = 2
         mock_coll.delete_many.return_value = mock_result
 
@@ -1234,12 +1249,8 @@ class TestQuery:
         self, mongo_engine
     ):
         _, _, mock_coll = self._mock_query_collection(mongo_engine)
-        find_result = MagicMock()
-        sort_result = MagicMock()
         limit_result = [{"name": "archery"}]
-        mock_coll.find.return_value = find_result
-        find_result.sort.return_value = sort_result
-        sort_result.limit.return_value.skip.return_value = limit_result
+        mock_coll.find.return_value = limit_result
         mongo_engine.close = MagicMock()
 
         result = mongo_engine.query(
@@ -1250,10 +1261,9 @@ class TestQuery:
         )
         assert result.error is None
         assert result.affected_rows == 1
-        mock_coll.find.assert_called_once_with({"a": 1}, {"name": 1})
-        find_result.sort.assert_called_once_with([("name", 1)])
-        sort_result.limit.assert_called_once_with(5)
-        sort_result.limit.return_value.skip.assert_called_once_with(2)
+        mock_coll.find.assert_called_once_with(
+            filter={"a": 1}, projection={"name": 1}, sort=[("name", 1)], limit=5, skip=2
+        )
         mongo_engine.close.assert_not_called()
 
     def test_query_explain_filters_server_info_and_ok(self, mongo_engine):

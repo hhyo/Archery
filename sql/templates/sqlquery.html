@@ -804,7 +804,8 @@
                 if (result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
                     need_describe_display = true
                     if (data.is_describe===undefined || !data.is_describe) {
-                        tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
+                        let m = result['full_sql'].match(/^show\s+create\s+table\s+([^;\s]+)/);
+                        tb_name = m ? m[1] : '';
                     }
                 }
                 if (data.is_describe || need_describe_display) {
@@ -1069,7 +1070,7 @@
                 else if (sql === 'show create table') {
                     sqlContent = "desc " + $("#table_name").val() + ";"
                 }
-            } else if (optgroup === "MySQL" || optgroup === "PgSQL" ) {
+            } else if (optgroup === "MySQL" || optgroup === "PgSQL" || optgroup === "GaussDB") {
                 //查看执行计划
                 if (sql === 'explain') {
                     sqlContent = 'explain ' + sqlContent
@@ -1254,6 +1255,7 @@
                 showRedisHelp: true,
                 showFormat: false, showExplain: false}),
             "PgSQL": createDisplayConfig({showSchemaName: true}),
+            "GaussDB": createDisplayConfig({showSchemaName: true}),
             "Mongo": createDisplayConfig({showFormat: false, showMongoHint: true}),
             "Phoenix": createDisplayConfig({showExplain: false}),
             "Cassandra": createDisplayConfig({showExplain: false}),
@@ -1310,6 +1312,10 @@
         });
 
         function get_instance(async) {
+            var instance_name = $("#instance_name").val();
+            if (!instance_name) {
+                return;
+            }
             optgroup_control(true);
             $("#db_name").empty();
             $('#db_name').selectpicker('render');
@@ -1366,16 +1372,20 @@
         $("#db_name").change(function () {
             // 清空表名列表
             tb_name_list = [];
+            var db_name = $("#db_name").val();
+            if (!db_name) {
+                return;
+            }
             $("#table_name").empty();
             $('#table_name').selectpicker('render');
             $('#table_name').selectpicker('refresh');
             $("#schema_name").empty();
             $('#schema_name').selectpicker('render');
             $('#schema_name').selectpicker('refresh');
-            // PgSQL需要选择模式再获取表
+            // PgSQL/GaussDB需要选择模式再获取表
             var optgroup = $('#instance_name :selected').parent().attr('label');
             var resource_type = "table";
-            if (optgroup === "PgSQL") {
+            if (optgroup === "PgSQL" || optgroup === "GaussDB") {
                 //获取schema
                 resource_type = "schema"
             }
@@ -1389,7 +1399,7 @@
                     resource_type: resource_type
                 },
                 complete: function () {
-                    if (optgroup === "PgSQL") {
+                    if (optgroup === "PgSQL" || optgroup === "GaussDB") {
                         //获取schema
                         $("#div-schema_name").show();
                         $("#schema_name").selectpicker('val', db_name);

@@ -106,8 +106,8 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             result["msg"] = f"无法校验查询语句权限，请联系管理员，错误信息：{msg}"
     # 其他类型实例仅校验库权限
     else:
-        # 先获取查询语句涉及的库，redis、mssql、pgsql特殊处理，仅校验当前选择的库
-        if instance.db_type in ["redis", "mssql", "pgsql"]:
+        # 先获取查询语句涉及的库，redis、mssql、pgsql/gaussdb特殊处理，仅校验当前选择的库
+        if instance.db_type in ["redis", "mssql", "pgsql", "gaussdb"]:
             dbs = [db_name]
         else:
             dbs = [
@@ -247,6 +247,11 @@ def query_priv_apply(request):
 
     # 库权限
     ins = Instance.objects.get(instance_name=instance_name)
+    if int(priv_type) == 2 and ins.db_type != "mysql":
+        result["status"] = 1
+        result["msg"] = "仅 MySQL 支持表级查询权限申请"
+        return HttpResponse(json.dumps(result), content_type="application/json")
+
     if int(priv_type) == 1:
         # 检查申请账号是否已拥库查询权限
         for db_name in db_list:
@@ -497,6 +502,8 @@ def _table_ref(sql_content, instance, db_name):
     :param db_name:
     :return:
     """
+    from sql.engines.goinception import GoInceptionEngine
+
     engine = GoInceptionEngine()
     query_tree = engine.query_print(
         instance=instance, db_name=db_name, sql=sql_content

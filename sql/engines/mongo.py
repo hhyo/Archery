@@ -250,7 +250,6 @@ class JsonDecoder:
             elif data_type == "ObjectId":
                 ojStr = re.findall(r"ObjectId\(.*?\)", outstr)  # 单独处理ObjectId
                 if len(ojStr) > 0:
-                    # return eval(ojStr[0])
                     id_str = re.findall(r"\(.*?\)", ojStr[0])
                     oid = id_str[0].replace(" ", "")[2:-2]
                     return ObjectId(oid)
@@ -1368,7 +1367,7 @@ class MongoEngine(EngineBase):
         sql = re.sub(r"^\s*//.*$", "", sql, flags=re.MULTILINE)
         if sql.startswith("explain"):
             sql = sql[7:] + ".explain()"
-            sql = re.sub("[;\s]*.explain\(\)$", ".explain()", sql).strip()
+            sql = re.sub(r"[;\s]*.explain\(\)$", ".explain()", sql).strip()
         result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
         pattern = re.compile(
             r"""^db\.(\w+\.?)+(?:\([\s\S]*\)(\s*;*)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)(\s*;*)$)"""
@@ -1405,11 +1404,9 @@ class MongoEngine(EngineBase):
         de = JsonDecoder()
 
         collection_name = query_dict["collection"]
-        if "method" in query_dict and query_dict["method"]:
-            method = query_dict["method"]
-            find_cmd = "collection." + method
-            if method == "index_information":
-                find_cmd += "()"
+        method = query_dict.get("method")
+
+        condition = None
         if "condition" in query_dict:
             if method == "aggregate":
                 condition = query_dict["condition"]
@@ -1424,76 +1421,109 @@ class MongoEngine(EngineBase):
                     else {}
                 )
                 condition = condition or {}
-            find_cmd += "(condition)"
+
+        projection = None
         if "projection" in query_dict and query_dict["projection"]:
             projection = de.decode(query_dict["projection"])
-            find_cmd = find_cmd[:-1] + ",projection)"
+
+        sorting = None
         if "sort" in query_dict and query_dict["sort"]:
             sorting = []
             for k, v in de.decode(query_dict["sort"]).items():
                 sorting.append((k, v))
-            find_cmd += ".sort(sorting)"
+
+        limit = None
         if (
             method == "find"
             and "limit" not in query_dict
             and "explain" not in query_dict
         ):
-            find_cmd += ".limit(limit_num)"
+            limit = limit_num
         if "limit" in query_dict and query_dict["limit"]:
             query_limit = int(query_dict["limit"])
             limit = min(limit_num, query_limit) if query_limit else limit_num
-            find_cmd += f".limit({limit})"
-        if "skip" in query_dict and query_dict["skip"]:
-            query_skip = int(query_dict["skip"])
-            find_cmd += f".skip({query_skip})"
-        if "count" in query_dict:
-            if condition:
-                find_cmd = "collection.count_documents(condition)"
-            else:
-                find_cmd = "collection.count_documents({})"
-        if "explain" in query_dict:
-            find_cmd += ".explain()"
 
-        # 覆盖 findOne/countDocuments/distinct/stats 对应的 pymongo 命令
-        if method == "findOne":
-            findone_filter = de.decode(query_dict.get("findOne_filter", "{}")) or {}
-            if "findOne_projection" in query_dict:
-                findone_projection = de.decode(query_dict["findOne_projection"])
-                find_cmd = "collection.find_one(findone_filter, findone_projection)"
-            else:
-                find_cmd = "collection.find_one(findone_filter)"
-        elif method == "countDocuments":
-            countdoc_filter = (
-                de.decode(query_dict.get("countDocuments_filter", "{}")) or {}
-            )
-            if "countDocuments_options" in query_dict:
-                countdoc_options = de.decode(query_dict["countDocuments_options"]) or {}
-                find_cmd = (
-                    "collection.count_documents(countdoc_filter, **countdoc_options)"
-                )
-            else:
-                find_cmd = "collection.count_documents(countdoc_filter)"
-        elif method == "distinct":
-            distinct_parts = self.__split_args(query_dict.get("distinct_args", "")) or [
-                ""
-            ]
-            distinct_field = distinct_parts[0].strip().strip('"').strip("'")
-            if len(distinct_parts) > 1 and distinct_parts[1].strip():
-                distinct_filter = de.decode(distinct_parts[1]) or {}
-                find_cmd = "collection.distinct(distinct_field, distinct_filter)"
-            else:
-                find_cmd = "collection.distinct(distinct_field)"
-        elif method == "stats":
-            find_cmd = 'db.command("collStats", collection_name)'
+        skip = None
+        if "skip" in query_dict and query_dict["skip"]:
+            skip = int(query_dict["skip"])
 
         try:
             conn = self.get_connection()
             db = conn[db_name]
             collection = db[collection_name]
 
-            # 执行语句
-            logger.debug(find_cmd)
-            cursor = eval(find_cmd)
+            # 使用字典映射方法名到函数对象
+            method_map = {
+                "find": collection.find,
+                "aggregate": collection.aggregate,
+                "index_information": collection.index_information,
+            }
+
+            logger.debug(f"Executing method: {method} on collection: {collection_name}")
+            cursor = None
+
+            if "count" in query_dict:
+                if condition:
+                    cursor = collection.count_documents(condition)
+                else:
+                    cursor = collection.count_documents({})
+            elif method == "findOne":
+                findone_filter = de.decode(query_dict.get("findOne_filter", "{}")) or {}
+                if "findOne_projection" in query_dict:
+                    findone_projection = de.decode(query_dict["findOne_projection"])
+                    cursor = collection.find_one(findone_filter, findone_projection)
+                else:
+                    cursor = collection.find_one(findone_filter)
+            elif method == "countDocuments":
+                countdoc_filter = (
+                    de.decode(query_dict.get("countDocuments_filter", "{}")) or {}
+                )
+                if "countDocuments_options" in query_dict:
+                    countdoc_options = (
+                        de.decode(query_dict["countDocuments_options"]) or {}
+                    )
+                    cursor = collection.count_documents(
+                        countdoc_filter, **countdoc_options
+                    )
+                else:
+                    cursor = collection.count_documents(countdoc_filter)
+            elif method == "distinct":
+                distinct_parts = self.__split_args(
+                    query_dict.get("distinct_args", "")
+                ) or [""]
+                distinct_field = distinct_parts[0].strip().strip('"').strip("'")
+                if len(distinct_parts) > 1 and distinct_parts[1].strip():
+                    distinct_filter = de.decode(distinct_parts[1]) or {}
+                    cursor = collection.distinct(distinct_field, distinct_filter)
+                else:
+                    cursor = collection.distinct(distinct_field)
+            elif method == "stats":
+                cursor = db.command("collStats", collection_name)
+            elif method in method_map:
+                func = method_map[method]
+                if method == "index_information":
+                    cursor = func()
+                elif method == "aggregate":
+                    cursor = func(condition)
+                elif method == "find":
+                    kwargs = {}
+                    if condition:
+                        kwargs["filter"] = condition
+                    if projection:
+                        kwargs["projection"] = projection
+                    if skip is not None:
+                        kwargs["skip"] = skip
+                    if limit is not None:
+                        kwargs["limit"] = limit
+                    if sorting is not None:
+                        kwargs["sort"] = sorting
+
+                    cursor = func(**kwargs)
+
+                    if "explain" in query_dict:
+                        cursor = cursor.explain()
+            else:
+                raise mongo_error(f"暂不支持的查询方法: {method}")
 
             columns = []
             rows = []

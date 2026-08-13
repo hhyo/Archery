@@ -57,6 +57,22 @@ def second_instance(db):
     ins.delete()
 
 
+@pytest.fixture
+def gaussdb_instance(db):
+    ins = Instance.objects.create(
+        instance_name="test_gaussdb",
+        type="master",
+        db_type="gaussdb",
+        host="127.0.0.3",
+        port=5432,
+        user="ins_user",
+        password="some_str",
+        db_name="postgres",
+    )
+    yield ins
+    ins.delete()
+
+
 def response_json(response):
     return json.loads(response.content)
 
@@ -257,6 +273,30 @@ class TestParamList:
             }
         ]
 
+    @patch("sql.instance.get_engine")
+    def test_param_list_seeds_builtin_gaussdb_templates(
+        self, mock_get_engine, client_with_super_user, gaussdb_instance
+    ):
+        mock_get_engine.return_value.get_variables.return_value = ResultSet(
+            rows=(
+                ("statement_timeout", "0"),
+                ("work_mem", "4MB"),
+                ("max_connections", "5000"),
+            )
+        )
+
+        response = client_with_super_user.post(
+            "/param/list/",
+            data={"instance_id": gaussdb_instance.id, "editable": "true"},
+        )
+
+        rows = response_json(response)
+        assert {row["variable_name"] for row in rows} == {
+            "statement_timeout",
+            "work_mem",
+        }
+        assert ParamTemplate.objects.filter(db_type="gaussdb").count() >= 3
+
 
 @pytest.mark.django_db
 class TestParamHistory:
@@ -335,6 +375,60 @@ class TestParamEdit:
                 "instance_id": master_instance.id,
                 "variable_name": "binlog_format",
                 "runtime_value": "ROW",
+            },
+        )
+
+        assert response_json(response) == {
+            "status": 1,
+            "msg": "请先在参数模板中配置该参数！",
+            "data": [],
+        }
+
+    @patch("sql.instance.get_engine")
+    def test_param_edit_rejects_template_from_other_db_type(
+        self, mock_get_engine, client_with_super_user, gaussdb_instance
+    ):
+        ParamTemplate.objects.create(
+            db_type="mysql",
+            variable_name="binlog_format",
+            default_value="ROW",
+            editable=True,
+        )
+        mock_get_engine.return_value.escape_string.side_effect = lambda value: value
+
+        response = client_with_super_user.post(
+            "/param/edit/",
+            data={
+                "instance_id": gaussdb_instance.id,
+                "variable_name": "binlog_format",
+                "runtime_value": "STATEMENT",
+            },
+        )
+
+        assert response_json(response) == {
+            "status": 1,
+            "msg": "请先在参数模板中配置该参数！",
+            "data": [],
+        }
+
+    @patch("sql.instance.get_engine")
+    def test_param_edit_rejects_non_editable_template(
+        self, mock_get_engine, client_with_super_user, master_instance
+    ):
+        ParamTemplate.objects.create(
+            db_type="mysql",
+            variable_name="max_connections",
+            default_value="151",
+            editable=False,
+        )
+        mock_get_engine.return_value.escape_string.side_effect = lambda value: value
+
+        response = client_with_super_user.post(
+            "/param/edit/",
+            data={
+                "instance_id": master_instance.id,
+                "variable_name": "max_connections",
+                "runtime_value": "200",
             },
         )
 

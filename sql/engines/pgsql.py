@@ -192,13 +192,19 @@ class PgSQLEngine(EngineBase):
             max_execution_time = kwargs.get("max_execution_time", 0)
             cursor = conn.cursor()
             try:
-                cursor.execute(f"SET statement_timeout TO {max_execution_time};")
+                cursor.execute(
+                    "SET statement_timeout TO %s;", (int(max_execution_time),)
+                )
             except:
                 pass
             cursor.execute("SET transaction ISOLATION LEVEL READ COMMITTED READ ONLY;")
             if schema_name:
+                from psycopg2 import sql as pg_sql
+
                 cursor.execute(
-                    f"SET search_path TO %(schema_name)s;", {"schema_name": schema_name}
+                    pg_sql.SQL("SET search_path TO {};").format(
+                        pg_sql.Identifier(schema_name)
+                    )
                 )
             cursor.execute(sql, parameters)
             # effect_row = cursor.rowcount
