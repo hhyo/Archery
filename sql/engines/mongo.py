@@ -13,6 +13,7 @@ from dateutil.parser import parse
 from bson.objectid import ObjectId
 from bson.int64 import Int64
 from bson.regex import Regex
+from bson.decimal128 import Decimal128
 
 from sql.utils.data_masking import data_masking
 
@@ -234,6 +235,7 @@ class JsonDecoder:
                     "ISODate",
                     "newISODate",
                     "NumberLong",
+                    "NumberDecimal",
                 ):  # ======类似的类型比较多还需单独处理，如int()等
                     data_type = outstr
                     for c in self.__remain_str():
@@ -273,6 +275,19 @@ class JsonDecoder:
                     id_str = re.findall(r"\(.*?\)", nuStr[0])
                     nlong = id_str[0].replace(" ", "")[2:-2]
                     return Int64(nlong)
+              elif data_type.replace(" ", "") in ("NumberDecimal",):
+                  decimal_str = re.findall(
+                      r"NumberDecimal\(.*?\)",
+                      outstr
+                  ) # 处理NumberDecimal
+                  if len(decimal_str) > 0:
+                      value = re.findall(
+                          r"\(.*?\)",
+                          decimal_str[0]
+                      )
+                      return Decimal128(
+                          value[0].replace(" ", "")[2:-2]
+                      )
             elif stripped:
                 return stripped
             raise Exception('Invalid symbol "%s"' % outstr)
