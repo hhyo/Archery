@@ -370,7 +370,7 @@ class MongoEngine(EngineBase):
             self.get_slave()  # 查询总数据要求在slave节点执行，会更新 self.host/port
             conn = self.get_connection(db_name)
             db = conn[db_name]
-            count = db[table_name].count_documents({})
+            count = db[table_name].estimated_document_count({})
             return count
         except Exception as e:
             logger.debug("get_table_conut:" + str(e))
