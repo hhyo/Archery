@@ -44,6 +44,7 @@ def databases(request):
         cnf_dbs[f"{db['db_name']}"] = db
 
     query_engine = get_engine(instance=instance)
+    query_engine.is_superuser = getattr(request.user, "is_superuser", False)
     query_result = query_engine.get_all_databases_summary()
     if not query_result.error:
         # 获取数据库关联用户信息
