@@ -11,7 +11,7 @@ import re
 import shlex
 
 import redis
-import rediscluster
+from redis.cluster import RedisCluster
 import logging
 import traceback
 
@@ -28,8 +28,9 @@ class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name
         if self.mode == "cluster":
-            return rediscluster.RedisCluster(
-                startup_nodes=[{"host": self.host, "port": self.port}],
+            return RedisCluster(
+                host=self.host,
+                port=self.port,
                 username=self.user,
                 password=self.password or None,
                 encoding_errors="ignore",

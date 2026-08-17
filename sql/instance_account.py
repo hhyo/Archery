@@ -179,76 +179,24 @@ def grant(request):
     engine = get_engine(instance=instance)
     if instance.db_type == "mysql":
         user_host = request.POST.get("user_host")
-        op_type = int(request.POST.get("op_type"))
-        priv_type = int(request.POST.get("priv_type"))
-        privs = json.loads(request.POST.get("privs"))
-
-        # escape
-        user_host = engine.escape_string(user_host)
-
-        # 全局权限
-        if priv_type == 0:
-            global_privs = privs["global_privs"]
-            if not all([global_privs]):
-                return JsonResponse(
-                    {"status": 1, "msg": "信息不完整，请确认后提交", "data": []}
-                )
-            global_privs = ["GRANT OPTION" if g == "GRANT" else g for g in global_privs]
-            if op_type == 0:
-                grant_sql = f"GRANT {','.join(global_privs)} ON *.* TO {user_host};"
-            elif op_type == 1:
-                grant_sql = f"REVOKE {','.join(global_privs)} ON *.* FROM {user_host};"
-
-        # 库权限
-        elif priv_type == 1:
-            db_privs = privs["db_privs"]
-            db_name = request.POST.getlist("db_name[]")
-            if not all([db_privs, db_name]):
-                return JsonResponse(
-                    {"status": 1, "msg": "信息不完整，请确认后提交", "data": []}
-                )
-            for db in db_name:
-                db_privs = ["GRANT OPTION" if d == "GRANT" else d for d in db_privs]
-                if op_type == 0:
-                    grant_sql += (
-                        f"GRANT {','.join(db_privs)} ON `{db}`.* TO {user_host};"
-                    )
-                elif op_type == 1:
-                    grant_sql += (
-                        f"REVOKE {','.join(db_privs)} ON `{db}`.* FROM {user_host};"
-                    )
-        # 表权限
-        elif priv_type == 2:
-            tb_privs = privs["tb_privs"]
-            db_name = request.POST.get("db_name")
-            tb_name = request.POST.getlist("tb_name[]")
-            if not all([tb_privs, db_name, tb_name]):
-                return JsonResponse(
-                    {"status": 1, "msg": "信息不完整，请确认后提交", "data": []}
-                )
-            for tb in tb_name:
-                tb_privs = ["GRANT OPTION" if t == "GRANT" else t for t in tb_privs]
-                if op_type == 0:
-                    grant_sql += f"GRANT {','.join(tb_privs)} ON `{db_name}`.`{tb}` TO {user_host};"
-                elif op_type == 1:
-                    grant_sql += f"REVOKE {','.join(tb_privs)} ON `{db_name}`.`{tb}` FROM {user_host};"
-        # 列权限
-        elif priv_type == 3:
-            col_privs = privs["col_privs"]
-            db_name = request.POST.get("db_name")
-            tb_name = request.POST.get("tb_name")
-            col_name = request.POST.getlist("col_name[]")
-            if not all([col_privs, db_name, tb_name, col_name]):
-                return JsonResponse(
-                    {"status": 1, "msg": "信息不完整，请确认后提交", "data": []}
-                )
-            for priv in col_privs:
-                if op_type == 0:
-                    grant_sql += f"GRANT {priv}(`{'`,`'.join(col_name)}`) ON `{db_name}`.`{tb_name}` TO {user_host};"
-                elif op_type == 1:
-                    grant_sql += f"REVOKE {priv}(`{'`,`'.join(col_name)}`) ON `{db_name}`.`{tb_name}` FROM {user_host};"
-        # 执行变更语句
-        exec_result = engine.execute(db_name="mysql", sql=grant_sql)
+        op_type = request.POST.get("op_type")
+        priv_type = request.POST.get("priv_type")
+        try:
+            privs = json.loads(request.POST.get("privs"))
+        except Exception:
+            return JsonResponse({"status": 1, "msg": "权限参数不合法", "data": []})
+        db_name = request.POST.getlist("db_name[]") or request.POST.get("db_name")
+        tb_name = request.POST.getlist("tb_name[]") or request.POST.get("tb_name")
+        col_name = request.POST.getlist("col_name[]")
+        exec_result = engine.grant_instance_user(
+            user_host=user_host,
+            op_type=op_type,
+            priv_type=priv_type,
+            privs=privs,
+            db_names=db_name,
+            tb_names=tb_name,
+            col_names=col_name,
+        )
     elif instance.db_type == "mongo":
         db_name_user = request.POST.get("db_name_user")
         roles = request.POST.getlist("roles[]")
@@ -266,6 +214,7 @@ def grant(request):
     engine.close()
     if exec_result.error:
         return JsonResponse({"status": 1, "msg": exec_result.error})
+    grant_sql = exec_result.full_sql
     return JsonResponse({"status": 0, "msg": "", "data": grant_sql})
 
 
@@ -346,16 +295,10 @@ def lock(request):
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
-    # escape
     engine = get_engine(instance=instance)
-    user_host = engine.escape_string(user_host)
-
-    if is_locked == "N":
-        lock_sql = f"ALTER USER {user_host} ACCOUNT LOCK;"
-    elif is_locked == "Y":
-        lock_sql = f"ALTER USER {user_host} ACCOUNT UNLOCK;"
-
-    exec_result = engine.execute(db_name="mysql", sql=lock_sql)
+    exec_result = engine.set_instance_user_lock(
+        user_host=user_host, is_locked=is_locked
+    )
     if exec_result.error:
         return JsonResponse({"status": 1, "msg": exec_result.error})
     return JsonResponse({"status": 0, "msg": "", "data": []})
