@@ -378,7 +378,11 @@ class MongoEngine(EngineBase):
             self.get_slave()  # 查询总数据要求在slave节点执行，会更新 self.host/port
             conn = self.get_connection(db_name)
             db = conn[db_name]
-            count = db[table_name].estimated_document_count({})
+            estimated_count  = db[table_name].estimated_document_count({}) # 先预估行数
+            if estimated_count < 1000000:  # 小于100万就精确统计行数，否则直接返回预估行数，避免大表精确统计的高负载
+                count = db[table_name].count_documents({})
+            else:
+                count = estimated_count
             return count
         except Exception as e:
             logger.debug("get_table_conut:" + str(e))
