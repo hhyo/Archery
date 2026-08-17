@@ -96,20 +96,21 @@ def test_get_connection_standalone_with_db_name(mock_redis, redis_engine):
     assert kwargs["db"] == "3"
 
 
-@patch("sql.engines.redis.rediscluster.RedisCluster")
+@patch("sql.engines.redis.RedisCluster")
 def test_get_connection_cluster(mock_redis_cluster, redis_cluster_engine):
     """测试集群模式获取连接"""
     redis_cluster_engine.get_connection()
     mock_redis_cluster.assert_called_once()
     kwargs = mock_redis_cluster.call_args.kwargs
-    assert kwargs["startup_nodes"] == [{"host": "127.0.0.1", "port": 7001}]
+    assert kwargs["host"] == "127.0.0.1"
+    assert kwargs["port"] == 7001
     assert kwargs["username"] == "ins_user"
     assert kwargs["password"] == "some_str"
     assert kwargs["decode_responses"] is True
     assert kwargs["ssl"] is False
 
 
-@patch("sql.engines.redis.rediscluster.RedisCluster")
+@patch("sql.engines.redis.RedisCluster")
 def test_get_connection_cluster_ignores_db_name(
     mock_redis_cluster, redis_cluster_engine
 ):
