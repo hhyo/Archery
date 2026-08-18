@@ -1395,7 +1395,8 @@ class MysqlEngine(EngineBase):
         """执行上线单，返回Review set"""
         # 判断实例是否只读
         read_only_result = self.query(sql="SELECT @@global.read_only;")
-        if getattr(read_only_result, "error", None):
+        if getattr(read_only_result, "error", None) or not read_only_result.rows:
+            error_msg = getattr(read_only_result, "error", None) or "查询结果为空"
             result = ReviewSet(
                 full_sql=workflow.sqlworkflowcontent.sql_content,
                 rows=[
@@ -1403,15 +1404,15 @@ class MysqlEngine(EngineBase):
                         id=1,
                         errlevel=2,
                         stagestatus="Execute Failed",
-                        errormessage=f"获取实例read_only状态失败: {read_only_result.error}",
+                        errormessage=f"获取实例read_only状态失败: {error_msg}",
                         sql=workflow.sqlworkflowcontent.sql_content,
                     )
                 ],
             )
-            result.error = (f"获取实例read_only状态失败: {read_only_result.error}",)
+            result.error = (f"获取实例read_only状态失败: {error_msg}",)
             return result
 
-        read_only = read_only_result.rows[0][0] if read_only_result.rows else None
+        read_only = read_only_result.rows[0][0]
         if read_only in (1, "ON"):
             result = ReviewSet(
                 full_sql=workflow.sqlworkflowcontent.sql_content,
