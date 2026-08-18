@@ -1176,6 +1176,11 @@ class MongoEngine(EngineBase):
             db_list = conn.list_database_names()
         except OperationFailure:
             db_list = [self.db_name]
+
+        is_superuser = getattr(self, "is_superuser", False)
+        if not is_superuser:
+            db_list = [db for db in db_list if db not in self.forbidden_databases]
+
         result.rows = db_list
         return result
 
@@ -1807,8 +1812,9 @@ class MongoEngine(EngineBase):
                 db_list = [self.db_name]
 
             rows = []
+            is_superuser = getattr(self, "is_superuser", False)
             for db_name in db_list:
-                if db_name in self.forbidden_databases:
+                if not is_superuser and db_name in self.forbidden_databases:
                     continue
                 db = conn[db_name]
                 collection_names = db.list_collection_names()
@@ -1888,8 +1894,9 @@ class MongoEngine(EngineBase):
                 db_list = [self.db_name]
 
             count = 0
+            is_superuser = getattr(self, "is_superuser", False)
             for db_name in db_list:
-                if db_name in self.forbidden_databases:
+                if not is_superuser and db_name in self.forbidden_databases:
                     continue
                 db = conn[db_name]
                 collection_names = db.list_collection_names()

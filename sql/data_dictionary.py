@@ -305,6 +305,7 @@ def export(request):
         dbs = [query_engine.escape_string(db_name)]
     # 管理员可以导出整个实例的字典信息
     elif request.user.is_superuser:
+        query_engine.is_superuser = True
         dbs = query_engine.get_all_databases().rows
     else:
         return JsonResponse(
