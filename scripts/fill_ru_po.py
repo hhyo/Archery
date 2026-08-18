@@ -5,6 +5,7 @@ Usage:
   python scripts/fill_ru_po.py common/locale/ru/LC_MESSAGES/django.po
   python scripts/fill_ru_po.py --targets
 """
+
 from __future__ import annotations
 
 import argparse
@@ -591,7 +592,9 @@ def _parse_entry(block: str) -> tuple[str, str]:
     for line in lines:
         if line.startswith("msgid "):
             mode = "id"
-            mid.append(line[6:].strip()[1:-1] if line[6:].strip().startswith('"') else "")
+            mid.append(
+                line[6:].strip()[1:-1] if line[6:].strip().startswith('"') else ""
+            )
             # properly extract quoted content
             m = re.match(r'msgid\s+"(.*)"\s*$', line)
             mid = [m.group(1)] if m else [""]
@@ -682,8 +685,7 @@ def fill_po(path: Path, *, force: bool = False) -> tuple[int, int, int]:
             return block
         filled_now += 1
         msgid_part = re.match(
-            r'(msgid (?:"(?:\\.|[^"\\])*"'
-            r'(?:\s*"(?:\\.|[^"\\])*")*)\s*)',
+            r'(msgid (?:"(?:\\.|[^"\\])*"' r'(?:\s*"(?:\\.|[^"\\])*")*)\s*)',
             block,
         )
         if not msgid_part:
@@ -707,7 +709,9 @@ def fill_po(path: Path, *, force: bool = False) -> tuple[int, int, int]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("po_files", nargs="*")
-    parser.add_argument("--targets", action="store_true", help="Fill the three target RU PO files")
+    parser.add_argument(
+        "--targets", action="store_true", help="Fill the three target RU PO files"
+    )
     parser.add_argument(
         "--force",
         action="store_true",

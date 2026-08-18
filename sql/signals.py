@@ -10,15 +10,13 @@ def ensure_workflow_log_column_widths():
     if connection.vendor != "mysql":
         return
     with connection.cursor() as cursor:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT CHARACTER_MAXIMUM_LENGTH
             FROM information_schema.COLUMNS
             WHERE TABLE_SCHEMA = DATABASE()
               AND TABLE_NAME = 'workflow_log'
               AND COLUMN_NAME = 'operation_type_desc'
-            """
-        )
+            """)
         row = cursor.fetchone()
         if not row or row[0] is None or row[0] >= 64:
             return

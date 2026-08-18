@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Extract gettext() msgids from templates/static JS and fill common djangojs.po (ru)."""
+
 from __future__ import annotations
 
 import re

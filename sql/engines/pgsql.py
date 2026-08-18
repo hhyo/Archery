@@ -390,9 +390,7 @@ class PgSQLEngine(EngineBase):
             conn = self.get_connection(db_name=db_name)
             conn.autocommit = False
             cursor = conn.cursor()
-            all_select = all(
-                _is_select_statement(s.rstrip(";")) for s in split_sql
-            )
+            all_select = all(_is_select_statement(s.rstrip(";")) for s in split_sql)
             if all_select:
                 cursor.execute(
                     "SET TRANSACTION ISOLATION LEVEL READ COMMITTED READ ONLY;"
@@ -409,9 +407,7 @@ class PgSQLEngine(EngineBase):
                     cursor.execute(statement)
                 if is_select:
                     colnames = (
-                        [d[0] for d in cursor.description]
-                        if cursor.description
-                        else []
+                        [d[0] for d in cursor.description] if cursor.description else []
                     )
                     rows = cursor.fetchmany(select_limit)
                     truncated = len(rows) >= select_limit

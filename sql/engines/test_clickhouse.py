@@ -377,9 +377,7 @@ def test_execute_check_select_mixed_with_insert(mock_get_engine, mock_instance):
     mock_get_engine.return_value = {"status": 1, "engine": "MergeTree"}
     engine = ClickHouseEngine(instance=mock_instance)
     _mock_config(engine)
-    ret = engine.execute_check(
-        db_name="db", sql="select 1; insert into t1 values (1);"
-    )
+    ret = engine.execute_check(db_name="db", sql="select 1; insert into t1 values (1);")
     assert ret.error_count >= 1
     assert any(
         "SELECT与DML/DDL不能在同一工单中提交" in (r.errormessage or "")
@@ -622,6 +620,7 @@ def test_execute_workflow_all_success(mock_execute, mock_instance):
     mock_execute.return_value = rs
     wf = _build_workflow_mock("insert into t values(1);insert into t values(2);")
     engine = ClickHouseEngine(instance=mock_instance)
+    _mock_config(engine)
     ret = engine.execute_workflow(wf)
     assert isinstance(ret, ReviewSet)
     assert len(ret.rows) == 2
@@ -638,6 +637,7 @@ def test_execute_workflow_select_stores_preview(mock_query, mock_instance):
     mock_query.return_value = rs
     wf = _build_workflow_mock("select id, name from t")
     engine = ClickHouseEngine(instance=mock_instance)
+    _mock_config(engine)
     ret = engine.execute_workflow(wf)
     assert ret.rows[0].errlevel == 0
     assert ret.rows[0].affected_rows == 2
@@ -658,6 +658,7 @@ def test_execute_workflow_fail_stop(mock_execute, mock_instance):
         "insert into t values(1);insert into t values(2);insert into t values(3);"
     )
     engine = ClickHouseEngine(instance=mock_instance)
+    _mock_config(engine)
     ret = engine.execute_workflow(wf)
     # 第一条成功，第二条失败，第三条标记为未执行
     assert ret.rows[0].errlevel == 0

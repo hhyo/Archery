@@ -1,4 +1,5 @@
 """Smoke tests for i18n configuration (zh-hans default, ru)."""
+
 from django.conf import settings
 from django.test import SimpleTestCase
 from django.urls import reverse
@@ -15,9 +16,7 @@ class I18nSettingsTests(SimpleTestCase):
         self.assertEqual(codes, {"ru", "zh-hans"})
 
     def test_locale_middleware_enabled(self):
-        self.assertIn(
-            "django.middleware.locale.LocaleMiddleware", settings.MIDDLEWARE
-        )
+        self.assertIn("django.middleware.locale.LocaleMiddleware", settings.MIDDLEWARE)
 
     def test_set_language_url(self):
         self.assertEqual(reverse("set_language"), "/i18n/setlang/")
