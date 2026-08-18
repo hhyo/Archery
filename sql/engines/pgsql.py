@@ -17,12 +17,127 @@ from common.config import SysConfig
 from common.utils.timer import FuncTimer
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
-from .models import ResultSet, ReviewSet, ReviewResult
+from .models import (
+    ResultSet,
+    ReviewSet,
+    ReviewResult,
+    serialize_select_rows,
+    apply_select_preview_limit,
+)
 from sql.utils.data_masking import simple_column_mask
 
 __author__ = "hhyo、yyukai"
 
 logger = logging.getLogger("default")
+
+_CTE_OUTER_KEYWORD = re.compile(
+    r"(select|insert|update|delete|merge|refresh|create|alter|drop|truncate)\b",
+    re.I,
+)
+
+
+def _cte_outer_keyword(sql: str) -> str:
+    """Return the main statement keyword after WITH cte definitions."""
+    header = re.match(r"^with\s+(?:recursive\s+)?", sql, re.I)
+    if not header:
+        return ""
+    i = header.end()
+    n = len(sql)
+    depth = 0
+    in_squote = in_dquote = in_line_comment = in_block_comment = False
+    while i < n:
+        if in_line_comment:
+            if sql[i] == "\n":
+                in_line_comment = False
+            i += 1
+            continue
+        if in_block_comment:
+            if sql[i : i + 2] == "*/":
+                in_block_comment = False
+                i += 2
+            else:
+                i += 1
+            continue
+        c = sql[i]
+        if in_squote:
+            if c == "'" and i + 1 < n and sql[i + 1] == "'":
+                i += 2
+                continue
+            if c == "'":
+                in_squote = False
+            i += 1
+            continue
+        if in_dquote:
+            if c == '"' and i + 1 < n and sql[i + 1] == '"':
+                i += 2
+                continue
+            if c == '"':
+                in_dquote = False
+            i += 1
+            continue
+        if c == "'":
+            in_squote = True
+            i += 1
+            continue
+        if c == '"':
+            in_dquote = True
+            i += 1
+            continue
+        if sql[i : i + 2] == "--":
+            in_line_comment = True
+            i += 2
+            continue
+        if sql[i : i + 2] == "/*":
+            in_block_comment = True
+            i += 2
+            continue
+        if c == "(":
+            depth += 1
+            i += 1
+            continue
+        if c == ")":
+            if depth > 0:
+                depth -= 1
+            i += 1
+            continue
+        if depth == 0:
+            matched = _CTE_OUTER_KEYWORD.match(sql, i)
+            if matched:
+                return matched.group(1).lower()
+        i += 1
+    return ""
+
+
+def _is_select_statement(statement: str) -> bool:
+    """True for SELECT and WITH ... SELECT. False for WITH ... INSERT/UPDATE/DELETE."""
+    try:
+        s = sqlparse.format(statement or "", strip_comments=True).strip()
+    except Exception:
+        s = (statement or "").strip()
+    if not s:
+        return False
+    if re.match(r"^select\b", s, re.I):
+        return True
+    if not re.match(r"^with\b", s, re.I):
+        return False
+    return _cte_outer_keyword(s) == "select"
+
+
+def _allow_select_in_workflow(config=None) -> bool:
+    """SysConfig allow_select_in_workflow; default True when unset."""
+    config = config or SysConfig()
+    val = config.get("allow_select_in_workflow", True)
+    if val is None or val == "":
+        return True
+    return bool(val)
+
+
+def _workflow_select_limit(config=None) -> int:
+    config = config or SysConfig()
+    try:
+        return max(1, int(config.get("admin_query_limit", 1000) or 1000))
+    except (TypeError, ValueError):
+        return 1000
 
 
 class PgSQLEngine(EngineBase):
@@ -256,7 +371,7 @@ class PgSQLEngine(EngineBase):
     def filter_sql(self, sql="", limit_num=0):
         # 对查询sql增加limit限制，# TODO limit改写待优化
         sql_lower = sql.lower().rstrip(";").strip()
-        if re.match(r"^select", sql_lower):
+        if _is_select_statement(sql):
             if re.search(r"limit\s+(\d+)$", sql_lower) is None:
                 if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
                     return f"{sql.rstrip(';')} limit {limit_num};"
@@ -264,7 +379,7 @@ class PgSQLEngine(EngineBase):
 
     def query_masking(self, db_name=None, sql="", resultset=None):
         """简单字段脱敏规则, 仅对select有效"""
-        if re.match(r"^select", sql, re.I):
+        if _is_select_statement(sql):
             filtered_result = simple_column_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:
@@ -279,20 +394,37 @@ class PgSQLEngine(EngineBase):
         line = 1
         critical_ddl_regex = config.get("critical_ddl_regex", "")
         p = re.compile(critical_ddl_regex)
+        allow_select = _allow_select_in_workflow(config)
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
+        has_select = False
+        has_change = False
         for statement in sqlparse.split(sql):
             statement = sqlparse.format(statement, strip_comments=True)
-            # 禁用语句
-            if re.match(r"^select", statement.lower()):
-                result = ReviewResult(
-                    id=line,
-                    errlevel=2,
-                    stagestatus="驳回不支持语句",
-                    errormessage="仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
-                    sql=statement,
-                )
+            is_select = _is_select_statement(statement)
+            # SELECT：默认允许走工单审批；关闭配置时保持原驳回
+            if is_select:
+                has_select = True
+                if not allow_select:
+                    result = ReviewResult(
+                        id=line,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage="仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
+                        sql=statement,
+                    )
+                else:
+                    result = ReviewResult(
+                        id=line,
+                        errlevel=0,
+                        stagestatus="Audit completed",
+                        errormessage="None",
+                        sql=statement,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
             # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
+                has_change = True
                 result = ReviewResult(
                     id=line,
                     errlevel=2,
@@ -303,6 +435,7 @@ class PgSQLEngine(EngineBase):
 
             # 正常语句
             else:
+                has_change = True
                 result = ReviewResult(
                     id=line,
                     errlevel=0,
@@ -317,6 +450,14 @@ class PgSQLEngine(EngineBase):
                 check_result.syntax_type = 1
             check_result.rows += [result]
             line += 1
+
+        if allow_select and has_select and has_change:
+            for r in check_result.rows:
+                if r.errlevel == 0:
+                    r.errlevel = 2
+                    r.stagestatus = "驳回不支持语句"
+                    r.errormessage = "SELECT与DML/DDL不能在同一工单中提交！"
+
         # 统计警告和错误数量
         for r in check_result.rows:
             if r.errlevel == 1:
@@ -327,11 +468,13 @@ class PgSQLEngine(EngineBase):
 
     def execute_workflow(self, workflow, close_conn=True):
         """执行上线单，返回Review set"""
+        config = SysConfig()
+        select_limit = _workflow_select_limit(config)
         sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
         # 删除注释语句，切分语句，将切换CURRENT_SCHEMA语句增加到切分结果中
         sql = sqlparse.format(sql, strip_comments=True)
-        split_sql = sqlparse.split(sql)
+        split_sql = [s for s in sqlparse.split(sql) if s and s.strip()]
         line = 1
         statement = None
         db_name = workflow.db_name
@@ -339,23 +482,84 @@ class PgSQLEngine(EngineBase):
             conn = self.get_connection(db_name=db_name)
             conn.autocommit = False
             cursor = conn.cursor()
-            cursor.execute("SET transaction ISOLATION LEVEL READ COMMITTED READ WRITE;")
+            all_select = all(_is_select_statement(s.rstrip(";")) for s in split_sql)
+            if all_select:
+                cursor.execute(
+                    "SET TRANSACTION ISOLATION LEVEL READ COMMITTED READ ONLY;"
+                )
+            else:
+                cursor.execute(
+                    "SET TRANSACTION ISOLATION LEVEL READ COMMITTED READ WRITE;"
+                )
             # 逐条执行切分语句，追加到执行结果中
             for statement in split_sql:
                 statement = statement.rstrip(";")
+                is_select = _is_select_statement(statement)
+                run_sql = statement
+                if is_select:
+                    run_sql = self.filter_sql(
+                        sql=statement, limit_num=select_limit + 1
+                    ).rstrip(";")
                 with FuncTimer() as t:
-                    cursor.execute(statement)
-                execute_result.rows.append(
-                    ReviewResult(
-                        id=line,
-                        errlevel=0,
-                        stagestatus="Execute Successfully",
-                        errormessage="None",
-                        sql=statement,
-                        affected_rows=cursor.rowcount,
-                        execute_time=t.cost,
+                    cursor.execute(run_sql)
+                if is_select:
+                    colnames = (
+                        [d[0] for d in cursor.description] if cursor.description else []
                     )
-                )
+                    rows = (
+                        cursor.fetchmany(select_limit + 1) if cursor.description else []
+                    )
+                    rows, truncated = apply_select_preview_limit(rows, select_limit)
+                    if config.get("data_masking"):
+                        resultset = ResultSet(
+                            full_sql=statement,
+                            rows=list(rows),
+                            column_list=list(colnames),
+                        )
+                        resultset.affected_rows = len(resultset.rows)
+                        try:
+                            masked = self.query_masking(db_name, statement, resultset)
+                            if masked and not masked.error:
+                                rows = masked.rows
+                                colnames = list(masked.column_list or colnames)
+                            elif masked and masked.error:
+                                logger.warning(
+                                    "数据脱敏异常，查询语句：%s，错误信息：%s",
+                                    statement,
+                                    masked.error,
+                                )
+                        except Exception:
+                            logger.warning(
+                                "数据脱敏异常，查询语句：%s，错误信息：%s",
+                                statement,
+                                traceback.format_exc(),
+                            )
+                    execute_result.rows.append(
+                        ReviewResult(
+                            id=line,
+                            errlevel=0,
+                            stagestatus="Execute Successfully",
+                            errormessage="",
+                            sql=statement,
+                            affected_rows=len(rows),
+                            execute_time=t.cost,
+                            select_columns=colnames,
+                            select_rows=serialize_select_rows(rows),
+                            select_truncated=truncated,
+                        )
+                    )
+                else:
+                    execute_result.rows.append(
+                        ReviewResult(
+                            id=line,
+                            errlevel=0,
+                            stagestatus="Execute Successfully",
+                            errormessage="None",
+                            sql=statement,
+                            affected_rows=cursor.rowcount,
+                            execute_time=t.cost,
+                        )
+                    )
                 line += 1
             conn.commit()
         except Exception as e:

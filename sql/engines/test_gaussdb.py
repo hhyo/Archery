@@ -114,14 +114,14 @@ class TestGaussDB(unittest.TestCase):
         self.assertFalse(explain_result["bad_query"])
 
     @patch("sql.engines.pgsql.SysConfig")
-    def test_execute_check_rejects_select(self, mock_sys_config):
-        mock_sys_config.return_value.get.return_value = ""
+    def test_execute_check_allows_select(self, mock_sys_config):
+        mock_sys_config.return_value.get.side_effect = lambda key, default=None: default
         engine = GaussDBEngine(instance=self.instance)
         result = engine.execute_check(db_name="biz_db", sql="select * from t_user;")
 
         self.assertIsInstance(result, ReviewSet)
-        self.assertEqual(result.error_count, 1)
-        self.assertEqual(result.rows[0].stagestatus, "驳回不支持语句")
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].stagestatus, "Audit completed")
 
     @patch("sql.engines.pgsql.SysConfig")
     def test_execute_check_accepts_dml_and_ddl(self, mock_sys_config):
@@ -141,8 +141,12 @@ class TestGaussDB(unittest.TestCase):
             ["Audit completed", "Audit completed"],
         )
 
+    @patch("sql.engines.pgsql.SysConfig")
     @patch("psycopg2.connect")
-    def test_execute_workflow_runs_statements_in_transaction(self, mock_connect):
+    def test_execute_workflow_runs_statements_in_transaction(
+        self, mock_connect, mock_sys_config
+    ):
+        mock_sys_config.return_value.get.side_effect = lambda key, default=None: default
         cursor = MagicMock()
         cursor.rowcount = 1
         conn = mock_connect.return_value

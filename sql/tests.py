@@ -190,6 +190,115 @@ class TestView(TransactionTestCase):
         r = self.client.get("/sqlquery/", data=data)
         self.assertEqual(r.status_code, 200)
 
+    def test_select_result_download_csv_and_json(self):
+        self.wf.sqlworkflowcontent.execute_result = json.dumps(
+            [
+                {
+                    "id": 1,
+                    "select_columns": ["id", "note"],
+                    "select_rows": [[1, "a"], [2, "b"]],
+                    "select_truncated": False,
+                    "errormessage": "",
+                }
+            ]
+        )
+        self.wf.sqlworkflowcontent.save()
+        csv_r = self.client.get(
+            "/sqlworkflow/select_result/",
+            {"workflow_id": self.wf.id, "sql_id": 1, "format": "csv"},
+        )
+        self.assertEqual(csv_r.status_code, 200)
+        self.assertIn("text/csv", csv_r["Content-Type"])
+        body = csv_r.content.decode("utf-8-sig")
+        self.assertIn("id,note", body)
+        self.assertIn("1,a", body)
+        json_r = self.client.get(
+            "/sqlworkflow/select_result/",
+            {"workflow_id": self.wf.id, "sql_id": 1, "format": "json"},
+        )
+        self.assertEqual(json_r.status_code, 200)
+        self.assertEqual(
+            json.loads(json_r.content),
+            [{"id": 1, "note": "a"}, {"id": 2, "note": "b"}],
+        )
+        view_r = self.client.get(
+            "/sqlworkflow/select_result/view/",
+            {"workflow_id": self.wf.id, "sql_id": 1},
+        )
+        self.assertEqual(view_r.status_code, 200)
+        self.assertContains(view_r, "tb-select-result")
+        self.assertContains(view_r, "format=csv")
+        self.assertContains(view_r, "format=json")
+        self.assertContains(view_r, 'id="select-result-columns"')
+        self.assertContains(view_r, 'type="application/json"')
+
+    def test_select_result_json_duplicate_columns(self):
+        self.wf.sqlworkflowcontent.execute_result = json.dumps(
+            [
+                {
+                    "id": 1,
+                    "select_columns": ["id", "id"],
+                    "select_rows": [[1, 2]],
+                    "select_truncated": False,
+                    "errormessage": "",
+                }
+            ]
+        )
+        self.wf.sqlworkflowcontent.save()
+        json_r = self.client.get(
+            "/sqlworkflow/select_result/",
+            {"workflow_id": self.wf.id, "sql_id": 1, "format": "json"},
+        )
+        self.assertEqual(json_r.status_code, 200)
+        self.assertEqual(json.loads(json_r.content), [{"id": 1, "id_1": 2}])
+
+    def test_select_result_csv_formula_prefix(self):
+        self.wf.sqlworkflowcontent.execute_result = json.dumps(
+            [
+                {
+                    "id": 1,
+                    "select_columns": ["note"],
+                    "select_rows": [["=1+1"], ["+cmd"], ["-1"], ["@SUM(A1)"]],
+                    "select_truncated": False,
+                    "errormessage": "",
+                }
+            ]
+        )
+        self.wf.sqlworkflowcontent.save()
+        csv_r = self.client.get(
+            "/sqlworkflow/select_result/",
+            {"workflow_id": self.wf.id, "sql_id": 1, "format": "csv"},
+        )
+        self.assertEqual(csv_r.status_code, 200)
+        body = csv_r.content.decode("utf-8-sig")
+        self.assertIn("'=1+1", body)
+        self.assertIn("'+cmd", body)
+        self.assertIn("'-1", body)
+        self.assertIn("'@SUM(A1)", body)
+        self.assertNotRegex(body, r"(?m)^[=+\-@]")
+
+    def test_select_result_view_script_safe_json(self):
+        payload = "</script><script>alert(1)</script>"
+        self.wf.sqlworkflowcontent.execute_result = json.dumps(
+            [
+                {
+                    "id": 1,
+                    "select_columns": ["note"],
+                    "select_rows": [[payload]],
+                    "select_truncated": False,
+                    "errormessage": "",
+                }
+            ]
+        )
+        self.wf.sqlworkflowcontent.save()
+        view_r = self.client.get(
+            "/sqlworkflow/select_result/view/",
+            {"workflow_id": self.wf.id, "sql_id": 1},
+        )
+        self.assertEqual(view_r.status_code, 200)
+        self.assertNotContains(view_r, "</script><script>alert")
+        self.assertContains(view_r, "\\u003C")
+
     def test_queryapplylist(self):
         """测试queryapplylist页面"""
         data = {}

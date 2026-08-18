@@ -1,0 +1,1254 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-10 16:03+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: common/auth.py:81 common/auth.py:117
+msgid "用户名或密码错误，请重新输入！"
+msgstr "Неверное имя пользователя или пароль, введите снова!"
+
+#: common/auth.py:87
+msgid "服务异常，请联系管理员处理"
+msgstr "Ошибка сервиса, обратитесь к администратору"
+
+#: common/auth.py:102
+#, python-brace-format
+msgid "登录失败超过限制，该账号已被锁定！请等候大约{}秒再试"
+msgstr ""
+"Превышен лимит неудачных входов, аккаунт заблокирован! Подождите около {} "
+"сек. и повторите попытку"
+
+#: common/auth.py:169
+msgid "注册未启用,请联系管理员开启"
+msgstr "Регистрация отключена, обратитесь к администратору"
+
+#: common/auth.py:180
+msgid "用户名和密码不能为空"
+msgstr "Имя пользователя и пароль не могут быть пустыми"
+
+#: common/auth.py:183
+msgid "用户名已存在"
+msgstr "Имя пользователя уже существует"
+
+#: common/auth.py:186
+msgid "两次输入密码不一致"
+msgstr "Введённые пароли не совпадают"
+
+#: common/auth.py:189
+msgid "请填写中文名"
+msgstr "Укажите отображаемое имя"
+
+#: common/dashboard.py:70
+msgid "error: 日期有误"
+msgstr "error: неверная дата"
+
+#: common/dashboard.py:137
+msgid "检索行数"
+msgstr "Строк выборки"
+
+#: common/dashboard.py:143
+msgid "检索次数"
+msgstr "Число выборок"
+
+#: common/templates/2fa.html:6 common/templates/base.html:97
+#: common/templates/base.html:316
+msgid "两步验证"
+msgstr "Двухфакторная аутентификация"
+
+#: common/templates/2fa.html:28
+msgid "启用两步验证"
+msgstr "Включить 2FA"
+
+#: common/templates/2fa.html:31
+msgid "验证方式:"
+msgstr "Способ проверки:"
+
+#: common/templates/2fa.html:33 common/templates/2fa.html:62
+msgid "选择额外验证方式:"
+msgstr "Дополнительный способ проверки:"
+
+#: common/templates/2fa.html:35
+msgid "Google身份验证器"
+msgstr "Google Authenticator"
+
+#: common/templates/2fa.html:36 common/templates/2fa.html:68
+msgid "短信验证码"
+msgstr "SMS-код"
+
+#: common/templates/2fa.html:41 common/templates/base.html:390
+msgid "1. 使用Google身份验证器扫码："
+msgstr "1. Отсканируйте QR-код в Google Authenticator:"
+
+#: common/templates/2fa.html:45 common/templates/base.html:394
+msgid "1. 输入要绑定的手机号码："
+msgstr "1. Введите номер телефона для привязки:"
+
+#: common/templates/2fa.html:50
+msgid "2. 输入6位验证码完成验证："
+msgstr "2. Введите 6-значный код для подтверждения:"
+
+#: common/templates/2fa.html:55 common/templates/2fa.html:74
+#: common/templates/base.html:404
+msgid "获取验证码"
+msgstr "Получить код"
+
+#: common/templates/2fa.html:56 common/templates/2fa.html:75
+msgid "验证"
+msgstr "Проверить"
+
+#: common/templates/2fa.html:60
+msgid "选择验证方式:"
+msgstr "Способ проверки:"
+
+#: common/templates/2fa.html:67
+msgid "OTP验证码"
+msgstr "OTP-код"
+
+#: common/templates/base.html:11
+msgid "Archery-SQL审核查询平台"
+msgstr "Archery — платформа аудита и запросов SQL"
+
+#: common/templates/base.html:58
+msgid "语言"
+msgstr "Язык"
+
+#: common/templates/base.html:68
+#, python-format
+msgid "你好，%(user)s"
+msgstr "Здравствуйте, %(user)s"
+
+#: common/templates/base.html:91
+msgid "系统信息"
+msgstr "Информация о системе"
+
+#: common/templates/base.html:94
+msgid "管理后台"
+msgstr "Админ-панель"
+
+#: common/templates/base.html:98
+msgid "修改密码"
+msgstr "Сменить пароль"
+
+#: common/templates/base.html:99
+msgid "退出"
+msgstr "Выход"
+
+#: common/templates/base.html:122
+msgid "SQL审核"
+msgstr "Проверка SQL"
+
+#: common/templates/base.html:126 common/templates/config.html:163
+msgid "SQL上线"
+msgstr "Отправка SQL"
+
+#: common/templates/base.html:131
+msgid "SQL分析"
+msgstr "Анализ SQL"
+
+#: common/templates/base.html:140 common/templates/config.html:338
+msgid "SQL查询"
+msgstr "SQL-запросы"
+
+msgid "提交审批"
+msgstr "Отправить на согласование"
+
+msgid "在线查询需经审批流通过后执行（与SQL上线同一审批配置）"
+msgstr "Онлайн-запрос выполняется только после согласования (тот же поток, что и отправка SQL)"
+
+msgid "已提交审批，请等待审核通过后执行"
+msgstr "Отправлено на согласование. Дождитесь утверждения, затем выполните."
+
+
+#: common/templates/base.html:144
+msgid "在线查询"
+msgstr "Онлайн-запрос"
+
+#: common/templates/base.html:149
+msgid "数据导出"
+msgstr "Экспорт данных"
+
+#: common/templates/base.html:154
+msgid "数据字典"
+msgstr "Словарь данных"
+
+#: common/templates/base.html:159
+msgid "权限管理"
+msgstr "Управление правами"
+
+#: common/templates/base.html:169 common/templates/config.html:648
+msgid "SQL优化"
+msgstr "Оптимизация SQL"
+
+#: common/templates/base.html:173
+msgid "优化工具"
+msgstr "Инструменты оптимизации"
+
+#: common/templates/base.html:178
+msgid "慢查日志"
+msgstr "Журнал медленных запросов"
+
+#: common/templates/base.html:187
+msgid "实例管理"
+msgstr "Управление инстансами"
+
+#: common/templates/base.html:191
+msgid "实例列表"
+msgstr "Список инстансов"
+
+#: common/templates/base.html:196
+msgid "会话管理"
+msgstr "Управление сессиями"
+
+#: common/templates/base.html:201
+msgid "数据库管理"
+msgstr "Управление БД"
+
+#: common/templates/base.html:207
+msgid "账号管理"
+msgstr "Управление аккаунтами"
+
+#: common/templates/base.html:212
+msgid "参数配置"
+msgstr "Параметры"
+
+#: common/templates/base.html:217
+msgid "参数对比"
+msgstr "Сравнение параметров"
+
+#: common/templates/base.html:226
+msgid "工具插件"
+msgstr "Плагины"
+
+#: common/templates/base.html:249
+msgid "系统管理"
+msgstr "Администрирование"
+
+#: common/templates/base.html:252
+msgid "配置项管理"
+msgstr "Настройки"
+
+#: common/templates/base.html:255
+msgid "资源组管理"
+msgstr "Группы ресурсов"
+
+#: common/templates/base.html:258
+msgid "其他配置管理"
+msgstr "Прочие настройки"
+
+#: common/templates/base.html:261
+msgid "用户"
+msgstr "Пользователь"
+
+msgid "实例"
+msgstr "Инстанс"
+
+msgid "用户管理"
+msgstr "Пользователи"
+
+msgid "请先完善当前用户邮箱信息！"
+msgstr "Сначала укажите email текущего пользователя!"
+
+#: common/templates/base.html:264
+msgid "权限组管理"
+msgstr "Группы прав"
+
+#: common/templates/base.html:267
+msgid "全部后台数据"
+msgstr "Все данные админки"
+
+#: common/templates/base.html:278
+msgid "系统审计"
+msgstr "Аудит"
+
+#: common/templates/base.html:281
+msgid "通用审计"
+msgstr "Общий аудит"
+
+#: common/templates/base.html:284
+msgid "sql上线审计"
+msgstr "Аудит отправки SQL"
+
+#: common/templates/base.html:287
+msgid "查询审计"
+msgstr "Аудит запросов"
+
+#: common/templates/base.html:294
+msgid "相关文档"
+msgstr "Документация"
+
+#: common/templates/base.html:321
+msgid "TOTP："
+msgstr "TOTP:"
+
+#: common/templates/base.html:331
+msgid "短信："
+msgstr "SMS:"
+
+#: common/templates/base.html:349
+msgid "关闭"
+msgstr "Закрыть"
+
+#: common/templates/base.html:362
+msgid "验证当前用户密码"
+msgstr "Проверить пароль текущего пользователя"
+
+#: common/templates/base.html:366
+msgid "输入密码验证:"
+msgstr "Подтверждение паролем:"
+
+#: common/templates/base.html:367
+msgid "确认密码"
+msgstr "Подтвердите пароль"
+
+#: common/templates/base.html:371 common/templates/login.html:95
+msgid "取消"
+msgstr "Отмена"
+
+#: common/templates/base.html:372
+msgid "确认"
+msgstr "Подтвердить"
+
+#: common/templates/base.html:385
+msgid "扫码绑定"
+msgstr "Привязка по QR-коду"
+
+#: common/templates/base.html:398
+msgid "2. 输入6位验证码完成绑定："
+msgstr "2. Введите 6-значный код для завершения привязки:"
+
+#: common/templates/base.html:405
+msgid "绑定"
+msgstr "Привязать"
+
+#: common/templates/config.html:11
+msgid "选择操作"
+msgstr "Выберите действие"
+
+#: common/templates/config.html:15
+msgid "配置项："
+msgstr "Параметр:"
+
+#: common/templates/config.html:19
+msgid "配置项"
+msgstr "Параметр"
+
+#: common/templates/config.html:19 common/templates/config.html:20
+msgid "请选择配置项:"
+msgstr "Выберите параметр:"
+
+#: common/templates/config.html:21
+msgid "系统设置"
+msgstr "Системные настройки"
+
+#: common/templates/config.html:22
+msgid "工单审核流配置"
+msgstr "Настройка потока согласования заявок"
+
+#: common/templates/config.html:27
+msgid "工单类型："
+msgstr "Тип заявки:"
+
+#: common/templates/config.html:31
+msgid "工单类型"
+msgstr "Тип заявки"
+
+#: common/templates/config.html:31
+msgid "请选择工单类型:"
+msgstr "Выберите тип заявки:"
+
+#: common/templates/config.html:43
+msgid "组："
+msgstr "Группа:"
+
+#: common/templates/config.html:47
+msgid "组"
+msgstr "Группа"
+
+#: common/templates/config.html:47
+msgid "请选择组:"
+msgstr "Выберите группу:"
+
+#: common/templates/config.html:60
+msgid "操作"
+msgstr "Действия"
+
+#: common/templates/config.html:64
+msgid "goInception配置"
+msgstr "Настройки goInception"
+
+#: common/templates/config.html:65
+msgid "注1：备份库的信息仅用于平台获取回滚语句，需要和审核工具自身的配置保持一致，此处配置变更不会修改审核工具自身的配置"
+msgstr ""
+"Примечание 1: сведения о резервной БД используются только для получения "
+"rollback-операторов платформой и должны совпадать с настройками инструмента "
+"аудита; изменение здесь не меняет конфигурацию самого инструмента"
+
+#: common/templates/config.html:77
+msgid "goInception地址"
+msgstr "Адрес goInception"
+
+#: common/templates/config.html:79 common/templates/config.html:438
+#: common/templates/config.html:746
+msgid "测试连接"
+msgstr "Проверить соединение"
+
+#: common/templates/config.html:89
+msgid "goInception端口"
+msgstr "Порт goInception"
+
+#: common/templates/config.html:100
+msgid "goInception用户（未启用认证可不填）"
+msgstr ""
+"Пользователь goInception (можно не указывать, если аутентификация отключена)"
+
+#: common/templates/config.html:111
+msgid "goInception密码（未启用认证可不填）"
+msgstr ""
+"Пароль goInception (можно не указывать, если аутентификация отключена)"
+
+#: common/templates/config.html:123
+msgid "备份库地址"
+msgstr "Адрес резервной БД"
+
+#: common/templates/config.html:134
+msgid "备份库端口"
+msgstr "Порт резервной БД"
+
+#: common/templates/config.html:145
+msgid "备份库用户"
+msgstr "Пользователь БД бэкапа"
+
+#: common/templates/config.html:156
+msgid "备份库用户密码"
+msgstr "Пароль пользователя БД бэкапа"
+
+#: common/templates/config.html:161
+msgid "功能模块配置"
+msgstr "Настройки функциональных модулей"
+
+#: common/templates/config.html:174
+msgid "正则条件，匹配的语句会禁止提交"
+msgstr "Регулярное выражение: совпадающие операторы запрещены к отправке"
+
+#: common/templates/config.html:185
+msgid "自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回"
+msgstr ""
+"Уровень автоотклонения: 1 — отклонять по предупреждениям; 2 или пусто — "
+"только по ошибкам; иное — не отклонять"
+
+#: common/templates/config.html:198
+msgid "是否开启备份选项(默认关闭, 强制要求备份)"
+msgstr ""
+"Включить опцию резервного копирования (по умолчанию выкл.; принудительно "
+"требовать бэкап)"
+
+#: common/templates/config.html
+msgid "是否允许在SQL上线工单中提交SELECT(走审批后执行)"
+msgstr ""
+"Разрешить отправку SELECT в заявках SQL上线 (выполнение после согласования)"
+
+#: common/templates/config.html:213
+msgid "是否开启SQL上线自动审批"
+msgstr "Включить автоутверждение отправки SQL"
+
+#: common/templates/config.html:226
+msgid "自动审批的实例标签"
+msgstr "Теги инстансов для автоутверждения"
+
+#: common/templates/config.html:245
+msgid "自动审批的数据库类型"
+msgstr "Типы БД для автоутверждения"
+
+#: common/templates/config.html:264
+msgid "正则条件，匹配的语句需要人工审批"
+msgstr ""
+"Регулярное выражение: совпадающие операторы требуют ручного утверждения"
+
+#: common/templates/config.html:275
+msgid "自动审批允许工单最大更新行数"
+msgstr "Макс. число обновляемых строк для автоутверждения заявки"
+
+#: common/templates/config.html:289
+msgid "是否开启SQL上线手工执行确认"
+msgstr "Включить подтверждение ручного выполнения отправки SQL"
+
+#: common/templates/config.html:304
+msgid "是否禁止DDL和DML在SQL上线同时提交(MySQL)"
+msgstr "Запретить одновременную отправку DDL и DML в одной отправке SQL (MySQL)"
+
+#: common/templates/config.html:318
+msgid "ON：禁止自审。OFF：允许自己审批自己的工单"
+msgstr "ON: запретить самоутверждение. OFF: разрешить утверждать свои заявки"
+
+#: common/templates/config.html:318
+msgid "禁止自审工单(管理员除外)"
+msgstr "Запретить самосогласование (кроме администраторов)"
+
+#: common/templates/config.html:332
+msgid "是否获取DML真实影响行数(MySQL、MongoDB)"
+msgstr "Получать реальное число затронутых строк DML (MySQL, MongoDB)"
+
+#: common/templates/config.html:339
+msgid "注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析"
+msgstr ""
+"Примечание: для маскирования необходимо настроить goInception (разбор SQL)"
+
+#: common/templates/config.html:351
+msgid "是否开启动态脱敏"
+msgstr "Включить динамическое маскирование"
+
+msgid "在线查询是否必须经工单审批后执行(与SQL上线同一审批流)"
+msgstr "Онлайн-запросы только через согласование (тот же поток, что и отправка SQL)"
+
+
+#: common/templates/config.html:365
+msgid "是否开启脱敏校验(无法脱敏的语句会抛错)"
+msgstr ""
+"Включить проверку маскирования (операторы без маскирования вызовут ошибку)"
+
+#: common/templates/config.html:379
+msgid "禁止在查询时使用 *"
+msgstr "Запретить использование * в запросах"
+
+#: common/templates/config.html:391
+msgid "在线查询超时时间阈值，单位秒，默认60"
+msgstr "Таймаут онлайн-запроса, сек; по умолчанию 60"
+
+#: common/templates/config.html:401
+msgid "管理员/DBA查询结果集限制"
+msgstr "Лимит результата запроса для админа/DBA"
+
+#: common/templates/config.html:406
+msgid "数据导出配置"
+msgstr "Настройки экспорта данных"
+
+#: common/templates/config.html:416
+msgid "导出数据量阈值限制，单位: 行，默认值: 10000"
+msgstr "Лимит объёма экспорта, строк; по умолчанию 10000"
+
+#: common/templates/config.html:422
+msgid "存储类型选择"
+msgstr "Выбор типа хранилища"
+
+#: common/templates/config.html:425
+msgid "存储类型"
+msgstr "Тип хранилища"
+
+#: common/templates/config.html:432
+msgid "本地存储"
+msgstr "Локальное хранилище"
+
+#: common/templates/config.html:434
+msgid "S3兼容存储"
+msgstr "S3-совместимое хранилище"
+
+#: common/templates/config.html:446
+msgid "本地存储路径"
+msgstr "Путь локального хранилища"
+
+#: common/templates/config.html:449
+msgid "项目根目录/downloads/DataExportFile/"
+msgstr "Корень проекта/downloads/DataExportFile/"
+
+#: common/templates/config.html:456
+msgid "SFTP主机"
+msgstr "Хост SFTP"
+
+#: common/templates/config.html:461
+msgid "SFTP服务访问IP"
+msgstr "IP доступа к SFTP"
+
+#: common/templates/config.html:465
+msgid "SFTP端口"
+msgstr "Порт SFTP"
+
+#: common/templates/config.html:470
+msgid "SFTP服务端口"
+msgstr "Порт службы SFTP"
+
+#: common/templates/config.html:474 common/templates/config.html:479
+msgid "SFTP用户名"
+msgstr "Имя пользователя SFTP"
+
+#: common/templates/config.html:483 common/templates/config.html:488
+msgid "SFTP密码"
+msgstr "Пароль SFTP"
+
+#: common/templates/config.html:492
+msgid "SFTP路径"
+msgstr "Путь SFTP"
+
+#: common/templates/config.html:497
+msgid "SFTP服务存储路径"
+msgstr "Путь хранения на SFTP"
+
+#: common/templates/config.html:501 common/templates/config.html:568
+#: common/templates/config.html:617
+msgid "自定义参数"
+msgstr "Пользовательские параметры"
+
+#: common/templates/config.html:507 common/templates/config.html:574
+#: common/templates/config.html:623
+msgid "输入JSON格式的自定义参数，例如：{&quot;key&quot;: &quot;value&quot;}"
+msgstr ""
+"Введите пользовательские параметры в JSON, например: {&quot;key&quot;: "
+"&quot;value&quot;}"
+
+#: common/templates/config.html:546
+msgid "Region 非必填"
+msgstr "Region необязателен"
+
+#: common/templates/config.html:564
+msgid "存储路径，开头没有/"
+msgstr "Путь хранения без ведущего /"
+
+#: common/templates/config.html:581
+msgid "Azure容器"
+msgstr "Контейнер Azure"
+
+#: common/templates/config.html:586 common/templates/config.html:590
+#: common/templates/config.html:595
+msgid "Azure账号名"
+msgstr "Имя учётной записи Azure"
+
+#: common/templates/config.html:599 common/templates/config.html:604
+msgid "Azure账号密钥"
+msgstr "Ключ учётной записи Azure"
+
+#: common/templates/config.html:613
+msgid "Azure 存储路径，开头没有 / ，如存储到tmp目录: tmp/"
+msgstr "Путь хранения Azure без ведущего /; например для tmp: tmp/"
+
+#: common/templates/config.html:657
+msgid "SQLADVISOR路径"
+msgstr "Путь к SQLADVISOR"
+
+#: common/templates/config.html:668
+msgid "SOAR路径"
+msgstr "Путь к SOAR"
+
+#: common/templates/config.html:679
+msgid "SOAR测试实例：user:pwd@host:port/db"
+msgstr "Тестовый инстанс SOAR: user:pwd@host:port/db"
+
+#: common/templates/config.html:685
+msgid "通知配置"
+msgstr "Настройки уведомлений"
+
+#: common/templates/config.html:686
+msgid "注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户"
+msgstr ""
+"Примечание 1: для DingTalk Webhook нужен адрес webhook группы ресурсов; "
+"webhook не уведомляет конкретного пользователя"
+
+#: common/templates/config.html:687
+msgid "注2：企业微信自建应用开启后，若未配置企业微信UserID，则默认取用户的username作为UserId"
+msgstr ""
+"Примечание 2: если включено приложение WeCom и UserID не задан, по умолчанию"
+" используется username пользователя"
+
+#: common/templates/config.html:688
+msgid "注3：企业微信群机器人需要配置资源组webhook地址（企业微信群机器人是通知到群；企业微信自建应用是通过应用通知到指定人）"
+msgstr ""
+"Примечание 3: для группового бота WeCom нужен webhook группы ресурсов (бот "
+"пишет в группу; самописное приложение уведомляет конкретного человека)"
+
+#: common/templates/config.html:691
+msgid "工单通知"
+msgstr "Уведомления по заявкам"
+
+#: common/templates/config.html:701
+msgid "系统HOST地址, 用于通知链接，如https://archery.com"
+msgstr "HOST системы для ссылок в уведомлениях, например https://archery.com"
+
+#: common/templates/config.html:711
+msgid "DDL工单通知权限组"
+msgstr "Группа прав для уведомлений по DDL-заявкам"
+
+#: common/templates/config.html:732
+msgid "工单通知分阶段控制"
+msgstr "Поэтапное управление уведомлениями по заявкам"
+
+#: common/templates/config.html:744
+msgid "是否开启邮件通知"
+msgstr "Включить уведомления по email"
+
+#: common/templates/config.html:759
+msgid "是否使用SSL"
+msgstr "Использовать SSL"
+
+#: common/templates/config.html:772
+msgid "邮件smtp地址"
+msgstr "SMTP-адрес почты"
+
+#: common/templates/config.html:783
+msgid "邮件smtp端口"
+msgstr "SMTP-порт почты"
+
+#: common/templates/config.html:794
+msgid "邮箱账号"
+msgstr "Учётная запись email"
+
+#: common/templates/config.html:805
+msgid "邮箱账号密码"
+msgstr "Пароль учётной записи email"
+
+#: common/templates/config.html:816
+msgid "是否开启钉钉Webhook通知"
+msgstr "Включить уведомления DingTalk Webhook"
+
+#: common/templates/config.html:829
+msgid "是否开启钉钉个人消息通知"
+msgstr "Включить личные сообщения DingTalk"
+
+#: common/templates/config.html:837
+msgid "创建钉钉Archery微应用参考："
+msgstr "Справка по созданию микроприложения Archery в DingTalk:"
+
+#: common/templates/config.html:838
+msgid "钉钉企业接入开发文档"
+msgstr "Документация по корпоративной интеграции DingTalk"
+
+#: common/templates/config.html:839
+msgid "同步用户"
+msgstr "Синхронизация пользователей"
+
+#: common/templates/config.html:850
+msgid "微应用Archery的AgentId"
+msgstr "AgentId микроприложения Archery"
+
+#: common/templates/config.html:861
+msgid "微应用Archery的AppKey"
+msgstr "AppKey микроприложения Archery"
+
+#: common/templates/config.html:872
+msgid "微应用Archery的AppSecret"
+msgstr "AppSecret микроприложения Archery"
+
+#: common/templates/config.html:883
+msgid "Archery.username对应钉钉里的字段"
+msgstr "Поле в DingTalk, соответствующее Archery.username"
+
+#: common/templates/config.html:893
+msgid "钉钉部门id，使用逗号分隔"
+msgstr "ID отделов DingTalk через запятую"
+
+#: common/templates/config.html:900
+msgid "企业微信自建应用"
+msgstr "Самописное приложение WeCom"
+
+#: common/templates/config.html:906
+msgid "是否开启企业微信自建应用通知"
+msgstr "Включить уведомления самописного приложения WeCom"
+
+#: common/templates/config.html:914
+msgid "创建企业微信应用参考："
+msgstr "Справка по созданию приложения WeCom:"
+
+#: common/templates/config.html:915
+msgid "企业微信接入开发文档"
+msgstr "Документация по интеграции WeCom"
+
+#: common/templates/config.html:927
+msgid "企业微信的企业ID"
+msgstr "Corp ID WeCom"
+
+#: common/templates/config.html:938
+msgid "应用的AgentId"
+msgstr "AgentId приложения"
+
+#: common/templates/config.html:949
+msgid "应用的Secret"
+msgstr "Secret приложения"
+
+#: common/templates/config.html:955
+msgid "企业微信群机器人"
+msgstr "Групповой бот WeCom"
+
+#: common/templates/config.html:961
+msgid "是否开启企业微信群机器人通知"
+msgstr "Включить уведомления группового бота WeCom"
+
+#: common/templates/config.html:968
+msgid "飞书Webhook"
+msgstr "Feishu Webhook"
+
+#: common/templates/config.html:974
+msgid "是否开启飞书Webhook通知"
+msgstr "Включить уведомления Feishu Webhook"
+
+#: common/templates/config.html:981
+msgid "飞书"
+msgstr "Feishu"
+
+#: common/templates/config.html:987
+msgid "是否开启飞书通知"
+msgstr "Включить уведомления Feishu"
+
+#: common/templates/config.html:995
+msgid "创建飞书应用参考："
+msgstr "Справка по созданию приложения Feishu:"
+
+#: common/templates/config.html:996
+msgid "飞书接入开发文档"
+msgstr "Документация по интеграции Feishu"
+
+#: common/templates/config.html:1002 common/templates/config.html:1008
+msgid "飞书应用AppID"
+msgstr "AppID приложения Feishu"
+
+#: common/templates/config.html:1013 common/templates/config.html:1019
+msgid "飞书AppSecret"
+msgstr "AppSecret Feishu"
+
+#: common/templates/config.html:1025
+msgid "通用Webhook地址"
+msgstr "Общий адрес Webhook"
+
+#: common/templates/config.html:1031
+msgid "通用 webhook 地址, 每个工单的每个状态转变均会调用"
+msgstr "Общий webhook: вызывается при каждом изменении статуса любой заявки"
+
+#: common/templates/config.html:1034
+msgid "短信服务"
+msgstr "SMS-сервис"
+
+#: common/templates/config.html:1038
+msgid "短信服务提供商"
+msgstr "Провайдер SMS"
+
+#: common/templates/config.html:1043
+msgid "短信服务商"
+msgstr "SMS-провайдер"
+
+#: common/templates/config.html:1057
+msgid "阿里云访问密钥ID，用于标识用户"
+msgstr "ID ключа доступа Aliyun для идентификации пользователя"
+
+#: common/templates/config.html:1068
+msgid "阿里云访问密钥（AccessKey），用于验证用户的密钥"
+msgstr "Секрет AccessKey Aliyun для проверки пользователя"
+
+#: common/templates/config.html:1079 common/templates/config.html:1136
+msgid "短信签名，需为审核通过状态"
+msgstr "Подпись SMS (должна быть утверждена)"
+
+#: common/templates/config.html:1090
+msgid "短信模板Code，需为审核通过状态"
+msgstr "Code шаблона SMS (должен быть утверждён)"
+
+#: common/templates/config.html:1101
+msgid "短信模板中的变量名，如：code"
+msgstr "Имя переменной в шаблоне SMS, например: code"
+
+#: common/templates/config.html:1114
+msgid "用于标识API调用者的身份"
+msgstr "Идентификатор вызывающей стороны API"
+
+#: common/templates/config.html:1125
+msgid "用于加密签名字符串和服务器端验证签名字符串的密钥"
+msgstr "Ключ для подписи и серверной проверки подписи"
+
+#: common/templates/config.html:1147
+msgid "短信模板ID，需为审核通过状态"
+msgstr "ID шаблона SMS (должен быть утверждён)"
+
+#: common/templates/config.html:1158
+msgid "短信应用ID"
+msgstr "ID SMS-приложения"
+
+#: common/templates/config.html:1165
+msgid "OIDC 配置"
+msgstr "Настройки OIDC"
+
+#: common/templates/config.html:1177
+msgid "登录按钮显示名称，比如Login With KeyCloak"
+msgstr "Текст кнопки входа, например Login With KeyCloak"
+
+#: common/templates/config.html:1182
+msgid "OPENAI 配置"
+msgstr "Настройки OPENAI"
+
+#: common/templates/config.html:1183
+msgid "注1：若无OPENAI_API_KEY配置，则不开启相关功能"
+msgstr "Примечание 1: без OPENAI_API_KEY связанные функции отключены"
+
+#: common/templates/config.html:1184
+msgid ""
+"注2：DEFAULT_CHAT_MODEL 默认配置为gpt-3.5-turbo，DEFAULT_QUERY_TEMPLATE 默认配置为系统定义的模板"
+msgstr ""
+"Примечание 2: DEFAULT_CHAT_MODEL по умолчанию gpt-3.5-turbo; "
+"DEFAULT_QUERY_TEMPLATE — системный шаблон"
+
+#: common/templates/config.html:1224
+msgid "默认生成SQL语句的Django模板, 无模板会导致生成结果失败, 需提供db_type/table_schema/user_input"
+msgstr ""
+"Django-шаблон генерации SQL по умолчанию; без шаблона генерация не удастся; "
+"нужны db_type/table_schema/user_input"
+
+#: common/templates/config.html:1229
+msgid "其他配置"
+msgstr "Прочие настройки"
+
+#: common/templates/config.html:1240
+msgid "系统首页路径，默认SQL工单页面：sqlworkflow"
+msgstr "Путь домашней страницы; по умолчанию страница заявок SQL: sqlworkflow"
+
+#: common/templates/config.html:1251
+msgid "my2sql调用路径，类似/opt/archery/src/plugins/my2sql"
+msgstr "Путь вызова my2sql, например /opt/archery/src/plugins/my2sql"
+
+#: common/templates/config.html:1261
+msgid "新用户首次登录自动关联权限组"
+msgstr "Автопривязка групп прав при первом входе"
+
+#: common/templates/config.html:1282
+msgid "新用户首次登录自动关联资源组"
+msgstr "Автопривязка групп ресурсов при первом входе"
+
+#: common/templates/config.html:1303
+msgid "API用户白名单"
+msgstr "Белый список API-пользователей"
+
+#: common/templates/config.html:1317
+msgid "账户登录失败锁定时间(秒)"
+msgstr "Время блокировки аккаунта после неудачных входов (сек)"
+
+#: common/templates/config.html:1328
+msgid "账户登录失败几次锁账户"
+msgstr "Число неудачных входов до блокировки аккаунта"
+
+#: common/templates/config.html:1339
+msgid "是否开启注册功能"
+msgstr "Включить регистрацию"
+
+#: common/templates/config.html:1352
+msgid "是否开启水印功能"
+msgstr "Включить водяной знак"
+
+#: common/templates/config.html:1365
+msgid "登录是否强制使用2FA"
+msgstr "Требовать 2FA при входе"
+
+#: common/templates/config.html:1378
+msgid "是否开启公告"
+msgstr "Включить объявления"
+
+#: common/templates/config.html:1391
+msgid "公告内容"
+msgstr "Текст объявления"
+
+#: common/templates/config.html:1403
+msgid "在网站标题及登录页面追加此内容, 可用于多archery实例的区分"
+msgstr ""
+"Добавляется к заголовку сайта и странице входа; удобно различать несколько "
+"инстансов Archery"
+
+#: common/templates/config.html:1410
+msgid "保存配置"
+msgstr "Сохранить настройки"
+
+#: common/templates/config.html:1416
+msgid "规则："
+msgstr "Правило:"
+
+#: common/templates/config.html:1416
+msgid "选择多个权限组即审批流程为多级审核，按照选择顺序进行流转，权限组内用户都可审核"
+msgstr ""
+"Несколько групп прав = многоуровневое утверждение; порядок — по выбору; "
+"любой пользователь группы может утверждать"
+
+#: common/templates/config.html:1418
+msgid "当前审批流程："
+msgstr "Текущий процесс утверждения:"
+
+#: common/templates/config.html:1420
+msgid "变更审批流程："
+msgstr "Изменить процесс утверждения:"
+
+#: common/templates/config.html:1427
+msgid "请选择审批权限组"
+msgstr "Выберите группу прав согласования"
+
+#: common/templates/config.html:1429
+msgid "审批人"
+msgstr "Утверждающий"
+
+#: common/templates/config.html:1429
+msgid "审批人:"
+msgstr "Утверждающий:"
+
+#: common/templates/config.html:1438
+msgid "变更"
+msgstr "Изменить"
+
+#: common/templates/config.html:1439
+msgid "刷新"
+msgstr "Обновить"
+
+#: common/templates/dashboard.html:20 common/templates/dashboard.html:172
+msgid "SQL上线工单"
+msgstr "Заявки на отправка SQL"
+
+#: common/templates/dashboard.html:26 common/templates/dashboard.html:48
+#: common/templates/dashboard.html:70 common/templates/dashboard.html:92
+msgid "更多"
+msgstr "Ещё"
+
+#: common/templates/dashboard.html:42
+msgid "SQL查询工单"
+msgstr "Заявки на SQL-запросы"
+
+#: common/templates/dashboard.html:64
+msgid "有效平台用户"
+msgstr "Активные пользователи платформы"
+
+#: common/templates/dashboard.html:86
+msgid "实例数量"
+msgstr "Число инстансов"
+
+#: common/templates/dashboard.html:104
+msgid "数据库实例类型统计"
+msgstr "Статистика типов инстансов БД"
+
+#: common/templates/dashboard.html:126
+msgid "统计时间范围："
+msgstr "Диапазон времени статистики:"
+
+#: common/templates/dashboard.html:138
+msgid "SQL查询统计"
+msgstr "Статистика SQL-запросов"
+
+#: common/templates/dashboard.html:149
+msgid "SQL上线数量"
+msgstr "Число отправок SQL"
+
+#: common/templates/dashboard.html:161
+msgid "SQL上线用户"
+msgstr "Пользователи отправки SQL"
+
+#: common/templates/dashboard.html:182
+msgid "24h慢查询db维度统计"
+msgstr "Статистика медленных запросов за 24ч по БД"
+
+#: common/templates/dashboard.html:196
+msgid "SQL上线统计"
+msgstr "Статистика отправок SQL"
+
+#: common/templates/dashboard.html:207
+msgid "DB检索行数"
+msgstr "Число строк поиска по БД"
+
+#: common/templates/dashboard.html:217
+msgid "SQL查询用户"
+msgstr "Пользователи SQL-запросов"
+
+#: common/templates/dashboard.html:227
+msgid "SQL上线工单类型"
+msgstr "Типы заявок на отправка SQL"
+
+#: common/templates/dashboard.html:236
+msgid "24h慢查询db/user维度统计"
+msgstr "Статистика медленных запросов за 24ч (БД/пользователь)"
+
+#: common/templates/dictionaryexport.html:5
+msgid "数据库表结构说明文档"
+msgstr "Документация по структуре таблиц БД"
+
+#: common/templates/dictionaryexport.html:15
+#, python-format
+msgid "%(db_name)s 数据字典 (共 %(var0)s 个表)"
+msgstr "Словарь данных %(db_name)s (всего таблиц: %(var0)s)"
+
+#: common/templates/dictionaryexport.html:16
+#, python-format
+msgid "生成时间：%(export_time)s"
+msgstr "Время генерации: %(export_time)s"
+
+#: common/templates/dictionaryexport.html:19
+#, python-format
+msgid "表名：%(var0)s"
+msgstr "Таблица: %(var0)s"
+
+#: common/templates/dictionaryexport.html:20
+#, python-format
+msgid "注释：%(var0)s"
+msgstr "Комментарий: %(var0)s"
+
+#: common/templates/errors/400.html:5
+msgid "Bad Request (400)"
+msgstr "Bad Request (400)"
+
+#: common/templates/errors/403.html:5
+msgid "403 Forbidden"
+msgstr "403 Forbidden"
+
+#: common/templates/errors/404.html:5
+msgid "Not Found"
+msgstr "Not Found"
+
+#: common/templates/errors/404.html:6
+msgid "The requested resource was not found on this server."
+msgstr "Запрошенный ресурс не найден на этом сервере."
+
+#: common/templates/errors/500.html:5
+msgid "Server Error (500)"
+msgstr "Server Error (500)"
+
+#: common/templates/login.html:6 common/templates/login.html:22
+msgid "Login To Archery"
+msgstr "Вход в Archery"
+
+#: common/templates/login.html:27
+msgid "以钉钉登录"
+msgstr "Войти через DingTalk"
+
+#: common/templates/login.html:35
+msgid "CAS认证登录"
+msgstr "Войти через CAS"
+
+#: common/templates/login.html:40
+msgid "显示传统登录"
+msgstr "Показать обычный вход"
+
+#: common/templates/login.html:52
+msgid "注册用户"
+msgstr "Регистрация"
+
+#: common/templates/login.html:66
+msgid "注册账号"
+msgstr "Регистрация аккаунта"
+
+#: common/templates/login.html:71
+msgid "用户名"
+msgstr "Имя пользователя"
+
+#: common/templates/login.html:75
+msgid "中文名"
+msgstr "Отображаемое имя"
+
+#: common/templates/login.html:79
+msgid "邮箱"
+msgstr "Email"
+
+#: common/templates/login.html:83
+msgid "密码"
+msgstr "Пароль"
+
+#: common/templates/login.html:88
+msgid "密码确认"
+msgstr "Подтверждение пароля"
+
+#: common/templates/login.html:96
+msgid "注册"
+msgstr "Регистрация"
+
+#: common/templates/login.html:113
+msgid "提示"
+msgstr "Подсказка"
+
+#: common/templates/login.html:118
+msgid "确定"
+msgstr "ОК"
+
+#: common/twofa/sms.py:46 common/twofa/sms.py:56
+msgid "系统未配置短信服务商！"
+msgstr "SMS-провайдер не настроен!"
+
+#: common/twofa/sms.py:50
+#, python-brace-format
+msgid "获取验证码太频繁，请于{}秒后再试"
+msgstr "Слишком частый запрос кода, повторите через {} сек"
+
+#: common/twofa/sms.py:71
+msgid "未获取验证码或验证码已过期！"
+msgstr "Код не получен или срок действия истёк!"
+
+#: common/twofa/sms.py:76 common/twofa/totp.py:34
+msgid "验证码不正确！"
+msgstr "Неверный код подтверждения!"
+
+#: common/utils/const.py:15
+msgid "查询权限申请"
+msgstr "Заявка на права запроса"
+
+#: common/utils/const.py:16
+msgid "SQL上线申请"
+msgstr "Заявка на отправка SQL"
+
+#: common/utils/const.py:17
+msgid "数据归档申请"
+msgstr "Заявка на архивацию данных"
+
+#: common/utils/const.py:21
+msgid "待审核"
+msgstr "Ожидает проверки"
+
+#: common/utils/const.py:22 common/utils/const.py:31
+msgid "审核通过"
+msgstr "Одобрено"
+
+#: common/utils/const.py:23 common/utils/const.py:32
+msgid "审核不通过"
+msgstr "Отклонено"
+
+#: common/utils/const.py:24 common/utils/const.py:33
+msgid "审核取消"
+msgstr "Проверка отменена"
+
+#: common/utils/const.py:30
+msgid "提交"
+msgstr "Отправить"
+
+#: common/utils/const.py:34
+msgid "设置定时执行"
+msgstr "Настроить отложенное выполнение"
+
+#: common/utils/const.py:35
+msgid "开始执行"
+msgstr "Начать выполнение"
+
+#: common/utils/const.py:36
+msgid "执行结束"
+msgstr "Выполнение завершено"
+
+#: common/utils/sendmsg.py:88
+msgid "收件人需要为列表"
+msgstr "Получатели должны быть списком"
+
+#: common/utils/sendmsg.py:91
+msgid "抄送人需要为列表"
+msgstr "Копия должна быть списком"
+
+#: common/utils/sendmsg.py:109
+msgid "Archery 通知"
+msgstr "Уведомление Archery"
+
+#: common/utils/sendmsg.py:135
+#, python-brace-format
+msgid ""
+"邮件推送失败\n"
+"{}"
+msgstr ""
+"Ошибка отправки почты\n"
+"{}"
+
+#: common/utils/sendmsg.py:213
+#, python-format
+msgid "[请点击链接](%s)"
+msgstr "[Перейти по ссылке](%s)"

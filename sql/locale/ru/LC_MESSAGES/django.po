@@ -1,0 +1,4918 @@
+# Archery Russian translations — workflow status keys
+# 更改翻译文件后务必使用 python manage.py compilemessages 编译翻译文件
+msgid ""
+msgstr ""
+"Project-Id-Version: Archery\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-10 16:03+0500\n"
+"PO-Revision-Date: 2026-08-10 00:00+0000\n"
+"Last-Translator: Archery\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: sql/admin.py:58 sql/admin.py:88
+msgid "认证信息"
+msgstr "Учётные данные"
+
+#: sql/admin.py:60 sql/admin.py:90
+msgid "个人信息"
+msgstr "Личные данные"
+
+#: sql/admin.py:72 sql/admin.py:102
+msgid "权限信息"
+msgstr "Права доступа"
+
+#: sql/admin.py:83 sql/admin.py:113 sql/models.py:72 sql/models.py:245
+#: sql/templates/groupmgmt.html:7
+msgid "资源组"
+msgstr "Группа ресурсов"
+
+#: sql/admin.py:84 sql/templates/archivedetail.html:31
+#: sql/templates/detail.html:31 sql/templates/queryapplydetail.html:21
+msgid "其他信息"
+msgstr "Прочее"
+
+#: sql/admin.py:229
+msgid "隧道信息"
+msgstr "Туннель"
+
+#: sql/admin.py:231
+msgid "连接信息"
+msgstr "Подключение"
+
+#: sql/archiver.py:151
+msgid "请填写完整！"
+msgstr "Заполните все поля!"
+
+#: sql/archiver.py:154
+msgid "归档到实例时目标实例信息必选！"
+msgstr "При архивации на инстанс обязательны данные целевого инстанса!"
+
+#: sql/archiver.py:163 sql/archiver.py:173 sql/data_dictionary.py:285
+#: sql/query_privileges.py:239 sql/sql_analyze.py:67 sql/sql_optimize.py:49
+#: sql/sql_optimize.py:166
+msgid "你所在组未关联该实例！"
+msgstr "Ваша группа не связана с этим инстансом!"
+
+#: sql/archiver.py:213 sql/query_privileges.py:300
+msgid "新建审批流失败, 请联系管理员"
+msgstr "Не удалось создать маршрут согласования, обратитесь к администратору"
+
+#: sql/archiver.py:253
+#, python-format
+msgid "数据错误, 不允许的操作, 请检查 audit_status, error: %(v0)s"
+msgstr ""
+"Ошибка данных, операция запрещена. Проверьте audit_status, error: %(v0)s"
+
+#: sql/archiver.py:262 sql/query_privileges.py:459 sql/sql_workflow.py:253
+msgid "工单不存在"
+msgstr "Заявка не найдена"
+
+#: sql/archiver.py:274 sql/query_privileges.py:468
+#, python-format
+msgid "审核失败: %(v0)s"
+msgstr "Ошибка проверки: %(v0)s"
+
+#: sql/archiver.py:429
+#, python-format
+msgid "命令执行报错:%(v0)s"
+msgstr "Ошибка выполнения команды: %(v0)s"
+
+#: sql/archiver.py:434
+#, python-format
+msgid "删除和写入数量不一致:%(v0)s!=%(v1)s"
+msgstr "Число удалённых и записанных строк не совпадает: %(v0)s!=%(v1)s"
+
+#: sql/archiver.py:439 sql/archiver.py:444
+#, python-format
+msgid "查询和删除数量不一致:%(v0)s!=%(v1)s"
+msgstr "Число найденных и удалённых строк не совпадает: %(v0)s!=%(v1)s"
+
+#: sql/binlog.py:73 sql/binlog.py:103 sql/instance.py:100 sql/instance.py:190
+#: sql/query.py:141 sql/slowlog.py:47 sql/slowlog.py:193
+#: sql/sql_optimize.py:218 sql/sql_optimize.py:269
+msgid "实例不存在"
+msgstr "Инстанс не найден"
+
+#: sql/binlog.py:111
+msgid "清理成功"
+msgstr "Очистка выполнена"
+
+#: sql/binlog.py:115
+#, python-format
+msgid "清理失败,Error:%(v0)s"
+msgstr "Очистка не удалась, Error:%(v0)s"
+
+#: sql/binlog.py:119
+msgid "Error:未选择binlog！"
+msgstr "Error: binlog не выбран!"
+
+#: sql/data_dictionary.py:40 sql/data_dictionary.py:86
+#: sql/data_dictionary.py:218 sql/data_dictionary.py:256
+msgid "非法调用！"
+msgstr "Недопустимый вызов!"
+
+#: sql/data_dictionary.py:198 sql/data_dictionary.py:233
+msgid "仅MySQL支持该功能"
+msgstr "Функция поддерживается только для MySQL"
+
+#: sql/data_dictionary.py:295
+msgid "仅管理员可以导出整个实例的字典信息！"
+msgstr "Только администратор может экспортировать словарь всего инстанса!"
+
+#: sql/data_dictionary.py:313 sql/data_dictionary.py:321
+msgid "实例名或db名不合法"
+msgstr "Недопустимое имя инстанса или БД"
+
+#: sql/data_dictionary.py:333
+#, python-format
+msgid "实例%(v0)s数据字典导出成功，请到downloads目录下载！"
+msgstr ""
+"Словарь данных инстанса %(v0)s экспортирован, скачайте из каталога "
+"downloads!"
+
+#: sql/db_diagnostic.py:32 sql/db_diagnostic.py:62 sql/db_diagnostic.py:93
+#: sql/db_diagnostic.py:133 sql/db_diagnostic.py:168 sql/db_diagnostic.py:205
+#: sql/instance_account.py:34 sql/instance_account.py:86
+#: sql/instance_account.py:138 sql/instance_account.py:178
+#: sql/instance_account.py:290 sql/instance_account.py:348
+#: sql/instance_account.py:380 sql/instance_database.py:39
+#: sql/instance_database.py:90 sql/instance_database.py:154 sql/slowlog.py:55
+#: sql/slowlog.py:201 sql/sql_optimize.py:108 sql/views.py:786
+msgid "你所在组未关联该实例"
+msgstr "Ваша группа не связана с этим инстансом"
+
+#: sql/db_diagnostic.py:72
+#, python-brace-format
+msgid "暂时不支持{}类型数据库通过进程id构建请求"
+msgstr ""
+"Пока не поддерживается построение запроса по process id для БД типа {}"
+
+#: sql/db_diagnostic.py:109
+#, python-brace-format
+msgid "暂时不支持{}类型数据库终止会话"
+msgstr "Пока не поддерживается завершение сессий для БД типа {}"
+
+#: sql/db_diagnostic.py:141
+#, python-brace-format
+msgid "暂时不支持{}类型数据库的表空间信息查询"
+msgstr "Пока не поддерживается запрос tablespace для БД типа {}"
+
+#: sql/db_diagnostic.py:179
+#, python-brace-format
+msgid "暂时不支持{}类型数据库的锁等待查询"
+msgstr "Пока не поддерживается запрос ожидания блокировок для БД типа {}"
+
+#: sql/db_diagnostic.py:214
+#, python-brace-format
+msgid "暂时不支持{}类型数据库的长事务查询"
+msgstr "Пока не поддерживается запрос длинных транзакций для БД типа {}"
+
+#: sql/engines/cassandra.py:128 sql/engines/clickhouse.py:170
+#: sql/engines/mssql.py:422 sql/engines/mysql.py:814 sql/engines/odps.py:150
+#: sql/engines/oracle.py:662 sql/engines/pgsql.py:169
+#: sql/engines/phoenix.py:78 sql/engines/tdengine.py:225
+#: sql/sql_optimize.py:227 sql/sql_optimize.py:280
+msgid "没有有效的SQL语句"
+msgstr "Нет допустимого SQL-выражения"
+
+#: sql/engines/cassandra.py:131 sql/engines/clickhouse.py:173
+#: sql/engines/mysql.py:817 sql/engines/pgsql.py:172
+#: sql/engines/tdengine.py:228 sql/offlinedownload.py:237
+msgid "不支持的查询语法类型!"
+msgstr "Неподдерживаемый тип синтаксиса запроса!"
+
+#: sql/engines/cassandra.py:134 sql/engines/clickhouse.py:176
+#: sql/engines/mysql.py:820 sql/engines/pgsql.py:175
+#: sql/engines/tdengine.py:231
+msgid "SQL语句中含有 * "
+msgstr "SQL-выражение содержит * "
+
+#: sql/engines/cassandra.py:229 sql/engines/clickhouse.py:459
+#: sql/engines/doris.py:179 sql/engines/elasticsearch.py:822
+#: sql/engines/mssql.py:776 sql/engines/mssql.py:813
+#: sql/engines/oracle.py:1208 sql/engines/pgsql.py:368
+#: sql/engines/phoenix.py:185 sql/engines/redis.py:684
+#: sql/engines/tdengine.py:1485
+#, python-brace-format
+msgid "异常信息：{}"
+msgstr "Ошибка: {}"
+
+#: sql/engines/cassandra.py:244 sql/engines/clickhouse.py:473
+#: sql/engines/doris.py:194 sql/engines/elasticsearch.py:837
+#: sql/engines/mssql.py:835 sql/engines/oracle.py:1222
+#: sql/engines/pgsql.py:382 sql/engines/phoenix.py:213
+#: sql/engines/redis.py:698 sql/engines/tdengine.py:1499
+msgid "前序语句失败, 未执行"
+msgstr "Предыдущее выражение завершилось с ошибкой, не выполнено"
+
+#: sql/engines/clickhouse.py:180
+msgid "当前ClickHouse实例版本低于20.6.3，不支持explain!"
+msgstr "Версия инстанса ClickHouse ниже 20.6.3, explain не поддерживается!"
+
+#: sql/engines/clickhouse.py:238
+msgid "驳回未通过检查SQL"
+msgstr "Отклонён SQL, не прошедший проверку"
+
+#: sql/engines/clickhouse.py:239
+#, python-brace-format
+msgid "explain语法检查错误：{}"
+msgstr "Ошибка проверки синтаксиса explain: {}"
+
+#: sql/engines/clickhouse.py:263 sql/engines/doris.py:92
+#: sql/engines/elasticsearch.py:558 sql/engines/elasticsearch.py:576
+#: sql/engines/elasticsearch.py:585 sql/engines/elasticsearch.py:609
+#: sql/engines/elasticsearch.py:617 sql/engines/elasticsearch.py:625
+#: sql/engines/elasticsearch.py:637 sql/engines/elasticsearch.py:651
+#: sql/engines/elasticsearch.py:661 sql/engines/elasticsearch.py:671
+#: sql/engines/elasticsearch.py:682 sql/engines/elasticsearch.py:696
+#: sql/engines/elasticsearch.py:710 sql/engines/elasticsearch.py:726
+#: sql/engines/elasticsearch.py:734 sql/engines/mongo.py:1085
+#: sql/engines/mssql.py:618 sql/engines/mysql.py:921 sql/engines/mysql.py:935
+#: sql/engines/oracle.py:767 sql/engines/pgsql.py:285
+#: sql/engines/tdengine.py:772
+msgid "驳回不支持语句"
+msgstr "Отклонено неподдерживаемое выражение"
+
+#: sql/engines/clickhouse.py:264 sql/engines/doris.py:93
+#: sql/engines/mssql.py:619 sql/engines/mysql.py:923 sql/engines/oracle.py:768
+#: sql/engines/pgsql.py:286 sql/engines/tdengine.py:773
+msgid "仅支持DML和DDL语句，查询语句请使用SQL查询功能！"
+msgstr "Поддерживаются только DML и DDL; для SELECT используйте SQL-запросы!"
+
+msgid "SELECT与DML/DDL不能在同一工单中提交！"
+msgstr "SELECT и DML/DDL нельзя отправлять в одной заявке!"
+
+msgid "(пусто)"
+msgstr "(пусто)"
+
+msgid "(результат обрезан, limit={})"
+msgstr "(результат обрезан, limit={})"
+
+msgid "format must be csv or json"
+msgstr "format должен быть csv или json"
+
+msgid "查询尚未执行"
+msgstr "Запрос ещё не выполнен"
+
+msgid "没有可下载的查询结果"
+msgstr "Нет результата для скачивания"
+
+msgid "结果已截断"
+msgstr "Результат обрезан"
+
+msgid "返回工单"
+msgstr "К заявке"
+
+#: sql/engines/clickhouse.py:272 sql/engines/doris.py:101
+#: sql/engines/mssql.py:629 sql/engines/mysql.py:927 sql/engines/oracle.py:776
+#: sql/engines/pgsql.py:294 sql/engines/tdengine.py:781
+msgid "驳回高危SQL"
+msgstr "Отклонён опасный SQL"
+
+#: sql/engines/clickhouse.py:273 sql/engines/doris.py:102
+#: sql/engines/mssql.py:630 sql/engines/mysql.py:929 sql/engines/oracle.py:777
+#: sql/engines/pgsql.py:295 sql/engines/tdengine.py:782
+#, python-brace-format
+msgid "禁止提交匹配{}条件的语句！"
+msgstr "Запрещено отправлять выражения, соответствующие условию {}!"
+
+#: sql/engines/clickhouse.py:296 sql/engines/clickhouse.py:311
+#: sql/engines/clickhouse.py:350 sql/engines/clickhouse.py:403
+#: sql/engines/tdengine.py:837 sql/engines/tdengine.py:873
+#: sql/engines/tdengine.py:896 sql/engines/tdengine.py:942
+#: sql/engines/tdengine.py:991 sql/engines/tdengine.py:999
+#: sql/engines/tdengine.py:1051 sql/engines/tdengine.py:1059
+#: sql/engines/tdengine.py:1128 sql/engines/tdengine.py:1254
+#: sql/engines/tdengine.py:1269 sql/engines/tdengine.py:1358
+#: sql/engines/tdengine.py:1415 sql/engines/tdengine.py:1423
+#: sql/engines/tdengine.py:1432
+msgid "驳回不支持SQL"
+msgstr "Отклонён неподдерживаемый SQL"
+
+#: sql/engines/clickhouse.py:297
+msgid "ALTER TABLE仅支持*MergeTree，Merge以及Distributed等引擎表！"
+msgstr ""
+"ALTER TABLE поддерживается только для движков *MergeTree, Merge и "
+"Distributed!"
+
+#: sql/engines/clickhouse.py:312
+msgid "DELETE与UPDATE仅支持*MergeTree引擎表！"
+msgstr "DELETE и UPDATE поддерживаются только для движка *MergeTree!"
+
+#: sql/engines/clickhouse.py:327 sql/engines/clickhouse.py:362
+#: sql/engines/clickhouse.py:395 sql/engines/tdengine.py:888
+#: sql/engines/tdengine.py:1076 sql/engines/tdengine.py:1282
+msgid "表不存在"
+msgstr "Таблица не найдена"
+
+#: sql/engines/clickhouse.py:328 sql/engines/clickhouse.py:363
+#: sql/engines/clickhouse.py:396 sql/engines/tdengine.py:1077
+#: sql/engines/tdengine.py:1179 sql/engines/tdengine.py:1228
+#: sql/engines/tdengine.py:1283 sql/engines/tdengine.py:1393
+#, python-brace-format
+msgid "表 {} 不存在！"
+msgstr "Таблица {} не найдена!"
+
+#: sql/engines/clickhouse.py:351
+msgid "TRUNCATE不支持View,File,URL,Buffer和Null表引擎！"
+msgstr ""
+"TRUNCATE не поддерживается для движков View, File, URL, Buffer и Null!"
+
+#: sql/engines/clickhouse.py:404 sql/engines/tdengine.py:1139
+#: sql/engines/tdengine.py:1238
+msgid "INSERT语法不正确！"
+msgstr "Некорректный синтаксис INSERT!"
+
+#: sql/engines/doris.py:112 sql/engines/oracle.py:787
+msgid "驳回未带where数据修改"
+msgstr "Отклонено изменение данных без WHERE"
+
+#: sql/engines/doris.py:113 sql/engines/oracle.py:788
+msgid "数据修改需带where条件！"
+msgstr "Изменение данных требует условия WHERE!"
+
+#: sql/engines/elasticsearch.py:120
+#, python-brace-format
+msgid "获取数据库时出错: {}"
+msgstr "Ошибка получения списка БД: {}"
+
+#: sql/engines/elasticsearch.py:170
+#, python-brace-format
+msgid "获取表列表时出错: {}"
+msgstr "Ошибка получения списка таблиц: {}"
+
+#: sql/engines/elasticsearch.py:187 sql/engines/elasticsearch.py:209
+msgid "无"
+msgstr "Нет"
+
+#: sql/engines/elasticsearch.py:192 sql/engines/elasticsearch.py:221
+#, python-brace-format
+msgid "获取字段时出错: {}"
+msgstr "Ошибка получения полей: {}"
+
+#: sql/engines/elasticsearch.py:226
+msgid "语句检查通过。"
+msgstr "Проверка выражения пройдена."
+
+#: sql/engines/elasticsearch.py:243
+msgid "没有有效的SQL语句。"
+msgstr "Нет допустимого SQL-выражения."
+
+#: sql/engines/elasticsearch.py:246
+msgid ""
+"语句检查失败：语句必须以 'get' 或 'select' 开头。示例查询：GET /dmp__iv/_search、select * from "
+"dmp__iv limit 10;"
+msgstr ""
+"Проверка не пройдена: выражение должно начинаться с 'get' или 'select'. "
+"Пример: GET /dmp__iv/_search, select * from dmp__iv limit 10;"
+
+#: sql/engines/elasticsearch.py:419 sql/engines/elasticsearch.py:1207
+#: sql/engines/elasticsearch.py:1238
+#, python-brace-format
+msgid "执行查询时出错: {}"
+msgstr "Ошибка выполнения запроса: {}"
+
+#: sql/engines/elasticsearch.py:464
+#, python-brace-format
+msgid "无法转为Json格式。{}。query_body：{}。"
+msgstr "Не удалось преобразовать в JSON. {}. query_body: {}."
+
+#: sql/engines/elasticsearch.py:513
+msgid "未找到索引名称。"
+msgstr "Имя индекса не найдено."
+
+#: sql/engines/elasticsearch.py:559
+msgid "仅支持PUT,POST,DELETE等API方法，GET,SELECT查询语句请使用SQL查询功能！"
+msgstr ""
+"Поддерживаются API PUT, POST, DELETE; для GET/SELECT используйте SQL-"
+"запросы!"
+
+#: sql/engines/elasticsearch.py:567
+msgid "此为注释信息。"
+msgstr "Это комментарий."
+
+#: sql/engines/elasticsearch.py:577
+#, python-brace-format
+msgid "请求必须包含索引名称或无法解析。解析结果：{}"
+msgstr ""
+"Запрос должен содержать имя индекса или не удалось разобрать. Результат: {}"
+
+#: sql/engines/elasticsearch.py:586 sql/engines/elasticsearch.py:975
+msgid "删除操作必须包含id条件。"
+msgstr "Операция удаления должна содержать условие id."
+
+#: sql/engines/elasticsearch.py:602
+#, python-brace-format
+msgid "审核通过。解析结果：创建表：[index_name：{}]"
+msgstr "Проверка пройдена. Результат: создание [index_name: {}]"
+
+#: sql/engines/elasticsearch.py:610
+msgid "PUT请求创建索引时请求体可以为空或需要包含mappings或settings。"
+msgstr ""
+"При PUT для создания индекса тело может быть пустым или содержать "
+"mappings/settings."
+
+#: sql/engines/elasticsearch.py:618
+#, python-brace-format
+msgid "POST请求必须指定API端点，例如_doc。解析结果：{}"
+msgstr "POST должен указывать API-эндпоинт, например _doc. Результат: {}"
+
+#: sql/engines/elasticsearch.py:626 sql/engines/elasticsearch.py:652
+#: sql/engines/elasticsearch.py:735
+#, python-brace-format
+msgid "不支持此操作。解析结果：{}"
+msgstr "Операция не поддерживается. Результат: {}"
+
+#: sql/engines/elasticsearch.py:638
+msgid "PUT请求必须包含文档Id。"
+msgstr "PUT должен содержать Id документа."
+
+#: sql/engines/elasticsearch.py:662
+msgid "_search属于查询方法。"
+msgstr "_search относится к методам запроса."
+
+#: sql/engines/elasticsearch.py:672
+#, python-brace-format
+msgid "POST请求{}时必须包含文档Id。"
+msgstr "POST {} должен содержать Id документа."
+
+#: sql/engines/elasticsearch.py:683 sql/engines/elasticsearch.py:697
+#: sql/engines/elasticsearch.py:711
+#, python-brace-format
+msgid "不支持此操作，{}需要使用POST方法。解析结果：{}"
+msgstr "Операция не поддерживается, для {} нужен POST. Результат: {}"
+
+#: sql/engines/elasticsearch.py:727
+msgid ""
+"API操作端点(API Endpoint)仅支持: 空, _doc、_update、_update_by_query、_delete_by_query。"
+msgstr ""
+"API Endpoint поддерживает только: пусто, _doc, _update, _update_by_query, "
+"_delete_by_query."
+
+#: sql/engines/elasticsearch.py:746
+#, python-brace-format
+msgid "审核通过。解析结果：{}"
+msgstr "Проверка пройдена. Результат: {}"
+
+#: sql/engines/elasticsearch.py:778
+msgid "注释信息不需要执行。"
+msgstr "Комментарий выполнять не нужно."
+
+#: sql/engines/elasticsearch.py:810 sql/engines/elasticsearch.py:884
+#, python-brace-format
+msgid "不支持的API类型：{}"
+msgstr "Неподдерживаемый тип API: {}"
+
+#: sql/engines/elasticsearch.py:1030
+#, python-brace-format
+msgid "无法转为Json格式。{}。doc_data_body：{}。"
+msgstr "Не удалось преобразовать в JSON. {}. doc_data_body: {}."
+
+#: sql/engines/elasticsearch.py:1124
+#, python-brace-format
+msgid "Elasticsearch 连接建立失败: {}"
+msgstr "Не удалось подключиться к Elasticsearch: {}"
+
+#: sql/engines/elasticsearch.py:1126
+msgid "Elasticsearch 连接无法建立。"
+msgstr "Не удалось установить соединение с Elasticsearch."
+
+#: sql/engines/elasticsearch.py:1131 sql/engines/elasticsearch.py:1135
+msgid "此方法暂未实现。"
+msgstr "Метод пока не реализован."
+
+#: sql/engines/elasticsearch.py:1174
+#, python-brace-format
+msgid "OpenSearch 连接建立失败: {}"
+msgstr "Не удалось подключиться к OpenSearch: {}"
+
+#: sql/engines/elasticsearch.py:1176
+msgid "OpenSearch 连接无法建立。"
+msgstr "Не удалось установить соединение с OpenSearch."
+
+#: sql/engines/goinception.py:136 sql/engines/mongo.py:802
+#: sql/offlinedownload.py:145
+msgid "异常终止"
+msgstr "Аварийное завершение"
+
+#: sql/engines/goinception.py:214
+msgid "Inception Error: 未获取到语法信息"
+msgstr "Inception Error: не получена информация о синтаксисе"
+
+#: sql/engines/memcached.py:40
+#, python-brace-format
+msgid "Memcached节点 {} 不存在"
+msgstr "Узел Memcached {} не существует"
+
+#: sql/engines/memcached.py:50
+#, python-brace-format
+msgid "连接Memcached节点 {} 失败: {}"
+msgstr "Ошибка подключения к узлу Memcached {}: {}"
+
+#: sql/engines/memcached.py:60
+#, python-brace-format
+msgid "连接成功，版本: {}"
+msgstr "Подключение успешно, версия: {}"
+
+#: sql/engines/memcached.py:60 sql/engines/memcached.py:278
+#: sql/engines/memcached.py:300 sql/engines/memcached.py:402
+#: sql/templates/audit_sqlworkflow.html:9
+#: sql/templates/data_dictionary.html:562
+#: sql/templates/sqlexportworkflow.html:9 sql/templates/sqlworkflow.html:9
+msgid "状态"
+msgstr "Статус"
+
+#: sql/engines/memcached.py:64
+#, python-brace-format
+msgid "测试连接失败: {}"
+msgstr "Проверка подключения не удалась: {}"
+
+#: sql/engines/memcached.py:68
+msgid "节点"
+msgstr "Узел"
+
+#: sql/engines/memcached.py:75
+#, python-brace-format
+msgid "获取所有节点失败: {}"
+msgstr "Не удалось получить список узлов: {}"
+
+#: sql/engines/memcached.py:99
+#, python-brace-format
+msgid "错误: {}"
+msgstr "Ошибка: {}"
+
+#: sql/engines/memcached.py:124
+msgid "仅支持 (version, get, gets) 命令"
+msgstr "Поддерживаются только команды (version, get, gets)"
+
+#: sql/engines/memcached.py:136
+msgid "命令执行结果行数不是1"
+msgstr "Результат команды содержит не 1 строку"
+
+#: sql/engines/memcached.py:137
+msgid "命令执行结果列数不是1"
+msgstr "Результат команды содержит не 1 столбец"
+
+#: sql/engines/memcached.py:184 sql/engines/memcached.py:193
+#: sql/engines/memcached.py:448
+#, python-brace-format
+msgid "不支持的命令: {}"
+msgstr "Неподдерживаемая команда: {}"
+
+#: sql/engines/memcached.py:248
+msgid "get命令格式错误"
+msgstr "Неверный формат команды get"
+
+#: sql/engines/memcached.py:253 sql/engines/memcached.py:334
+msgid "值"
+msgstr "Значение"
+
+#: sql/engines/memcached.py:256
+#, python-brace-format
+msgid "get命令执行失败: {}"
+msgstr "Ошибка выполнения get: {}"
+
+#: sql/engines/memcached.py:270
+msgid "set命令格式错误"
+msgstr "Неверный формат команды set"
+
+#: sql/engines/memcached.py:280
+#, python-brace-format
+msgid "set命令执行失败: {}"
+msgstr "Ошибка выполнения set: {}"
+
+#: sql/engines/memcached.py:294
+msgid "delete命令格式错误"
+msgstr "Неверный формат команды delete"
+
+#: sql/engines/memcached.py:302
+#, python-brace-format
+msgid "delete命令执行失败: {}"
+msgstr "Ошибка выполнения delete: {}"
+
+#: sql/engines/memcached.py:316
+msgid "版本"
+msgstr "Версия"
+
+#: sql/engines/memcached.py:329
+msgid "gets命令格式错误"
+msgstr "Неверный формат команды gets"
+
+#: sql/engines/memcached.py:334
+msgid "键"
+msgstr "Ключ"
+
+#: sql/engines/memcached.py:338
+#, python-brace-format
+msgid "gets命令执行失败: {}"
+msgstr "Ошибка выполнения gets: {}"
+
+#: sql/engines/memcached.py:352
+msgid "incr命令格式错误"
+msgstr "Неверный формат команды incr"
+
+#: sql/engines/memcached.py:358 sql/engines/memcached.py:379
+msgid "结果"
+msgstr "Результат"
+
+#: sql/engines/memcached.py:360
+#, python-brace-format
+msgid "incr命令执行失败: {}"
+msgstr "Ошибка выполнения incr: {}"
+
+#: sql/engines/memcached.py:373
+msgid "decr命令格式错误"
+msgstr "Неверный формат команды decr"
+
+#: sql/engines/memcached.py:381
+#, python-brace-format
+msgid "decr命令执行失败: {}"
+msgstr "Ошибка выполнения decr: {}"
+
+#: sql/engines/memcached.py:395
+msgid "touch命令格式错误"
+msgstr "Неверный формат команды touch"
+
+#: sql/engines/memcached.py:404
+#, python-brace-format
+msgid "touch命令执行失败: {}"
+msgstr "Ошибка выполнения touch: {}"
+
+#: sql/engines/memcached.py:440
+msgid "空SQL语句"
+msgstr "Пустое SQL-выражение"
+
+#: sql/engines/mongo.py:447
+#, python-brace-format
+msgid "无法解析语句: {}"
+msgstr "Не удалось разобрать выражение: {}"
+
+#: sql/engines/mongo.py:452
+#, python-brace-format
+msgid "无法解析方法参数: {}"
+msgstr "Не удалось разобрать параметры метода: {}"
+
+#: sql/engines/mongo.py:762
+#, python-brace-format
+msgid "暂不支持的语句: {}"
+msgstr "Пока неподдерживаемое выражение: {}"
+
+#: sql/engines/mongo.py:803
+#, python-brace-format
+msgid "mongo语句执行报错: {}"
+msgstr "Ошибка выполнения mongo: {}"
+
+#: sql/engines/mongo.py:810
+msgid "执行结束"
+msgstr "Выполнение завершено"
+
+#: sql/engines/mongo.py:838
+msgid "提交的语句请以分号结尾"
+msgstr "Выражение должно заканчиваться точкой с запятой"
+
+#: sql/engines/mongo.py:916 sql/engines/mongo.py:920
+msgid "文档已经存在"
+msgstr "Документ уже существует"
+
+#: sql/engines/mongo.py:921
+msgid "文档已经存在！"
+msgstr "Документ уже существует!"
+
+#: sql/engines/mongo.py:932 sql/engines/mongo.py:936
+msgid "文档不存在"
+msgstr "Документ не найден"
+
+#: sql/engines/mongo.py:937
+#, python-brace-format
+msgid "文档不存在，不能进行{}操作！"
+msgstr "Документ не найден, операция {} невозможна!"
+
+#: sql/engines/mongo.py:960
+msgid "后台创建索引"
+msgstr "Создание индекса в фоне"
+
+#: sql/engines/mongo.py:961
+msgid "创建索引没有加 background:true"
+msgstr "При создании индекса не указано background:true"
+
+#: sql/engines/mongo.py:980
+msgid "大表创建索引"
+msgstr "Создание индекса на большой таблице"
+
+#: sql/engines/mongo.py:981
+msgid "大于500万条，请在业务低谷期创建索引！"
+msgstr "Более 5 млн строк — создавайте индекс в период низкой нагрузки!"
+
+#: sql/engines/mongo.py:1005 sql/engines/mongo.py:1076
+msgid "检测通过"
+msgstr "Проверка пройдена"
+
+#: sql/engines/mongo.py:1086
+msgid "仅支持DML和DDL语句，如需查询请使用数据库查询功能！"
+msgstr ""
+"Поддерживаются только DML и DDL; для запросов используйте функцию запроса к "
+"БД!"
+
+#: sql/engines/mongo.py:1090 sql/engines/mongo.py:1094
+#: sql/engines/mssql.py:665
+msgid "语法错误"
+msgstr "Синтаксическая ошибка"
+
+#: sql/engines/mongo.py:1095
+msgid "请检查语句的正确性或（）{} },{是否正确匹配！"
+msgstr "Проверьте корректность выражения или парность () {} },{ !"
+
+#: sql/engines/mongo.py:1382
+msgid "错误：对不起，只支持查询相关方法"
+msgstr "Ошибка: поддерживаются только методы запросов"
+
+#: sql/engines/mongo.py:1389
+#, python-brace-format
+msgid ""
+"\n"
+"错误: {} 文档不存在!"
+msgstr ""
+"\n"
+"Ошибка: {} документ не найден!"
+
+#: sql/engines/mongo.py:1393
+msgid "请检查语句的正确性! 请使用原生查询语句"
+msgstr "Проверьте выражение! Используйте нативный запрос"
+
+#: sql/engines/mssql.py:103
+#, python-brace-format
+msgid ""
+"ODBC 驱动 '{driver}' 不可用。\n"
+"可用驱动: {drivers}\n"
+"请安装 Microsoft ODBC Driver for SQL Server 或配置正确的驱动。\n"
+"原始错误: {error}"
+msgstr ""
+"ODBC-драйвер '{driver}' недоступен.\n"
+"Доступные: {drivers}\n"
+"Установите Microsoft ODBC Driver for SQL Server или укажите корректный драйвер.\n"
+"Исходная ошибка: {error}"
+
+#: sql/engines/mssql.py:116
+#, python-brace-format
+msgid ""
+"未找到可用的 ODBC 驱动。\n"
+"请安装 Microsoft ODBC Driver for SQL Server。\n"
+"安装方法:\n"
+"  macOS: brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release && brew install msodbcsql17\n"
+"  Linux: 参考 https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/install-odbc-driver-sql-server\n"
+"原始错误: {error}"
+msgstr ""
+"Доступный ODBC-драйвер не найден.\n"
+"Установите Microsoft ODBC Driver for SQL Server.\n"
+"Установка:\n"
+"  macOS: brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release && brew install msodbcsql17\n"
+"  Linux: см. https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/install-odbc-driver-sql-server\n"
+"Исходная ошибка: {error}"
+
+#: sql/engines/mssql.py:405 sql/engines/mssql.py:428 sql/engines/odps.py:154
+#: sql/engines/phoenix.py:82
+#, python-brace-format
+msgid "仅支持{}语法!"
+msgstr "Поддерживается только синтаксис {}!"
+
+#: sql/engines/mssql.py:413
+msgid "执行计划查询中未找到有效的SQL语句"
+msgstr "В запросе плана выполнения нет допустимого SQL"
+
+#: sql/engines/mssql.py:431 sql/engines/oracle.py:669
+msgid "禁止使用 * 关键词\n"
+msgstr "Запрещено использовать ключевое слово *\n"
+
+#: sql/engines/mssql.py:436
+#, python-brace-format
+msgid "禁止使用 {} 关键词\n"
+msgstr "Запрещено использовать ключевое слово {}\n"
+
+#: sql/engines/mssql.py:666
+#, python-brace-format
+msgid "语法检测失败: {}"
+msgstr "Проверка синтаксиса не удалась: {}"
+
+#: sql/engines/mysql.py:838
+msgid "您无权查看该表"
+msgstr "Нет прав на просмотр этой таблицы"
+
+#: sql/engines/mysql.py:937
+msgid "DDL语句和DML语句不能同时执行！"
+msgstr "Нельзя выполнять DDL и DML одновременно!"
+
+#: sql/engines/mysql.py:952 sql/engines/mysql.py:957
+msgid "实例read_only=1，禁止执行变更语句!"
+msgstr "Инстанс read_only=1, изменение данных запрещено!"
+
+#: sql/engines/odps.py:26
+msgid "db_name不能为空"
+msgstr "db_name не может быть пустым"
+
+#: sql/engines/odps.py:50
+#, python-brace-format
+msgid "[{}]项目不存在"
+msgstr "[{}] проект не найден"
+
+#: sql/engines/odps.py:109
+msgid "仅支持ODPS查询语句"
+msgstr "Поддерживаются только запросы ODPS"
+
+#: sql/engines/oracle.py:46
+msgid "sid 和 dsn 均未填写, 请联系管理页补充该实例配置."
+msgstr "Не заполнены sid и dsn, дополните конфигурацию инстанса в админке."
+
+#: sql/engines/oracle.py:666
+msgid "不支持语法!"
+msgstr "Синтаксис не поддерживается!"
+
+#: sql/engines/oracle.py:796 sql/engines/oracle.py:797
+msgid "SQL中不能包含^set|^rollback|^exit"
+msgstr "SQL не должен содержать ^set|^rollback|^exit"
+
+#: sql/engines/oracle.py:811 sql/engines/oracle.py:812
+msgid "WARNING:新建表的新建索引语句暂无法检测！"
+msgstr "WARNING: создание индексов на новых таблицах пока не проверяется!"
+
+#: sql/engines/oracle.py:827 sql/engines/oracle.py:828
+msgid "WARNING:新建表的数据修改暂无法检测！"
+msgstr "WARNING: изменение данных новых таблиц пока не проверяется!"
+
+#: sql/engines/oracle.py:843
+msgid "explain语法检查未通过！"
+msgstr "Проверка синтаксиса explain не пройдена!"
+
+#: sql/engines/oracle.py:883 sql/engines/oracle.py:884
+#: sql/engines/oracle.py:1049 sql/engines/oracle.py:1050
+#, python-brace-format
+msgid "{}对象已经存在！"
+msgstr "Объект {} уже существует!"
+
+#: sql/engines/oracle.py:896 sql/engines/oracle.py:897
+#: sql/engines/oracle.py:928 sql/engines/oracle.py:929
+msgid "影响行数大于1000，请关注"
+msgstr "Затронуто более 1000 строк — обратите внимание"
+
+#: sql/engines/oracle.py:983 sql/engines/oracle.py:984
+#, python-brace-format
+msgid "{}对象不存在！"
+msgstr "Объект {} не существует!"
+
+#: sql/engines/oracle.py:991 sql/engines/oracle.py:992
+#: sql/engines/oracle.py:1058 sql/engines/oracle.py:1059
+#: sql/engines/oracle.py:1072 sql/engines/oracle.py:1073
+msgid "当前平台，此语法不支持审核！"
+msgstr "На этой платформе синтаксис не поддерживает проверку!"
+
+#: sql/engines/oracle.py:1030 sql/engines/oracle.py:1031
+#, python-brace-format
+msgid "{}对象已经存在，请确认是否替换！"
+msgstr "Объект {} уже существует, подтвердите замену!"
+
+#: sql/engines/redis.py:355 sql/engines/redis.py:640
+msgid "禁止执行该命令！"
+msgstr "Выполнение этой команды запрещено!"
+
+#: sql/engines/redis.py:604
+msgid "禁止使用查询命令！"
+msgstr "Команды запроса запрещены!"
+
+#: sql/engines/redis.py:630 sql/engines/redis.py:666
+msgid "暂不支持显示影响行数"
+msgstr "Показ числа затронутых строк пока не поддерживается"
+
+#: sql/engines/tdengine.py:824 sql/engines/tdengine.py:856
+#: sql/engines/tdengine.py:978
+msgid "对象已存在"
+msgstr "Объект уже существует"
+
+#: sql/engines/tdengine.py:825
+#, python-brace-format
+msgid "数据库 {} 已存在，不允许重复创建！"
+msgstr "БД {} уже существует, повторное создание запрещено!"
+
+#: sql/engines/tdengine.py:838
+msgid "CREATE DATABASE 语法不正确！"
+msgstr "Некорректный синтаксис CREATE DATABASE!"
+
+#: sql/engines/tdengine.py:857 sql/engines/tdengine.py:924
+#: sql/engines/tdengine.py:979
+#, python-brace-format
+msgid "对象 {} 已存在，不允许重复创建！"
+msgstr "Объект {} уже существует, повторное создание запрещено!"
+
+#: sql/engines/tdengine.py:874
+msgid "CREATE STABLE 语法不正确！"
+msgstr "Некорректный синтаксис CREATE STABLE!"
+
+#: sql/engines/tdengine.py:889 sql/engines/tdengine.py:930
+#: sql/engines/tdengine.py:1161 sql/engines/tdengine.py:1203
+#: sql/engines/tdengine.py:1351
+#, python-brace-format
+msgid "超级表 {} 不存在！"
+msgstr "Супертаблица {} не существует!"
+
+#: sql/engines/tdengine.py:897 sql/engines/tdengine.py:935
+#: sql/engines/tdengine.py:1208
+#, python-brace-format
+msgid "USING 对象 {} 不是超级表！"
+msgstr "Объект USING {} не является супертаблицей!"
+
+#: sql/engines/tdengine.py:909
+msgid "CREATE TABLE 子表语法不正确！"
+msgstr "Некорректный синтаксис CREATE TABLE для подтаблицы!"
+
+#: sql/engines/tdengine.py:970 sql/engines/tdengine.py:1031
+#: sql/engines/tdengine.py:1324 sql/engines/tdengine.py:1350
+msgid "对象不存在"
+msgstr "Объект не существует"
+
+#: sql/engines/tdengine.py:971 sql/engines/tdengine.py:1032
+#: sql/engines/tdengine.py:1325
+#, python-brace-format
+msgid "数据库 {} 不存在！"
+msgstr "БД {} не существует!"
+
+#: sql/engines/tdengine.py:992
+msgid "CREATE TABLE 语法不正确！"
+msgstr "Некорректный синтаксис CREATE TABLE!"
+
+#: sql/engines/tdengine.py:1000
+msgid "CREATE语法不正确！"
+msgstr "Некорректный синтаксис CREATE!"
+
+#: sql/engines/tdengine.py:1052
+msgid "ALTER DATABASE 语法不正确！"
+msgstr "Некорректный синтаксис ALTER DATABASE!"
+
+#: sql/engines/tdengine.py:1060
+msgid "ALTER语法不正确！"
+msgstr "Некорректный синтаксис ALTER!"
+
+#: sql/engines/tdengine.py:1083
+msgid "ALTER语法不符合对象类型约束！"
+msgstr "Синтаксис ALTER не соответствует типу объекта!"
+
+#: sql/engines/tdengine.py:1087
+msgid "超级表仅支持 ALTER STABLE 语法！"
+msgstr "Для супертаблиц только ALTER STABLE!"
+
+#: sql/engines/tdengine.py:1093
+msgid "ALTER STABLE 语法不正确！"
+msgstr "Некорректный синтаксис ALTER STABLE!"
+
+#: sql/engines/tdengine.py:1096
+msgid "普通表不支持 ALTER STABLE 语法！"
+msgstr "Обычные таблицы не поддерживают ALTER STABLE!"
+
+#: sql/engines/tdengine.py:1103
+msgid "普通表 ALTER TABLE 语法不正确！"
+msgstr "Некорректный ALTER TABLE для обычной таблицы!"
+
+#: sql/engines/tdengine.py:1106
+msgid "子表不支持 ALTER STABLE 语法！"
+msgstr "Подтаблицы не поддерживают ALTER STABLE!"
+
+#: sql/engines/tdengine.py:1112
+msgid "子表 ALTER TABLE 语法不正确！"
+msgstr "Некорректный ALTER TABLE для подтаблицы!"
+
+#: sql/engines/tdengine.py:1164
+#, python-brace-format
+msgid "{} 不是超级表，不能使用 tbname 子查询语法！"
+msgstr "{} не супертаблица — синтаксис подзапроса tbname недоступен!"
+
+#: sql/engines/tdengine.py:1184 sql/engines/tdengine.py:1235
+#, python-brace-format
+msgid "{} 为超级表，不能直接写入，请指定 tbname 字段！"
+msgstr "{} — супертаблица, прямая запись запрещена, укажите поле tbname!"
+
+#: sql/engines/tdengine.py:1216
+#, python-brace-format
+msgid "{} 为超级表，不能使用 USING 语法写入！"
+msgstr "{} — супертаблица, запись через USING запрещена!"
+
+#: sql/engines/tdengine.py:1223
+#, python-brace-format
+msgid "表 {} 已存在，不能使用 USING 语法写入！"
+msgstr "Таблица {} уже существует, запись через USING запрещена!"
+
+#: sql/engines/tdengine.py:1270
+msgid "DELETE语法不正确！"
+msgstr "Некорректный синтаксис DELETE!"
+
+#: sql/engines/tdengine.py:1359
+#, python-brace-format
+msgid "对象 {} 不是超级表！"
+msgstr "Объект {} не является супертаблицей!"
+
+#: sql/engines/tdengine.py:1376
+msgid "DROP TABLE 语法不正确！"
+msgstr "Некорректный синтаксис DROP TABLE!"
+
+#: sql/engines/tdengine.py:1398
+#, python-brace-format
+msgid "对象 {} 为超级表，请使用 DROP STABLE！"
+msgstr "Объект {} — супертаблица, используйте DROP STABLE!"
+
+#: sql/engines/tdengine.py:1424
+msgid "DROP语法不正确！"
+msgstr "Некорректный синтаксис DROP!"
+
+#: sql/engines/tdengine.py:1433
+msgid "不支持该语法！"
+msgstr "Синтаксис не поддерживается!"
+
+#: sql/form.py:37
+msgid "秘钥文件不存在， 请勾选秘钥路径的清除选项再进行保存"
+msgstr "Файл ключа не найден — отметьте очистку пути ключа и сохраните снова"
+
+#: sql/instance.py:94 sql/instance.py:184
+msgid "实例ID不合法"
+msgstr "Недопустимый ID инстанса"
+
+#: sql/instance.py:199
+msgid "请先在参数模板中配置该参数！"
+msgstr "Сначала настройте параметр в шаблоне!"
+
+#: sql/instance.py:204
+msgid "参数值与实际运行值一致，未调整！"
+msgstr "Значение совпадает с текущим, изменений нет!"
+
+#: sql/instance.py:212
+#, python-format
+msgid "设置错误，错误信息：%(v0)s"
+msgstr "Ошибка настройки: %(v0)s"
+
+#: sql/instance.py:227
+msgid "修改成功，请手动持久化到配置文件！"
+msgstr "Изменено успешно, сохраните в конфиг вручную!"
+
+#: sql/instance.py:239
+msgid "源实例ID"
+msgstr "ID исходного инстанса"
+
+#: sql/instance.py:239
+msgid "目标实例ID"
+msgstr "ID целевого инстанса"
+
+#: sql/instance.py:244
+#, python-format
+msgid "%(v0)s不合法"
+msgstr "%(v0)s недопустимо"
+
+#: sql/instance.py:252
+msgid "源实例不存在"
+msgstr "Исходный инстанс не найден"
+
+#: sql/instance.py:258
+msgid "目标实例不存在"
+msgstr "Целевой инстанс не найден"
+
+#: sql/instance.py:265
+msgid "两个实例的数据库类型不一致，无法对比"
+msgstr "Типы БД инстансов различаются, сравнение невозможно"
+
+#: sql/instance.py:275
+#, python-format
+msgid "%(v0)s 引擎不支持参数对比功能"
+msgstr "Движок %(v0)s не поддерживает сравнение параметров"
+
+#: sql/instance.py:286 sql/instance.py:290
+msgid "获取源实例参数失败，请联系管理员"
+msgstr "Не удалось получить параметры исходного инстанса"
+
+#: sql/instance.py:297 sql/instance.py:301
+msgid "获取目标实例参数失败，请联系管理员"
+msgstr "Не удалось получить параметры целевого инстанса"
+
+#: sql/instance.py:334 sql/instance.py:347
+msgid "一致"
+msgstr "Совпадает"
+
+#: sql/instance.py:337
+msgid "值不同"
+msgstr "Значения различаются"
+
+#: sql/instance.py:340
+msgid "仅源实例存在"
+msgstr "Только на исходном инстансе"
+
+#: sql/instance.py:343
+msgid "仅目标实例存在"
+msgstr "Только на целевом инстансе"
+
+#: sql/instance.py:439
+msgid "执行对比命令失败，请联系管理员"
+msgstr "Не удалось выполнить сравнение, обратитесь к администратору"
+
+#: sql/instance.py:461 sql/instance.py:467
+msgid "读取对比结果文件失败，请联系管理员"
+msgstr "Не удалось прочитать файл результата сравнения"
+
+#: sql/instance_account.py:94 sql/instance_account.py:144
+#: sql/instance_account.py:298 sql/instance_account.py:342
+#: sql/instance_account.py:386 sql/instance_database.py:82
+#: sql/instance_database.py:146
+msgid "参数不完整，请确认后提交"
+msgstr "Параметры неполные, проверьте и отправьте снова"
+
+#: sql/instance_account.py:98 sql/instance_account.py:302
+msgid "两次输入密码不一致"
+msgstr "Пароли не совпадают"
+
+#: sql/instance_account.py:195 sql/instance_account.py:209
+#: sql/instance_account.py:228 sql/instance_account.py:244
+msgid "信息不完整，请确认后提交"
+msgstr "Данные неполны, проверьте и отправьте снова"
+
+#: sql/instance_database.py:95 sql/instance_database.py:159
+msgid "负责人不存在"
+msgstr "Ответственный не найден"
+
+#: sql/instance_database.py:113
+#, python-format
+msgid "创建数据库失败, 错误信息：%(v0)s"
+msgstr "Не удалось создать БД: %(v0)s"
+
+#: sql/models.py:36 sql/models.py:320 sql/models.py:411 sql/models.py:479
+#: sql/models.py:529
+msgid "组ID"
+msgstr "ID группы"
+
+#: sql/models.py:37 sql/models.py:321 sql/models.py:412 sql/models.py:480
+#: sql/models.py:530
+msgid "组名称"
+msgstr "Название группы"
+
+#: sql/models.py:38
+msgid "父级id"
+msgstr "ID родителя"
+
+#: sql/models.py:39
+msgid "排序"
+msgstr "Сортировка"
+
+#: sql/models.py:40
+msgid "层级"
+msgstr "Уровень"
+
+#: sql/models.py:41
+msgid "钉钉webhook地址"
+msgstr "Webhook DingTalk"
+
+#: sql/models.py:42
+msgid "飞书webhook地址"
+msgstr "Webhook Feishu"
+
+#: sql/models.py:43
+msgid "企业微信webhook地址"
+msgstr "Webhook WeCom"
+
+#: sql/models.py:44 sql/models.py:582
+msgid "是否删除"
+msgstr "Удалён"
+
+#: sql/models.py:44 sql/models.py:330 sql/models.py:343 sql/models.py:347
+#: sql/models.py:626 sql/models.py:633 sql/templates/detail.html:97
+#: sql/templates/param.html:26 sql/templates/sqladvisor.html:68
+msgid "否"
+msgstr "Нет"
+
+#: sql/models.py:44 sql/models.py:331 sql/models.py:343 sql/models.py:348
+#: sql/models.py:627 sql/models.py:634 sql/templates/detail.html:95
+#: sql/templates/param.html:25 sql/templates/sqladvisor.html:67
+msgid "是"
+msgstr "Да"
+
+#: sql/models.py:55 sql/models.py:56
+msgid "资源组管理"
+msgstr "Группы ресурсов"
+
+#: sql/models.py:64
+msgid "显示的中文名"
+msgstr "Отображаемое имя"
+
+#: sql/models.py:65
+msgid "钉钉UserID"
+msgstr "DingTalk UserID"
+
+#: sql/models.py:66
+msgid "企业微信UserID"
+msgstr "WeCom UserID"
+
+#: sql/models.py:67
+msgid "飞书OpenID"
+msgstr "Feishu OpenID"
+
+#: sql/models.py:68
+msgid "失败计数"
+msgstr "Счётчик неудач"
+
+#: sql/models.py:69
+msgid "上次失败登录时间"
+msgstr "Время последней неудачной попытки входа"
+
+#: sql/models.py:88 sql/models.py:89
+msgid "用户管理"
+msgstr "Пользователи"
+
+#: sql/models.py:98 sql/views.py:92
+msgid "Google身份验证器"
+msgstr "Google Authenticator"
+
+#: sql/models.py:99 sql/views.py:94
+msgid "短信验证码"
+msgstr "SMS-код"
+
+#: sql/models.py:102 sql/models.py:169 sql/models.py:218 sql/models.py:568
+msgid "用户名"
+msgstr "Имя пользователя"
+
+#: sql/models.py:104
+msgid "认证类型"
+msgstr "Тип аутентификации"
+
+#: sql/models.py:107
+msgid "手机号码"
+msgstr "Номер телефона"
+
+#: sql/models.py:110
+msgid "用户密钥"
+msgstr "Секрет пользователя"
+
+#: sql/models.py:117 sql/models.py:118
+msgid "2FA配置"
+msgstr "Настройка 2FA"
+
+#: sql/models.py:125
+msgid "标签代码"
+msgstr "Код тега"
+
+#: sql/models.py:126
+msgid "标签名称"
+msgstr "Название тега"
+
+#: sql/models.py:127 sql/models.py:670
+msgid "激活状态"
+msgstr "Статус активности"
+
+#: sql/models.py:128 sql/models.py:181 sql/models.py:258 sql/models.py:341
+#: sql/models.py:768 sql/models.py:836 sql/templates/data_dictionary.html:104
+#: sql/templates/data_dictionary.html:176
+#: sql/templates/data_dictionary.html:246
+#: sql/templates/data_dictionary.html:440
+#: sql/templates/data_dictionary.html:480
+#: sql/templates/data_dictionary.html:526
+msgid "创建时间"
+msgstr "Время создания"
+
+#: sql/models.py:136 sql/models.py:137 sql/models.py:248
+msgid "实例标签"
+msgstr "Теги инстанса"
+
+#: sql/models.py:165
+msgid "隧道名称"
+msgstr "Имя туннеля"
+
+#: sql/models.py:166
+msgid "隧道连接"
+msgstr "Подключение туннеля"
+
+#: sql/models.py:167 sql/models.py:216
+msgid "端口"
+msgstr "Порт"
+
+#: sql/models.py:172 sql/models.py:221 sql/models.py:722
+#: sql/templates/instanceaccount.html:90
+#: sql/templates/instanceaccount.html:167
+#: sql/templates/instanceaccount.html:969
+msgid "密码"
+msgstr "Пароль"
+
+#: sql/models.py:174
+msgid "密钥"
+msgstr "Ключ"
+
+#: sql/models.py:176
+msgid "密钥地址"
+msgstr "Путь к ключу"
+
+#: sql/models.py:179
+msgid "密钥密码"
+msgstr "Пароль ключа"
+
+#: sql/models.py:182 sql/models.py:259 sql/templates/data_dictionary.html:106
+#: sql/templates/data_dictionary.html:178
+msgid "更新时间"
+msgstr "Время обновления"
+
+#: sql/models.py:196 sql/models.py:197
+msgid "隧道配置"
+msgstr "Настройка туннеля"
+
+#: sql/models.py:205 sql/models.py:605
+msgid "实例名称"
+msgstr "Имя инстанса"
+
+#: sql/models.py:206 sql/templates/instance.html:10
+msgid "实例类型"
+msgstr "Тип инстанса"
+
+#: sql/models.py:206
+msgid "主库"
+msgstr "Master"
+
+#: sql/models.py:206
+msgid "从库"
+msgstr "Slave"
+
+#: sql/models.py:208 sql/models.py:761 sql/templates/instance.html:17
+msgid "数据库类型"
+msgstr "Тип БД"
+
+#: sql/models.py:209
+msgid "运行模式"
+msgstr "Режим работы"
+
+#: sql/models.py:213
+msgid "单机"
+msgstr "Одиночный"
+
+#: sql/models.py:213
+msgid "集群"
+msgstr "Кластер"
+
+#: sql/models.py:215
+msgid "实例连接"
+msgstr "Подключение инстанса"
+
+#: sql/models.py:223
+msgid "是否启用SSL"
+msgstr "Включить SSL"
+
+#: sql/models.py:224
+msgid "是否验证服务端SSL证书"
+msgstr "Проверять SSL-сертификат сервера"
+
+#: sql/models.py:225 sql/models.py:323 sql/models.py:536 sql/models.py:571
+#: sql/templates/archivedetail.html:44 sql/templates/detail.html:44
+#: sql/templates/instanceaccount.html:55
+#: sql/templates/instanceaccount.html:139
+#: sql/templates/instanceaccount.html:237
+#: sql/templates/queryapplydetail.html:37
+#: sql/templates/sqlexportsubmit.html:89 sql/templates/sqlsubmit.html:67
+msgid "数据库"
+msgstr "База данных"
+
+#: sql/models.py:226
+msgid "显示的数据库列表正则"
+msgstr "Regex списка отображаемых БД"
+
+#: sql/models.py:230
+msgid "正则表达式。示例：^(test_db|dmp_db|za.*)$。Redis示例: ^(0|4|6|11|12|13)$"
+msgstr ""
+"Регулярное выражение. Пример: ^(test_db|dmp_db|za.*)$. Redis: "
+"^(0|4|6|11|12|13)$"
+
+#: sql/models.py:232
+msgid "隐藏的数据库列表正则"
+msgstr "Regex списка скрываемых БД"
+
+#: sql/models.py:236
+msgid "正则表达式。隐藏大于显示，此规则优先。"
+msgstr "Регулярное выражение. Скрытие приоритетнее отображения."
+
+#: sql/models.py:239 sql/templates/data_dictionary.html:386
+msgid "字符集"
+msgstr "Кодировка"
+
+#: sql/models.py:252
+msgid "连接隧道"
+msgstr "Туннель подключения"
+
+#: sql/models.py:267 sql/models.py:268
+msgid "实例配置"
+msgstr "Настройка инстанса"
+
+#: sql/models.py:272
+msgid "workflow_finish"
+msgstr "Успешно завершено"
+
+#: sql/models.py:273
+msgid "workflow_abort"
+msgstr "Отменено вручную"
+
+#: sql/models.py:274
+msgid "workflow_manreviewing"
+msgstr "Ожидает проверки"
+
+#: sql/models.py:275
+msgid "workflow_review_pass"
+msgstr "Проверка пройдена"
+
+#: sql/models.py:276
+msgid "workflow_timingtask"
+msgstr "Отложенное исполнение"
+
+#: sql/models.py:277
+msgid "workflow_queuing"
+msgstr "В очереди"
+
+#: sql/models.py:278
+msgid "workflow_executing"
+msgstr "Выполняется"
+
+#: sql/models.py:279
+msgid "workflow_autoreviewwrong"
+msgstr "Автопроверка не пройдена"
+
+#: sql/models.py:280
+msgid "workflow_exception"
+msgstr "Ошибка при выполнении"
+
+#: sql/models.py:318
+msgid "工单内容"
+msgstr "Содержимое заявки"
+
+#: sql/models.py:319 sql/templates/sqlsubmit.html:38
+msgid "需求链接"
+msgstr "Ссылка на требование"
+
+#: sql/models.py:324
+msgid "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单"
+msgstr "Тип заявки: 0 неизвестно, 1 DDL, 2 DML, 3 офлайн-экспорт"
+
+#: sql/models.py:325 sql/models.py:655
+msgid "其他"
+msgstr "Прочее"
+
+#: sql/models.py:325
+msgid "离线导出工单"
+msgstr "Заявка на офлайн-экспорт"
+
+#: sql/models.py:328
+msgid "是否备份"
+msgstr "С бэкапом"
+
+#: sql/models.py:335 sql/templates/detail.html:38
+msgid "发起人"
+msgstr "Инициатор"
+
+#: sql/models.py:336
+msgid "发起人中文名"
+msgstr "Имя инициатора"
+
+#: sql/models.py:338 sql/models.py:418 sql/models.py:482 sql/models.py:548
+#: sql/models.py:808
+msgid "审批权限组列表"
+msgstr "Группы согласования"
+
+#: sql/models.py:339
+msgid "可执行起始时间"
+msgstr "Начало окна исполнения"
+
+#: sql/models.py:340
+msgid "可执行结束时间"
+msgstr "Конец окна исполнения"
+
+#: sql/models.py:342 sql/models.py:868 sql/templates/data_dictionary.html:574
+#: sql/templates/detail.html:53
+msgid "结束时间"
+msgstr "Время окончания"
+
+#: sql/models.py:343
+msgid "是否原生执行"
+msgstr "Нативное исполнение"
+
+#: sql/models.py:345
+msgid "是否为离线导出工单"
+msgstr "Заявка на офлайн-экспорт"
+
+#: sql/models.py:354
+msgid "导出格式"
+msgstr "Формат экспорта"
+
+#: sql/models.py:368
+msgid "文件名"
+msgstr "Имя файла"
+
+#: sql/models.py:380 sql/models.py:381
+msgid "SQL工单"
+msgstr "SQL-заявка"
+
+#: sql/models.py:391
+msgid "具体sql内容"
+msgstr "Текст SQL"
+
+#: sql/models.py:392
+msgid "自动审核内容的JSON格式"
+msgstr "JSON автопроверки"
+
+#: sql/models.py:393
+msgid "执行结果的JSON格式"
+msgstr "JSON результата выполнения"
+
+#: sql/models.py:401 sql/models.py:402
+msgid "SQL工单内容"
+msgstr "Содержимое SQL-заявки"
+
+#: sql/models.py:413
+msgid "关联业务id"
+msgstr "Связанный business id"
+
+#: sql/models.py:414
+msgid "申请类型"
+msgstr "Тип заявки"
+
+#: sql/models.py:415 sql/models.py:531
+msgid "申请标题"
+msgstr "Заголовок заявки"
+
+#: sql/models.py:416
+msgid "申请备注"
+msgstr "Комментарий заявки"
+
+#: sql/models.py:419
+msgid "当前审批权限组"
+msgstr "Текущая группа согласования"
+
+#: sql/models.py:420
+msgid "下级审批权限组"
+msgstr "Следующая группа согласования"
+
+#: sql/models.py:421 sql/models.py:459 sql/models.py:547 sql/models.py:830
+msgid "审核状态"
+msgstr "Статус проверки"
+
+#: sql/models.py:422 sql/models.py:533 sql/models.py:833
+#: sql/templates/archivedetail.html:38 sql/templates/queryapplydetail.html:28
+msgid "申请人"
+msgstr "Заявитель"
+
+#: sql/models.py:423 sql/models.py:534 sql/models.py:569 sql/models.py:834
+msgid "申请人中文名"
+msgstr "Имя заявителя"
+
+#: sql/models.py:424 sql/templates/archivedetail.html:53
+#: sql/templates/queryapplydetail.html:46
+msgid "申请时间"
+msgstr "Время подачи"
+
+#: sql/models.py:425 sql/models.py:461
+msgid "系统时间"
+msgstr "Системное время"
+
+#: sql/models.py:444 sql/models.py:445
+msgid "工作流审批列表"
+msgstr "Список согласований workflow"
+
+#: sql/models.py:456
+msgid "审核主表id"
+msgstr "ID основной таблицы проверки"
+
+#: sql/models.py:457
+msgid "审核人"
+msgstr "Проверяющий"
+
+#: sql/models.py:458
+msgid "审核时间"
+msgstr "Время проверки"
+
+#: sql/models.py:460 sql/templates/archivedetail.html:241
+#: sql/templates/detail.html:172 sql/templates/queryapplydetail.html:135
+msgid "审核备注"
+msgstr "Комментарий проверки"
+
+#: sql/models.py:469 sql/models.py:470
+msgid "工作流审批明细"
+msgstr "Детали согласования workflow"
+
+#: sql/models.py:481
+msgid "审批类型"
+msgstr "Тип согласования"
+
+#: sql/models.py:493 sql/models.py:494
+msgid "审批流程配置"
+msgstr "Конфигурация маршрута согласования"
+
+#: sql/models.py:503
+msgid "工单审批id"
+msgstr "ID согласования заявки"
+
+#: sql/models.py:504 sql/templates/instanceaccount.html:213
+msgid "操作类型"
+msgstr "Тип действия"
+
+#: sql/models.py:507
+msgid "操作类型描述"
+msgstr "Описание типа действия"
+
+#: sql/models.py:508 sql/templates/archivedetail.html:225
+#: sql/templates/detail.html:146 sql/templates/queryapplydetail.html:119
+msgid "操作信息"
+msgstr "Информация об операции"
+
+#: sql/models.py:509 sql/models.py:611
+msgid "操作人"
+msgstr "Оператор"
+
+#: sql/models.py:510 sql/models.py:612
+msgid "操作人中文名"
+msgstr "Имя оператора"
+
+#: sql/models.py:519 sql/models.py:520
+msgid "工作流日志"
+msgstr "Журнал workflow"
+
+#: sql/models.py:537 sql/models.py:572 sql/templates/archivedetail.html:47
+#: sql/templates/data_dictionary.html:31
+#: sql/templates/instanceaccount.html:248
+#: sql/templates/instanceaccount.html:259
+msgid "表"
+msgstr "Таблица"
+
+#: sql/models.py:538 sql/models.py:573 sql/templates/queryapplydetail.html:43
+msgid "有效时间"
+msgstr "Срок действия"
+
+#: sql/models.py:539 sql/models.py:574
+msgid "行数限制"
+msgstr "Лимит строк"
+
+#: sql/models.py:540 sql/models.py:575
+msgid "权限类型"
+msgstr "Тип права"
+
+#: sql/models.py:558 sql/models.py:559
+msgid "查询权限申请记录表"
+msgstr "Заявки на права запросов"
+
+#: sql/models.py:595 sql/models.py:596
+msgid "查询权限记录"
+msgstr "Записи прав запросов"
+
+#: sql/models.py:606 sql/models.py:719 sql/templates/database.html:51
+#: sql/templates/database.html:105
+msgid "数据库名称"
+msgstr "Имя БД"
+
+#: sql/models.py:607
+msgid "执行的查询语句"
+msgstr "Выполненный запрос"
+
+#: sql/models.py:608
+msgid "返回行数"
+msgstr "Число возвращённых строк"
+
+#: sql/models.py:609
+msgid "执行耗时"
+msgstr "Длительность"
+
+#: sql/models.py:613
+msgid "查询权限是否正常校验"
+msgstr "Права запроса проверены корректно"
+
+#: sql/models.py:615
+msgid "跳过"
+msgstr "Пропущено"
+
+#: sql/models.py:616
+msgid "正常"
+msgstr "Норма"
+
+#: sql/models.py:620
+msgid "查询是否命中脱敏规则"
+msgstr "Сработало правило маскирования"
+
+#: sql/models.py:621
+msgid "未命中/未知"
+msgstr "Не сработало / неизвестно"
+
+#: sql/models.py:621
+msgid "命中"
+msgstr "Сработало"
+
+#: sql/models.py:624
+msgid "查询结果是否正常脱敏"
+msgstr "Результат замаскирован корректно"
+
+#: sql/models.py:631
+msgid "是否收藏"
+msgstr "В избранном"
+
+#: sql/models.py:638
+msgid "语句标识"
+msgstr "Метка выражения"
+
+#: sql/models.py:639 sql/models.py:1361
+msgid "操作时间"
+msgstr "Время операции"
+
+#: sql/models.py:645 sql/models.py:646
+msgid "查询日志"
+msgstr "Журнал запросов"
+
+#: sql/models.py:650
+msgid "手机号"
+msgstr "Телефон"
+
+#: sql/models.py:651
+msgid "证件号码"
+msgstr "Номер документа"
+
+#: sql/models.py:652
+msgid "银行卡"
+msgstr "Банковская карта"
+
+#: sql/models.py:653
+msgid "邮箱"
+msgstr "Email"
+
+#: sql/models.py:654
+msgid "金额"
+msgstr "Сумма"
+
+#: sql/models.py:656
+msgid "三段式通用脱敏规则"
+msgstr "Трёхсегментное маскирование"
+
+#: sql/models.py:665
+msgid "字段id"
+msgstr "ID поля"
+
+#: sql/models.py:666 sql/models.py:693
+msgid "规则类型"
+msgstr "Тип правила"
+
+#: sql/models.py:668
+msgid "三段式通用脱敏规则：根据字段长度自动分成三份，中间段脱敏。"
+msgstr ""
+"Трёхсегментное маскирование: поле делится на три части, средняя маскируется."
+
+#: sql/models.py:670
+msgid "未激活"
+msgstr "Неактивно"
+
+#: sql/models.py:670
+msgid "激活"
+msgstr "Активно"
+
+#: sql/models.py:673
+msgid "字段所在库名"
+msgstr "БД поля"
+
+#: sql/models.py:674
+msgid "字段所在表名"
+msgstr "Таблица поля"
+
+#: sql/models.py:675
+msgid "字段名"
+msgstr "Имя поля"
+
+#: sql/models.py:676
+msgid "字段描述"
+msgstr "Описание поля"
+
+#: sql/models.py:684 sql/models.py:685
+msgid "脱敏字段配置"
+msgstr "Настройка маскируемых полей"
+
+#: sql/models.py:694
+msgid "规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替"
+msgstr "Regex маскирования; обязательны группы, скрытые заменяются на ****"
+
+#: sql/models.py:697
+msgid "需要隐藏的组"
+msgstr "Группы для скрытия"
+
+#: sql/models.py:698
+msgid "规则描述"
+msgstr "Описание правила"
+
+#: sql/models.py:704 sql/models.py:705
+msgid "脱敏规则配置"
+msgstr "Настройка правил маскирования"
+
+#: sql/models.py:714
+msgid "账号"
+msgstr "Аккаунт"
+
+#: sql/models.py:716 sql/templates/instanceaccount.html:77
+#: sql/templates/instanceaccount.html:158
+msgid "主机"
+msgstr "Хост"
+
+#: sql/models.py:724 sql/models.py:745 sql/templates/data_dictionary.html:488
+#: sql/templates/data_dictionary.html:534
+#: sql/templates/data_dictionary.html:586 sql/templates/database.html:77
+#: sql/templates/database.html:128 sql/templates/instanceaccount.html:110
+#: sql/templates/instanceaccount.html:174
+msgid "备注"
+msgstr "Примечание"
+
+#: sql/models.py:725 sql/models.py:746
+msgid "系统修改时间"
+msgstr "Время изменения системой"
+
+#: sql/models.py:731 sql/models.py:732
+msgid "实例账号列表"
+msgstr "Список аккаунтов инстанса"
+
+#: sql/models.py:741
+msgid "数据库名"
+msgstr "Имя БД"
+
+#: sql/models.py:742 sql/templates/database.html:63
+#: sql/templates/database.html:115
+msgid "负责人"
+msgstr "Ответственный"
+
+#: sql/models.py:743
+msgid "负责人中文名"
+msgstr "Имя ответственного"
+
+#: sql/models.py:752
+msgid "实例数据库"
+msgstr "БД инстанса"
+
+#: sql/models.py:753
+msgid "实例数据库列表"
+msgstr "Список БД инстанса"
+
+#: sql/models.py:762 sql/models.py:785
+msgid "参数名"
+msgstr "Имя параметра"
+
+#: sql/models.py:763
+msgid "默认参数值"
+msgstr "Значение по умолчанию"
+
+#: sql/models.py:764
+msgid "是否支持修改"
+msgstr "Можно изменять"
+
+#: sql/models.py:765
+msgid "有效参数值，范围参数[1-65535]，值参数[ON|OFF]"
+msgstr "Допустимые значения: диапазон [1-65535] или [ON|OFF]"
+
+#: sql/models.py:767
+msgid "参数描述"
+msgstr "Описание параметра"
+
+#: sql/models.py:769 sql/models.py:838 sql/models.py:869
+msgid "系统时间修改"
+msgstr "Время изменения"
+
+#: sql/models.py:775 sql/models.py:776
+msgid "实例参数模板配置"
+msgstr "Шаблон параметров инстанса"
+
+#: sql/models.py:786
+msgid "修改前参数值"
+msgstr "Значение до изменения"
+
+#: sql/models.py:787
+msgid "修改后参数值"
+msgstr "Значение после изменения"
+
+#: sql/models.py:788
+msgid "在线变更配置执行的SQL语句"
+msgstr "SQL онлайн-изменения конфигурации"
+
+#: sql/models.py:789
+msgid "修改人"
+msgstr "Кто изменил"
+
+#: sql/models.py:790
+msgid "修改人中文名"
+msgstr "Имя изменившего"
+
+#: sql/models.py:791
+msgid "参数被修改时间点"
+msgstr "Время изменения параметра"
+
+#: sql/models.py:797 sql/models.py:798
+msgid "实例参数修改历史"
+msgstr "История изменений параметров"
+
+#: sql/models.py:806
+msgid "归档配置说明"
+msgstr "Описание конфигурации архивации"
+
+#: sql/models.py:812 sql/templates/archivedetail.html:169
+msgid "源数据库"
+msgstr "Исходная БД"
+
+#: sql/models.py:813 sql/templates/archivedetail.html:173
+msgid "源表"
+msgstr "Исходная таблица"
+
+#: sql/models.py:821 sql/templates/archivedetail.html:189
+msgid "目标数据库"
+msgstr "Целевая БД"
+
+#: sql/models.py:822 sql/templates/archivedetail.html:193
+msgid "目标表"
+msgstr "Целевая таблица"
+
+#: sql/models.py:823 sql/models.py:854
+msgid "归档条件，where条件"
+msgstr "Условие архивации (WHERE)"
+
+#: sql/models.py:824 sql/models.py:855 sql/templates/archivedetail.html:50
+#: sql/templates/archivedetail.html:140
+msgid "归档模式"
+msgstr "Режим архивации"
+
+#: sql/models.py:826 sql/models.py:857
+msgid "文件"
+msgstr "Файл"
+
+#: sql/models.py:826 sql/models.py:857
+msgid "其他实例"
+msgstr "Другой инстанс"
+
+#: sql/models.py:826 sql/models.py:857 sql/templates/archive.html:103
+msgid "直接删除"
+msgstr "Удалить напрямую"
+
+#: sql/models.py:828 sql/models.py:859
+msgid "是否保留源数据"
+msgstr "Сохранять исходные данные"
+
+#: sql/models.py:829
+msgid "归档limit行后的休眠秒数"
+msgstr "Пауза (сек) после limit строк архивации"
+
+#: sql/models.py:832
+msgid "是否启用归档"
+msgstr "Архивация включена"
+
+#: sql/models.py:837 sql/templates/archivedetail.html:56
+msgid "最近归档时间"
+msgstr "Время последней архивации"
+
+#: sql/models.py:843 sql/models.py:844
+msgid "归档配置表"
+msgstr "Таблица конфигурации архивации"
+
+#: sql/models.py:853
+msgid "归档命令"
+msgstr "Команда архивации"
+
+#: sql/models.py:860
+msgid "归档limit行记录后的休眠秒数"
+msgstr "Пауза (сек) после limit записей"
+
+#: sql/models.py:861
+msgid "查询数量"
+msgstr "Число выборок"
+
+#: sql/models.py:862
+msgid "插入数量"
+msgstr "Число вставок"
+
+#: sql/models.py:863
+msgid "删除数量"
+msgstr "Число удалений"
+
+#: sql/models.py:864
+msgid "归档统计日志"
+msgstr "Статистика архивации"
+
+#: sql/models.py:865
+msgid "是否归档成功"
+msgstr "Архивация успешна"
+
+#: sql/models.py:866
+msgid "错误信息"
+msgstr "Сообщение об ошибке"
+
+#: sql/models.py:867 sql/templates/data_dictionary.html:572
+msgid "开始时间"
+msgstr "Время начала"
+
+#: sql/models.py:874 sql/models.py:875
+msgid "归档日志表"
+msgstr "Журнал архивации"
+
+#: sql/models.py:883 sql/templates/instanceaccount.html:222
+msgid "配置项"
+msgstr "Параметр конфигурации"
+
+#: sql/models.py:884
+msgid "配置项值"
+msgstr "Значение параметра"
+
+#: sql/models.py:885
+msgid "描述"
+msgstr "Описание"
+
+#: sql/models.py:890 sql/models.py:891
+msgid "系统配置"
+msgstr "Системная конфигурация"
+
+#: sql/models.py:928 sql/models.py:929
+msgid "云服务认证信息配置"
+msgstr "Учётные данные облака"
+
+#: sql/models.py:938
+msgid "对应阿里云RDS实例ID"
+msgstr "ID инстанса Aliyun RDS"
+
+#: sql/models.py:940
+msgid "RDS实例对应的AK配置"
+msgstr "AK для инстанса RDS"
+
+#: sql/models.py:942 sql/templates/archivedetail.html:121
+msgid "是否启用"
+msgstr "Включено"
+
+#: sql/models.py:950 sql/models.py:951
+msgid "阿里云rds配置"
+msgstr "Конфигурация Aliyun RDS"
+
+#: sql/models.py:962
+msgid "菜单 Dashboard"
+msgstr "Меню Dashboard"
+
+#: sql/models.py:963
+msgid "菜单 SQL审核"
+msgstr "Меню: проверка SQL"
+
+#: sql/models.py:964
+msgid "菜单 SQL上线"
+msgstr "Меню: отправка SQL"
+
+#: sql/models.py:965
+msgid "菜单 SQL分析"
+msgstr "Меню: анализ SQL"
+
+#: sql/models.py:966
+msgid "菜单 SQL查询"
+msgstr "Меню: SQL-запросы"
+
+#: sql/models.py:967
+msgid "菜单 在线查询"
+msgstr "Меню: онлайн-запрос"
+
+#: sql/models.py:968
+msgid "菜单 权限管理"
+msgstr "Меню: управление правами"
+
+#: sql/models.py:969
+msgid "菜单 SQL优化"
+msgstr "Меню: оптимизация SQL"
+
+#: sql/models.py:970
+msgid "菜单 优化工具"
+msgstr "Меню: инструменты оптимизации"
+
+#: sql/models.py:971
+msgid "菜单 慢查日志"
+msgstr "Меню: журнал медленных запросов"
+
+#: sql/models.py:972
+msgid "菜单 实例管理"
+msgstr "Меню: управление инстансами"
+
+#: sql/models.py:973
+msgid "菜单 实例列表"
+msgstr "Меню: список инстансов"
+
+#: sql/models.py:974
+msgid "菜单 会话管理"
+msgstr "Меню: управление сессиями"
+
+#: sql/models.py:975
+msgid "菜单 数据库管理"
+msgstr "Меню: управление БД"
+
+#: sql/models.py:976
+msgid "菜单 实例账号管理"
+msgstr "Меню: аккаунты инстанса"
+
+#: sql/models.py:977
+msgid "菜单 参数配置"
+msgstr "Меню: параметры"
+
+#: sql/models.py:978
+msgid "菜单 参数对比"
+msgstr "Меню: сравнение параметров"
+
+#: sql/models.py:979
+msgid "菜单 数据字典"
+msgstr "Меню: словарь данных"
+
+#: sql/models.py:980
+msgid "菜单 工具插件"
+msgstr "Меню: плагины"
+
+#: sql/models.py:981
+msgid "菜单 数据归档"
+msgstr "Меню: архивация данных"
+
+#: sql/models.py:982
+msgid "菜单 My2SQL"
+msgstr "Меню My2SQL"
+
+#: sql/models.py:983
+msgid "菜单 SchemaSync"
+msgstr "Меню SchemaSync"
+
+#: sql/models.py:984
+msgid "菜单 系统管理"
+msgstr "Меню: администрирование"
+
+#: sql/models.py:985
+msgid "菜单 相关文档"
+msgstr "Меню: документация"
+
+#: sql/models.py:986
+msgid "菜单 OpenAPI"
+msgstr "Меню OpenAPI"
+
+#: sql/models.py:987
+msgid "提交SQL上线工单"
+msgstr "Подать заявку на отправка SQL"
+
+#: sql/models.py:988
+msgid "审核SQL上线工单"
+msgstr "Проверить заявку на отправка SQL"
+
+#: sql/models.py:989
+msgid "执行SQL上线工单(资源组粒度)"
+msgstr "Выполнить заявку на отправка SQL (группа ресурсов)"
+
+#: sql/models.py:990
+msgid "执行SQL上线工单(仅自己提交的)"
+msgstr "Выполнить заявку на отправка SQL (только свои)"
+
+#: sql/models.py:991
+msgid "执行SQL分析"
+msgstr "Выполнить анализ SQL"
+
+#: sql/models.py:992
+msgid "执行SQLAdvisor"
+msgstr "Выполнить SQLAdvisor"
+
+#: sql/models.py:993
+msgid "执行SQLTuning"
+msgstr "Выполнить SQLTuning"
+
+#: sql/models.py:994
+msgid "执行SOAR"
+msgstr "Выполнить SOAR"
+
+#: sql/models.py:995
+msgid "申请查询权限"
+msgstr "Запросить права на запросы"
+
+#: sql/models.py:996
+msgid "管理查询权限"
+msgstr "Управлять правами запросов"
+
+#: sql/models.py:997
+msgid "审核查询权限"
+msgstr "Проверка прав запросов"
+
+#: sql/models.py:998
+msgid "提交SQL查询"
+msgstr "Отправить SQL-запрос"
+
+#: sql/models.py:999
+msgid "可查询所有实例"
+msgstr "Доступ ко всем инстансам для запросов"
+
+#: sql/models.py:1000
+msgid "可查询所在资源组内的所有实例"
+msgstr "Доступ ко всем инстансам своей группы ресурсов"
+
+#: sql/models.py:1001
+msgid "查看会话"
+msgstr "Просмотр сессий"
+
+#: sql/models.py:1002 sql/templates/dbdiagnostic.html:7
+msgid "终止会话"
+msgstr "Завершить сессию"
+
+#: sql/models.py:1003
+msgid "查看表空间"
+msgstr "Просмотр tablespace"
+
+#: sql/models.py:1004
+msgid "查看事务信息"
+msgstr "Просмотр транзакций"
+
+#: sql/models.py:1005
+msgid "查看锁信息"
+msgstr "Просмотр блокировок"
+
+#: sql/models.py:1006
+msgid "管理实例账号"
+msgstr "Управление аккаунтами инстанса"
+
+#: sql/models.py:1007
+msgid "查看实例参数列表"
+msgstr "Просмотр параметров инстанса"
+
+#: sql/models.py:1008
+msgid "修改实例参数"
+msgstr "Изменить параметры инстанса"
+
+#: sql/models.py:1009
+msgid "导出数据字典"
+msgstr "Экспорт словаря данных"
+
+#: sql/models.py:1010
+msgid "提交归档申请"
+msgstr "Подать заявку на архивацию"
+
+#: sql/models.py:1011
+msgid "审核归档申请"
+msgstr "Проверить заявку на архивацию"
+
+#: sql/models.py:1012
+msgid "管理归档申请"
+msgstr "Управлять заявками на архивацию"
+
+#: sql/models.py:1013
+msgid "审计权限"
+msgstr "Права аудита"
+
+#: sql/models.py:1014
+msgid "在线查询下载权限"
+msgstr "Право скачивания онлайн-запросов"
+
+#: sql/models.py:1015
+msgid "离线下载权限"
+msgstr "Право офлайн-скачивания"
+
+#: sql/models.py:1016
+msgid "菜单 数据导出"
+msgstr "Меню: экспорт данных"
+
+#: sql/models.py:1017
+msgid "提交数据导出"
+msgstr "Подать экспорт данных"
+
+#: sql/models.py:1038 sql/models.py:1039 sql/templates/slowquery.html:12
+msgid "慢日志统计"
+msgstr "Статистика slow log"
+
+#: sql/models.py:1291 sql/models.py:1292 sql/templates/slowquery.html:15
+msgid "慢日志明细"
+msgstr "Детали slow log"
+
+#: sql/models.py:1309 sql/models.py:1310
+msgid "Redis慢日志统计"
+msgstr "Статистика Redis slow log"
+
+#: sql/models.py:1347 sql/models.py:1348
+msgid "Redis慢日志明细"
+msgstr "Детали Redis slow log"
+
+#: sql/models.py:1356
+msgid "用户ID"
+msgstr "ID пользователя"
+
+#: sql/models.py:1357
+msgid "用户名称"
+msgstr "Имя пользователя"
+
+#: sql/models.py:1358
+msgid "用户中文名"
+msgstr "Отображаемое имя"
+
+#: sql/models.py:1359 sql/templates/audit.html:8
+msgid "动作"
+msgstr "Действие"
+
+#: sql/models.py:1360
+msgid "额外的信息"
+msgstr "Доп. информация"
+
+#: sql/models.py:1366 sql/models.py:1367
+msgid "审计日志"
+msgstr "Журнал аудита"
+
+#: sql/notify.py:71
+msgid "需要提供 WorkflowAudit 或 workflow"
+msgstr "Нужен WorkflowAudit или workflow"
+
+#: sql/notify.py:171
+#, python-brace-format
+msgid "数据库清单：{}\n"
+msgstr "Список БД: {}\n"
+
+#: sql/notify.py:173
+#, python-brace-format
+msgid ""
+"数据库：{}\n"
+"表清单：{}\n"
+msgstr ""
+"БД: {}\n"
+"Список таблиц: {}\n"
+
+#: sql/notify.py:177
+#, python-brace-format
+msgid ""
+"授权截止时间：{}\n"
+"结果集：{}\n"
+msgstr ""
+"Срок прав: {}\n"
+"Результат: {}\n"
+
+#: sql/notify.py:193
+#, python-brace-format
+msgid ""
+"归档表：{}\n"
+"归档模式：{}\n"
+"归档条件：{}\n"
+msgstr ""
+"Таблица архивации: {}\n"
+"Режим: {}\n"
+"Условие: {}\n"
+
+#: sql/notify.py:199
+msgid "工单类型不正确"
+msgstr "Неверный тип заявки"
+
+#: sql/notify.py:202
+#, python-brace-format
+msgid "[{}]新的工单申请#{}"
+msgstr "[{}] Новая заявка #{}"
+
+#: sql/notify.py:207
+#, python-brace-format
+msgid ""
+"发起时间：{}\n"
+"发起人：{}\n"
+"组：{}\n"
+"目标实例：{}\n"
+"数据库：{}\n"
+"审批流程：{}\n"
+"当前审批：{}\n"
+"工单名称：{}\n"
+"工单地址：{}\n"
+"工单详情预览：{}"
+msgstr ""
+"Время: {}\n"
+"Инициатор: {}\n"
+"Группа: {}\n"
+"Целевой инстанс: {}\n"
+"БД: {}\n"
+"Маршрут: {}\n"
+"Текущее согласование: {}\n"
+"Имя заявки: {}\n"
+"URL: {}\n"
+"Превью: {}"
+
+#: sql/notify.py:229
+#, python-brace-format
+msgid "[{}]工单审核通过#{}"
+msgstr "[{}] Заявка одобрена #{}"
+
+#: sql/notify.py:233
+#, python-brace-format
+msgid ""
+"发起时间：{}\n"
+"发起人：{}\n"
+"组：{}\n"
+"目标实例：{}\n"
+"数据库：{}\n"
+"审批流程：{}\n"
+"工单名称：{}\n"
+"工单地址：{}\n"
+"工单详情预览：{}\n"
+msgstr ""
+"Время: {}\n"
+"Инициатор: {}\n"
+"Группа: {}\n"
+"Целевой инстанс: {}\n"
+"БД: {}\n"
+"Маршрут: {}\n"
+"Имя заявки: {}\n"
+"URL: {}\n"
+"Превью: {}\n"
+
+#: sql/notify.py:245
+#, python-brace-format
+msgid "[{}]工单被驳回#{}"
+msgstr "[{}] Заявка отклонена #{}"
+
+#: sql/notify.py:249
+#, python-brace-format
+msgid ""
+"发起时间：{}\n"
+"目标实例：{}\n"
+"数据库：{}\n"
+"工单名称：{}\n"
+"工单地址：{}\n"
+"驳回原因：{}\n"
+"提醒：此工单被审核不通过，请按照驳回原因进行修改！"
+msgstr ""
+"Время: {}\n"
+"Целевой инстанс: {}\n"
+"БД: {}\n"
+"Имя заявки: {}\n"
+"URL: {}\n"
+"Причина отклонения: {}\n"
+"Заявка не прошла проверку — исправьте по причине отклонения!"
+
+#: sql/notify.py:258
+#, python-brace-format
+msgid "[{}]提交人主动终止工单#{}"
+msgstr "[{}] Заявитель отменил заявку #{}"
+
+#: sql/notify.py:268
+#, python-brace-format
+msgid ""
+"发起时间：{}\n"
+"发起人：{}\n"
+"组：{}\n"
+"目标实例：{}\n"
+"数据库：{}\n"
+"工单名称：{}\n"
+"工单地址：{}\n"
+"终止原因：{}"
+msgstr ""
+"Время: {}\n"
+"Инициатор: {}\n"
+"Группа: {}\n"
+"Целевой инстанс: {}\n"
+"БД: {}\n"
+"Имя заявки: {}\n"
+"URL: {}\n"
+"Причина отмены: {}"
+
+#: sql/notify.py:279
+msgid "工单状态不正确"
+msgstr "Неверный статус заявки"
+
+#: sql/notify.py:294
+#, python-brace-format
+msgid "[{}]工单{}#{}"
+msgstr "[{}] заявка {} #{}"
+
+#: sql/notify.py:305
+#, python-brace-format
+msgid ""
+"发起时间：{}\n"
+"发起人：{}\n"
+"组：{}\n"
+"目标实例：{}\n"
+"数据库：{}\n"
+"审批流程：{}\n"
+"工单名称：{}\n"
+"工单地址：{}\n"
+"工单详情预览：{}"
+msgstr ""
+"Время: {}\n"
+"Инициатор: {}\n"
+"Группа: {}\n"
+"Целевой инстанс: {}\n"
+"БД: {}\n"
+"Маршрут: {}\n"
+"Имя заявки: {}\n"
+"URL: {}\n"
+"Превью: {}"
+
+#: sql/notify.py:338
+#, python-brace-format
+msgid "[Archery]有新的DDL语句执行完成#{}"
+msgstr "[Archery] Выполнен новый DDL #{}"
+
+#: sql/notify.py:339
+#, python-brace-format
+msgid ""
+"发起人：{}\n"
+"变更组：{}\n"
+"变更实例：{}\n"
+"变更数据库：{}\n"
+"工单名称：{}\n"
+"工单地址：{}\n"
+"工单预览：{}"
+msgstr ""
+"Инициатор: {}\n"
+"Группа: {}\n"
+"Инстанс: {}\n"
+"БД: {}\n"
+"Имя заявки: {}\n"
+"URL: {}\n"
+"Превью: {}"
+
+#: sql/notify.py:364
+msgid "[Archery 通知]My2SQL执行结束"
+msgstr "[Archery] My2SQL завершён"
+
+#: sql/notify.py:365
+#, python-brace-format
+msgid "解析的SQL文件在{}目录下，请前往查看"
+msgstr "Разобранный SQL-файл в каталоге {}, откройте его"
+
+#: sql/notify.py:367
+msgid "[Archery 通知]My2SQL执行失败"
+msgstr "[Archery] My2SQL завершился с ошибкой"
+
+#: sql/offlinedownload.py:125
+msgid "执行正常"
+msgstr "Выполнено успешно"
+
+#: sql/offlinedownload.py:126
+#, python-format
+msgid "保存文件: %(v0)s"
+msgstr "Сохранён файл: %(v0)s"
+
+#: sql/offlinedownload.py:187 sql/offlinedownload.py:199
+#: sql/offlinedownload.py:220 sql/offlinedownload.py:234
+#: sql/offlinedownload.py:286 sql/offlinedownload.py:299
+msgid "自动审核失败"
+msgstr "Автопроверка не пройдена"
+
+#: sql/offlinedownload.py:189 sql/offlinedownload.py:201
+#: sql/offlinedownload.py:222 sql/offlinedownload.py:236
+#: sql/offlinedownload.py:288 sql/offlinedownload.py:301
+#: sql/offlinedownload.py:309
+msgid "检查未通过！"
+msgstr "Проверка не пройдена!"
+
+#: sql/offlinedownload.py:190
+msgid "没有有效的查询语句"
+msgstr "Нет допустимого запроса"
+
+#: sql/offlinedownload.py:202
+msgid "检测到多个查询语句，只能提交一个导出查询。"
+msgstr "Обнаружено несколько запросов — для экспорта допустим только один."
+
+#: sql/offlinedownload.py:310
+#, python-format
+msgid "导出数据行数(%(v0)s)超过阈值(%(v1)s)。"
+msgstr "Число строк экспорта (%(v0)s) превышает порог (%(v1)s)."
+
+#: sql/offlinedownload.py:317
+msgid "行数统计完成"
+msgstr "Подсчёт строк завершён"
+
+#: sql/offlinedownload.py:458
+msgid "Excel最大支持行数为1048576,已超出!"
+msgstr "Превышен лимит Excel 1048576 строк!"
+
+#: sql/offlinedownload.py:514
+msgid "离线下载"
+msgstr "Офлайн-скачивание"
+
+#: sql/offlinedownload.py:515
+#, python-format
+msgid "工单id：%(v0)s，文件：%(v1)s"
+msgstr "ID заявки: %(v0)s, файл: %(v1)s"
+
+#: sql/offlinedownload.py:522
+msgid "，error:文件不存在。"
+msgstr ", error: файл не найден."
+
+#: sql/offlinedownload.py:523
+msgid "文件不存在"
+msgstr "Файл не найден"
+
+#: sql/offlinedownload.py:541 sql/offlinedownload.py:553
+msgid "文件下载失败：请联系管理员。"
+msgstr "Не удалось скачать файл, обратитесь к администратору."
+
+#: sql/offlinedownload.py:559
+msgid "内部错误，请联系管理员。"
+msgstr "Внутренняя ошибка, обратитесь к администратору."
+
+#: sql/query.py:132
+msgid "query_desc or db_type不存在"
+msgstr "query_desc или db_type не найден"
+
+#: sql/query.py:187
+msgid "openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]"
+msgstr ""
+"Не хватает настроек openai: [openai_base_url, openai_api_key, "
+"default_chat_model]"
+
+#: sql/query_privileges.py:85
+#, python-format
+msgid "你无%(v0)s.%(v1)s表的查询权限！请先到查询权限管理进行申请"
+msgstr ""
+"Нет права запроса к %(v0)s.%(v1)s — сначала подайте заявку в управлении "
+"правами"
+
+#: sql/query_privileges.py:100
+#, python-format
+msgid "无法校验查询语句权限，请联系管理员，错误信息：%(v0)s"
+msgstr "Не удалось проверить права запроса: %(v0)s"
+
+#: sql/query_privileges.py:123
+#, python-format
+msgid "你无%(v0)s数据库的查询权限！请先到查询权限管理进行申请"
+msgstr "Нет права запроса к БД %(v0)s — сначала подайте заявку"
+
+#: sql/query_privileges.py:219 sql/query_privileges.py:231
+msgid "请填写完整"
+msgstr "Заполните все поля"
+
+#: sql/query_privileges.py:250
+#, python-format
+msgid "你已拥有%(v0)s实例%(v1)s库权限，不能重复申请"
+msgstr "У вас уже есть права на БД %(v1)s инстанса %(v0)s"
+
+#: sql/query_privileges.py:260
+#, python-format
+msgid "你已拥有%(v0)s实例%(v1)s库的全部权限，不能重复申请"
+msgstr "У вас уже есть полные права на БД %(v1)s инстанса %(v0)s"
+
+#: sql/query_privileges.py:268
+#, python-format
+msgid "你已拥有%(v0)s实例%(v1)s.%(v2)s表的查询权限，不能重复申请"
+msgstr "У вас уже есть право запроса к %(v1)s.%(v2)s инстанса %(v0)s"
+
+#: sql/query_privileges.py:402
+msgid "privilege_ids 参数格式错误"
+msgstr "Неверный формат privilege_ids"
+
+#: sql/query_privileges.py:409
+msgid "privilege_id 参数格式错误"
+msgstr "Неверный формат privilege_id"
+
+#: sql/query_privileges.py:413
+msgid "请传入 privilege_id 或 privilege_ids"
+msgstr "Укажите privilege_id или privilege_ids"
+
+#: sql/query_privileges.py:419
+msgid "待操作权限不存在"
+msgstr "Указанное право не найдено"
+
+#: sql/query_privileges.py:449
+#, python-format
+msgid "audit_status 参数错误, %(v0)s"
+msgstr "Неверный параметр audit_status, %(v0)s"
+
+#: sql/query_privileges.py:574
+msgid "用户无任何有效权限！"
+msgstr "У пользователя нет действующих прав!"
+
+#: sql/resource_group.py:125
+msgid "关联对象类型不正确"
+msgstr "Неверный тип связанного объекта"
+
+#: sql/resource_group.py:210
+msgid "参数错误"
+msgstr "Ошибка параметра"
+
+#: sql/resource_group.py:221
+msgid "审批流程权限组不存在，请重新配置！"
+msgstr "Группа согласования не найдена, перенастройте маршрут!"
+
+#: sql/slowlog.py:364
+msgid "慢查次数"
+msgstr "Число медленных запросов"
+
+#: sql/slowlog.py:369
+msgid "最大值"
+msgstr "Максимум"
+
+#: sql/slowlog.py:370
+msgid "平均值"
+msgstr "Среднее"
+
+#: sql/slowlog.py:374
+msgid "慢查时长(95%)"
+msgstr "Длительность (95%)"
+
+#: sql/slowlog.py:381
+msgid "SQL历史趋势"
+msgstr "История SQL"
+
+#: sql/sql_analyze.py:90
+msgid "SQL 语句不合法"
+msgstr "Недопустимое SQL-выражение"
+
+#: sql/sql_optimize.py:40 sql/sql_optimize.py:100 sql/sql_optimize.py:212
+#: sql/sql_optimize.py:263 sql/views.py:777
+msgid "页面提交参数可能为空"
+msgstr "Параметры формы могут быть пустыми"
+
+#: sql/sql_optimize.py:56
+msgid "请配置SQLAdvisor路径！"
+msgstr "Настройте путь к SQLAdvisor!"
+
+#: sql/sql_optimize.py:116
+msgid "请配置soar_path和test_dsn！"
+msgstr "Настройте soar_path и test_dsn!"
+
+#: sql/sql_optimize.py:161
+msgid "只支持查询SQL！"
+msgstr "Поддерживаются только SELECT!"
+
+#: sql/sql_optimize.py:233
+msgid "仅支持explain开头的语句，请检查"
+msgstr "Поддерживаются только выражения, начинающиеся с explain"
+
+#: sql/sql_optimize.py:286
+msgid "SQLTuningAdvisor仅支持oracle数据库的检查"
+msgstr "SQLTuningAdvisor только для Oracle"
+
+#: sql/sql_workflow.py:165 sql/sql_workflow.py:176
+msgid "执行结果Json解析失败, 请联系管理员"
+msgstr "Не удалось разобрать JSON результата"
+
+#: sql/sql_workflow.py:216 sql/sql_workflow.py:248 sql/sql_workflow.py:304
+#: sql/sql_workflow.py:450 sql/sql_workflow.py:507 sql/views.py:323
+msgid "workflow_id参数为空."
+msgstr "Параметр workflow_id пуст."
+
+#: sql/sql_workflow.py:221 sql/sql_workflow.py:308 sql/sql_workflow.py:402
+#: sql/sql_workflow.py:460
+msgid "你无权操作当前工单！"
+msgstr "Нет прав на эту заявку!"
+
+#: sql/sql_workflow.py:265
+#, python-format
+msgid "审核失败, 错误信息: %(v0)s"
+msgstr "Проверка не удалась: %(v0)s"
+
+#: sql/sql_workflow.py:313
+msgid "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+msgstr "Вне окна исполнения — для смены времени подайте заявку заново!"
+
+#: sql/sql_workflow.py:344
+msgid "执行工单"
+msgstr "Выполнить заявку"
+
+#: sql/sql_workflow.py:345
+msgid "工单执行排队中"
+msgstr "Заявка в очереди на выполнение"
+
+#: sql/sql_workflow.py:362
+msgid "手工工单"
+msgstr "Ручная заявка"
+
+#: sql/sql_workflow.py:363
+msgid "确认手工执行结束"
+msgstr "Подтвердить ручное завершение"
+
+#: sql/sql_workflow.py:394
+msgid "时间不能为空"
+msgstr "Время обязательно"
+
+#: sql/sql_workflow.py:397
+msgid "时间不能小于当前时间"
+msgstr "Время не может быть раньше текущего"
+
+#: sql/sql_workflow.py:410
+msgid "不在可执行时间范围内，如果需要修改执    行时间请重新提交工单!"
+msgstr "Вне окна исполнения — для смены времени подайте заявку заново!"
+
+#: sql/sql_workflow.py:430 sql/templates/detail.html:217
+msgid "定时执行"
+msgstr "Отложенное исполнение"
+
+#: sql/sql_workflow.py:431
+#, python-brace-format
+msgid "定时执行时间：{}"
+msgstr "Время отложенного исполнения: {}"
+
+#: sql/sql_workflow.py:455
+msgid "终止原因不能为空"
+msgstr "Причина отмены обязательна"
+
+#: sql/storage.py:78 sql/storage.py:191
+#, python-format
+msgid "不支持的存储类型: %(v0)s"
+msgstr "Неподдерживаемый тип хранилища: %(v0)s"
+
+#: sql/storage.py:178
+msgid "本地存储连接成功"
+msgstr "Локальное хранилище подключено"
+
+#: sql/storage.py:198
+msgid "SFTP 连接成功"
+msgstr "SFTP подключён"
+
+#: sql/storage.py:200
+#, python-format
+msgid "SFTP 连接失败: %(v0)s"
+msgstr "Ошибка SFTP: %(v0)s"
+
+#: sql/storage.py:207
+msgid "S3 存储连接成功"
+msgstr "S3 подключён"
+
+#: sql/storage.py:209
+#, python-format
+msgid "S3 存储连接失败: %(v0)s"
+msgstr "Ошибка S3: %(v0)s"
+
+#: sql/storage.py:216
+msgid "Azure Blob 存储连接成功"
+msgstr "Azure Blob подключён"
+
+#: sql/storage.py:218
+#, python-format
+msgid "Azure Blob 存储连接失败: %(v0)s"
+msgstr "Ошибка Azure Blob: %(v0)s"
+
+#: sql/templates/archive.html:11
+msgid "全部实例"
+msgstr "Все инстансы"
+
+#: sql/templates/archive.html:19
+msgid "启用状态"
+msgstr "Статус включения"
+
+#: sql/templates/archive.html:20
+msgid "启用"
+msgstr "Включить"
+
+#: sql/templates/archive.html:21
+msgid "未启用"
+msgstr "Отключено"
+
+#: sql/templates/archive.html:28
+msgid "申请归档"
+msgstr "Заявка на архивацию"
+
+#: sql/templates/archive.html:36
+msgid "添加配置"
+msgstr "Добавить конфигурацию"
+
+#: sql/templates/archive.html:55
+msgid "申请数据归档"
+msgstr "Заявка на архивацию данных"
+
+#: sql/templates/archive.html:60
+msgid "对归档进行简单描述"
+msgstr "Краткое описание архивации"
+
+#: sql/templates/archive.html:65 sql/templates/queryapplylist.html:38
+msgid "请选择组:"
+msgstr "Выберите группу:"
+
+#: sql/templates/archive.html:75 sql/templates/param_compare.html:26
+#: sql/templates/param_compare.html:27 sql/templates/schemasync.html:15
+msgid "请选择源实例:"
+msgstr "Выберите исходный инстанс:"
+
+#: sql/templates/archive.html:76 sql/templates/dbdiagnostic.html:26
+#: sql/templates/my2sql.html:17 sql/templates/queryapplylist.html:48
+#: sql/templates/schemasync.html:16 sql/templates/slowquery.html:20
+#: sql/templates/sqladvisor.html:38 sql/templates/sqladvisor.html:39
+#: sql/templates/sqlanalyze.html:18 sql/templates/sqlanalyze.html:19
+#: sql/templates/sqlquery.html:100 sql/templates/sqlquery.html:101
+msgid "请选择实例:"
+msgstr "Выберите инстанс:"
+
+#: sql/templates/archive.html:82 sql/templates/schemasync.html:21
+msgid "请选择源数据库:"
+msgstr "Выберите исходную БД:"
+
+#: sql/templates/archive.html:83 sql/templates/queryapplylist.html:64
+#: sql/templates/queryapplylist.html:70 sql/templates/schemasync.html:22
+#: sql/templates/slowquery.html:26 sql/templates/sqladvisor.html:48
+#: sql/templates/sqladvisor.html:49 sql/templates/sqlanalyze.html:24
+#: sql/templates/sqlanalyze.html:25 sql/templates/sqlexportsubmit.html:93
+#: sql/templates/sqlquery.html:111 sql/templates/sqlquery.html:112
+#: sql/templates/sqlsubmit.html:71
+msgid "请选择数据库:"
+msgstr "Выберите БД:"
+
+#: sql/templates/archive.html:90 sql/templates/archive.html:91
+#: sql/templates/archive.html:92
+msgid "请选择需要归档的表:"
+msgstr "Выберите таблицу для архивации:"
+
+#: sql/templates/archive.html:98 sql/templates/archive.html:99
+#: sql/templates/archive.html:100
+msgid "请选择归档模式:"
+msgstr "Выберите режим архивации:"
+
+#: sql/templates/archive.html:101
+msgid "归档到文件"
+msgstr "Архивация в файл"
+
+#: sql/templates/archive.html:102
+msgid "归档到其他实例"
+msgstr "Архивация на другой инстанс"
+
+#: sql/templates/archive.html:110 sql/templates/archive.html:111
+msgid "归档后是否保留源数据:"
+msgstr "Сохранять исходные данные после архивации:"
+
+#: sql/templates/archive.html:112
+msgid "归档后是否保留源数据"
+msgstr "Сохранять исходные данные после архивации"
+
+#: sql/templates/archive.html:113 sql/templates/archivedetail.html:149
+msgid "保留"
+msgstr "Сохранить"
+
+#: sql/templates/archive.html:114 sql/templates/archivedetail.html:149
+msgid "删除"
+msgstr "Удалить"
+
+#: sql/templates/archive.html:122 sql/templates/archive.html:123
+#: sql/templates/param_compare.html:33 sql/templates/param_compare.html:34
+#: sql/templates/schemasync.html:29 sql/templates/schemasync.html:30
+msgid "请选择目标实例:"
+msgstr "Выберите целевой инстанс:"
+
+#: sql/templates/archive.html:129 sql/templates/schemasync.html:36
+msgid "请选择目标数据库:"
+msgstr "Выберите целевую БД:"
+
+#: sql/templates/archive.html:130 sql/templates/schemasync.html:37
+msgid "请选择对应数据库:"
+msgstr "Выберите БД:"
+
+#: sql/templates/archive.html:137 sql/templates/archive.html:138
+msgid "请选择目标表:"
+msgstr "Выберите целевую таблицу:"
+
+#: sql/templates/archive.html:139
+msgid "请选择需目标表:"
+msgstr "Выберите целевую таблицу:"
+
+#: sql/templates/archive.html:145
+msgid "请输入归档条件，就是SQL语句的WHERE条件"
+msgstr "Введите условие архивации (WHERE)"
+
+#: sql/templates/archive.html:149
+msgid "归档10000行记录后的休眠秒数"
+msgstr "Пауза (сек) после 10000 строк"
+
+#: sql/templates/archive.html:153 sql/templates/queryapplylist.html:104
+msgid "&nbsp&nbsp&nbsp审批流程："
+msgstr "&nbsp&nbsp&nbspМаршрут согласования:"
+
+#: sql/templates/archive.html:155
+msgid "提示：源表和目标表结构必须保持一致，否则将会归档失败"
+msgstr "Структуры исходной и целевой таблиц должны совпадать"
+
+#: sql/templates/archive.html:158 sql/templates/database.html:86
+#: sql/templates/database.html:137 sql/templates/dbdiagnostic.html:88
+#: sql/templates/detail.html:296 sql/templates/detail.html:358
+#: sql/templates/groupmgmt.html:63 sql/templates/instance.html:66
+#: sql/templates/instanceaccount.html:119
+#: sql/templates/instanceaccount.html:183
+#: sql/templates/instanceaccount.html:947
+#: sql/templates/instanceaccount.html:990
+#: sql/templates/instanceaccount.html:1013
+#: sql/templates/instanceaccount.html:1036
+#: sql/templates/queryapplylist.html:109
+#: sql/templates/queryuserprivileges.html:63
+#: sql/templates/queryuserprivileges.html:92
+#: sql/templates/queryuserprivileges.html:112
+#: sql/templates/queryuserprivileges.html:132 sql/templates/sqlquery.html:41
+#: sql/templates/sqlsubmit.html:154
+msgid "取消"
+msgstr "Отмена"
+
+#: sql/templates/archive.html:159 sql/templates/queryapplylist.html:110
+msgid "提交申请"
+msgstr "Отправить заявку"
+
+#: sql/templates/archive.html:171 sql/templates/audit_sqlworkflow.html:53
+#: sql/templates/detail.html:126 sql/templates/queryapplylist.html:122
+#: sql/templates/sqlexportworkflow.html:63 sql/templates/sqlworkflow.html:60
+msgid "工单日志"
+msgstr "Журнал заявки"
+
+#: sql/templates/archivedetail.html:7 sql/templates/queryapplydetail.html:6
+msgid "工单名称："
+msgstr "Имя заявки:"
+
+#: sql/templates/archivedetail.html:10
+msgid "修改归档配置"
+msgstr "Изменить конфигурацию архивации"
+
+#: sql/templates/archivedetail.html:17
+msgid "立即归档"
+msgstr "Архивировать сейчас"
+
+#: sql/templates/archivedetail.html:26 sql/templates/detail.html:26
+#: sql/templates/queryapplydetail.html:16
+msgid "审批流"
+msgstr "Маршрут согласования"
+
+#: sql/templates/archivedetail.html:41 sql/templates/audit_sqlworkflow.html:18
+#: sql/templates/groupmgmt.html:16 sql/templates/groupmgmt.html:52
+#: sql/templates/queryapplydetail.html:31
+#: sql/templates/sqlexportsubmit.html:78
+#: sql/templates/sqlexportworkflow.html:18 sql/templates/sqlsubmit.html:56
+#: sql/templates/sqlworkflow.html:18
+msgid "实例"
+msgstr "Инстанс"
+
+#: sql/templates/archivedetail.html:59 sql/templates/detail.html:59
+#: sql/templates/queryapplydetail.html:49
+msgid "当前状态"
+msgstr "Текущий статус"
+
+#: sql/templates/archivedetail.html:62 sql/templates/audit_sqlworkflow.html:27
+#: sql/templates/detail.html:62 sql/templates/groupmgmt.html:44
+#: sql/templates/queryapplydetail.html:52
+#: sql/templates/sqlexportsubmit.html:66
+#: sql/templates/sqlexportworkflow.html:27 sql/templates/sqlsubmit.html:44
+#: sql/templates/sqlworkflow.html:27
+msgid "组"
+msgstr "Группа"
+
+#: sql/templates/archivedetail.html:91 sql/templates/queryapplydetail.html:81
+msgid "待审核"
+msgstr "Ожидает проверки"
+
+#: sql/templates/archivedetail.html:93 sql/templates/archivedetail.html:248
+#: sql/templates/detail.html:192 sql/templates/queryapplydetail.html:83
+#: sql/templates/queryapplydetail.html:142 sql/templates/workflow.html:41
+msgid "审核通过"
+msgstr "Проверка пройдена"
+
+#: sql/templates/archivedetail.html:95 sql/templates/queryapplydetail.html:85
+msgid "审核不通过"
+msgstr "Проверка не пройдена"
+
+#: sql/templates/archivedetail.html:97 sql/templates/queryapplydetail.html:87
+msgid "审核取消"
+msgstr "Проверка отменена"
+
+#: sql/templates/archivedetail.html:110
+msgid "归档配置信息"
+msgstr "Конфигурация архивации"
+
+#: sql/templates/archivedetail.html:113
+msgid "归档日志"
+msgstr "Журнал архивации"
+
+#: sql/templates/archivedetail.html:136
+msgid "归档信息"
+msgstr "Сведения об архивации"
+
+#: sql/templates/archivedetail.html:142
+msgid "归档到文件(file)"
+msgstr "В файл (file)"
+
+#: sql/templates/archivedetail.html:143
+msgid "归档到其他实例(dest)"
+msgstr "На другой инстанс (dest)"
+
+#: sql/templates/archivedetail.html:144
+msgid "直接删除(purge)"
+msgstr "Удалить (purge)"
+
+#: sql/templates/archivedetail.html:147
+msgid "源数据"
+msgstr "Исходные данные"
+
+#: sql/templates/archivedetail.html:151
+msgid "休眠(秒)"
+msgstr "Пауза (сек)"
+
+#: sql/templates/archivedetail.html:157
+msgid "实例信息"
+msgstr "Сведения об инстансе"
+
+#: sql/templates/archivedetail.html:161
+msgid "源信息"
+msgstr "Источник"
+
+#: sql/templates/archivedetail.html:165
+msgid "源实例"
+msgstr "Исходный инстанс"
+
+#: sql/templates/archivedetail.html:181
+msgid "目标信息"
+msgstr "Цель"
+
+#: sql/templates/archivedetail.html:185 sql/templates/detail.html:41
+msgid "目标实例"
+msgstr "Целевой инстанс"
+
+#: sql/templates/archivedetail.html:201
+msgid "归档条件"
+msgstr "Условие архивации"
+
+#: sql/templates/archivedetail.html:242
+#: sql/templates/queryapplydetail.html:136
+msgid "请填写审核备注"
+msgstr "Укажите комментарий проверки"
+
+#: sql/templates/archivedetail.html:256 sql/templates/detail.html:228
+#: sql/templates/queryapplydetail.html:150
+msgid "终止流程"
+msgstr "Отменить процесс"
+
+#: sql/templates/data_dictionary.html:12 sql/templates/database.html:11
+#: sql/templates/instanceaccount.html:13 sql/templates/param.html:31
+#: sql/templates/param.html:33 sql/templates/sqlexportsubmit.html:79
+#: sql/templates/sqlsubmit.html:57
+msgid "请选择实例"
+msgstr "Выберите инстанс"
+
+#: sql/templates/data_dictionary.html:23 sql/templates/instanceaccount.html:58
+#: sql/templates/instanceaccount.html:142
+#: sql/templates/instanceaccount.html:235
+#: sql/templates/sqlexportsubmit.html:91 sql/templates/sqlsubmit.html:69
+msgid "请选择数据库"
+msgstr "Выберите БД"
+
+#: sql/templates/data_dictionary.html:30
+msgid "对象类型"
+msgstr "Тип объекта"
+
+#: sql/templates/data_dictionary.html:32
+msgid "视图"
+msgstr "Представление"
+
+#: sql/templates/data_dictionary.html:33
+msgid "触发器"
+msgstr "Триггер"
+
+#: sql/templates/data_dictionary.html:34
+msgid "存储过程"
+msgstr "Хранимая процедура"
+
+#: sql/templates/data_dictionary.html:35
+msgid "函数"
+msgstr "Функция"
+
+#: sql/templates/data_dictionary.html:36
+msgid "定时任务"
+msgstr "Расписание (event)"
+
+#: sql/templates/data_dictionary.html:43
+msgid "导出"
+msgstr "Экспорт"
+
+#: sql/templates/data_dictionary.html:63
+msgid "表元数据展示"
+msgstr "Метаданные таблицы"
+
+#: sql/templates/data_dictionary.html:67
+#: sql/templates/data_dictionary.html:151
+#: sql/templates/data_dictionary.html:215
+#: sql/templates/data_dictionary.html:289
+msgid "表信息"
+msgstr "Сведения о таблице"
+
+#: sql/templates/data_dictionary.html:74
+#: sql/templates/data_dictionary.html:158
+#: sql/templates/data_dictionary.html:222
+#: sql/templates/data_dictionary.html:296
+msgid "表名"
+msgstr "Таблица"
+
+#: sql/templates/data_dictionary.html:76
+#: sql/templates/data_dictionary.html:224
+msgid "引擎"
+msgstr "Движок"
+
+#: sql/templates/data_dictionary.html:78
+msgid "行格式"
+msgstr "Формат строк"
+
+#: sql/templates/data_dictionary.html:80
+#: sql/templates/data_dictionary.html:160
+#: sql/templates/data_dictionary.html:228
+msgid "表行数"
+msgstr "Число строк"
+
+#: sql/templates/data_dictionary.html:84
+msgid "平均行长度"
+msgstr "Средняя длина строки"
+
+#: sql/templates/data_dictionary.html:86
+msgid "最大行长度"
+msgstr "Макс. длина строки"
+
+#: sql/templates/data_dictionary.html:88
+#: sql/templates/data_dictionary.html:164
+msgid "数据长度（K）"
+msgstr "Размер данных (K)"
+
+#: sql/templates/data_dictionary.html:90
+#: sql/templates/data_dictionary.html:166
+msgid "索引长度（K）"
+msgstr "Размер индексов (K)"
+
+#: sql/templates/data_dictionary.html:94
+#: sql/templates/data_dictionary.html:170
+msgid "数据总大小（K）"
+msgstr "Общий размер (K)"
+
+#: sql/templates/data_dictionary.html:96
+#: sql/templates/data_dictionary.html:172
+msgid "碎片大小"
+msgstr "Размер фрагментации"
+
+#: sql/templates/data_dictionary.html:98
+#: sql/templates/data_dictionary.html:182
+msgid "当前自增值"
+msgstr "Текущий AUTO_INCREMENT"
+
+#: sql/templates/data_dictionary.html:100
+msgid "表的校验码"
+msgstr "Контрольная сумма таблицы"
+
+#: sql/templates/data_dictionary.html:108
+msgid "检查时间"
+msgstr "Время проверки"
+
+#: sql/templates/data_dictionary.html:110
+#: sql/templates/data_dictionary.html:184
+#: sql/templates/data_dictionary.html:248
+msgid "表说明"
+msgstr "Описание таблицы"
+
+#: sql/templates/data_dictionary.html:119
+#: sql/templates/data_dictionary.html:193
+#: sql/templates/data_dictionary.html:257
+#: sql/templates/data_dictionary.html:343
+#: sql/templates/data_dictionary.html:395
+msgid "列信息"
+msgstr "Сведения о столбцах"
+
+#: sql/templates/data_dictionary.html:129
+#: sql/templates/data_dictionary.html:203
+#: sql/templates/data_dictionary.html:267
+#: sql/templates/data_dictionary.html:353
+msgid "索引信息"
+msgstr "Сведения об индексах"
+
+#: sql/templates/data_dictionary.html:139
+#: sql/templates/data_dictionary.html:277
+msgid "建表语句"
+msgstr "DDL создания таблицы"
+
+#: sql/templates/data_dictionary.html:230
+msgid "数据大小"
+msgstr "Размер данных"
+
+#: sql/templates/data_dictionary.html:234
+msgid "分区键"
+msgstr "Ключ партиционирования"
+
+#: sql/templates/data_dictionary.html:236
+msgid "排序键"
+msgstr "Ключ сортировки"
+
+#: sql/templates/data_dictionary.html:240
+msgid "主键"
+msgstr "Первичный ключ"
+
+#: sql/templates/data_dictionary.html:242
+msgid "采样键"
+msgstr "Ключ семплирования"
+
+#: sql/templates/data_dictionary.html:298
+msgid "表类型"
+msgstr "Тип таблицы"
+
+#: sql/templates/data_dictionary.html:303
+msgid "段类型"
+msgstr "Тип сегмента"
+
+#: sql/templates/data_dictionary.html:305
+msgid "压缩"
+msgstr "Сжатие"
+
+#: sql/templates/data_dictionary.html:309
+msgid "表空间"
+msgstr "Tablespace"
+
+#: sql/templates/data_dictionary.html:311
+msgid "表中的记录数"
+msgstr "Число записей в таблице"
+
+#: sql/templates/data_dictionary.html:315
+msgid "表中数据所占的数据块数"
+msgstr "Число блоков данных"
+
+#: sql/templates/data_dictionary.html:317
+msgid "表中的空块数"
+msgstr "Число пустых блоков"
+
+#: sql/templates/data_dictionary.html:321
+msgid "数据块中平均的使用空间"
+msgstr "Среднее использование блока"
+
+#: sql/templates/data_dictionary.html:323
+msgid "表中行连接和行迁移的数量"
+msgstr "Число chained/migrated строк"
+
+#: sql/templates/data_dictionary.html:327
+msgid "每条记录的平均长度"
+msgstr "Средняя длина записи"
+
+#: sql/templates/data_dictionary.html:329
+msgid "上次统计信息搜集的时间"
+msgstr "Время последнего сбора статистики"
+
+#: sql/templates/data_dictionary.html:333
+msgid "表注释"
+msgstr "Комментарий таблицы"
+
+#: sql/templates/data_dictionary.html:365
+msgid "视图信息"
+msgstr "Сведения о представлении"
+
+#: sql/templates/data_dictionary.html:372
+msgid "视图名"
+msgstr "Имя представления"
+
+#: sql/templates/data_dictionary.html:374
+#: sql/templates/data_dictionary.html:436
+#: sql/templates/data_dictionary.html:474
+#: sql/templates/data_dictionary.html:520
+#: sql/templates/data_dictionary.html:580
+msgid "定义者"
+msgstr "Определивший"
+
+#: sql/templates/data_dictionary.html:378
+#: sql/templates/data_dictionary.html:476
+msgid "安全类型"
+msgstr "Тип безопасности"
+
+#: sql/templates/data_dictionary.html:380
+msgid "检查选项"
+msgstr "Check option"
+
+#: sql/templates/data_dictionary.html:384
+msgid "是否可更新"
+msgstr "Обновляемое"
+
+#: sql/templates/data_dictionary.html:405
+msgid "视图定义 SQL"
+msgstr "SQL определения представления"
+
+#: sql/templates/data_dictionary.html:415
+msgid "触发器信息"
+msgstr "Сведения о триггере"
+
+#: sql/templates/data_dictionary.html:422
+msgid "触发器名"
+msgstr "Имя триггера"
+
+#: sql/templates/data_dictionary.html:424
+msgid "触发时机"
+msgstr "Момент срабатывания"
+
+#: sql/templates/data_dictionary.html:428
+msgid "事件"
+msgstr "Событие"
+
+#: sql/templates/data_dictionary.html:430
+msgid "关联表"
+msgstr "Связанная таблица"
+
+#: sql/templates/data_dictionary.html:434
+msgid "作用粒度"
+msgstr "Гранулярность"
+
+#: sql/templates/data_dictionary.html:451
+msgid "触发器体 SQL"
+msgstr "Тело триггера (SQL)"
+
+#: sql/templates/data_dictionary.html:461
+msgid "存储过程信息"
+msgstr "Сведения о процедуре"
+
+#: sql/templates/data_dictionary.html:468
+#: sql/templates/data_dictionary.html:514
+#: sql/templates/data_dictionary.html:560
+msgid "名称"
+msgstr "Имя"
+
+#: sql/templates/data_dictionary.html:470
+#: sql/templates/data_dictionary.html:522
+msgid "所属数据库"
+msgstr "БД"
+
+#: sql/templates/data_dictionary.html:482
+#: sql/templates/data_dictionary.html:528
+msgid "修改时间"
+msgstr "Время изменения"
+
+#: sql/templates/data_dictionary.html:497
+#: sql/templates/data_dictionary.html:543
+msgid "创建语句"
+msgstr "DDL создания"
+
+#: sql/templates/data_dictionary.html:507
+msgid "函数信息"
+msgstr "Сведения о функции"
+
+#: sql/templates/data_dictionary.html:516
+msgid "返回类型"
+msgstr "Тип возврата"
+
+#: sql/templates/data_dictionary.html:553
+msgid "事件信息"
+msgstr "Сведения о событии"
+
+#: sql/templates/data_dictionary.html:566
+msgid "调度类型"
+msgstr "Тип расписания"
+
+#: sql/templates/data_dictionary.html:568
+msgid "间隔"
+msgstr "Интервал"
+
+#: sql/templates/data_dictionary.html:578
+msgid "上次执行时间"
+msgstr "Время последнего выполнения"
+
+#: sql/templates/data_dictionary.html:584
+msgid "完成后行为"
+msgstr "Действие после завершения"
+
+#: sql/templates/data_dictionary.html:595
+msgid "事件定义 SQL"
+msgstr "SQL определения события"
+
+#: sql/templates/database.html:19 sql/templates/database.html:20
+#: sql/templates/groupmgmt.html:14 sql/templates/instanceaccount.html:21
+#: sql/templates/instanceaccount.html:22
+#: sql/templates/queryuserprivileges.html:15 sql/templates/schemasync.html:23
+#: sql/templates/schemasync.html:38 sql/templates/sqlanalyze.html:26
+#: sql/templates/sqlquery.html:9 sql/templates/sqlquery.html:10
+#: sql/templates/sqlquery.html:18 sql/templates/sqlquery.html:19
+#: sql/templates/workflow.html:11
+msgid "全部"
+msgstr "Все"
+
+#: sql/templates/database.html:21 sql/templates/instanceaccount.html:23
+msgid "已录入"
+msgstr "Зарегистрировано"
+
+#: sql/templates/database.html:28 sql/templates/database.html:46
+msgid "创建数据库"
+msgstr "Создать БД"
+
+#: sql/templates/database.html:55 sql/templates/database.html:110
+msgid "请输入数据库名称"
+msgstr "Введите имя БД"
+
+#: sql/templates/database.html:57
+msgid "由字母、数字、下划线、中划线组成，字母开头，字母或数字结尾，最长64个字符"
+msgstr ""
+"Буквы, цифры, _ и -; начинается с буквы, заканчивается буквой/цифрой; до 64 "
+"символов"
+
+#: sql/templates/database.html:68 sql/templates/database.html:69
+#: sql/templates/database.html:120
+msgid "请选择数据库负责人"
+msgstr "Выберите ответственного за БД"
+
+#: sql/templates/database.html:81 sql/templates/database.html:132
+#: sql/templates/instanceaccount.html:114
+#: sql/templates/instanceaccount.html:178
+msgid "请输入备注"
+msgstr "Введите примечание"
+
+#: sql/templates/database.html:87 sql/templates/database.html:138
+#: sql/templates/instanceaccount.html:120
+msgid "创建"
+msgstr "Создать"
+
+#: sql/templates/database.html:100
+msgid "编辑/录入数据库信息"
+msgstr "Редактировать / внести сведения о БД"
+
+#: sql/templates/dbdiagnostic.html:12
+msgid "进程状态"
+msgstr "Статус процессов"
+
+#: sql/templates/dbdiagnostic.html:15
+msgid "Top表空间"
+msgstr "Top tablespace"
+
+#: sql/templates/dbdiagnostic.html:18
+msgid "事务信息"
+msgstr "Транзакции"
+
+#: sql/templates/dbdiagnostic.html:21
+msgid "锁信息"
+msgstr "Блокировки"
+
+#: sql/templates/dbdiagnostic.html:39
+msgid "command类型"
+msgstr "Тип command"
+
+#: sql/templates/dbdiagnostic.html:81
+msgid "确定要终止所选会话吗？"
+msgstr "Завершить выбранные сессии?"
+
+#: sql/templates/dbdiagnostic.html:89
+msgid "确定终止"
+msgstr "Подтвердить завершение"
+
+#: sql/templates/detail.html:14 sql/templates/queryapplydetail.html:10
+msgid "上线其他实例"
+msgstr "Отправить на другой инстанс"
+
+#: sql/templates/detail.html:18
+msgid "查看提交信息"
+msgstr "Сведения о подаче"
+
+#: sql/templates/detail.html:47
+msgid "发起时间"
+msgstr "Время подачи"
+
+#: sql/templates/detail.html:50
+msgid "可执行时间范围"
+msgstr "Окно исполнения"
+
+#: sql/templates/detail.html:56
+msgid "备份"
+msgstr "Бэкап"
+
+#: sql/templates/detail.html:65
+msgid "类型"
+msgstr "Тип"
+
+#: sql/templates/detail.html:87
+msgid "无限制"
+msgstr "Без ограничений"
+
+#: sql/templates/detail.html:123
+msgid "工单详情"
+msgstr "Детали заявки"
+
+#: sql/templates/detail.html:135
+msgid "展开全部"
+msgstr "Развернуть всё"
+
+#: sql/templates/detail.html:173
+msgid "请填写审核备注/终止原因"
+msgstr "Укажите комментарий проверки / причину отмены"
+
+#: sql/templates/detail.html:183
+msgid "可执行时间变更"
+msgstr "Изменить окно исполнения"
+
+#: sql/templates/detail.html:202
+msgid "立即执行"
+msgstr "Выполнить сейчас"
+
+#: sql/templates/detail.html:210
+msgid "已手动完成"
+msgstr "Завершено вручную"
+
+#: sql/templates/detail.html:219
+msgid "执行时间变更"
+msgstr "Изменить время исполнения"
+
+#: sql/templates/detail.html:233
+msgid "下载中..."
+msgstr "Скачивание..."
+
+#: sql/templates/detail.html:235
+msgid "下载文件"
+msgstr "Скачать файл"
+
+#: sql/templates/detail.html:246
+msgid "查看回滚SQL"
+msgstr "Просмотр rollback SQL"
+
+#: sql/templates/detail.html:253
+msgid "下载回滚SQL"
+msgstr "Скачать rollback SQL"
+
+#: sql/templates/detail.html:265 sql/templates/detail.html:269
+msgid "重新修改"
+msgstr "Изменить снова"
+
+#: sql/templates/detail.html:282
+msgid "定时执行SQL"
+msgstr "Отложенное выполнение SQL"
+
+#: sql/templates/detail.html:290
+msgid "请选择执行时间"
+msgstr "Выберите время выполнения"
+
+#: sql/templates/detail.html:299 sql/templates/detail.html:361
+msgid "确认提交"
+msgstr "Подтвердить отправку"
+
+#: sql/templates/detail.html:310
+msgid "暂停"
+msgstr "Пауза"
+
+#: sql/templates/detail.html:311
+msgid "恢复"
+msgstr "Возобновить"
+
+#: sql/templates/detail.html:312
+msgid "终止"
+msgstr "Отменить"
+
+#: sql/templates/detail.html:320
+msgid "执行进度"
+msgstr "Прогресс выполнения"
+
+#: sql/templates/detail.html:342
+msgid "修改可执行时间"
+msgstr "Изменить окно исполнения"
+
+#: sql/templates/detail.html:351 sql/templates/sqlexportsubmit.html:102
+#: sql/templates/sqlsubmit.html:92
+msgid "请选择可执行时间范围"
+msgstr "Выберите окно исполнения"
+
+#: sql/templates/group.html:12
+msgid "添加组"
+msgstr "Добавить группу"
+
+#: sql/templates/groupmgmt.html:8
+msgid "关联对象"
+msgstr "Связанные объекты"
+
+#: sql/templates/groupmgmt.html:15 sql/templates/groupmgmt.html:51
+msgid "用户"
+msgstr "Пользователь"
+
+msgid "提交审批"
+msgstr "Отправить на согласование"
+
+msgid "在线查询需经审批流通过后执行（与SQL上线同一审批配置）"
+msgstr "Онлайн-запрос выполняется только после согласования (тот же поток, что и отправка SQL)"
+
+msgid "已提交审批，请等待审核通过后执行"
+msgstr "Отправлено на согласование. Дождитесь утверждения, затем выполните."
+
+msgid "自动审核未通过，无法提交审批"
+msgstr "Автопроверка не пройдена — нельзя отправить на согласование"
+
+msgid "提交审批失败：{}"
+msgstr "Не удалось отправить на согласование: {}"
+
+msgid "用户无相关审批权限, 请合理配置权限"
+msgstr "У пользователя нет прав на согласование. Проверьте настройки прав."
+
+msgid "当前审批权限组不存在, 请联系管理员检查并清洗错误数据"
+msgstr "Группа согласования не существует. Обратитесь к администратору."
+
+msgid "用户不在流程相关资源组内, 无权限审核"
+msgstr "Пользователь не в ресурсной группе процесса — нет прав на согласование."
+
+msgid "用户不在当前节点的审核组内, 无权限审核"
+msgstr "Пользователь не в группе согласования текущего узла."
+
+#: sql/templates/groupmgmt.html:22 sql/templates/groupmgmt.html:39
+msgid "新增关联对象"
+msgstr "Добавить связанный объект"
+
+#: sql/templates/groupmgmt.html:49
+msgid "关联对象类型"
+msgstr "Тип связанного объекта"
+
+#: sql/templates/groupmgmt.html:49 sql/templates/groupmgmt.html:50
+msgid "请选择关联对象类型:"
+msgstr "Выберите тип связанного объекта:"
+
+#: sql/templates/groupmgmt.html:58
+msgid "请选择关联对象:"
+msgstr "Выберите связанный объект:"
+
+#: sql/templates/groupmgmt.html:64
+msgid "提交"
+msgstr "Отправить"
+
+#: sql/templates/instance.html:25
+msgid "标签筛选"
+msgstr "Фильтр по тегам"
+
+#: sql/templates/instance.html:35
+msgid "添加实例"
+msgstr "Добавить инстанс"
+
+#: sql/templates/instance.html:52
+msgid "清理Binlog日志"
+msgstr "Очистка binlog"
+
+#: sql/templates/instance.html:63
+msgid "提示：该binlog前的所有binlog都会被删除！"
+msgstr "Все binlog до указанного будут удалены!"
+
+#: sql/templates/instance.html:67
+msgid "清理"
+msgstr "Очистить"
+
+#: sql/templates/instanceaccount.html:30 sql/templates/instanceaccount.html:48
+msgid "创建账号"
+msgstr "Создать аккаунт"
+
+#: sql/templates/instanceaccount.html:49
+msgid "注：新创建的账号无权限，需要使用授权功能授予相关权限"
+msgstr "Новый аккаунт без прав — выдайте права через авторизацию"
+
+#: sql/templates/instanceaccount.html:65
+#: sql/templates/instanceaccount.html:149
+msgid "数据库账号"
+msgstr "БДаккаунт"
+
+#: sql/templates/instanceaccount.html:69
+#: sql/templates/instanceaccount.html:153
+msgid "请输入账号名称"
+msgstr "Введите имя аккаунта"
+
+#: sql/templates/instanceaccount.html:71
+msgid "帐号名需要1-16个字符，由字母、数字和特殊字符组成；"
+msgstr "Имя аккаунта: 1–16 символов (буквы, цифры, спецсимволы);"
+
+#: sql/templates/instanceaccount.html:81
+#: sql/templates/instanceaccount.html:162
+msgid "请输入主机"
+msgstr "Введите хост"
+
+#: sql/templates/instanceaccount.html:83
+#, python-format
+msgid "1. IP形式，支持填入%%"
+msgstr "1. Формат IP, допустимо %%"
+
+#: sql/templates/instanceaccount.html:84
+msgid "2. 多个主机以|分隔符分隔"
+msgstr "2. Несколько хостов через |"
+
+#: sql/templates/instanceaccount.html:94
+#: sql/templates/instanceaccount.html:973
+msgid "请输入密码"
+msgstr "Введите пароль"
+
+#: sql/templates/instanceaccount.html:96
+#: sql/templates/instanceaccount.html:975
+msgid "密码需要8-32个字符，至少包含英文、数字和特殊符号"
+msgstr "Пароль: 8–32 символа, буквы, цифры и спецсимволы"
+
+#: sql/templates/instanceaccount.html:102
+#: sql/templates/instanceaccount.html:981
+msgid "确认密码"
+msgstr "Подтвердите пароль"
+
+#: sql/templates/instanceaccount.html:106
+#: sql/templates/instanceaccount.html:985
+msgid "请再次输入密码"
+msgstr "Введите пароль ещё раз"
+
+#: sql/templates/instanceaccount.html:132
+msgid "修改/录入账号"
+msgstr "Изменить / внести аккаунт"
+
+#: sql/templates/instanceaccount.html:133
+msgid "注：此操作不会修改账号密码，仅将相关信息录入平台进行管理，如需修改密码请使用改密功能"
+msgstr ""
+"Пароль на сервере не меняется — только учёт в платформе; для смены пароля "
+"используйте смену пароля"
+
+#: sql/templates/instanceaccount.html:170
+msgid "请输入密码，留空则不修改录入信息"
+msgstr "Введите пароль; пусто — не менять"
+
+#: sql/templates/instanceaccount.html:184
+msgid "修改/录入"
+msgstr "Изменить / внести"
+
+#: sql/templates/instanceaccount.html:196
+msgid "授权变更"
+msgstr "Изменение прав"
+
+#: sql/templates/instanceaccount.html:197
+#: sql/templates/instanceaccount.html:962
+#: sql/templates/instanceaccount.html:1004
+#: sql/templates/instanceaccount.html:1027
+msgid "实例:"
+msgstr "Инстанс:"
+
+#: sql/templates/instanceaccount.html:198
+#: sql/templates/instanceaccount.html:963
+#: sql/templates/instanceaccount.html:1005
+#: sql/templates/instanceaccount.html:1028
+msgid "账号:"
+msgstr "Аккаунт:"
+
+#: sql/templates/instanceaccount.html:205
+msgid "对象选择"
+msgstr "Выбор объекта"
+
+#: sql/templates/instanceaccount.html:209
+msgid "选择操作类型："
+msgstr "Тип операции:"
+
+#: sql/templates/instanceaccount.html:213
+msgid "请选择操作类型"
+msgstr "Выберите тип операции"
+
+#: sql/templates/instanceaccount.html:214
+msgid "赋权"
+msgstr "Выдать"
+
+#: sql/templates/instanceaccount.html:215
+msgid "回收"
+msgstr "Отозвать"
+
+#: sql/templates/instanceaccount.html:218
+msgid "选择权限类型："
+msgstr "Тип права:"
+
+#: sql/templates/instanceaccount.html:222
+msgid "请选择配置项"
+msgstr "Выберите параметр"
+
+#: sql/templates/instanceaccount.html:223
+msgid "全局权限"
+msgstr "Глобальные права"
+
+#: sql/templates/instanceaccount.html:224
+msgid "库权限"
+msgstr "Права на БД"
+
+#: sql/templates/instanceaccount.html:225
+msgid "表权限"
+msgstr "Права на таблицу"
+
+#: sql/templates/instanceaccount.html:226
+msgid "列权限"
+msgstr "Права на столбец"
+
+#: sql/templates/instanceaccount.html:231
+msgid "请选择数据库："
+msgstr "Выберите БД:"
+
+#: sql/templates/instanceaccount.html:242
+msgid "请选择表："
+msgstr "Выберите таблицу:"
+
+#: sql/templates/instanceaccount.html:246
+msgid "请选择表"
+msgstr "Выберите таблицу"
+
+#: sql/templates/instanceaccount.html:253
+msgid "请选择列："
+msgstr "Выберите столбец:"
+
+#: sql/templates/instanceaccount.html:257
+msgid "请选择列"
+msgstr "Выберите столбец"
+
+#: sql/templates/instanceaccount.html:270
+msgid "权限选择"
+msgstr "Выбор прав"
+
+#: sql/templates/instanceaccount.html:276
+#: sql/templates/instanceaccount.html:533
+#: sql/templates/instanceaccount.html:727
+#: sql/templates/instanceaccount.html:867
+msgid "数据"
+msgstr "Данные"
+
+#: sql/templates/instanceaccount.html:323
+#: sql/templates/instanceaccount.html:576
+msgid "结构"
+msgstr "Структура"
+
+#: sql/templates/instanceaccount.html:431
+#: sql/templates/instanceaccount.html:691
+#: sql/templates/instanceaccount.html:840
+#: sql/templates/instanceaccount.html:901
+msgid "管理"
+msgstr "Администрирование"
+
+#: sql/templates/instanceaccount.html:921
+msgid "数据库角色"
+msgstr "Роль БД"
+
+#: sql/templates/instanceaccount.html:924
+msgid "请选择数据库角色"
+msgstr "Выберите роль БД"
+
+#: sql/templates/instanceaccount.html:948
+msgid "执行"
+msgstr "Выполнить"
+
+#: sql/templates/instanceaccount.html:961
+msgid "修改密码"
+msgstr "Сменить пароль"
+
+#: sql/templates/instanceaccount.html:964
+msgid "注：此操作会修改账号密码，同时变更平台录入信息，请谨慎操作"
+msgstr "Пароль аккаунта и запись в платформе будут изменены — действуйте осторожно"
+
+#: sql/templates/instanceaccount.html:991
+msgid "修改"
+msgstr "Изменить"
+
+#: sql/templates/instanceaccount.html:1003
+msgid "锁定账号"
+msgstr "Заблокировать аккаунт"
+
+#: sql/templates/instanceaccount.html:1009
+msgid "确认锁定该账号？"
+msgstr "Заблокировать этот аккаунт?"
+
+#: sql/templates/instanceaccount.html:1014
+#: sql/templates/instanceaccount.html:1037
+msgid "确定"
+msgstr "OK"
+
+#: sql/templates/instanceaccount.html:1026
+msgid "删除账号"
+msgstr "Удалить аккаунт"
+
+#: sql/templates/instanceaccount.html:1032
+msgid "确认删除该账号？请预先统计该账号近期的连接和访问情况，做好风险防范措施！"
+msgstr "Удалить аккаунт? Сначала оцените недавние подключения и риски!"
+
+#: sql/templates/legacy_login_form.html:3
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: sql/templates/legacy_login_form.html:3
+msgid "AD登录名"
+msgstr "Логин AD"
+
+#: sql/templates/legacy_login_form.html:7
+msgid "使用 Active Directory 用户名登录；本地账号也可登录"
+msgstr "Войдите с именем пользователя Active Directory; локальные учётные записи тоже работают"
+
+#: sql/templates/legacy_login_form.html:12
+msgid "Password"
+msgstr "Пароль"
+
+#: sql/templates/legacy_login_form.html:18
+msgid "登录"
+msgstr "Вход"
+
+#: sql/templates/my2sql.html:9 sql/templates/param_compare.html:10
+#: sql/templates/schemasync.html:9
+msgid "操作选项"
+msgstr "Параметры операции"
+
+#: sql/templates/my2sql.html:13
+msgid "选择实例："
+msgstr "Выберите инстанс:"
+
+#: sql/templates/my2sql.html:27
+msgid "是否保存到文件(异步操作)"
+msgstr "Сохранить в файл (асинхронно)"
+
+#: sql/templates/my2sql.html:33
+msgid "解析模式："
+msgstr "Режим разбора:"
+
+#: sql/templates/my2sql.html:74
+msgid "解析线程数："
+msgstr "Потоки разбора:"
+
+#: sql/templates/my2sql.html:76
+msgid "默认4"
+msgstr "По умолчанию 4"
+
+#: sql/templates/my2sql.html:82
+msgid "解析范围控制："
+msgstr "Ограничение разбора:"
+
+#: sql/templates/my2sql.html:84
+msgid "页面解析行数，默认30"
+msgstr "Строк на странице, по умолчанию 30"
+
+#: sql/templates/my2sql.html:89
+msgid "起始解析文件:"
+msgstr "Начальный файл:"
+
+#: sql/templates/my2sql.html:94
+msgid "起始解析位置(可选)"
+msgstr "Начальная позиция (опц.)"
+
+#: sql/templates/my2sql.html:99
+msgid "终止解析文件(可选):"
+msgstr "Конечный файл (опц.):"
+
+#: sql/templates/my2sql.html:104
+msgid "终止解析位置(可选)"
+msgstr "Конечная позиция (опц.)"
+
+#: sql/templates/my2sql.html:109
+msgid "起始解析时间(不建议)"
+msgstr "Начальное время (не рекомендуется)"
+
+#: sql/templates/my2sql.html:113
+msgid "终止解析时间(可选)"
+msgstr "Конечное время (опц.)"
+
+#: sql/templates/my2sql.html:117
+msgid "对象过滤："
+msgstr "Фильтр объектов:"
+
+#: sql/templates/my2sql.html:121
+msgid "数据库过滤(可选):"
+msgstr "Фильтр БД (опц.):"
+
+#: sql/templates/my2sql.html:128
+msgid "表过滤(可选):"
+msgstr "Фильтр таблиц (опц.):"
+
+#: sql/templates/my2sql.html:134
+msgid "类型过滤(可选):"
+msgstr "Фильтр типов (опц.):"
+
+#: sql/templates/my2sql.html:142
+msgid "获取SQL"
+msgstr "Получить SQL"
+
+#: sql/templates/my2sql.html:143
+msgid "提交工单"
+msgstr "Отправить заявку"
+
+#: sql/templates/my2sql.html:151 sql/templates/schemasync.html:68
+msgid "SQL语句"
+msgstr "SQL-выражение"
+
+#: sql/templates/my2sql.html:155
+msgid ""
+"前端展示数量由解析范围参数控制，如果勾选了保存到文件，则会异步获取完整的SQL文件，\n"
+"                            保存到项目downloads目录，在开启消息通知后，执行结束会发送通知给操作人"
+msgstr "Число строк на экране задаётся параметром разбора; при сохранении в файл полный SQL пишется асинхронно в downloads; при включённых уведомлениях оператор получит сообщение по завершении"
+
+#: sql/templates/param.html:9
+msgid "可修改参数"
+msgstr "Изменяемые параметры"
+
+#: sql/templates/param.html:12
+msgid "修改历史"
+msgstr "История изменений"
+
+#: sql/templates/param.html:19
+msgid "添加参数"
+msgstr "Добавить параметр"
+
+#: sql/templates/param.html:24
+msgid "允许修改"
+msgstr "Разрешить изменение"
+
+#: sql/templates/param_compare.html:16
+msgid "请选择数据库类型:"
+msgstr "Выберите тип БД:"
+
+#: sql/templates/param_compare.html:41
+msgid "仅显示差异项"
+msgstr "Только различия"
+
+#: sql/templates/param_compare.html:46
+msgid "开始对比"
+msgstr "Сравнить"
+
+#: sql/templates/param_compare.html:55
+msgid "对比结果"
+msgstr "Результат сравнения"
+
+#: sql/templates/param_compare.html:61
+msgid "一致参数"
+msgstr "Совпадающие параметры"
+
+#: sql/templates/param_compare.html:69
+msgid "差异参数"
+msgstr "Различающиеся параметры"
+
+#: sql/templates/param_compare.html:77
+msgid "总参数数"
+msgstr "Всего параметров"
+
+#: sql/templates/queryapplydetail.html:34
+msgid "权限级别"
+msgstr "Уровень прав"
+
+#: sql/templates/queryapplydetail.html:40
+msgid "结果集"
+msgstr "Набор результатов"
+
+#: sql/templates/queryapplydetail.html:100
+msgid "数据库清单"
+msgstr "Список БД"
+
+#: sql/templates/queryapplydetail.html:102
+msgid "表清单"
+msgstr "Список таблиц"
+
+#: sql/templates/queryapplylist.html:9
+#: sql/templates/queryuserprivileges.html:7
+msgid "权限管理"
+msgstr "Управление правами"
+
+#: sql/templates/queryapplylist.html:13
+msgid "权限申请"
+msgstr "Заявка на права"
+
+#: sql/templates/queryapplylist.html:29
+msgid "申请数据库查询权限"
+msgstr "Запросить права на запросы к БД"
+
+#: sql/templates/queryapplylist.html:33
+msgid "简单说明权限用途"
+msgstr "Кратко опишите назначение прав"
+
+#: sql/templates/queryapplylist.html:50
+msgid "// TODO 使用models中的choices 渲染"
+msgstr "// TODO рендер choices из models"
+
+#: sql/templates/queryapplylist.html:58
+msgid "权限级别:"
+msgstr "Уровень прав:"
+
+#: sql/templates/queryapplylist.html:79
+msgid "请选择表:"
+msgstr "Выберите таблицу:"
+
+#: sql/templates/queryapplylist.html:84
+msgid "请选择授权时间:"
+msgstr "Выберите срок прав:"
+
+#: sql/templates/queryapplylist.html:86
+msgid "一天"
+msgstr "1 день"
+
+#: sql/templates/queryapplylist.html:87
+msgid "一周"
+msgstr "1 неделя"
+
+#: sql/templates/queryapplylist.html:88
+msgid "一月"
+msgstr "1 месяц"
+
+#: sql/templates/queryapplylist.html:89
+msgid "长期(一年)"
+msgstr "Долгосрочно (1 год)"
+
+#: sql/templates/queryapplylist.html:95
+msgid "请选择查询限制行数:"
+msgstr "Лимит строк результата:"
+
+#: sql/templates/queryapplylist.html:106
+msgid "提示：权限审核通过后即可进行在线查询，请耐心等待。"
+msgstr "После одобрения прав доступен онлайн-запрос."
+
+#: sql/templates/queryuserprivileges.html:6
+msgid "申请列表"
+msgstr "Список заявок"
+
+#: sql/templates/queryuserprivileges.html:27
+msgid "批量变更"
+msgstr "Массовое изменение"
+
+#: sql/templates/queryuserprivileges.html:30
+msgid "批量删除权限"
+msgstr "Массовое удаление прав"
+
+#: sql/templates/queryuserprivileges.html:47
+msgid "权限变更"
+msgstr "Изменение прав"
+
+#: sql/templates/queryuserprivileges.html:51
+#: sql/templates/queryuserprivileges.html:81
+msgid "请输入结果限制"
+msgstr "Введите лимит строк"
+
+#: sql/templates/queryuserprivileges.html:53
+#: sql/templates/queryuserprivileges.html:83
+msgid "用于限制在线查询结果的显示行数"
+msgstr "Ограничивает число строк онлайн-запроса"
+
+#: sql/templates/queryuserprivileges.html:58
+#: sql/templates/queryuserprivileges.html:87
+msgid "请选择有效期"
+msgstr "Выберите срок действия"
+
+#: sql/templates/queryuserprivileges.html:59
+#: sql/templates/queryuserprivileges.html:88
+msgid "过期后权限自动回收"
+msgstr "По истечении права отзываются автоматически"
+
+#: sql/templates/queryuserprivileges.html:64
+#: sql/templates/queryuserprivileges.html:93
+msgid "确定修改"
+msgstr "Подтвердить изменение"
+
+#: sql/templates/queryuserprivileges.html:76
+msgid "批量变更权限"
+msgstr "Массовое изменение прав"
+
+#: sql/templates/queryuserprivileges.html:105
+#: sql/templates/queryuserprivileges.html:125
+msgid "提示信息"
+msgstr "Подсказка"
+
+#: sql/templates/queryuserprivileges.html:109
+msgid "删除后用户将无法查询数据，确定批量删除吗？"
+msgstr "После удаления пользователь не сможет запрашивать данные. Удалить пакетно?"
+
+#: sql/templates/queryuserprivileges.html:113
+#: sql/templates/queryuserprivileges.html:133
+msgid "确定删除"
+msgstr "Подтвердить удаление"
+
+#: sql/templates/queryuserprivileges.html:129
+msgid "删除后用户将无法查询数据，确定删除吗？"
+msgstr "После удаления пользователь не сможет запрашивать данные. Удалить?"
+
+#: sql/templates/rollback.html:7
+msgid "提交回滚请求"
+msgstr "Подать заявку на откат"
+
+#: sql/templates/schemasync.html:42
+msgid "DIFF选项："
+msgstr "Опции DIFF:"
+
+#: sql/templates/schemasync.html:59
+msgid "Schema对比"
+msgstr "Сравнение схем"
+
+#: sql/templates/schemasync.html:72
+msgid "页面仅展示单库对比结果，生成的SQL文件会保存到项目downloads目录"
+msgstr "На странице — сравнение одной БД; SQL сохраняется в downloads"
+
+#: sql/templates/slowquery.html:7 sql/templates/sqladvisor.html:100
+msgid "获取优化建议"
+msgstr "Получить рекомендации"
+
+#: sql/templates/sqladvisor.html:9
+msgid "SQL优化工具"
+msgstr "Инструменты оптимизации SQL"
+
+#: sql/templates/sqladvisor.html:20 sql/templates/sqladvisor.html:23
+#: sql/templates/sqladvisor.html:26 sql/templates/sqladvisor.html:29
+msgid "查看介绍"
+msgstr "Описание"
+
+#: sql/templates/sqladvisor.html:56 sql/templates/sqladvisor.html:57
+#: sql/templates/sqladvisor.html:58
+msgid "请选择优化方式:"
+msgstr "Выберите способ оптимизации:"
+
+#: sql/templates/sqladvisor.html:64
+msgid "是否查看优化过程"
+msgstr "Показывать процесс оптимизации"
+
+#: sql/templates/sqladvisor.html:65 sql/templates/sqladvisor.html:66
+msgid "是否查看优化过程:"
+msgstr "Показывать процесс оптимизации:"
+
+#: sql/templates/sqladvisor.html:75
+msgid "显示系统参数"
+msgstr "Показать системные параметры"
+
+#: sql/templates/sqladvisor.html:81
+msgid "显示执行计划"
+msgstr "Показать план выполнения"
+
+#: sql/templates/sqladvisor.html:87
+msgid "显示相关对象(表、索引)统计信息"
+msgstr "Показать статистику объектов (таблицы, индексы)"
+
+#: sql/templates/sqladvisor.html:93
+msgid "显示PROFILE跟踪信息(真实执行SQL，谨慎选择)"
+msgstr "Показать PROFILE (реальный SQL — осторожно)"
+
+#: sql/templates/sqladvisor.html:98 sql/templates/sqlexportsubmit.html:117
+#: sql/templates/sqlquery.html:144 sql/templates/sqlsubmit.html:107
+msgid "美化"
+msgstr "Форматировать"
+
+#: sql/templates/sqladvisor.html:99 sql/templates/sqlquery.html:145
+msgid "执行计划"
+msgstr "План выполнения"
+
+#: sql/templates/sqladvisor.html:110
+msgid "优化建议"
+msgstr "Рекомендации"
+
+#: sql/templates/sqladvisor.html:142
+msgid "查看文章"
+msgstr "Статья"
+
+#: sql/templates/sqlanalyze.html:9
+msgid "分析选项"
+msgstr "Параметры анализа"
+
+#: sql/templates/sqlanalyze.html:30
+msgid "开始分析"
+msgstr "Начать анализ"
+
+#: sql/templates/sqlanalyze.html:39
+msgid "SQL列表"
+msgstr "Список SQL"
+
+#: sql/templates/sqlanalyze.html:57
+msgid "分析报告"
+msgstr "Отчёт анализа"
+
+#: sql/templates/sqlexportsubmit.html:9
+msgid "数据导出"
+msgstr "Экспорт данных"
+
+#: sql/templates/sqlexportsubmit.html:22
+msgid "行数统计中..."
+msgstr "Подсчёт строк..."
+
+#: sql/templates/sqlexportsubmit.html:23
+msgid "正在校验SQL语法并统计结果行数，请稍候..."
+msgstr "Проверка синтаксиса и подсчёт строк..."
+
+#: sql/templates/sqlexportsubmit.html:25
+msgid "关闭"
+msgstr "Закрыть"
+
+#: sql/templates/sqlexportsubmit.html:34 sql/templates/sqlsubmit.html:19
+msgid "SQL内容"
+msgstr "Текст SQL"
+
+#: sql/templates/sqlexportsubmit.html:35 sql/templates/sqlsubmit.html:20
+msgid "SQL内容不能为空！"
+msgstr "SQL не может быть пустым!"
+
+#: sql/templates/sqlexportsubmit.html:36 sql/templates/sqlsubmit.html:21
+msgid "请在此提交SQL，请以分号结尾。"
+msgstr "Введите SQL, завершите точкой с запятой."
+
+#: sql/templates/sqlexportsubmit.html:46
+msgid "导出工单名称"
+msgstr "Имя заявки на экспорт"
+
+#: sql/templates/sqlexportsubmit.html:46
+msgid "请输入导出工单名称!"
+msgstr "Введите имя заявки на экспорт!"
+
+#: sql/templates/sqlexportsubmit.html:47
+msgid "请输入导出工单名称，如:XX项目会员数据导出"
+msgstr "Введите имя, напр.: экспорт данных участников XX"
+
+#: sql/templates/sqlexportsubmit.html:53
+msgid "离线导出数据格式"
+msgstr "Формат офлайн-экспорта"
+
+#: sql/templates/sqlexportsubmit.html:53
+msgid "请选择导出数据格式！"
+msgstr "Выберите формат экспорта!"
+
+#: sql/templates/sqlexportsubmit.html:54
+msgid "请选择导出数据格式"
+msgstr "Выберите формат экспорта"
+
+#: sql/templates/sqlexportsubmit.html:55 sql/templates/sqlexportsubmit.html:68
+#: sql/templates/sqlsubmit.html:46
+msgid "搜索您所在的组"
+msgstr "Найти вашу группу"
+
+#: sql/templates/sqlexportsubmit.html:66 sql/templates/sqlsubmit.html:44
+msgid "请选择组！"
+msgstr "Выберите группу!"
+
+#: sql/templates/sqlexportsubmit.html:67 sql/templates/sqlsubmit.html:45
+msgid "请选择组"
+msgstr "Выберите группу"
+
+#: sql/templates/sqlexportsubmit.html:78 sql/templates/sqlsubmit.html:56
+msgid "请选择实例！"
+msgstr "Выберите инстанс!"
+
+#: sql/templates/sqlexportsubmit.html:80 sql/templates/sqlquery.html:99
+#: sql/templates/sqlsubmit.html:58
+msgid "搜索您所在组的实例"
+msgstr "Найти инстанс вашей группы"
+
+#: sql/templates/sqlexportsubmit.html:89 sql/templates/sqlsubmit.html:67
+msgid "请选择数据库！"
+msgstr "Выберите БД!"
+
+#: sql/templates/sqlexportsubmit.html:90 sql/templates/sqlsubmit.html:68
+msgid "搜索要提交的数据库"
+msgstr "Найти БД для заявки"
+
+#: sql/templates/sqlexportsubmit.html:110 sql/templates/sqlsubmit.html:100
+msgid "审批流程"
+msgstr "Маршрут согласования"
+
+#: sql/templates/sqlexportsubmit.html:111 sql/templates/sqlsubmit.html:101
+msgid "请配置审批流程！"
+msgstr "Настройте маршрут согласования!"
+
+#: sql/templates/sqlexportsubmit.html:113 sql/templates/sqlsubmit.html:103
+msgid "审批流程："
+msgstr "Маршрут согласования:"
+
+#: sql/templates/sqlexportsubmit.html:118 sql/templates/sqlsubmit.html:108
+msgid "检测中..."
+msgstr "Проверка..."
+
+#: sql/templates/sqlexportsubmit.html:119
+msgid "导出校验"
+msgstr "Проверка экспорта"
+
+#: sql/templates/sqlexportsubmit.html:121 sql/templates/sqlsubmit.html:111
+msgid "提交中..."
+msgstr "Отправка..."
+
+#: sql/templates/sqlexportsubmit.html:123
+msgid "导出提交"
+msgstr "Отправка экспорта"
+
+#: sql/templates/sqlexportworkflow.html:45 sql/templates/sqlquery.html:66
+msgid "提交导出工单"
+msgstr "Отправить заявку на экспорт"
+
+#: sql/templates/sqlquery.html:11
+msgid "已收藏"
+msgstr "В избранном"
+
+#: sql/templates/sqlquery.html:12
+msgid "未收藏"
+msgstr "Не в избранном"
+
+#: sql/templates/sqlquery.html:33
+msgid "收藏语句"
+msgstr "Избранные выражения"
+
+#: sql/templates/sqlquery.html:38
+msgid "请输入语句别名"
+msgstr "Введите псевдоним выражения"
+
+#: sql/templates/sqlquery.html:42
+msgid "收藏"
+msgstr "В избранное"
+
+#: sql/templates/sqlquery.html:51 sql/templates/sqlquery.html:146
+msgid "SQL查询"
+msgstr "SQL-запросы"
+
+#: sql/templates/sqlquery.html:54
+msgid "搜索"
+msgstr "Поиск"
+
+#: sql/templates/sqlquery.html:55
+msgid "常用查询"
+msgstr "Частые запросы"
+
+#: sql/templates/sqlquery.html:71
+msgid "AI 查询描述"
+msgstr "Описание запроса для AI"
+
+#: sql/templates/sqlquery.html:72
+msgid "生成SQL"
+msgstr "Сгенерировать SQL"
+
+#: sql/templates/sqlquery.html:73
+msgid "仅此操作会与 AI 交互, 收集数据库类型、表结构以及输入框信息, 交给 AI 生成 SQL 并置于下面的语句框中"
+msgstr "Только эта операция обращается к AI: тип БД, структура таблиц и текст передаются для генерации SQL ниже"
+
+#: sql/templates/sqlquery.html:89
+msgid "按表名定位实例（如 orders）"
+msgstr "Найти инстанс по имени таблицы (напр. orders)"
+
+#: sql/templates/sqlquery.html:91
+msgid "查询中..."
+msgstr "Запрос..."
+
+#: sql/templates/sqlquery.html:110
+msgid "搜索您要查询的数据库"
+msgstr "Найти БД для запроса"
+
+#: sql/templates/sqlquery.html:119 sql/templates/sqlquery.html:120
+msgid "请选择模式:"
+msgstr "Выберите схему:"
+
+#: sql/templates/sqlquery.html:126
+msgid "搜索您要查询的表"
+msgstr "Найти таблицу для запроса"
+
+#: sql/templates/sqlquery.html:127
+msgid "查看表结构"
+msgstr "Структура таблицы"
+
+#: sql/templates/sqlquery.html:128 sql/templates/sqlquery.html:129
+msgid "查看表结构:"
+msgstr "Структура таблицы:"
+
+#: sql/templates/sqlquery.html:135 sql/templates/sqlquery.html:136
+msgid "返回行数:"
+msgstr "Число строк:"
+
+#: sql/templates/sqlquery.html:140
+msgid "max(最大限制行数)"
+msgstr "max (макс. лимит строк)"
+
+#: sql/templates/sqlquery.html:149
+msgid "支持注释行，可选择指定语句执行，默认执行第一条;"
+msgstr "Поддерживаются комментарии; можно выбрать выражение, по умолчанию первое;"
+
+#: sql/templates/sqlquery.html:150
+msgid "查询结果行数限制见权限管理，会选择查询涉及表的最小limit值"
+msgstr "Лимит строк — в управлении правами; берётся минимальный limit по таблицам запроса"
+
+#: sql/templates/sqlquery.html:151
+msgid "支持mongo原生查询语句，例如："
+msgstr "Поддерживаются нативные запросы mongo, например:"
+
+#: sql/templates/sqlquery.html:161
+msgid "查询结果"
+msgstr "Результат запроса"
+
+#: sql/templates/sqlquery.html:169
+msgid "查询历史"
+msgstr "История запросов"
+
+#: sql/templates/sqlquery.html:185
+msgid "Key操作"
+msgstr "Операции с Key"
+
+#: sql/templates/sqlquery.html:197
+msgid "1、exists key　检查key是否存在，若key存在返回1，否则返回0"
+msgstr "1. exists key — проверка наличия key (1/0)"
+
+#: sql/templates/sqlquery.html:198
+msgid "2、keys pattern 查找所有符合给定模式的key，通常用于查找key"
+msgstr "2. keys pattern — поиск ключей по шаблону"
+
+#: sql/templates/sqlquery.html:199
+msgid "3、expire key seconds 为key设置超时时间（单位：秒），当key过期时，会被系统自动删除"
+msgstr "3. expire key seconds — TTL в секундах; по истечении ключ удаляется"
+
+#: sql/templates/sqlquery.html:200
+msgid ""
+"4、ttl key 以秒为单位返回key的剩余生存时间（time to live），当key不存在时返回-2，当key存在未设置生存时间时返回-1"
+msgstr "4. ttl key — оставшийся TTL в секундах (-2 нет ключа, -1 без TTL)"
+
+#: sql/templates/sqlquery.html:201
+msgid "5、pttl key 这个命令和ttl类似，它以毫秒为单位返回key的剩余生存时间"
+msgstr "5. pttl key — как ttl, но в миллисекундах"
+
+#: sql/templates/sqlquery.html:202
+msgid "6、move key db 将key移动到指定数据库中"
+msgstr "6. move key db — переместить ключ в указанную БД"
+
+#: sql/templates/sqlquery.html:203
+msgid ""
+"7、type key "
+"返回key存储的值的类型，返回none（不存在）、string（字符串）、list（列表）、set（集合）、zset（有序集合）、hash（哈希表）"
+msgstr "7. type key — тип значения: none/string/list/set/zset/hash"
+
+#: sql/templates/sqlquery.html:207
+msgid "1、get key 返回key的值，若key不存在则返回nil，若key存储的值不是字符串则返回错误"
+msgstr "1. get key — значение ключа (nil если нет; ошибка если не string)"
+
+#: sql/templates/sqlquery.html:208
+msgid "2、mget key [key...] 依次返回一个或多个key的值，若key不存在返回nil，若key存在但不是字符串返回nil"
+msgstr "2. mget key [key...] — значения нескольких ключей"
+
+#: sql/templates/sqlquery.html:209
+msgid "3、strlen key 返回key所存储的字符串的长度，当key不存在时返回0，当key存在但不是字符串时返回错误"
+msgstr "3. strlen key — длина строки (0 если нет; ошибка если не string)"
+
+#: sql/templates/sqlquery.html:210
+msgid "4、append key value 将指定的值追加到key末尾，若key不存在，则创建并赋值，返回追加后的字符串长度"
+msgstr "4. append key value — дописать значение; создаёт ключ при отсутствии"
+
+#: sql/templates/sqlquery.html:211
+msgid ""
+"5、set key value [ex seconds] [px milliseconds] [nx|xx] "
+"为key设置值,ex和px均为设置过期时间只不过单位不同，nx表示只有key不存在时才进行操作，xx表示只有key存在时才进行操作"
+msgstr "5. set key value [ex|px] [nx|xx] — установить значение с опциями TTL и nx/xx"
+
+#: sql/templates/sqlquery.html:212
+msgid "6、setex key seconds value 设置带生存时间的key的值，以秒为单位"
+msgstr "6. setex key seconds value — значение с TTL в секундах"
+
+#: sql/templates/sqlquery.html:213
+msgid "7、setnx key value 为key设置值，若key已存在则不进行任何操作"
+msgstr "7. setnx key value — установить только если ключа нет"
+
+#: sql/templates/sqlquery.html:214
+msgid ""
+"8、mset key value [key value...] 为一组或多组key设置值，该操作为原子操作，要么一组都设置成功，要么一组都设置失败"
+msgstr "8. mset key value [...] — атомарная установка нескольких ключей"
+
+#: sql/templates/sqlquery.html:215
+msgid ""
+"9、msetnx key value [key value...] 与mset不同的是msetnx中的key必须是不存在的，若有一个已存在则会整体失败"
+msgstr "9. msetnx — как mset, но все ключи должны отсутствовать"
+
+#: sql/templates/sqlquery.html:219
+msgid "1、hgetall key 获取hash表中所有field的值"
+msgstr "1. hgetall key — все поля hash"
+
+#: sql/templates/sqlquery.html:220
+msgid "2、hexists key field 判断hash表中指定field是否存在，返回1；若key或field不存在则返回0"
+msgstr "2. hexists key field — есть ли поле (1/0)"
+
+#: sql/templates/sqlquery.html:221
+msgid "3、hget key field 获取hash表中指定field的值，key或field不存在时返回nil"
+msgstr "3. hget key field — значение поля (nil если нет)"
+
+#: sql/templates/sqlquery.html:222
+msgid ""
+"4、hmget key field[field...] 获取hash表中多个指定field的值，若key不存在返回空，若field不存在返回nil"
+msgstr "4. hmget key field[...] — значения нескольких полей"
+
+#: sql/templates/sqlquery.html:223
+msgid "5、hkeys key 返回hash表中的所有field，若key不存在返回空"
+msgstr "5. hkeys key — все имена полей"
+
+#: sql/templates/sqlquery.html:224
+msgid "6、hvals key 返回hash表中的所有val，若key不存在返回空"
+msgstr "6. hvals key — все значения полей"
+
+#: sql/templates/sqlquery.html:225
+msgid "7、hdel key field[field...] 删除hash表中指定field，若key或field不存在则会忽略"
+msgstr "7. hdel key field[...] — удалить поля"
+
+#: sql/templates/sqlquery.html:226
+msgid ""
+"8、hset key field value 将field-"
+"value设置到hash表中，若key不存在会新建hash表再赋值，若field已存在则会覆盖现有值"
+msgstr "8. hset key field value — установить поле hash"
+
+#: sql/templates/sqlquery.html:227
+msgid "9、hsetnx key field value 和hset类似，但是hsetnx要求field不存在才能进行此操作，否则会返回0"
+msgstr "9. hsetnx — как hset, только если поля ещё нет"
+
+#: sql/templates/sqlquery.html:231
+msgid "1、smembers key 列出集合key中的所有成员"
+msgstr "1. smembers key — все элементы множества"
+
+#: sql/templates/sqlquery.html:232
+msgid "2、scard key 返回集合key中元素的个数"
+msgstr "2. scard key — число элементов"
+
+#: sql/templates/sqlquery.html:233
+msgid "3、sdiff key[key...] 获取集合的差集，若key为1个则返回集合的全部成员"
+msgstr "3. sdiff key[...] — разность множеств"
+
+#: sql/templates/sqlquery.html:234
+msgid "4、sunion key[key...] 返回集合的并集，不存在的key会被当做空集处理"
+msgstr "4. sunion key[...] — объединение множеств"
+
+#: sql/templates/sqlquery.html:235
+msgid "5、spop key 移除并返回集合中的一个随机元素，当key不存在时返回NULL"
+msgstr "5. spop key — удалить и вернуть случайный элемент"
+
+#: sql/templates/sqlquery.html:236
+msgid "6、sismember key member 判断member在key中是否已存在返回0或1"
+msgstr "6. sismember key member — есть ли элемент (0/1)"
+
+#: sql/templates/sqlquery.html:237
+msgid ""
+"7、sadd key member[member...] 将一个或多个member元素加入到集合key中，若member已存在那么会忽略此元素"
+msgstr "7. sadd key member[...] — добавить элементы"
+
+#: sql/templates/sqlquery.html:238
+msgid ""
+"8、smove source destination member "
+"将元素member从source移动到destination；若member在destination中已存在只会删除source中的数据，若source或member不存在会返回0，若destination不存在则会创建后再进行操作"
+msgstr "8. smove source destination member — переместить элемент между множествами"
+
+#: sql/templates/sqlquery.html:239
+msgid "9、srem key member[member]　移除key中的一个或多个member元素，不存在的member会被忽略"
+msgstr "9. srem key member[...] — удалить элементы"
+
+#: sql/templates/sqlquery.html:246
+msgid "帮助文档："
+msgstr "Справка:"
+
+#: sql/templates/sqlquery.html:247
+msgid "1、zrange key start stop [WITHSCORES] 通过索引区间返回有序集合指定区间内的成员"
+msgstr "1. zrange key start stop [WITHSCORES] — элементы по индексу"
+
+#: sql/templates/sqlquery.html:248
+msgid "2、zrangebyscore key min max [WITHSCORES] [LIMIT] 通过分数返回有序集合指定区间内的成员"
+msgstr "2. zrangebyscore key min max — элементы по score"
+
+#: sql/templates/sqlquery.html:249
+msgid "3、zscore key member 返回有序集中，成员的分数值"
+msgstr "3. zscore key member — score элемента"
+
+#: sql/templates/sqlquery.html:250
+msgid "4、zcard key 获取有序集合的成员数"
+msgstr "4. zcard key — число элементов"
+
+#: sql/templates/sqlquery.html:251
+msgid "5、zcount key min max 计算在有序集合中指定区间分数的成员数"
+msgstr "5. zcount key min max — число элементов в диапазоне score"
+
+#: sql/templates/sqlquery.html:252
+msgid "6、zrank key member 返回有序集合中指定成员的索引"
+msgstr "6. zrank key member — индекс элемента"
+
+#: sql/templates/sqlsubmit.html:9
+msgid "SQL上线"
+msgstr "Отправка SQL"
+
+#: sql/templates/sqlsubmit.html:31
+msgid "上线单名称"
+msgstr "Название заявки на отправку"
+
+#: sql/templates/sqlsubmit.html:31
+msgid "请输入上线单名称!"
+msgstr "Введите название заявки на отправку!"
+
+#: sql/templates/sqlsubmit.html:32
+msgid "请输入上线单名称，如:XX项目会员功能建表"
+msgstr "Введите имя, напр.: создание таблиц функции участников XX"
+
+#: sql/templates/sqlsubmit.html:38
+msgid "请提供需求链接，记录工单需求信息！"
+msgstr "Укажите ссылку на требование!"
+
+#: sql/templates/sqlsubmit.html:39
+msgid "请输入需求链接"
+msgstr "Введите ссылку на требование"
+
+#: sql/templates/sqlsubmit.html:78
+msgid "是否选择备份"
+msgstr "Нужен бэкап"
+
+#: sql/templates/sqlsubmit.html:79
+msgid "请选择是否需要备份"
+msgstr "Выберите, нужен ли бэкап"
+
+#: sql/templates/sqlsubmit.html:80
+msgid "请选择是否要备份"
+msgstr "Выберите, нужен ли бэкап"
+
+#: sql/templates/sqlsubmit.html:81
+msgid "备份SQL"
+msgstr "Бэкап SQL"
+
+#: sql/templates/sqlsubmit.html:82
+msgid "不备份SQL"
+msgstr "Без бэкапа SQL"
+
+#: sql/templates/sqlsubmit.html:109
+msgid "SQL检测"
+msgstr "Проверка SQL"
+
+#: sql/templates/sqlsubmit.html:113
+msgid "SQL提交"
+msgstr "Отправка SQL"
+
+#: sql/templates/sqlsubmit.html:118
+msgid "支持mongo原生命令，例如："
+msgstr "Поддерживаются нативные команды mongo, например:"
+
+#: sql/templates/sqlsubmit.html:128
+msgid "检测结果"
+msgstr "Результат проверки"
+
+#: sql/templates/sqlsubmit.html:147
+msgid "提交信息确认"
+msgstr "Подтверждение отправки"
+
+#: sql/templates/sqlsubmit.html:150
+msgid "提交的SQL经检测仍存在"
+msgstr "После проверки в SQL осталось"
+
+#: sql/templates/sqlsubmit.html:150
+msgid "个警告信息和"
+msgstr " предупреждений и "
+
+#: sql/templates/sqlsubmit.html:151
+msgid "个错误信息，请按照平台规范仔细检查！"
+msgstr " ошибок — проверьте по правилам платформы!"
+
+#: sql/templates/sqlsubmit.html:155
+msgid "确定提交"
+msgstr "Подтвердить отправку"
+
+#: sql/templates/sqlworkflow.html:44
+msgid "提交SQL"
+msgstr "Отправить SQL"
+
+#: sql/templates/workflow.html:5
+msgid "待办列表"
+msgstr "Список задач"
+
+#: sql/templates/workflow.html:12
+msgid "查询权限申请"
+msgstr "Заявка на права запросов"
+
+#: sql/templates/workflow.html:13
+msgid "SQL上线申请"
+msgstr "Заявка на отправка SQL"
+
+#: sql/templates/workflow.html:14
+msgid "数据归档申请"
+msgstr "Заявка на архивацию данных"
+
+#: sql/templates/workflow.html:30
+msgid "审核确认"
+msgstr "Подтверждение проверки"
+
+#: sql/templates/workflow.html:35
+msgid "请输入审核备注"
+msgstr "Введите комментарий проверки"
+
+#: sql/templates/workflow.html:40
+msgid "拒绝"
+msgstr "Отклонить"
+
+#: sql/templates/workflow_display.html:5
+msgid "无需审批"
+msgstr "Без согласования"
+
+#: sql/views.py:71
+msgid "以OIDC登录"
+msgstr "Войти через OIDC"
+
+#: sql/views.py:223
+msgid "支持上线"
+msgstr "Поддержка отправки"
+
+#: sql/views.py:354
+#, python-format
+msgid "【回滚工单】原工单Id:%(v0)s ,%(v1)s"
+msgstr "[Откат] Исходная заявка Id:%(v0)s ,%(v1)s"
+
+#: sql/views.py:374 sql/views.py:742
+msgid "支持查询"
+msgstr "Поддержка запросов"
+
+#: sql/views.py:618
+msgid ""
+"你是一个熟悉 {{db_type}} 的工程师, 我会给你一些基本信息和要求, 你会生成一个查询语句给我使用, 不要返回任何注释和序号, 仅返回查询语句：{{table_schema}} \n"
+" {{user_input}}"
+msgstr ""
+"Вы инженер, знакомый с {{db_type}}. По данным и требованиям сгенерируйте один запрос без комментариев и нумерации, только SQL: {{table_schema}} \n"
+" {{user_input}}"
+
+#: sql/views.py:655
+msgid "不存在对应的工单记录"
+msgstr "Соответствующая заявка не найдена"
+
+# Admin / workflow log / audit entry (login) translations
+msgid "登入"
+msgstr "Вход"
+
+msgid "登出"
+msgstr "Выход"
+
+msgid "登入失败"
+msgstr "Ошибка входа"
+
+msgid "系统直接审核不通过"
+msgstr "Система отклонила без согласования"
+
+msgid "系统直接审批不通过"
+msgstr "Система отклонила без согласования"
+
+msgid "无需审批，系统直接审核通过"
+msgstr "Согласование не требуется, система одобрила автоматически"
+
+msgid "等待审批，审批流程：{}"
+msgstr "Ожидание согласования, маршрут: {}"
+
+msgid "审批备注: {}, 无下级审批"
+msgstr "Комментарий: {}, следующих этапов нет"
+
+msgid "审批备注：{}, 下级审批：{}"
+msgstr "Комментарий: {}, следующий этап: {}"
+
+msgid "审批备注：{}"
+msgstr "Комментарий: {}"
+
+msgid "审批不通过"
+msgstr "Отклонено"
+
+msgid "审批取消"
+msgstr "Отменено"
+
+msgid "取消原因：{}"
+msgstr "Причина отмены: {}"
+
+msgid "直接审核不通过"
+msgstr "Отклонено системой"
+
+msgid "无需审批, 直接审核通过"
+msgstr "Согласование не требуется, одобрено системой"
+
+msgid "工单已正常提交"
+msgstr "Заявка успешно отправлена"
+
+msgid "工单开始执行"
+msgstr "Заявка начала выполняться"
+
+msgid "系统定时执行工单"
+msgstr "Системное отложенное выполнение заявки"
+
+msgid "执行结果：{}"
+msgstr "Результат выполнения: {}"
+
+msgid "系统"
+msgstr "Система"
+
+msgid "工单状态不正确，禁止执行！"
+msgstr "Некорректный статус заявки, выполнение запрещено!"

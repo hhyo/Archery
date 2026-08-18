@@ -2,7 +2,13 @@
 from clickhouse_driver import connect
 from clickhouse_driver.util.escape import escape_chars_map
 from sql.utils.sql_utils import get_syntax_type
-from .models import ResultSet, ReviewResult, ReviewSet
+from .models import (
+    ResultSet,
+    ReviewResult,
+    ReviewSet,
+    serialize_select_rows,
+    apply_select_preview_limit,
+)
 from common.utils.timer import FuncTimer
 from common.config import SysConfig
 from . import EngineBase
@@ -11,6 +17,29 @@ import logging
 import re
 
 logger = logging.getLogger("default")
+
+
+def _is_query_statement(statement: str) -> bool:
+    """True for SELECT / SHOW / EXPLAIN / WITH ... SELECT (CTE)."""
+    s = (statement or "").strip().lstrip(";").strip()
+    return bool(re.match(r"^(select|show|explain|with)\b", s, re.I))
+
+
+def _allow_select_in_workflow(config=None) -> bool:
+    """SysConfig allow_select_in_workflow; default True when unset."""
+    config = config or SysConfig()
+    val = config.get("allow_select_in_workflow", True)
+    if val is None or val == "":
+        return True
+    return bool(val)
+
+
+def _workflow_select_limit(config=None) -> int:
+    config = config or SysConfig()
+    try:
+        return max(1, int(config.get("admin_query_limit", 1000) or 1000))
+    except (TypeError, ValueError):
+        return 1000
 
 
 class ClickHouseEngine(EngineBase):
@@ -250,19 +279,35 @@ class ClickHouseEngine(EngineBase):
         line = 1
         critical_ddl_regex = self.config.get("critical_ddl_regex", "")
         p = re.compile(critical_ddl_regex)
+        allow_select = _allow_select_in_workflow(self.config)
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
+        has_query = False
+        has_change = False
 
         for statement in sql_list:
             statement = statement.rstrip(";")
-            # 禁用语句
-            if re.match(r"^select|^show", statement, re.M | re.IGNORECASE):
-                result = ReviewResult(
-                    id=line,
-                    errlevel=2,
-                    stagestatus="驳回不支持语句",
-                    errormessage="仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
-                    sql=statement,
-                )
+            is_query = _is_query_statement(statement)
+            # SELECT/SHOW/EXPLAIN：默认允许走工单审批
+            if is_query:
+                has_query = True
+                if not allow_select:
+                    result = ReviewResult(
+                        id=line,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage="仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
+                        sql=statement,
+                    )
+                else:
+                    result = ReviewResult(
+                        id=line,
+                        errlevel=0,
+                        stagestatus="Audit completed",
+                        errormessage="None",
+                        sql=statement,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
             # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
                 result = ReviewResult(
@@ -408,11 +453,21 @@ class ClickHouseEngine(EngineBase):
                 result = self.explain_check(check_result, db_name, line, statement)
 
             # 没有找出DDL语句的才继续执行此判断
+            if not is_query:
+                has_change = True
             if check_result.syntax_type == 2:
                 if get_syntax_type(statement, parser=False, db_type="mysql") == "DDL":
                     check_result.syntax_type = 1
             check_result.rows += [result]
             line += 1
+
+        if allow_select and has_query and has_change:
+            for r in check_result.rows:
+                if r.errlevel == 0:
+                    r.errlevel = 2
+                    r.stagestatus = "驳回不支持语句"
+                    r.errormessage = "SELECT与DML/DDL不能在同一工单中提交！"
+
         # 统计警告和错误数量
         for r in check_result.rows:
             if r.errlevel == 1:
@@ -423,6 +478,7 @@ class ClickHouseEngine(EngineBase):
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
+        select_limit = _workflow_select_limit(self.config)
         sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
         sqls = sqlparse.format(sql, strip_comments=True)
@@ -430,22 +486,54 @@ class ClickHouseEngine(EngineBase):
 
         line = 1
         for statement in sql_list:
+            statement_stripped = statement.rstrip(";")
+            is_query = _is_query_statement(statement_stripped)
             with FuncTimer() as t:
-                result = self.execute(
-                    db_name=workflow.db_name, sql=statement, close_conn=True
-                )
-            if not result.error:
-                execute_result.rows.append(
-                    ReviewResult(
-                        id=line,
-                        errlevel=0,
-                        stagestatus="Execute Successfully",
-                        errormessage="None",
-                        sql=statement,
-                        affected_rows=0,
-                        execute_time=t.cost,
+                if is_query:
+                    run_sql = self.filter_sql(
+                        sql=statement_stripped, limit_num=select_limit + 1
                     )
-                )
+                    result = self.query(
+                        db_name=workflow.db_name,
+                        sql=run_sql,
+                        limit_num=select_limit + 1,
+                        close_conn=True,
+                    )
+                else:
+                    result = self.execute(
+                        db_name=workflow.db_name, sql=statement, close_conn=True
+                    )
+            if not result.error:
+                if is_query:
+                    rows, truncated = apply_select_preview_limit(
+                        result.rows or [], select_limit
+                    )
+                    execute_result.rows.append(
+                        ReviewResult(
+                            id=line,
+                            errlevel=0,
+                            stagestatus="Execute Successfully",
+                            errormessage="",
+                            sql=statement,
+                            affected_rows=len(rows),
+                            execute_time=t.cost,
+                            select_columns=list(result.column_list or []),
+                            select_rows=serialize_select_rows(rows),
+                            select_truncated=truncated,
+                        )
+                    )
+                else:
+                    execute_result.rows.append(
+                        ReviewResult(
+                            id=line,
+                            errlevel=0,
+                            stagestatus="Execute Successfully",
+                            errormessage="None",
+                            sql=statement,
+                            affected_rows=0,
+                            execute_time=t.cost,
+                        )
+                    )
                 line += 1
             else:
                 # 追加当前报错语句信息到执行结果中

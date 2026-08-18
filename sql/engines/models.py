@@ -4,6 +4,35 @@
 import json
 
 
+def json_safe_cell(value):
+    """Make a query cell JSON/CSV serializable."""
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    iso = getattr(value, "isoformat", None)
+    if callable(iso):
+        try:
+            return iso()
+        except Exception:
+            pass
+    return str(value)
+
+
+def serialize_select_rows(rows):
+    return [[json_safe_cell(v) for v in row] for row in rows]
+
+
+def apply_select_preview_limit(rows, select_limit):
+    """Keep at most select_limit rows; truncated only when an extra row exists."""
+    rows = list(rows or [])
+    limit = max(1, int(select_limit))
+    truncated = len(rows) > limit
+    if truncated:
+        rows = rows[:limit]
+    return rows, truncated
+
+
 class SqlItem:
     def __init__(
         self,
