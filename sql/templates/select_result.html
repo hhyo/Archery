@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "查询结果" %} — {{ workflow.workflow_name }}{% endblock %}
+
+{% block content %}
+    <h4>{% trans "查询结果" %}</h4>
+    <p class="text-muted">
+        {{ workflow.instance.instance_name }} / {{ workflow.db_name }}
+        · {{ row_count }}
+        {% if truncated %}
+            <span class="label label-warning">{% trans "结果已截断" %}</span>
+        {% endif %}
+    </p>
+    {% if sql_text %}
+        <pre style="max-height:120px;overflow:auto;">{{ sql_text }}</pre>
+    {% endif %}
+    <div id="toolbar" class="btn-group">
+        <a class="btn btn-default"
+           href="/sqlworkflow/select_result/?workflow_id={{ workflow.id }}&sql_id={{ sql_id }}&format=csv">CSV</a>
+        <a class="btn btn-default"
+           href="/sqlworkflow/select_result/?workflow_id={{ workflow.id }}&sql_id={{ sql_id }}&format=json">JSON</a>
+        <a class="btn btn-link" href="/detail/{{ workflow.id }}/">{% trans "返回工单" %}</a>
+    </div>
+    <table id="tb-select-result" class="table table-striped table-hover"></table>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script>
+        var columns = {{ columns_json|safe }};
+        var rows = {{ rows_json|safe }};
+        var tableColumns = columns.map(function (name, i) {
+            return {field: "c" + i, title: name, sortable: true};
+        });
+        var tableData = rows.map(function (row) {
+            var obj = {};
+            (row || []).forEach(function (val, i) {
+                obj["c" + i] = val;
+            });
+            return obj;
+        });
+        $("#tb-select-result").bootstrapTable({
+            locale: window.ARCHERY_LOCALE,
+            data: tableData,
+            columns: tableColumns,
+            toolbar: "#toolbar",
+            search: true,
+            pagination: true,
+            pageSize: 50,
+            pageList: [20, 50, 100, 500],
+            showColumns: true,
+            showExport: true,
+            exportTypes: ["csv", "json", "txt", "excel"],
+            escape: true,
+            striped: true,
+            sidePagination: "client"
+        });
+    </script>
+{% endblock %}

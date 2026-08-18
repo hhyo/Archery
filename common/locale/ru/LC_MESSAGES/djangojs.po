@@ -1,0 +1,1412 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-10 16:03+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: common/static/ace/ace-init.js:325
+msgid "-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n"
+msgstr ""
+"-- Введите SQL, заканчивая точкой с запятой; поддерживаются только DML и "
+"DDL; для SELECT используйте SQL-запросы.\n"
+
+#: common/static/ace/ace-init.js:341
+msgid "请在此输入命令，多个命令请换行填写，在提交时请删除此行说明"
+msgstr ""
+"Введите команды здесь, по одной на строку; перед отправкой удалите эту "
+"подсказку"
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "iterator"
+msgstr "iterator"
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "toStringTag"
+msgstr "toStringTag"
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "native-string-replace"
+msgstr "native-string-replace"
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "function"
+msgstr "function"
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "Object.prototype.hasOwnProperty"
+msgstr "Object.prototype.hasOwnProperty"
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "RegExp.prototype.exec"
+msgstr "RegExp.prototype.exec"
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "Object.prototype.toString"
+msgstr "Object.prototype.toString"
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid ""
+"RegExp.prototype.flags requires a true ES5 environment that supports "
+"property descriptors"
+msgstr ""
+"RegExp.prototype.flags requires a true ES5 environment that supports "
+"property descriptors"
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "Promise"
+msgstr "Promise"
+
+#: common/static/dbdiagnostic/js/db_info.js:32
+msgid "阻塞PID"
+msgstr "Блокирующий PID"
+
+#: common/static/dbdiagnostic/js/db_info.js:33
+#: common/static/dbdiagnostic/js/db_info.js:329
+msgid "数据库"
+msgstr "База данных"
+
+#: common/static/dbdiagnostic/js/db_info.js:34
+#: common/static/dbdiagnostic/js/db_info.js:324
+#: common/static/dbdiagnostic/js/db_info.js:573
+msgid "用户"
+msgstr "Пользователь"
+
+#: common/static/dbdiagnostic/js/db_info.js:35
+msgid "应用名称"
+msgstr "Имя приложения"
+
+#: common/static/dbdiagnostic/js/db_info.js:36
+msgid "状态"
+msgstr "Статус"
+
+#: common/static/dbdiagnostic/js/db_info.js:37
+msgid "客户端地址"
+msgstr "Адрес клиента"
+
+#: common/static/dbdiagnostic/js/db_info.js:38
+#: common/static/dbdiagnostic/js/db_info.js:589
+msgid "耗时(秒)"
+msgstr "Длительность (сек)"
+
+#: common/static/dbdiagnostic/js/db_info.js:39
+msgid "耗时"
+msgstr "Длительность"
+
+#: common/static/dbdiagnostic/js/db_info.js:40
+msgid "查询语句"
+msgstr "Текст запроса"
+
+#: common/static/dbdiagnostic/js/db_info.js:41
+msgid "等待事件类型"
+msgstr "Тип события ожидания"
+
+#: common/static/dbdiagnostic/js/db_info.js:42
+msgid "等待事件"
+msgstr "Событие ожидания"
+
+#: common/static/dbdiagnostic/js/db_info.js:43
+msgid "查询开始时间"
+msgstr "Время начала запроса"
+
+#: common/static/dbdiagnostic/js/db_info.js:44
+msgid "后端开始时间"
+msgstr "Время старта бэкенда"
+
+#: common/static/dbdiagnostic/js/db_info.js:45
+msgid "父PID"
+msgstr "Родительский PID"
+
+#: common/static/dbdiagnostic/js/db_info.js:46
+msgid "客户端主机名"
+msgstr "Имя хоста клиента"
+
+#: common/static/dbdiagnostic/js/db_info.js:47
+msgid "客户端端口"
+msgstr "Порт клиента"
+
+#: common/static/dbdiagnostic/js/db_info.js:48
+msgid "事务开始时间"
+msgstr "Время начала транзакции"
+
+#: common/static/dbdiagnostic/js/db_info.js:49
+msgid "状态变更时间"
+msgstr "Время смены статуса"
+
+#: common/static/dbdiagnostic/js/db_info.js:50
+msgid "后端XID"
+msgstr "Backend XID"
+
+#: common/static/dbdiagnostic/js/db_info.js:51
+msgid "后端XMIN"
+msgstr "Backend XMIN"
+
+#: common/static/dbdiagnostic/js/db_info.js:52
+msgid "后端类型"
+msgstr "Тип бэкенда"
+
+#: common/static/dbdiagnostic/js/db_info.js:102
+#: common/static/dbdiagnostic/js/db_info.js:172
+msgid "完整INFO"
+msgstr "Полный INFO"
+
+#: common/static/dbdiagnostic/js/db_info.js:276
+msgid "完整command"
+msgstr "Полная команда"
+
+#: common/static/dbdiagnostic/js/db_info.js:312
+msgid "远程地址"
+msgstr "Удалённый адрес"
+
+#: common/static/dbdiagnostic/js/db_info.js:316
+msgid "本地地址"
+msgstr "Локальный адрес"
+
+#: common/static/dbdiagnostic/js/db_info.js:320
+msgid "客户端名称"
+msgstr "Имя клиента"
+
+#: common/static/dbdiagnostic/js/db_info.js:333
+msgid "连接耗时(秒)"
+msgstr "Время соединения (сек)"
+
+#: common/static/dbdiagnostic/js/db_info.js:337
+msgid "空闲时间(秒)"
+msgstr "Время простоя (сек)"
+
+#: common/static/dbdiagnostic/js/db_info.js:341
+msgid "命令"
+msgstr "Команда"
+
+#: common/static/dbdiagnostic/js/db_info.js:345
+msgid "总内存"
+msgstr "Всего памяти"
+
+#: common/static/dbdiagnostic/js/db_info.js:349
+msgid "输出内存"
+msgstr "Память вывода"
+
+#: common/static/dbdiagnostic/js/db_info.js:353
+msgid "标志"
+msgstr "Флаги"
+
+#: common/static/dbdiagnostic/js/db_info.js:357
+msgid "文件描述符"
+msgstr "Файловый дескриптор"
+
+#: common/static/dbdiagnostic/js/db_info.js:361
+msgid "订阅数"
+msgstr "Число подписок"
+
+#: common/static/dbdiagnostic/js/db_info.js:365
+msgid "模式订阅数"
+msgstr "Число подписок по шаблону"
+
+#: common/static/dbdiagnostic/js/db_info.js:369
+msgid "MULTI 队列长度"
+msgstr "Длина очереди MULTI"
+
+#: common/static/dbdiagnostic/js/db_info.js:373
+msgid "查询缓冲区"
+msgstr "Буфер запроса"
+
+#: common/static/dbdiagnostic/js/db_info.js:377
+msgid "查询缓冲区空闲"
+msgstr "Свободно в буфере запроса"
+
+#: common/static/dbdiagnostic/js/db_info.js:381
+msgid "参数内存"
+msgstr "Память параметров"
+
+#: common/static/dbdiagnostic/js/db_info.js:385
+msgid "输出缓冲区长度"
+msgstr "Длина буфера вывода"
+
+#: common/static/dbdiagnostic/js/db_info.js:389
+msgid "输出链长度"
+msgstr "Длина цепочки вывода"
+
+#: common/static/dbdiagnostic/js/db_info.js:393
+msgid "事件文件"
+msgstr "Файл событий"
+
+#: common/static/dbdiagnostic/js/db_info.js:397
+msgid "重定向"
+msgstr "Перенаправление"
+
+#: common/static/dbdiagnostic/js/db_info.js:569
+msgid "查询ID"
+msgstr "ID запроса"
+
+#: common/static/dbdiagnostic/js/db_info.js:581
+msgid "端口"
+msgstr "Порт"
+
+#: common/static/dbdiagnostic/js/db_info.js:585
+msgid "库名"
+msgstr "Имя БД"
+
+#: common/static/dbdiagnostic/js/db_info.js:593
+msgid "总行数(预估)"
+msgstr "Всего строк (оценка)"
+
+#: common/static/dbdiagnostic/js/db_info.js:597
+msgid "分配内存"
+msgstr "Выделено памяти"
+
+#: common/static/dbdiagnostic/js/db_info.js:601
+msgid "类型"
+msgstr "Тип"
+
+#: common/static/dbdiagnostic/js/db_info.js:605
+msgid "语句"
+msgstr "Оператор"
+
+#: common/static/dbdiagnostic/js/db_info.js:612
+msgid "完整语句"
+msgstr "Полный оператор"
+
+#: common/static/dist/js/formatter.js:4
+msgid "查询权限申请"
+msgstr "Заявка на права запроса"
+
+#: common/static/dist/js/formatter.js:6
+msgid "SQL上线申请"
+msgstr "Заявка на отправка SQL"
+
+#: common/static/dist/js/formatter.js:8
+msgid "数据归档申请"
+msgstr "Заявка на архивацию данных"
+
+#: common/static/dist/js/formatter.js:14
+msgid "待审核"
+msgstr "Ожидает проверки"
+
+#: common/static/dist/js/formatter.js:16
+msgid "审核通过"
+msgstr "Одобрено"
+
+#: common/static/dist/js/formatter.js:18
+msgid "审核不通过"
+msgstr "Отклонено"
+
+#: common/static/dist/js/formatter.js:20
+msgid "审核取消"
+msgstr "Проверка отменена"
+
+#: common/static/dist/js/formatter.js:56 common/static/dist/js/formatter.js:75
+#: common/static/dist/js/formatter.js:97
+msgid "未知状态"
+msgstr "Неизвестный статус"
+
+#: common/static/dist/js/utils.js:3
+msgid "权限错误，您没有权限查看该数据！"
+msgstr "Ошибка прав: у вас нет доступа к этим данным!"
+
+#: common/static/dist/js/utils.js:7
+msgid "未知错误，请联系管理员处理！"
+msgstr "Неизвестная ошибка, обратитесь к администратору!"
+
+#: common/static/dist/js/utils.js:73 common/static/dist/js/utils.js:80
+#, javascript-format
+msgid "%s 秒后重试"
+msgstr "Повтор через %s сек"
+
+#: common/static/dist/js/utils.js:84
+msgid "获取验证码"
+msgstr "Получить код"
+
+#: common/static/watermark/shuiyin.js:14
+msgid "测试水印"
+msgstr "Тестовый водяной знак"
+
+msgid "-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\\n"
+msgstr ""
+"-- Введите SQL, заканчивая точкой с запятой. Поддерживаются только DML/DDL; "
+"для SELECT используйте модуль SQL-запросов.\\n"
+
+msgid "95%耗时(微秒)"
+msgstr "95-й перцентиль (мкс)"
+
+msgid "<\\>才是标准SQL中的不等于运算符"
+msgstr "В стандартном SQL оператор неравенства — <>"
+
+msgid "<i class=\"fa fa-spinner fa-spin\"></i> 准备下载..."
+msgstr "<i class=\"fa fa-spinner fa-spin\"></i> Подготовка загрузки..."
+
+msgid "<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择Binlog:</option>"
+msgstr ""
+"<option value=\"is-empty\" disabled=\"\" selected=\"selected\">Выберите "
+"Binlog:</option>"
+
+msgid "<p>未获取到索引统计信息</p>"
+msgstr "<p>Статистика индексов недоступна</p>"
+
+msgid "<p>未获取到表统计信息</p>"
+msgstr "<p>Статистика таблиц недоступна</p>"
+
+msgid "<p>解析表出错或者表不存在，无法展示表信息</p>"
+msgstr "<p>Ошибка разбора таблицы или таблица не существует</p>"
+
+msgid "<p>解析表结构出错或者无权限查看表结构</p>"
+msgstr "<p>Ошибка разбора структуры или нет прав на просмотр</p>"
+
+msgid "Inception测试连接成功，请点击页面下方的保存按钮生效！"
+msgstr ""
+"Проверка соединения с Inception успешна. Нажмите «Сохранить» внизу страницы."
+
+msgid "My2SQL回滚-"
+msgstr "Откат My2SQL — "
+
+msgid "Redis帮助文档"
+msgstr "Справка Redis"
+
+msgid "Redis节点"
+msgstr "Узел Redis"
+
+msgid "SQL内容"
+msgstr "Содержимое SQL"
+
+msgid "SQL内容不能为空！"
+msgstr "SQL не может быть пустым!"
+
+msgid "SQL语句"
+msgstr "SQL-выражение"
+
+msgid "SQL语句超过2000行，不支持提交工单，请使用异步导出文件的方式！"
+msgstr ""
+"SQL превышает 2000 строк — отправка заявки недоступна. Используйте "
+"асинхронный экспорт."
+
+msgid "goInception和备份库测试连接成功，请点击页面下方的保存按钮生效！"
+msgstr ""
+"Проверка goInception и БД бэкапа успешна. Нажмите «Сохранить» внизу "
+"страницы."
+
+msgid "一"
+msgstr "Пн"
+
+msgid "七月"
+msgstr "июл"
+
+msgid "三"
+msgstr "Ср"
+
+msgid "三月"
+msgstr "мар"
+
+msgid "上一年"
+msgstr "Прошлый год"
+
+msgid "上个月"
+msgstr "Прошлый месяц"
+
+msgid "上线单名称/工单名称不能超过50个字符！"
+msgstr "Название заявки не должно превышать 50 символов!"
+
+msgid "下载"
+msgstr "Скачать"
+
+msgid "下载失败:"
+msgstr "Ошибка загрузки:"
+
+msgid "中文名"
+msgstr "Отображаемое имя"
+
+msgid "主机"
+msgstr "Хост"
+
+msgid "九月"
+msgstr "сен"
+
+msgid "二"
+msgstr "Вт"
+
+msgid "二月"
+msgstr "фев"
+
+msgid "五"
+msgstr "Пт"
+
+msgid "五月"
+msgstr "май"
+
+msgid "仅支持10M内的SQL文件"
+msgstr "Допустимы SQL-файлы не более 10 МБ"
+
+msgid "仅源实例存在"
+msgstr "Только на исходном инстансе"
+
+msgid "仅目标实例存在"
+msgstr "Только на целевом инстансе"
+
+msgid "今日"
+msgstr "Сегодня"
+
+msgid "休眠(秒)"
+msgstr "Ожидание (с)"
+
+msgid "使用率(%)"
+msgstr "Использование (%)"
+
+msgid "信息不完整，无法一键查询！"
+msgstr "Недостаточно данных для быстрого запроса!"
+
+msgid "信息填写不完整，或者未配置审批流程"
+msgstr "Данные заполнены не полностью или не настроен маршрут согласования"
+
+msgid "修改人"
+msgstr "Изменил"
+
+msgid "修改参数值"
+msgstr "Изменить значение параметра"
+
+msgid "修改成功"
+msgstr "Изменение выполнено"
+
+msgid "修改时间"
+msgstr "Время изменения"
+
+msgid "值不同"
+msgstr "Значения различаются"
+
+msgid "全部数据"
+msgstr "Все данные"
+
+msgid "八月"
+msgstr "авг"
+
+msgid "六"
+msgstr "Сб"
+
+msgid "六月"
+msgstr "июн"
+
+msgid "关联对象"
+msgstr "Связанный объект"
+
+msgid "关联对象描述"
+msgstr "Описание связанного объекта"
+
+msgid "关联对象类型"
+msgstr "Тип связанного объекта"
+
+msgid "分析报告"
+msgstr "Отчёт анализа"
+
+msgid "删除"
+msgstr "Удалить"
+
+msgid "动作"
+msgstr "Действие"
+
+msgid "十一月"
+msgstr "ноя"
+
+msgid "十二月"
+msgstr "дек"
+
+msgid "十月"
+msgstr "окт"
+
+msgid "压缩后的数据空间(MB)"
+msgstr "Размер данных после сжатия (МБ)"
+
+msgid "压缩率"
+msgstr "Степень сжатия"
+
+msgid "参数不正确"
+msgstr "Некорректные параметры"
+
+msgid "参数名"
+msgstr "Имя параметра"
+
+msgid "参数描述"
+msgstr "Описание параметра"
+
+msgid "发起人"
+msgstr "Инициатор"
+
+msgid "发起时间"
+msgstr "Время создания"
+
+msgid "取消"
+msgstr "Отмена"
+
+msgid "变更前的参数值"
+msgstr "Значение до изменения"
+
+msgid "变更后的参数值"
+msgstr "Значение после изменения"
+
+msgid "可修改参数值"
+msgstr "Допустимое значение"
+
+msgid "可执行时间范围不应该短于"
+msgstr "Окно выполнения не должно быть короче"
+
+msgid "后台二次校验，请稍候..."
+msgstr "Повторная проверка на сервере, подождите..."
+
+msgid "启用"
+msgstr "Включить"
+
+msgid "启用状态"
+msgstr "Состояние"
+
+msgid "命令模板"
+msgstr "Шаблон команды"
+
+msgid "命令错误！"
+msgstr "Ошибка команды!"
+
+msgid "四"
+msgstr "Чт"
+
+msgid "四月"
+msgstr "апр"
+
+msgid "回滚语句"
+msgstr "Откатный SQL"
+
+msgid "回调失败"
+msgstr "Ошибка callback"
+
+msgid "回调成功"
+msgstr "Callback выполнен"
+
+msgid "回调触发"
+msgstr "Вызов callback"
+
+msgid "固定集合"
+msgstr "Фиксированная коллекция"
+
+msgid "备份"
+msgstr "Резервная копия"
+
+msgid "备份耗时"
+msgstr "Время бэкапа"
+
+msgid "备注"
+msgstr "Комментарий"
+
+msgid "字符集"
+msgstr "Кодировка"
+
+msgid "存储引擎"
+msgstr "Движок хранения"
+
+msgid "完整ExtraInfo"
+msgstr "полная ExtraInfo"
+
+msgid "完整SQL"
+msgstr "полный SQL"
+
+msgid "完整SQL内容"
+msgstr "Полное содержимое SQL"
+
+msgid "完整SQL语句"
+msgstr "Полный SQL"
+
+msgid "完整命令"
+msgstr "Полная команда"
+
+msgid "完整回滚语句"
+msgstr "Полный откатный SQL"
+
+msgid "完整执行语句"
+msgstr "Полный исполняемый SQL"
+
+msgid "完整额外信息"
+msgstr "Полная доп. информация"
+
+msgid "实例"
+msgstr "Инстанс"
+
+msgid "实例名称"
+msgstr "Имя инстанса"
+
+msgid "实例类型"
+msgstr "Тип инстанса"
+
+msgid "审核/执行信息"
+msgstr "Результат выполнения"
+
+msgid "查看结果"
+msgstr "Просмотр"
+
+msgid "结果已截断"
+msgstr "Результат обрезан"
+
+msgid "审核/执行状态"
+msgstr "проверка/выполнениестатус"
+
+msgid "审核信息"
+msgstr "Сведения о проверке"
+
+msgid "审核状态"
+msgstr "Статус проверки"
+
+msgid "导出工单名称不能超过50个字符！"
+msgstr "Название заявки на экспорт не должно превышать 50 символов!"
+
+msgid "展开全部"
+msgstr "Развернуть всё"
+
+msgid "工单名称"
+msgstr "Название заявки"
+
+msgid "工单完整名称"
+msgstr "Полное название заявки"
+
+msgid "工单提交中..."
+msgstr "Отправка заявки..."
+
+msgid "工单状态"
+msgstr "Статус заявки"
+
+msgid "差异类型"
+msgstr "Тип различия"
+
+msgid "已使用空间(MB)"
+msgstr "Использовано (МБ)"
+
+msgid "已关闭归档任务"
+msgstr "Задача архивации отключена"
+
+msgid "已开启两步验证！"
+msgstr "Двухфакторная аутентификация включена!"
+
+msgid "已开启归档任务"
+msgstr "Задача архивации включена"
+
+msgid "已提交SOAR分析，未选择实例和数据库将不会输出执行计划和索引建议，请耐心等待分析结果!"
+msgstr ""
+"Анализ SOAR запущен. Без выбора инстанса и БД план и рекомендации по "
+"индексам недоступны. Дождитесь результата."
+
+msgid "已提交SOAR分析，请耐心等待分析结果!"
+msgstr "Анализ SOAR запущен. Дождитесь результата."
+
+msgid "已添加定时同步任务并且触发同步，点击确认查看任务状态"
+msgstr ""
+"Добавлена и запущена задача синхронизации. Нажмите OK, чтобы открыть статус."
+
+msgid "已选中{0}项"
+msgstr "Выбрано элементов: {0}"
+
+msgid "已选择 "
+msgstr "Выбрано: "
+
+msgid "帐号名"
+msgstr "Имя учётной записи"
+
+msgid "平均执行时长(微秒)"
+msgstr "Среднее время (мкс)"
+
+msgid "平均执行时长(秒)"
+msgstr "Среднее время (с)"
+
+msgid "平均扫描行数"
+msgstr "Среднее число сканируемых строк"
+
+msgid "平均返回行数"
+msgstr "Среднее число возвращаемых строк"
+
+msgid "开始"
+msgstr "Начало"
+
+msgid "开始时间"
+msgstr "Время начала"
+
+msgid "归档任务提交成功！请稍后查看归档日志获取结果"
+msgstr "Задача архивации отправлена. Результат смотрите в журнале архивации."
+
+msgid "归档命令"
+msgstr "Команда архивации"
+
+msgid "归档条件"
+msgstr "Условие архивации"
+
+msgid "归档模式"
+msgstr "Режим архивации"
+
+msgid "当前阶段"
+msgstr "Текущий этап"
+
+msgid "当开启钉钉通知到个人时，企业id和secret等必须填写!"
+msgstr "При личных уведомлениях DingTalk необходимо указать corp id и secret!"
+
+msgid "总空间"
+msgstr "Всего места"
+
+msgid "总空间(MB)"
+msgstr "Всего места (МБ)"
+
+msgid "总耗时(秒)"
+msgstr "Общее время (с)"
+
+msgid "所选会话已终止！"
+msgstr "Выбранные сессии завершены!"
+
+msgid "执行开始时间"
+msgstr "Время начала выполнения"
+
+msgid "执行总时长(秒)"
+msgstr "Суммарное время (с)"
+
+msgid "执行总次数"
+msgstr "Число выполнений"
+
+msgid "执行时长(95%)"
+msgstr "Время выполнения (95%)"
+
+msgid "执行次数"
+msgstr "Число выполнений"
+
+msgid "执行结果"
+msgstr "Результат выполнения"
+
+msgid "执行耗时"
+msgstr "выполнениевремя"
+
+msgid "执行语句"
+msgstr "Исполняемый SQL"
+
+msgid "扫描/影响行数"
+msgstr "Просканировано / затронуто строк"
+
+msgid "扫描总行数"
+msgstr "Строк просканировано (всего)"
+
+msgid "扫码绑定"
+msgstr "Привязка по QR-коду"
+
+msgid "折叠全部"
+msgstr "Свернуть всё"
+
+msgid "授权账号"
+msgstr "Учётная запись с правами"
+
+msgid "排序规则"
+msgstr "Правила сортировки (collation)"
+
+msgid "插入"
+msgstr "INSERT"
+
+msgid "操作"
+msgstr "Действия"
+
+msgid "操作人"
+msgstr "Оператор"
+
+msgid "操作信息"
+msgstr "Сведения об операции"
+
+msgid "操作成功！请稍后刷新获取最新状态"
+msgstr "Операция выполнена. Обновите страницу для актуального статуса."
+
+msgid "操作时间"
+msgstr "Время операции"
+
+msgid "数据加载失败！"
+msgstr "Не удалось загрузить данные!"
+
+msgid "数据库名"
+msgstr "Имя БД"
+
+msgid "数据库清单：<br>"
+msgstr "Список БД:<br>"
+
+msgid "数据库类型"
+msgstr "Тип СУБД"
+
+msgid "数据空间(MB)"
+msgstr "Данные (МБ)"
+
+msgid "数据空间(压缩后)"
+msgstr "Данные (после сжатия)"
+
+msgid "数据空间(未压缩)"
+msgstr "Данные (без сжатия)"
+
+msgid "文件大小超过10M，请重新选择"
+msgstr "Размер файла больше 10 МБ — выберите другой"
+
+msgid "文件大小超过5M，请重新选择"
+msgstr "Размер файла больше 5 МБ — выберите другой"
+
+msgid "无匹配结果"
+msgstr "Совпадений нет"
+
+msgid "日志统计时间"
+msgstr "Время агрегации лога"
+
+msgid "昨日"
+msgstr "Вчера"
+
+msgid "普通表"
+msgstr "Обычная таблица"
+
+msgid "最近30日"
+msgstr "Последние 30 дней"
+
+msgid "最近365日"
+msgstr "Последние 365 дней"
+
+msgid "最近7日"
+msgstr "Последние 7 дней"
+
+msgid "有效时间"
+msgstr "Срок действия"
+
+msgid "未压缩的数据空间(MB)"
+msgstr "Данные без сжатия (МБ)"
+
+msgid "未知的响应格式"
+msgstr "Неизвестный формат ответа"
+
+msgid "本年"
+msgstr "Этот год"
+
+msgid "本月"
+msgstr "Этот месяц"
+
+msgid "权限"
+msgstr "права"
+
+msgid "权限级别"
+msgstr "Уровень прав"
+
+msgid "查询"
+msgstr "Запрос"
+
+msgid "查询历史"
+msgstr "История запросов"
+
+msgid "查询历史tab不允许删除"
+msgstr "Вкладку «История запросов» удалить нельзя"
+
+msgid "查询时间"
+msgstr "Время запроса"
+
+msgid "校验失败"
+msgstr "Проверка не пройдена"
+
+msgid "校验成功"
+msgstr "Проверка пройдена"
+
+msgid "检测到多个查询语句，只能提交一个导出查询，请选中要提交导出工单的语句重试。"
+msgstr ""
+"Обнаружено несколько запросов. Для экспорта допустим один — выберите нужный "
+"и повторите."
+
+msgid "正在校验SQL语法并统计结果行数，请稍候..."
+msgstr "Проверка синтаксиса SQL и подсчёт строк, подождите..."
+
+msgid "每行平均(B)"
+msgstr "В среднем на строку (Б)"
+
+msgid "注册成功, 请输入密码登录!"
+msgstr "Регистрация выполнена. Войдите с паролем!"
+
+msgid "测试邮件已成功发送给当前用户，注意查收，请点击页面下方的保存按钮生效！"
+msgstr ""
+"Тестовое письмо отправлено текущему пользователю. Нажмите «Сохранить» внизу "
+"страницы."
+
+msgid "清空"
+msgstr "Очистить"
+
+msgid "源实例参数值 ("
+msgstr "Параметр исходного инстанса ("
+
+msgid "源实例和目标实例不能相同！"
+msgstr "Исходный и целевой инстансы должны различаться!"
+
+msgid "源数据"
+msgstr "Источник"
+
+msgid "用户名"
+msgstr "Имя пользователя"
+
+msgid "申请人"
+msgstr "Заявитель"
+
+msgid "申请时间"
+msgstr "Время подачи"
+
+msgid "申请标题"
+msgstr "Заголовок заявки"
+
+msgid "申请类型"
+msgstr "Тип заявки"
+
+msgid "目标实例"
+msgstr "Целевой инстанс"
+
+msgid "目标实例参数值 ("
+msgstr "Параметр целевого инстанса ("
+
+msgid "确定"
+msgstr "OK"
+
+msgid "确认"
+msgstr "Подтвердить"
+
+msgid "确认中..."
+msgstr "Подтверждение..."
+
+msgid "碎片率(%)"
+msgstr "Фрагментация (%)"
+
+msgid "碎片空间(MB)"
+msgstr "Фрагментировано (МБ)"
+
+msgid "禁用"
+msgstr "Отключить"
+
+msgid "等待事务ID"
+msgstr "ID ожидающей транзакции"
+
+msgid "等待事务开始时间"
+msgstr "Начало ожидающей транзакции"
+
+msgid "等待事务的sql"
+msgstr "SQL ожидающей транзакции"
+
+msgid "等待事务等待开始时间"
+msgstr "Начало ожидания транзакции"
+
+msgid "等待事务线程ID"
+msgstr "ID потока ожидающей транзакции"
+
+msgid "等待的状态"
+msgstr "Статус ожидания"
+
+msgid "等待的表信息"
+msgstr "Таблицы в ожидании"
+
+msgid "等待的锁id"
+msgstr "ID ожидаемой блокировки"
+
+msgid "索引数"
+msgstr "Число индексов"
+
+msgid "索引空间"
+msgstr "Место индексов"
+
+msgid "索引空间(MB)"
+msgstr "Индексы (МБ)"
+
+msgid "组"
+msgstr "Группа"
+
+msgid "组名称"
+msgstr "Название группы"
+
+msgid "绑定手机号"
+msgstr "Привязка телефона"
+
+msgid "结束"
+msgstr "Окончание"
+
+msgid "结束时间"
+msgstr "Время окончания"
+
+msgid "结果限制不能超过 "
+msgstr "Лимит строк не должен превышать "
+
+msgid "结果限制必须为正整数"
+msgstr "Лимит строк должен быть положительным целым"
+
+msgid "结果集"
+msgstr "Результирующий набор"
+
+msgid "统计日志"
+msgstr "Лог статистики"
+
+msgid "统计查询结果：{ActualRows} 行数据，点击提交导出按钮申请导出。"
+msgstr ""
+"Результат: {ActualRows} строк. Нажмите «Отправить экспорт» для заявки."
+
+msgid "统计查询结果：{ActualRows} 行数据，超过了阈值：{maxExportRows}"
+msgstr "Результат: {ActualRows} строк — превышен лимит {maxExportRows}"
+
+msgid "自定义"
+msgstr "Произвольный"
+
+msgid "行数"
+msgstr "число строк"
+
+msgid "行数统计中..."
+msgstr "Подсчёт строк..."
+
+msgid "表"
+msgstr "Таблица"
+
+msgid "表名"
+msgstr "Имя таблицы"
+
+msgid "表清单：<br>"
+msgstr "Список таблиц:<br>"
+
+msgid "表空间名"
+msgstr "Имя tablespace"
+
+msgid "表空间类型"
+msgstr "Тип tablespace"
+
+msgid "角色"
+msgstr "Роль"
+
+msgid "解析总行数"
+msgstr "Разобрано строк"
+
+msgid "该实例不在当前资源组"
+msgstr "Инстанс не входит в текущую группу ресурсов"
+
+msgid "该工单2分钟仍然未执行完毕，请稍后尝试手动刷新本页面"
+msgstr "Заявка не завершилась за 2 минуты. Позже обновите страницу вручную."
+
+msgid "该工单未选择备份，将不会自动备份数据，请确认是否立即执行？"
+msgstr ""
+"Бэкап не выбран — данные не будут сохранены автоматически. Выполнить сейчас?"
+
+msgid "请先保存相关配置信息！"
+msgstr "Сначала сохраните настройки!"
+
+msgid "请先在参数模板中配置该参数！"
+msgstr "Сначала настройте параметр в шаблоне!"
+
+msgid "请先解析SQL/MyBatis3 Mapper XML文件"
+msgstr "Сначала разберите файл SQL / MyBatis3 Mapper XML"
+
+msgid "请先选择实例和数据库！"
+msgstr "Сначала выберите инстанс и БД!"
+
+msgid "请先选择要终止的会话"
+msgstr "Сначала выберите сессии для завершения"
+
+msgid "请先选择要终止进程"
+msgstr "Сначала выберите процессы для завершения"
+
+msgid "请先选择需要优化的sql"
+msgstr "Сначала выберите SQL для оптимизации"
+
+msgid "请填写完整"
+msgstr "укажите полный"
+
+msgid "请填写完整！"
+msgstr "укажите полный！"
+
+msgid "请填写定时执行时间"
+msgstr "Укажите время отложенного выполнения"
+
+msgid "请填写审核备注"
+msgstr "Укажите комментарий проверки"
+
+msgid "请填写终止原因"
+msgstr "Укажите причину отмены"
+
+msgid "请求失败："
+msgstr "Ошибка запроса: "
+
+msgid "请确认是否已经手工执行结束？"
+msgstr "Подтвердите, что ручное выполнение завершено."
+
+msgid "请确认是否立即执行？"
+msgstr "Выполнить сейчас?"
+
+msgid "请确认是否立即终止？终止后需要手动清理触发器以及相关中间表！"
+msgstr ""
+"Завершить сейчас? После этого вручную удалите триггеры и промежуточные "
+"таблицы!"
+
+msgid "请确认是否立即进行归档？"
+msgstr "Запустить архивацию сейчас?"
+
+msgid "请耐心等待对比结果，可在对应目录获取生成的SQL文件"
+msgstr ""
+"Дождитесь результата сравнения. SQL-файлы появятся в соответствующем "
+"каталоге."
+
+msgid "请输入密码！"
+msgstr "Введите пароль!"
+
+msgid "请输入手机号！"
+msgstr "Введите номер телефона!"
+
+msgid "请输入文件名："
+msgstr "Введите имя файла:"
+
+msgid "请输入查询描述！"
+msgstr "Введите описание запроса!"
+
+msgid "请输入语句别名！"
+msgstr "Введите псевдоним выражения!"
+
+msgid "请输入验证码！"
+msgstr "Введите код подтверждения!"
+
+msgid "请选择可执行时间范围"
+msgstr "Выберите окно выполнения"
+
+msgid "请选择完整！"
+msgstr "выберите полный！"
+
+msgid "请选择实例"
+msgstr "выберите инстанс"
+
+msgid "请选择实例和起始解析文件！"
+msgstr "Выберите инстанс и начальный файл разбора!"
+
+msgid "请选择实例！"
+msgstr "Выберите инстанс!"
+
+msgid "请选择数据库！"
+msgstr "Выберите базу данных!"
+
+msgid "请选择权限类别"
+msgstr "Выберите категорию прав"
+
+msgid "请选择源实例和目标实例！"
+msgstr "Выберите исходный и целевой инстансы!"
+
+msgid "请选择组、工单类型和审批流程！"
+msgstr "Выберите группу, тип заявки и маршрут согласования!"
+
+msgid "请选择表结构！"
+msgstr "Выберите структуру таблицы!"
+
+msgid "负责人"
+msgstr "Ответственный"
+
+msgid "账号"
+msgstr "Учётная запись"
+
+msgid "资源组"
+msgstr "Группа ресурсов"
+
+msgid "超级表"
+msgstr "Супертаблица"
+
+msgid "运行事务的sql"
+msgstr "SQL активной транзакции"
+
+msgid "运行事务的时间"
+msgstr "Время активной транзакции"
+
+msgid "运行事务的状态"
+msgstr "Статус активной транзакции"
+
+msgid "运行事务的等待开始时间"
+msgstr "Начало ожидания активной транзакции"
+
+msgid "运行参数值"
+msgstr "Текущее значение параметра"
+
+msgid "运行的事务id"
+msgstr "ID активной транзакции"
+
+msgid "运行的事务线程id"
+msgstr "ID потока активной транзакции"
+
+msgid "运行的表信息"
+msgstr "Таблицы активной транзакции"
+
+msgid "运行的锁id"
+msgstr "ID блокировки активной транзакции"
+
+msgid "返回总行数"
+msgstr "Строк возвращено (всего)"
+
+msgid "返回行数"
+msgstr "Строк возвращено"
+
+msgid "连接成功"
+msgstr "Соединение установлено"
+
+msgid "连接测试成功，请点击页面下方的保存按钮生效！"
+msgstr "Проверка соединения успешна. Нажмите «Сохранить» внизу страницы."
+
+msgid "配置成功"
+msgstr "Настройки сохранены"
+
+msgid "锁定总时长(秒)"
+msgstr "Время блокировок (с)"
+
+msgid "错误：{msg}"
+msgstr "ошибка：{msg}"
+
+msgid "集合名"
+msgstr "Имя коллекции"
+
+msgid "额外信息"
+msgstr "Доп. информация"
+
+msgid "验证成功！"
+msgstr "Проверка успешна!"
+
+msgid "验证码已发送，5分钟内有效"
+msgstr "Код отправлен, действует 5 минут"
+
+msgid "默认参数值"
+msgstr "Значение по умолчанию"
+
+msgid "测试"
+msgstr "Проверить"
+
+msgid "Binlog清理"
+msgstr "Очистка Binlog"
+
+msgid "操作日志"
+msgstr "Журнал операций"
+
+msgid "查看进度"
+msgstr "Прогресс"
+
+msgid "查看"
+msgstr "Просмотр"
+
+msgid "编辑"
+msgstr "Изменить"
+
+msgid "授权"
+msgstr "Права"
+
+msgid "改密"
+msgstr "Сменить пароль"
+
+msgid "锁定"
+msgstr "Блокировать"
+
+msgid "已提交审批，请等待审核通过后执行"
+msgstr "Отправлено на согласование. Дождитесь утверждения, затем выполните."
+
+msgid "解锁"
+msgstr "Разблокировать"
+
+msgid "取消收藏"
+msgstr "Убрать из избранного"
+
+msgid "一键查询"
+msgstr "Быстрый запрос"
+
+msgid "查询时间 : "
+msgstr "Время запроса: "
+
+msgid "脱敏时间 : "
+msgstr "Время маскирования: "
+
+msgid "非json格式，无法格式化！"
+msgstr "Не JSON — форматирование невозможно!"
+
+msgid "（提交申请）"
+msgstr "(подать заявку)"
+
+msgid "查看集合字段:"
+msgstr "Поля коллекции:"
+
+msgid "查询失败"
+msgstr "Ошибка запроса"
+
+msgid "日"
+msgstr "Вс"
+
+msgid "一月"
+msgstr "янв"
+
+msgid "全部"
+msgstr "Все"
+
+msgid "其他"
+msgstr "Прочее"
+
+msgid "数据导出: "
+msgstr "Экспорт данных: "
+
+msgid "是"
+msgstr "Да"
+
+msgid "否"
+msgstr "Нет"
+
+msgid "暂无描述"
+msgstr "Нет описания"
+
+msgid "一致"
+msgstr "Совпадает"
+
+msgid "全部数据库"
+msgstr "Все БД"
+
+msgid "保留"
+msgstr "Сохранить"
+
+msgid "成功"
+msgstr "Успех"
+
+msgid "失败"
+msgstr "Ошибка"
+
+msgid "变更"
+msgstr "Изменить"
+
+msgid "删除权限"
+msgstr "Удалить права"
+
+msgid " 条权限记录"
+msgstr " записей прав"
+
+msgid "未知"
+msgstr "Неизвестно"
+
+msgid "关闭"
+msgstr "Выкл."
+
+msgid "分钟"
+msgstr " мин."
+
+msgid "下载错误: "
+msgstr "Ошибка загрузки: "
+
+msgid "服务器连接失败"
+msgstr "Нет соединения с сервером"
+
+msgid "阿里云"
+msgstr "Alibaba Cloud"
+
+msgid "腾讯云"
+msgstr "Tencent Cloud"
+
+msgid "该账号？"
+msgstr " эту учётную запись?"
+
+msgid "表过滤(可选):"
+msgstr "Фильтр таблиц (опц.):"
+
+msgid "参数值不能为空"
+msgstr "Значение параметра не может быть пустым"
+
+msgid "权限级别:"
+msgstr "Уровень прав:"
+
+msgid "审核"
+msgstr "Проверить"
+
+msgid "管理"
+msgstr "Управление"

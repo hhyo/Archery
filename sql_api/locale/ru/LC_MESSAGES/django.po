@@ -1,0 +1,485 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-10 16:03+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: sql_api/api_instance.py:41
+msgid "实例清单"
+msgstr "Список инстансов"
+
+#: sql_api/api_instance.py:44
+msgid "列出所有实例（过滤，分页）"
+msgstr "Список всех инстансов (фильтр, пагинация)"
+
+#: sql_api/api_instance.py:54
+msgid "创建实例"
+msgstr "Создать инстанс"
+
+#: sql_api/api_instance.py:57
+msgid "创建一个实例配置"
+msgstr "Создать конфигурацию инстанса"
+
+#: sql_api/api_instance.py:81
+msgid "更新实例"
+msgstr "Обновить инстанс"
+
+#: sql_api/api_instance.py:84
+msgid "更新一个实例配置"
+msgstr "Обновить конфигурацию инстанса"
+
+#: sql_api/api_instance.py:94
+msgid "删除实例"
+msgstr "Удалить инстанс"
+
+#: sql_api/api_instance.py:94
+msgid "删除一个实例配置"
+msgstr "Удалить конфигурацию инстанса"
+
+#: sql_api/api_instance.py:111
+msgid "隧道清单"
+msgstr "Список туннелей"
+
+#: sql_api/api_instance.py:114
+msgid "列出所有隧道（过滤，分页）"
+msgstr "Список всех туннелей (фильтр, пагинация)"
+
+#: sql_api/api_instance.py:124
+msgid "创建隧道"
+msgstr "Создать туннель"
+
+#: sql_api/api_instance.py:127
+msgid "创建一个隧道配置"
+msgstr "Создать конфигурацию туннеля"
+
+#: sql_api/api_instance.py:147
+msgid "AliyunRDS清单"
+msgstr "Список AliyunRDS"
+
+#: sql_api/api_instance.py:150
+msgid "列出所有AliyunRDS（过滤，分页）"
+msgstr "Список всех AliyunRDS (фильтр, пагинация)"
+
+#: sql_api/api_instance.py:160
+msgid "创建AliyunRDS"
+msgstr "Создать AliyunRDS"
+
+#: sql_api/api_instance.py:163
+msgid "创建一个AliyunRDS配置（包含一个CloudAccessKey）"
+msgstr "Создать конфигурацию AliyunRDS (включая CloudAccessKey)"
+
+#: sql_api/api_instance.py:179
+msgid "实例资源"
+msgstr "Ресурсы инстанса"
+
+#: sql_api/api_instance.py:182
+msgid "获取实例内的资源信息"
+msgstr "Получить сведения о ресурсах инстанса"
+
+#: sql_api/api_instance.py:239
+msgid "不支持的资源类型或者参数不完整！"
+msgstr "Неподдерживаемый тип ресурса или неполные параметры!"
+
+#: sql_api/api_instance.py:258
+msgid "按表名查询所属实例"
+msgstr "Найти инстансы по имени таблицы"
+
+#: sql_api/api_instance.py:261
+msgid "输入table名，返回包含该表的实例列表（固定返回status/msg/count/data）。"
+msgstr ""
+"Введите имя table; возвращает список инстансов с этой таблицей (всегда "
+"status/msg/count/data)."
+
+#: sql_api/api_instance.py:267
+msgid "参数校验失败"
+msgstr "Ошибка проверки параметров"
+
+#: sql_api/api_instance.py:269
+#, python-format
+msgid "参数table_name错误: %(v0)s"
+msgstr "Ошибка параметра table_name: %(v0)s"
+
+#: sql_api/api_instance.py:286
+msgid "查询失败: 未知错误, 请联系管理员"
+msgstr "Ошибка запроса: неизвестная ошибка, обратитесь к администратору"
+
+#: sql_api/api_instance.py:295
+msgid "查询成功"
+msgstr "Запрос выполнен успешно"
+
+#: sql_api/api_sqlquery.py:40
+msgid "SQLQuery 可访问实例列表"
+msgstr "SQLQuery: доступные инстансы"
+
+#: sql_api/api_sqlquery.py:63
+msgid "SQLQuery 实例资源列表"
+msgstr "SQLQuery: ресурсы инстанса"
+
+#: sql_api/api_sqlquery.py:74
+msgid "SQLQuery 表结构"
+msgstr "SQLQuery: структура таблицы"
+
+#: sql_api/api_sqlquery.py:86
+msgid "SQLQuery 执行查询"
+msgstr "SQLQuery: выполнить запрос"
+
+#: sql_api/api_sqlquery.py:89
+msgid "无执行查询权限"
+msgstr "Нет прав на выполнение запроса"
+
+#: sql_api/api_sqlquery.py:99
+msgid "SQLQuery 历史查询记录"
+msgstr "SQLQuery: история запросов"
+
+#: sql_api/api_sqlquery.py:117
+msgid "SQLQuery 收藏/取消收藏"
+msgstr "SQLQuery: в избранное / убрать"
+
+#: sql_api/api_sqlquery.py:122
+msgid "无收藏操作权限"
+msgstr "Нет прав на операции с избранным"
+
+#: sql_api/api_user.py:44
+msgid "用户清单"
+msgstr "Список пользователей"
+
+#: sql_api/api_user.py:47
+msgid "列出所有用户（过滤，分页）"
+msgstr "Список всех пользователей (фильтр, пагинация)"
+
+#: sql_api/api_user.py:57
+msgid "创建用户"
+msgstr "Создать пользователя"
+
+#: sql_api/api_user.py:60
+msgid "创建一个用户"
+msgstr "Создать пользователя"
+
+#: sql_api/api_user.py:84
+msgid "更新用户"
+msgstr "Обновить пользователя"
+
+#: sql_api/api_user.py:87
+msgid "更新一个用户"
+msgstr "Обновить пользователя"
+
+#: sql_api/api_user.py:97
+msgid "删除用户"
+msgstr "Удалить пользователя"
+
+#: sql_api/api_user.py:97
+msgid "删除一个用户"
+msgstr "Удалить пользователя"
+
+#: sql_api/api_user.py:114
+msgid "用户组清单"
+msgstr "Список групп пользователей"
+
+#: sql_api/api_user.py:117
+msgid "列出所有用户组（过滤，分页）"
+msgstr "Список всех групп пользователей (фильтр, пагинация)"
+
+#: sql_api/api_user.py:127
+msgid "创建用户组"
+msgstr "Создать группу пользователей"
+
+#: sql_api/api_user.py:130
+msgid "创建一个用户组"
+msgstr "Создать группу пользователей"
+
+#: sql_api/api_user.py:154
+msgid "更新用户组"
+msgstr "Обновить группу пользователей"
+
+#: sql_api/api_user.py:157
+msgid "更新一个用户组"
+msgstr "Обновить группу пользователей"
+
+#: sql_api/api_user.py:167
+msgid "删除用户组"
+msgstr "Удалить группу пользователей"
+
+#: sql_api/api_user.py:167
+msgid "删除一个用户组"
+msgstr "Удалить группу пользователей"
+
+#: sql_api/api_user.py:184
+msgid "资源组清单"
+msgstr "Список групп ресурсов"
+
+#: sql_api/api_user.py:187
+msgid "列出所有资源组（过滤，分页）"
+msgstr "Список всех групп ресурсов (фильтр, пагинация)"
+
+#: sql_api/api_user.py:197
+msgid "创建资源组"
+msgstr "Создать группу ресурсов"
+
+#: sql_api/api_user.py:200
+msgid "创建一个资源组"
+msgstr "Создать группу ресурсов"
+
+#: sql_api/api_user.py:224
+msgid "更新资源组"
+msgstr "Обновить группу ресурсов"
+
+#: sql_api/api_user.py:227
+msgid "更新一个资源组"
+msgstr "Обновить группу ресурсов"
+
+#: sql_api/api_user.py:237
+msgid "删除资源组"
+msgstr "Удалить группу ресурсов"
+
+#: sql_api/api_user.py:237
+msgid "删除一个资源组"
+msgstr "Удалить группу ресурсов"
+
+#: sql_api/api_user.py:252
+msgid "用户认证校验"
+msgstr "Проверка аутентификации пользователя"
+
+#: sql_api/api_user.py:260
+msgid "认证成功"
+msgstr "Аутентификация успешна"
+
+#: sql_api/api_user.py:266
+msgid "用户名或密码错误！"
+msgstr "Неверное имя пользователя или пароль!"
+
+#: sql_api/api_user.py:278
+msgid "配置2fa"
+msgstr "Настройка 2FA"
+
+#: sql_api/api_user.py:294 sql_api/api_user.py:410
+msgid "登录用户与校验用户不一致！"
+msgstr "Пользователь входа не совпадает с проверяемым!"
+
+#: sql_api/api_user.py:296 sql_api/api_user.py:412
+msgid "需先校验用户密码！"
+msgstr "Сначала подтвердите пароль пользователя!"
+
+#: sql_api/api_user.py:329 sql_api/api_user.py:331
+msgid "查询2fa配置情况"
+msgstr "Получить конфигурацию 2FA"
+
+#: sql_api/api_user.py:361
+msgid "保存2fa配置"
+msgstr "Сохранить конфигурацию 2FA"
+
+#: sql_api/api_user.py:392
+msgid "检验2fa密码"
+msgstr "Проверить код 2FA"
+
+#: sql_api/api_user.py:417
+msgid "用户未配置2FA！"
+msgstr "У пользователя не настроена 2FA!"
+
+#: sql_api/api_workflow.py:55
+msgid "SQL检查"
+msgstr "Проверка SQL"
+
+#: sql_api/api_workflow.py:58
+msgid "对提供的SQL进行语法检查"
+msgstr "Синтаксическая проверка переданного SQL"
+
+#: sql_api/api_workflow.py:118
+msgid "SQL上线工单清单"
+msgstr "Список заявок на отправка SQL"
+
+#: sql_api/api_workflow.py:121
+msgid "列出所有SQL上线工单（过滤，分页）"
+msgstr "Список всех заявок на отправка SQL (фильтр, пагинация)"
+
+#: sql_api/api_workflow.py:131
+msgid "提交SQL上线工单"
+msgstr "Отправить заявку на отправка SQL"
+
+#: sql_api/api_workflow.py:134
+msgid "提交一条SQL上线工单"
+msgstr "Отправить одну заявку на отправка SQL"
+
+#: sql_api/api_workflow.py:180 sql_api/api_workflow.py:434
+msgid "方法 “GET” 不被允许。"
+msgstr "Метод «GET» не разрешён."
+
+#: sql_api/api_workflow.py:183
+msgid "待审核清单"
+msgstr "Список ожидающих проверки"
+
+#: sql_api/api_workflow.py:186
+msgid "列出指定用户待审核清单（过滤，分页）"
+msgstr "Список ожидающих утверждения для пользователя (фильтр, пагинация)"
+
+#: sql_api/api_workflow.py:223
+msgid "审核工单"
+msgstr "Согласовать заявку"
+
+#: sql_api/api_workflow.py:225
+msgid "审核一条工单（通过或终止）"
+msgstr "Утвердить заявку (принять или отменить)"
+
+#: sql_api/api_workflow.py:250
+msgid "用户无权操作此工单"
+msgstr "Нет прав на эту заявку"
+
+#: sql_api/api_workflow.py:253
+msgid "audit_type 只能是 pass 或 cancel"
+msgstr "audit_type может быть только pass или cancel"
+
+#: sql_api/api_workflow.py:261
+#, python-format
+msgid "操作失败, %(v0)s"
+msgstr "Ошибка операции: %(v0)s"
+
+#: sql_api/api_workflow.py:313 sql_api/api_workflow.py:377
+msgid "执行工单"
+msgstr "Выполнить заявку"
+
+#: sql_api/api_workflow.py:315
+msgid "执行一条工单"
+msgstr "Выполнить заявку"
+
+#: sql_api/api_workflow.py:337 sql_api/api_workflow.py:340
+msgid "你无权执行当前工单！"
+msgstr "У вас нет прав на выполнение этой заявки!"
+
+#: sql_api/api_workflow.py:345
+msgid "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+msgstr ""
+"Вне допустимого окна выполнения; чтобы изменить время, отправьте заявку "
+"заново!"
+
+#: sql_api/api_workflow.py:378
+msgid "工单执行排队中"
+msgstr "Заявка в очереди на выполнение"
+
+#: sql_api/api_workflow.py:395
+msgid "手工工单"
+msgstr "Ручная заявка"
+
+#: sql_api/api_workflow.py:396
+msgid "确认手工执行结束"
+msgstr "Подтвердить завершение ручного выполнения"
+
+#: sql_api/api_workflow.py:420
+msgid "开始执行，执行结果请到工单详情页查看"
+msgstr "Выполнение начато; результат смотрите на странице заявки"
+
+#: sql_api/api_workflow.py:437
+msgid "工单日志"
+msgstr "Журнал заявки"
+
+#: sql_api/api_workflow.py:440
+msgid "获取某个工单的日志（分页）"
+msgstr "Получить журнал заявки (пагинация)"
+
+#: sql_api/serializers.py:121 sql_api/serializers.py:139
+#: sql_api/serializers.py:170 sql_api/serializers.py:193
+msgid "不存在该用户"
+msgstr "Пользователь не найден"
+
+#: sql_api/serializers.py:125 sql_api/serializers.py:161
+#: sql_api/serializers.py:188
+msgid "缺少 phone"
+msgstr "Отсутствует phone"
+
+#: sql_api/serializers.py:165
+msgid "缺少 key"
+msgstr "Отсутствует key"
+
+#: sql_api/serializers.py:281
+msgid "不存在该实例"
+msgstr "Инстанс не найден"
+
+#: sql_api/serializers.py:348
+msgid "instance_id 或 instance_name 必须提供一个"
+msgstr "Нужно указать instance_id или instance_name"
+
+#: sql_api/serializers.py:352
+msgid "db_name 不能为空"
+msgstr "db_name не может быть пустым"
+
+#: sql_api/serializers.py:356
+msgid "column 查询需提供 db_name 和 tb_name"
+msgstr "Для запроса column нужны db_name и tb_name"
+
+#: sql_api/serializers.py:408
+#, python-format
+msgid "不存在该实例：%(v0)s"
+msgstr "Инстанс не найден: %(v0)s"
+
+#: sql_api/serializers.py:444
+#, python-format
+msgid "不存在该资源组：%(v0)s"
+msgstr "Группа ресурсов не найдена: %(v0)s"
+
+#: sql_api/serializers.py:482
+#, python-format
+msgid "不存在用户：%(v0)s"
+msgstr "Пользователь не найден: %(v0)s"
+
+#: sql_api/serializers.py:494
+msgid "你所在组未关联该实例！"
+msgstr "Ваша группа не связана с этим инстансом!"
+
+#: sql_api/serializers.py:585 sql_api/serializers.py:604
+#: sql_api/serializers.py:682
+#, python-format
+msgid "不存在该用户：%(v0)s"
+msgstr "Пользователь не найден: %(v0)s"
+
+#: sql_api/serializers.py:592 sql_api/serializers.py:637
+#: sql_api/serializers.py:690
+msgid "不存在该工单"
+msgstr "Заявка не найдена"
+
+#: sql_api/serializers.py:674
+msgid "缺少 mode"
+msgstr "Отсутствует mode"
+
+#: sql_api/serializers.py:676
+msgid "缺少 engineer"
+msgstr "Отсутствует engineer"
+
+#: sql_api/views.py:67
+#, python-format
+msgid "获取Redis信息报错:%(v0)s"
+msgstr "Ошибка получения сведений Redis:%(v0)s"
+
+#: sql_api/views.py:110
+msgid "没有正在运行的集群信息，请检查django_q状态"
+msgstr "Нет сведений о работающем кластере; проверьте статус django_q"
+
+#: sql_api/views.py:115
+#, python-format
+msgid "获取django_q信息报错:%(v0)s"
+msgstr "Ошибка получения сведений django_q:%(v0)s"
+
+#: sql_api/views.py:154
+#, python-format
+msgid "获取goInception信息报错:%(v0)s"
+msgstr "Ошибка получения сведений goInception:%(v0)s"
+
+#: sql_api/views.py:170
+#, python-format
+msgid ""
+"无法连接goInception备份库\n"
+"%(v0)s"
+msgstr ""
+"Не удалось подключиться к резервной БД goInception\n"
+"%(v0)s"

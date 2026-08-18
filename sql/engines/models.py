@@ -4,6 +4,25 @@
 import json
 
 
+def json_safe_cell(value):
+    """Make a query cell JSON/CSV serializable."""
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    iso = getattr(value, "isoformat", None)
+    if callable(iso):
+        try:
+            return iso()
+        except Exception:
+            pass
+    return str(value)
+
+
+def serialize_select_rows(rows):
+    return [[json_safe_cell(v) for v in row] for row in rows]
+
+
 class SqlItem:
     def __init__(
         self,

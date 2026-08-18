@@ -12,7 +12,7 @@ from sql.engines import EngineBase
 from sql.engines.goinception import GoInceptionEngine
 from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.engines.redis import RedisEngine
-from sql.engines.pgsql import PgSQLEngine
+from sql.engines.pgsql import PgSQLEngine, _is_select_statement
 from sql.engines.mongo import MongoEngine
 from sql.engines.clickhouse import ClickHouseEngine
 from sql.engines.odps import ODPSEngine
@@ -605,18 +605,42 @@ class TestPgSQL(TestCase):
         self.assertEqual(masking_result, query_result)
 
     def test_execute_check_select_sql(self):
+        """Default: SELECT allowed in workflow (approve path)."""
+        self.sys_config.purge()
         sql = "select * from user;"
-        row = ReviewResult(
-            id=1,
-            errlevel=2,
-            stagestatus="驳回不支持语句",
-            errormessage="仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
-            sql=sql,
-        )
         new_engine = PgSQLEngine(instance=self.ins)
         check_result = new_engine.execute_check(db_name="archery", sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
-        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+        self.assertEqual(check_result.error_count, 0)
+        self.assertEqual(check_result.rows[0].errlevel, 0)
+        self.assertEqual(check_result.rows[0].stagestatus, "Audit completed")
+        self.assertTrue(_is_select_statement(check_result.rows[0].sql))
+
+    def test_execute_check_select_sql_disabled(self):
+        """When allow_select_in_workflow=false, SELECT is rejected."""
+        self.sys_config.set("allow_select_in_workflow", False)
+        self.sys_config.get_all_config()
+        sql = "select * from user;"
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name="archery", sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].errlevel, 2)
+        self.assertIn("DML", check_result.rows[0].errormessage)
+        self.sys_config.purge()
+
+    def test_execute_check_select_mixed_with_dml(self):
+        """SELECT + DML in one ticket is rejected."""
+        self.sys_config.purge()
+        sql = "select * from user; update user set id=1;"
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name="archery", sql=sql)
+        self.assertGreaterEqual(check_result.error_count, 1)
+        self.assertTrue(
+            any(
+                "SELECT与DML/DDL不能在同一工单中提交" in (r.errormessage or "")
+                for r in check_result.rows
+            )
+        )
 
     def test_execute_check_critical_sql(self):
         self.sys_config.set("critical_ddl_regex", "^|update")
@@ -683,6 +707,36 @@ class TestPgSQL(TestCase):
         execute_result = new_engine.execute_workflow(workflow=wf)
         self.assertIsInstance(execute_result, ReviewSet)
         self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
+
+    @patch("psycopg2.connect")
+    def test_execute_workflow_select_stores_preview(self, _conn):
+        self.sys_config.purge()
+        sql = "select id, name from user"
+        cursor = _conn.return_value.cursor.return_value
+        cursor.description = (("id",), ("name",))
+        cursor.fetchmany.return_value = [(1, "a"), (2, "b")]
+        cursor.rowcount = 2
+        wf = SqlWorkflow.objects.create(
+            workflow_name="select_wf",
+            group_id=1,
+            group_name="g1",
+            engineer_display="",
+            audit_auth_groups="some_group",
+            create_time=datetime.now() - timedelta(days=1),
+            status="workflow_finish",
+            is_backup=False,
+            instance=self.ins,
+            db_name="some_db",
+            syntax_type=2,
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        new_engine = PgSQLEngine(instance=self.ins)
+        execute_result = new_engine.execute_workflow(workflow=wf)
+        self.assertEqual(execute_result.error_count, 0)
+        self.assertEqual(execute_result.rows[0].affected_rows, 2)
+        self.assertEqual(execute_result.rows[0].select_columns, ["id", "name"])
+        self.assertEqual(execute_result.rows[0].select_rows, [[1, "a"], [2, "b"]])
+        self.assertFalse(execute_result.rows[0].select_truncated)
 
     @patch("psycopg2.connect.cursor.execute")
     @patch("psycopg2.connect.cursor")
@@ -1576,10 +1630,8 @@ class TestClickHouse(TestCase):
         new_engine = ClickHouseEngine(instance=self.ins1)
         select_sql = "select id,name from tb_test"
         check_result = new_engine.execute_check(db_name="some_db", sql=select_sql)
-        self.assertEqual(
-            check_result.rows[0].errormessage,
-            "仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
-        )
+        self.assertEqual(check_result.rows[0].errlevel, 0)
+        self.assertEqual(check_result.error_count, 0)
 
     @patch.object(ClickHouseEngine, "query")
     def test_execute_check_alter_sql(self, mock_query):

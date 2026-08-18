@@ -1,0 +1,1204 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-10 16:03+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+#: common/auth.py:81 common/auth.py:117
+msgid "用户名或密码错误，请重新输入！"
+msgstr ""
+
+#: common/auth.py:87
+msgid "服务异常，请联系管理员处理"
+msgstr ""
+
+#: common/auth.py:102
+#, python-brace-format
+msgid "登录失败超过限制，该账号已被锁定！请等候大约{}秒再试"
+msgstr ""
+
+#: common/auth.py:169
+msgid "注册未启用,请联系管理员开启"
+msgstr ""
+
+#: common/auth.py:180
+msgid "用户名和密码不能为空"
+msgstr ""
+
+#: common/auth.py:183
+msgid "用户名已存在"
+msgstr ""
+
+#: common/auth.py:186
+msgid "两次输入密码不一致"
+msgstr ""
+
+#: common/auth.py:189
+msgid "请填写中文名"
+msgstr ""
+
+#: common/dashboard.py:70
+msgid "error: 日期有误"
+msgstr ""
+
+#: common/dashboard.py:137
+msgid "检索行数"
+msgstr ""
+
+#: common/dashboard.py:143
+msgid "检索次数"
+msgstr ""
+
+#: common/templates/2fa.html:6 common/templates/base.html:97
+#: common/templates/base.html:316
+msgid "两步验证"
+msgstr ""
+
+#: common/templates/2fa.html:28
+msgid "启用两步验证"
+msgstr ""
+
+#: common/templates/2fa.html:31
+msgid "验证方式:"
+msgstr ""
+
+#: common/templates/2fa.html:33 common/templates/2fa.html:62
+msgid "选择额外验证方式:"
+msgstr ""
+
+#: common/templates/2fa.html:35
+msgid "Google身份验证器"
+msgstr ""
+
+#: common/templates/2fa.html:36 common/templates/2fa.html:68
+msgid "短信验证码"
+msgstr ""
+
+#: common/templates/2fa.html:41 common/templates/base.html:390
+msgid "1. 使用Google身份验证器扫码："
+msgstr ""
+
+#: common/templates/2fa.html:45 common/templates/base.html:394
+msgid "1. 输入要绑定的手机号码："
+msgstr ""
+
+#: common/templates/2fa.html:50
+msgid "2. 输入6位验证码完成验证："
+msgstr ""
+
+#: common/templates/2fa.html:55 common/templates/2fa.html:74
+#: common/templates/base.html:404
+msgid "获取验证码"
+msgstr ""
+
+#: common/templates/2fa.html:56 common/templates/2fa.html:75
+msgid "验证"
+msgstr ""
+
+#: common/templates/2fa.html:60
+msgid "选择验证方式:"
+msgstr ""
+
+#: common/templates/2fa.html:67
+msgid "OTP验证码"
+msgstr ""
+
+#: common/templates/base.html:11
+msgid "Archery-SQL审核查询平台"
+msgstr ""
+
+#: common/templates/base.html:58
+msgid "语言"
+msgstr ""
+
+#: common/templates/base.html:68
+#, python-format
+msgid "你好，%(user)s"
+msgstr ""
+
+#: common/templates/base.html:91
+msgid "系统信息"
+msgstr ""
+
+#: common/templates/base.html:94
+msgid "管理后台"
+msgstr ""
+
+#: common/templates/base.html:98
+msgid "修改密码"
+msgstr ""
+
+#: common/templates/base.html:99
+msgid "退出"
+msgstr ""
+
+#: common/templates/base.html:122
+msgid "SQL审核"
+msgstr ""
+
+#: common/templates/base.html:126 common/templates/config.html:163
+msgid "SQL上线"
+msgstr ""
+
+#: common/templates/base.html:131
+msgid "SQL分析"
+msgstr ""
+
+#: common/templates/base.html:140 common/templates/config.html:338
+msgid "SQL查询"
+msgstr ""
+
+#: common/templates/base.html:144
+msgid "在线查询"
+msgstr ""
+
+#: common/templates/base.html:149
+msgid "数据导出"
+msgstr ""
+
+#: common/templates/base.html:154
+msgid "数据字典"
+msgstr ""
+
+#: common/templates/base.html:159
+msgid "权限管理"
+msgstr ""
+
+#: common/templates/base.html:169 common/templates/config.html:648
+msgid "SQL优化"
+msgstr ""
+
+#: common/templates/base.html:173
+msgid "优化工具"
+msgstr ""
+
+#: common/templates/base.html:178
+msgid "慢查日志"
+msgstr ""
+
+#: common/templates/base.html:187
+msgid "实例管理"
+msgstr ""
+
+#: common/templates/base.html:191
+msgid "实例列表"
+msgstr ""
+
+#: common/templates/base.html:196
+msgid "会话管理"
+msgstr ""
+
+#: common/templates/base.html:201
+msgid "数据库管理"
+msgstr ""
+
+#: common/templates/base.html:207
+msgid "账号管理"
+msgstr ""
+
+#: common/templates/base.html:212
+msgid "参数配置"
+msgstr ""
+
+#: common/templates/base.html:217
+msgid "参数对比"
+msgstr ""
+
+#: common/templates/base.html:226
+msgid "工具插件"
+msgstr ""
+
+#: common/templates/base.html:249
+msgid "系统管理"
+msgstr ""
+
+#: common/templates/base.html:252
+msgid "配置项管理"
+msgstr ""
+
+#: common/templates/base.html:255
+msgid "资源组管理"
+msgstr ""
+
+#: common/templates/base.html:258
+msgid "其他配置管理"
+msgstr ""
+
+#: common/templates/base.html:261
+msgid "用户管理"
+msgstr ""
+
+#: common/templates/base.html:264
+msgid "权限组管理"
+msgstr ""
+
+#: common/templates/base.html:267
+msgid "全部后台数据"
+msgstr ""
+
+#: common/templates/base.html:278
+msgid "系统审计"
+msgstr ""
+
+#: common/templates/base.html:281
+msgid "通用审计"
+msgstr ""
+
+#: common/templates/base.html:284
+msgid "sql上线审计"
+msgstr ""
+
+#: common/templates/base.html:287
+msgid "查询审计"
+msgstr ""
+
+#: common/templates/base.html:294
+msgid "相关文档"
+msgstr ""
+
+#: common/templates/base.html:321
+msgid "TOTP："
+msgstr ""
+
+#: common/templates/base.html:331
+msgid "短信："
+msgstr ""
+
+#: common/templates/base.html:349
+msgid "关闭"
+msgstr ""
+
+#: common/templates/base.html:362
+msgid "验证当前用户密码"
+msgstr ""
+
+#: common/templates/base.html:366
+msgid "输入密码验证:"
+msgstr ""
+
+#: common/templates/base.html:367
+msgid "确认密码"
+msgstr ""
+
+#: common/templates/base.html:371 common/templates/login.html:95
+msgid "取消"
+msgstr ""
+
+#: common/templates/base.html:372
+msgid "确认"
+msgstr ""
+
+#: common/templates/base.html:385
+msgid "扫码绑定"
+msgstr ""
+
+#: common/templates/base.html:398
+msgid "2. 输入6位验证码完成绑定："
+msgstr ""
+
+#: common/templates/base.html:405
+msgid "绑定"
+msgstr ""
+
+#: common/templates/config.html:11
+msgid "选择操作"
+msgstr ""
+
+#: common/templates/config.html:15
+msgid "配置项："
+msgstr ""
+
+#: common/templates/config.html:19
+msgid "配置项"
+msgstr ""
+
+#: common/templates/config.html:19 common/templates/config.html:20
+msgid "请选择配置项:"
+msgstr ""
+
+#: common/templates/config.html:21
+msgid "系统设置"
+msgstr ""
+
+#: common/templates/config.html:22
+msgid "工单审核流配置"
+msgstr ""
+
+#: common/templates/config.html:27
+msgid "工单类型："
+msgstr ""
+
+#: common/templates/config.html:31
+msgid "工单类型"
+msgstr ""
+
+#: common/templates/config.html:31
+msgid "请选择工单类型:"
+msgstr ""
+
+#: common/templates/config.html:43
+msgid "组："
+msgstr ""
+
+#: common/templates/config.html:47
+msgid "组"
+msgstr ""
+
+#: common/templates/config.html:47
+msgid "请选择组:"
+msgstr ""
+
+#: common/templates/config.html:60
+msgid "操作"
+msgstr ""
+
+#: common/templates/config.html:64
+msgid "goInception配置"
+msgstr ""
+
+#: common/templates/config.html:65
+msgid ""
+"注1：备份库的信息仅用于平台获取回滚语句，需要和审核工具自身的配置保持一致，此"
+"处配置变更不会修改审核工具自身的配置"
+msgstr ""
+
+#: common/templates/config.html:77
+msgid "goInception地址"
+msgstr ""
+
+#: common/templates/config.html:79 common/templates/config.html:438
+#: common/templates/config.html:746
+msgid "测试连接"
+msgstr ""
+
+#: common/templates/config.html:89
+msgid "goInception端口"
+msgstr ""
+
+#: common/templates/config.html:100
+msgid "goInception用户（未启用认证可不填）"
+msgstr ""
+
+#: common/templates/config.html:111
+msgid "goInception密码（未启用认证可不填）"
+msgstr ""
+
+#: common/templates/config.html:123
+msgid "备份库地址"
+msgstr ""
+
+#: common/templates/config.html:134
+msgid "备份库端口"
+msgstr ""
+
+#: common/templates/config.html:145
+msgid "备份库用户"
+msgstr ""
+
+#: common/templates/config.html:156
+msgid "备份库用户密码"
+msgstr ""
+
+#: common/templates/config.html:161
+msgid "功能模块配置"
+msgstr ""
+
+#: common/templates/config.html:174
+msgid "正则条件，匹配的语句会禁止提交"
+msgstr ""
+
+#: common/templates/config.html:185
+msgid "自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回"
+msgstr ""
+
+#: common/templates/config.html:198
+msgid "是否开启备份选项(默认关闭, 强制要求备份)"
+msgstr ""
+
+#: common/templates/config.html:213
+msgid "是否开启SQL上线自动审批"
+msgstr ""
+
+#: common/templates/config.html:226
+msgid "自动审批的实例标签"
+msgstr ""
+
+#: common/templates/config.html:245
+msgid "自动审批的数据库类型"
+msgstr ""
+
+#: common/templates/config.html:264
+msgid "正则条件，匹配的语句需要人工审批"
+msgstr ""
+
+#: common/templates/config.html:275
+msgid "自动审批允许工单最大更新行数"
+msgstr ""
+
+#: common/templates/config.html:289
+msgid "是否开启SQL上线手工执行确认"
+msgstr ""
+
+#: common/templates/config.html:304
+msgid "是否禁止DDL和DML在SQL上线同时提交(MySQL)"
+msgstr ""
+
+#: common/templates/config.html:318
+msgid "ON：禁止自审。OFF：允许自己审批自己的工单"
+msgstr ""
+
+#: common/templates/config.html:318
+msgid "禁止自审工单(管理员除外)"
+msgstr ""
+
+#: common/templates/config.html:332
+msgid "是否获取DML真实影响行数(MySQL、MongoDB)"
+msgstr ""
+
+#: common/templates/config.html:339
+msgid "注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析"
+msgstr ""
+
+#: common/templates/config.html:351
+msgid "是否开启动态脱敏"
+msgstr ""
+
+#: common/templates/config.html:365
+msgid "是否开启脱敏校验(无法脱敏的语句会抛错)"
+msgstr ""
+
+#: common/templates/config.html:379
+msgid "禁止在查询时使用 *"
+msgstr ""
+
+#: common/templates/config.html:391
+msgid "在线查询超时时间阈值，单位秒，默认60"
+msgstr ""
+
+#: common/templates/config.html:401
+msgid "管理员/DBA查询结果集限制"
+msgstr ""
+
+#: common/templates/config.html:406
+msgid "数据导出配置"
+msgstr ""
+
+#: common/templates/config.html:416
+msgid "导出数据量阈值限制，单位: 行，默认值: 10000"
+msgstr ""
+
+#: common/templates/config.html:422
+msgid "存储类型选择"
+msgstr ""
+
+#: common/templates/config.html:425
+msgid "存储类型"
+msgstr ""
+
+#: common/templates/config.html:432
+msgid "本地存储"
+msgstr ""
+
+#: common/templates/config.html:434
+msgid "S3兼容存储"
+msgstr ""
+
+#: common/templates/config.html:446
+msgid "本地存储路径"
+msgstr ""
+
+#: common/templates/config.html:449
+msgid "项目根目录/downloads/DataExportFile/"
+msgstr ""
+
+#: common/templates/config.html:456
+msgid "SFTP主机"
+msgstr ""
+
+#: common/templates/config.html:461
+msgid "SFTP服务访问IP"
+msgstr ""
+
+#: common/templates/config.html:465
+msgid "SFTP端口"
+msgstr ""
+
+#: common/templates/config.html:470
+msgid "SFTP服务端口"
+msgstr ""
+
+#: common/templates/config.html:474 common/templates/config.html:479
+msgid "SFTP用户名"
+msgstr ""
+
+#: common/templates/config.html:483 common/templates/config.html:488
+msgid "SFTP密码"
+msgstr ""
+
+#: common/templates/config.html:492
+msgid "SFTP路径"
+msgstr ""
+
+#: common/templates/config.html:497
+msgid "SFTP服务存储路径"
+msgstr ""
+
+#: common/templates/config.html:501 common/templates/config.html:568
+#: common/templates/config.html:617
+msgid "自定义参数"
+msgstr ""
+
+#: common/templates/config.html:507 common/templates/config.html:574
+#: common/templates/config.html:623
+msgid "输入JSON格式的自定义参数，例如：{&quot;key&quot;: &quot;value&quot;}"
+msgstr ""
+
+#: common/templates/config.html:546
+msgid "Region 非必填"
+msgstr ""
+
+#: common/templates/config.html:564
+msgid "存储路径，开头没有/"
+msgstr ""
+
+#: common/templates/config.html:581
+msgid "Azure容器"
+msgstr ""
+
+#: common/templates/config.html:586 common/templates/config.html:590
+#: common/templates/config.html:595
+msgid "Azure账号名"
+msgstr ""
+
+#: common/templates/config.html:599 common/templates/config.html:604
+msgid "Azure账号密钥"
+msgstr ""
+
+#: common/templates/config.html:613
+msgid "Azure 存储路径，开头没有 / ，如存储到tmp目录: tmp/"
+msgstr ""
+
+#: common/templates/config.html:657
+msgid "SQLADVISOR路径"
+msgstr ""
+
+#: common/templates/config.html:668
+msgid "SOAR路径"
+msgstr ""
+
+#: common/templates/config.html:679
+msgid "SOAR测试实例：user:pwd@host:port/db"
+msgstr ""
+
+#: common/templates/config.html:685
+msgid "通知配置"
+msgstr ""
+
+#: common/templates/config.html:686
+msgid "注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户"
+msgstr ""
+
+#: common/templates/config.html:687
+msgid ""
+"注2：企业微信自建应用开启后，若未配置企业微信UserID，则默认取用户的username作"
+"为UserId"
+msgstr ""
+
+#: common/templates/config.html:688
+msgid ""
+"注3：企业微信群机器人需要配置资源组webhook地址（企业微信群机器人是通知到群；"
+"企业微信自建应用是通过应用通知到指定人）"
+msgstr ""
+
+#: common/templates/config.html:691
+msgid "工单通知"
+msgstr ""
+
+#: common/templates/config.html:701
+msgid "系统HOST地址, 用于通知链接，如https://archery.com"
+msgstr ""
+
+#: common/templates/config.html:711
+msgid "DDL工单通知权限组"
+msgstr ""
+
+#: common/templates/config.html:732
+msgid "工单通知分阶段控制"
+msgstr ""
+
+#: common/templates/config.html:744
+msgid "是否开启邮件通知"
+msgstr ""
+
+#: common/templates/config.html:759
+msgid "是否使用SSL"
+msgstr ""
+
+#: common/templates/config.html:772
+msgid "邮件smtp地址"
+msgstr ""
+
+#: common/templates/config.html:783
+msgid "邮件smtp端口"
+msgstr ""
+
+#: common/templates/config.html:794
+msgid "邮箱账号"
+msgstr ""
+
+#: common/templates/config.html:805
+msgid "邮箱账号密码"
+msgstr ""
+
+#: common/templates/config.html:816
+msgid "是否开启钉钉Webhook通知"
+msgstr ""
+
+#: common/templates/config.html:829
+msgid "是否开启钉钉个人消息通知"
+msgstr ""
+
+#: common/templates/config.html:837
+msgid "创建钉钉Archery微应用参考："
+msgstr ""
+
+#: common/templates/config.html:838
+msgid "钉钉企业接入开发文档"
+msgstr ""
+
+#: common/templates/config.html:839
+msgid "同步用户"
+msgstr ""
+
+#: common/templates/config.html:850
+msgid "微应用Archery的AgentId"
+msgstr ""
+
+#: common/templates/config.html:861
+msgid "微应用Archery的AppKey"
+msgstr ""
+
+#: common/templates/config.html:872
+msgid "微应用Archery的AppSecret"
+msgstr ""
+
+#: common/templates/config.html:883
+msgid "Archery.username对应钉钉里的字段"
+msgstr ""
+
+#: common/templates/config.html:893
+msgid "钉钉部门id，使用逗号分隔"
+msgstr ""
+
+#: common/templates/config.html:900
+msgid "企业微信自建应用"
+msgstr ""
+
+#: common/templates/config.html:906
+msgid "是否开启企业微信自建应用通知"
+msgstr ""
+
+#: common/templates/config.html:914
+msgid "创建企业微信应用参考："
+msgstr ""
+
+#: common/templates/config.html:915
+msgid "企业微信接入开发文档"
+msgstr ""
+
+#: common/templates/config.html:927
+msgid "企业微信的企业ID"
+msgstr ""
+
+#: common/templates/config.html:938
+msgid "应用的AgentId"
+msgstr ""
+
+#: common/templates/config.html:949
+msgid "应用的Secret"
+msgstr ""
+
+#: common/templates/config.html:955
+msgid "企业微信群机器人"
+msgstr ""
+
+#: common/templates/config.html:961
+msgid "是否开启企业微信群机器人通知"
+msgstr ""
+
+#: common/templates/config.html:968
+msgid "飞书Webhook"
+msgstr ""
+
+#: common/templates/config.html:974
+msgid "是否开启飞书Webhook通知"
+msgstr ""
+
+#: common/templates/config.html:981
+msgid "飞书"
+msgstr ""
+
+#: common/templates/config.html:987
+msgid "是否开启飞书通知"
+msgstr ""
+
+#: common/templates/config.html:995
+msgid "创建飞书应用参考："
+msgstr ""
+
+#: common/templates/config.html:996
+msgid "飞书接入开发文档"
+msgstr ""
+
+#: common/templates/config.html:1002 common/templates/config.html:1008
+msgid "飞书应用AppID"
+msgstr ""
+
+#: common/templates/config.html:1013 common/templates/config.html:1019
+msgid "飞书AppSecret"
+msgstr ""
+
+#: common/templates/config.html:1025
+msgid "通用Webhook地址"
+msgstr ""
+
+#: common/templates/config.html:1031
+msgid "通用 webhook 地址, 每个工单的每个状态转变均会调用"
+msgstr ""
+
+#: common/templates/config.html:1034
+msgid "短信服务"
+msgstr ""
+
+#: common/templates/config.html:1038
+msgid "短信服务提供商"
+msgstr ""
+
+#: common/templates/config.html:1043
+msgid "短信服务商"
+msgstr ""
+
+#: common/templates/config.html:1057
+msgid "阿里云访问密钥ID，用于标识用户"
+msgstr ""
+
+#: common/templates/config.html:1068
+msgid "阿里云访问密钥（AccessKey），用于验证用户的密钥"
+msgstr ""
+
+#: common/templates/config.html:1079 common/templates/config.html:1136
+msgid "短信签名，需为审核通过状态"
+msgstr ""
+
+#: common/templates/config.html:1090
+msgid "短信模板Code，需为审核通过状态"
+msgstr ""
+
+#: common/templates/config.html:1101
+msgid "短信模板中的变量名，如：code"
+msgstr ""
+
+#: common/templates/config.html:1114
+msgid "用于标识API调用者的身份"
+msgstr ""
+
+#: common/templates/config.html:1125
+msgid "用于加密签名字符串和服务器端验证签名字符串的密钥"
+msgstr ""
+
+#: common/templates/config.html:1147
+msgid "短信模板ID，需为审核通过状态"
+msgstr ""
+
+#: common/templates/config.html:1158
+msgid "短信应用ID"
+msgstr ""
+
+#: common/templates/config.html:1165
+msgid "OIDC 配置"
+msgstr ""
+
+#: common/templates/config.html:1177
+msgid "登录按钮显示名称，比如Login With KeyCloak"
+msgstr ""
+
+#: common/templates/config.html:1182
+msgid "OPENAI 配置"
+msgstr ""
+
+#: common/templates/config.html:1183
+msgid "注1：若无OPENAI_API_KEY配置，则不开启相关功能"
+msgstr ""
+
+#: common/templates/config.html:1184
+msgid ""
+"注2：DEFAULT_CHAT_MODEL 默认配置为gpt-3.5-turbo，DEFAULT_QUERY_TEMPLATE 默认"
+"配置为系统定义的模板"
+msgstr ""
+
+#: common/templates/config.html:1224
+msgid ""
+"默认生成SQL语句的Django模板, 无模板会导致生成结果失败, 需提供db_type/"
+"table_schema/user_input"
+msgstr ""
+
+#: common/templates/config.html:1229
+msgid "其他配置"
+msgstr ""
+
+#: common/templates/config.html:1240
+msgid "系统首页路径，默认SQL工单页面：sqlworkflow"
+msgstr ""
+
+#: common/templates/config.html:1251
+msgid "my2sql调用路径，类似/opt/archery/src/plugins/my2sql"
+msgstr ""
+
+#: common/templates/config.html:1261
+msgid "新用户首次登录自动关联权限组"
+msgstr ""
+
+#: common/templates/config.html:1282
+msgid "新用户首次登录自动关联资源组"
+msgstr ""
+
+#: common/templates/config.html:1303
+msgid "API用户白名单"
+msgstr ""
+
+#: common/templates/config.html:1317
+msgid "账户登录失败锁定时间(秒)"
+msgstr ""
+
+#: common/templates/config.html:1328
+msgid "账户登录失败几次锁账户"
+msgstr ""
+
+#: common/templates/config.html:1339
+msgid "是否开启注册功能"
+msgstr ""
+
+#: common/templates/config.html:1352
+msgid "是否开启水印功能"
+msgstr ""
+
+#: common/templates/config.html:1365
+msgid "登录是否强制使用2FA"
+msgstr ""
+
+#: common/templates/config.html:1378
+msgid "是否开启公告"
+msgstr ""
+
+#: common/templates/config.html:1391
+msgid "公告内容"
+msgstr ""
+
+#: common/templates/config.html:1403
+msgid "在网站标题及登录页面追加此内容, 可用于多archery实例的区分"
+msgstr ""
+
+#: common/templates/config.html:1410
+msgid "保存配置"
+msgstr ""
+
+#: common/templates/config.html:1416
+msgid "规则："
+msgstr ""
+
+#: common/templates/config.html:1416
+msgid ""
+"选择多个权限组即审批流程为多级审核，按照选择顺序进行流转，权限组内用户都可审"
+"核"
+msgstr ""
+
+#: common/templates/config.html:1418
+msgid "当前审批流程："
+msgstr ""
+
+#: common/templates/config.html:1420
+msgid "变更审批流程："
+msgstr ""
+
+#: common/templates/config.html:1427
+msgid "请选择审批权限组"
+msgstr ""
+
+#: common/templates/config.html:1429
+msgid "审批人"
+msgstr ""
+
+#: common/templates/config.html:1429
+msgid "审批人:"
+msgstr ""
+
+#: common/templates/config.html:1438
+msgid "变更"
+msgstr ""
+
+#: common/templates/config.html:1439
+msgid "刷新"
+msgstr ""
+
+#: common/templates/dashboard.html:20 common/templates/dashboard.html:172
+msgid "SQL上线工单"
+msgstr ""
+
+#: common/templates/dashboard.html:26 common/templates/dashboard.html:48
+#: common/templates/dashboard.html:70 common/templates/dashboard.html:92
+msgid "更多"
+msgstr ""
+
+#: common/templates/dashboard.html:42
+msgid "SQL查询工单"
+msgstr ""
+
+#: common/templates/dashboard.html:64
+msgid "有效平台用户"
+msgstr ""
+
+#: common/templates/dashboard.html:86
+msgid "实例数量"
+msgstr ""
+
+#: common/templates/dashboard.html:104
+msgid "数据库实例类型统计"
+msgstr ""
+
+#: common/templates/dashboard.html:126
+msgid "统计时间范围："
+msgstr ""
+
+#: common/templates/dashboard.html:138
+msgid "SQL查询统计"
+msgstr ""
+
+#: common/templates/dashboard.html:149
+msgid "SQL上线数量"
+msgstr ""
+
+#: common/templates/dashboard.html:161
+msgid "SQL上线用户"
+msgstr ""
+
+#: common/templates/dashboard.html:182
+msgid "24h慢查询db维度统计"
+msgstr ""
+
+#: common/templates/dashboard.html:196
+msgid "SQL上线统计"
+msgstr ""
+
+#: common/templates/dashboard.html:207
+msgid "DB检索行数"
+msgstr ""
+
+#: common/templates/dashboard.html:217
+msgid "SQL查询用户"
+msgstr ""
+
+#: common/templates/dashboard.html:227
+msgid "SQL上线工单类型"
+msgstr ""
+
+#: common/templates/dashboard.html:236
+msgid "24h慢查询db/user维度统计"
+msgstr ""
+
+#: common/templates/dictionaryexport.html:5
+msgid "数据库表结构说明文档"
+msgstr ""
+
+#: common/templates/dictionaryexport.html:15
+#, python-format
+msgid "%(db_name)s 数据字典 (共 %(var0)s 个表)"
+msgstr ""
+
+#: common/templates/dictionaryexport.html:16
+#, python-format
+msgid "生成时间：%(export_time)s"
+msgstr ""
+
+#: common/templates/dictionaryexport.html:19
+#, python-format
+msgid "表名：%(var0)s"
+msgstr ""
+
+#: common/templates/dictionaryexport.html:20
+#, python-format
+msgid "注释：%(var0)s"
+msgstr ""
+
+#: common/templates/errors/400.html:5
+msgid "Bad Request (400)"
+msgstr ""
+
+#: common/templates/errors/403.html:5
+msgid "403 Forbidden"
+msgstr ""
+
+#: common/templates/errors/404.html:5
+msgid "Not Found"
+msgstr ""
+
+#: common/templates/errors/404.html:6
+msgid "The requested resource was not found on this server."
+msgstr ""
+
+#: common/templates/errors/500.html:5
+msgid "Server Error (500)"
+msgstr ""
+
+#: common/templates/login.html:6 common/templates/login.html:22
+msgid "Login To Archery"
+msgstr ""
+
+#: common/templates/login.html:27
+msgid "以钉钉登录"
+msgstr ""
+
+#: common/templates/login.html:35
+msgid "CAS认证登录"
+msgstr ""
+
+#: common/templates/login.html:40
+msgid "显示传统登录"
+msgstr ""
+
+#: common/templates/login.html:52
+msgid "注册用户"
+msgstr ""
+
+#: common/templates/login.html:66
+msgid "注册账号"
+msgstr ""
+
+#: common/templates/login.html:71
+msgid "用户名"
+msgstr ""
+
+#: common/templates/login.html:75
+msgid "中文名"
+msgstr ""
+
+#: common/templates/login.html:79
+msgid "邮箱"
+msgstr ""
+
+#: common/templates/login.html:83
+msgid "密码"
+msgstr ""
+
+#: common/templates/login.html:88
+msgid "密码确认"
+msgstr ""
+
+#: common/templates/login.html:96
+msgid "注册"
+msgstr ""
+
+#: common/templates/login.html:113
+msgid "提示"
+msgstr ""
+
+#: common/templates/login.html:118
+msgid "确定"
+msgstr ""
+
+#: common/twofa/sms.py:46 common/twofa/sms.py:56
+msgid "系统未配置短信服务商！"
+msgstr ""
+
+#: common/twofa/sms.py:50
+#, python-brace-format
+msgid "获取验证码太频繁，请于{}秒后再试"
+msgstr ""
+
+#: common/twofa/sms.py:71
+msgid "未获取验证码或验证码已过期！"
+msgstr ""
+
+#: common/twofa/sms.py:76 common/twofa/totp.py:34
+msgid "验证码不正确！"
+msgstr ""
+
+#: common/utils/const.py:15
+msgid "查询权限申请"
+msgstr ""
+
+#: common/utils/const.py:16
+msgid "SQL上线申请"
+msgstr ""
+
+#: common/utils/const.py:17
+msgid "数据归档申请"
+msgstr ""
+
+#: common/utils/const.py:21
+msgid "待审核"
+msgstr ""
+
+#: common/utils/const.py:22 common/utils/const.py:31
+msgid "审核通过"
+msgstr ""
+
+#: common/utils/const.py:23 common/utils/const.py:32
+msgid "审核不通过"
+msgstr ""
+
+#: common/utils/const.py:24 common/utils/const.py:33
+msgid "审核取消"
+msgstr ""
+
+#: common/utils/const.py:30
+msgid "提交"
+msgstr ""
+
+#: common/utils/const.py:34
+msgid "设置定时执行"
+msgstr ""
+
+#: common/utils/const.py:35
+msgid "开始执行"
+msgstr ""
+
+#: common/utils/const.py:36
+msgid "执行结束"
+msgstr ""
+
+#: common/utils/sendmsg.py:88
+msgid "收件人需要为列表"
+msgstr ""
+
+#: common/utils/sendmsg.py:91
+msgid "抄送人需要为列表"
+msgstr ""
+
+#: common/utils/sendmsg.py:109
+msgid "Archery 通知"
+msgstr ""
+
+#: common/utils/sendmsg.py:135
+#, python-brace-format
+msgid ""
+"邮件推送失败\n"
+"{}"
+msgstr ""
+
+#: common/utils/sendmsg.py:213
+#, python-format
+msgid "[请点击链接](%s)"
+msgstr ""

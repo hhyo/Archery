@@ -650,7 +650,23 @@
                     title: '审核/执行信息',
                     field: 'errormessage',
                     formatter: function (value, row, index) {
-                        return value.replace(/\n/g, '<br>');
+                        if (row.select_columns) {
+                            var wf = "{{ workflow_detail.id }}";
+                            var sid = row.id;
+                            var q = "workflow_id=" + wf + "&sql_id=" + encodeURIComponent(sid);
+                            var view = "/sqlworkflow/select_result/view/?" + q;
+                            var csv = "/sqlworkflow/select_result/?" + q + "&format=csv";
+                            var js = "/sqlworkflow/select_result/?" + q + "&format=json";
+                            var html = '<a href="' + view + '" target="_blank">查看结果</a>'
+                                + ' · <a href="' + csv + '">CSV</a>'
+                                + ' · <a href="' + js + '">JSON</a>';
+                            if (row.select_truncated) {
+                                html += '<br><span class="text-muted">结果已截断</span>';
+                            }
+                            return html;
+                        }
+                        return $('<div>').text(value == null ? '' : String(value)).html()
+                            .replace(/\n/g, '<br>');
                     },
                     sortable: true
                 }, {

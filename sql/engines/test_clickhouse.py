@@ -343,13 +343,48 @@ def _mock_config(engine, critical_ddl_regex=""):
 
 
 @patch.object(ClickHouseEngine, "server_version", new=(21, 8, 3))
-def test_execute_check_reject_select(mock_instance):
+def test_execute_check_allow_select(mock_instance):
     engine = ClickHouseEngine(instance=mock_instance)
     _mock_config(engine)
     ret = engine.execute_check(db_name="db", sql="select 1;")
     assert isinstance(ret, ReviewSet)
+    assert ret.rows[0].errlevel == 0
+    assert ret.error_count == 0
+
+
+@patch.object(ClickHouseEngine, "server_version", new=(21, 8, 3))
+def test_execute_check_reject_select_when_disabled(mock_instance):
+    engine = ClickHouseEngine(instance=mock_instance)
+    mock_cfg = Mock()
+
+    def _get(key, default=None):
+        if key == "allow_select_in_workflow":
+            return False
+        if key == "critical_ddl_regex":
+            return ""
+        return default
+
+    mock_cfg.get.side_effect = _get
+    engine.config = mock_cfg
+    ret = engine.execute_check(db_name="db", sql="select 1;")
     assert ret.rows[0].errlevel == 2
     assert "仅支持DML和DDL语句" in ret.rows[0].errormessage
+
+
+@patch.object(ClickHouseEngine, "server_version", new=(21, 8, 3))
+@patch.object(ClickHouseEngine, "get_table_engine")
+def test_execute_check_select_mixed_with_insert(mock_get_engine, mock_instance):
+    mock_get_engine.return_value = {"status": 1, "engine": "MergeTree"}
+    engine = ClickHouseEngine(instance=mock_instance)
+    _mock_config(engine)
+    ret = engine.execute_check(
+        db_name="db", sql="select 1; insert into t1 values (1);"
+    )
+    assert ret.error_count >= 1
+    assert any(
+        "SELECT与DML/DDL不能在同一工单中提交" in (r.errormessage or "")
+        for r in ret.rows
+    )
 
 
 @patch.object(ClickHouseEngine, "server_version", new=(21, 8, 3))
@@ -592,6 +627,24 @@ def test_execute_workflow_all_success(mock_execute, mock_instance):
     assert len(ret.rows) == 2
     for r in ret.rows:
         assert r.errlevel == 0
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_execute_workflow_select_stores_preview(mock_query, mock_instance):
+    rs = ResultSet()
+    rs.error = None
+    rs.column_list = ["id", "name"]
+    rs.rows = [(1, "a"), (2, "b")]
+    mock_query.return_value = rs
+    wf = _build_workflow_mock("select id, name from t")
+    engine = ClickHouseEngine(instance=mock_instance)
+    ret = engine.execute_workflow(wf)
+    assert ret.rows[0].errlevel == 0
+    assert ret.rows[0].affected_rows == 2
+    assert ret.rows[0].select_columns == ["id", "name"]
+    assert ret.rows[0].select_rows == [[1, "a"], [2, "b"]]
+    assert ret.rows[0].errormessage == ""
+    mock_query.assert_called_once()
 
 
 @patch.object(ClickHouseEngine, "execute")
