@@ -1394,7 +1394,24 @@ class MysqlEngine(EngineBase):
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
         # 判断实例是否只读
-        read_only = self.query(sql="SELECT @@global.read_only;").rows[0][0]
+        read_only_result = self.query(sql="SELECT @@global.read_only;")
+        if getattr(read_only_result, "error", None):
+            result = ReviewSet(
+                full_sql=workflow.sqlworkflowcontent.sql_content,
+                rows=[
+                    ReviewResult(
+                        id=1,
+                        errlevel=2,
+                        stagestatus="Execute Failed",
+                        errormessage=f"获取实例read_only状态失败: {read_only_result.error}",
+                        sql=workflow.sqlworkflowcontent.sql_content,
+                    )
+                ],
+            )
+            result.error = (f"获取实例read_only状态失败: {read_only_result.error}",)
+            return result
+
+        read_only = read_only_result.rows[0][0] if read_only_result.rows else None
         if read_only in (1, "ON"):
             result = ReviewSet(
                 full_sql=workflow.sqlworkflowcontent.sql_content,
