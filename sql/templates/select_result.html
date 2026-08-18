@@ -29,9 +29,11 @@
 {% block js %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    {{ columns|json_script:"select-result-columns" }}
+    {{ rows|json_script:"select-result-rows" }}
     <script>
-        var columns = {{ columns_json|safe }};
-        var rows = {{ rows_json|safe }};
+        var columns = JSON.parse(document.getElementById("select-result-columns").textContent);
+        var rows = JSON.parse(document.getElementById("select-result-rows").textContent);
         var tableColumns = columns.map(function (name, i) {
             return {field: "c" + i, title: name, sortable: true};
         });
@@ -43,7 +45,7 @@
             return obj;
         });
         $("#tb-select-result").bootstrapTable({
-            locale: window.ARCHERY_LOCALE,
+            locale: window.ARCHERY_LOCALE || "zh-CN",
             data: tableData,
             columns: tableColumns,
             toolbar: "#toolbar",

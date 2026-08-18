@@ -39,6 +39,33 @@ from .models import SqlWorkflow, WorkflowAudit
 
 logger = logging.getLogger("default")
 
+_CSV_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _unique_column_names(columns):
+    """Keep duplicate labels distinguishable in object-style JSON exports."""
+    used = set()
+    result = []
+    for col in columns or []:
+        base = "" if col is None else str(col)
+        label = base
+        n = 1
+        while label in used:
+            label = f"{base}_{n}"
+            n += 1
+        used.add(label)
+        result.append(label)
+    return result
+
+
+def _csv_safe_cell(value):
+    """Neutralize spreadsheet formula injection in CSV cells."""
+    if value is None:
+        return ""
+    if isinstance(value, str) and value[:1] in _CSV_FORMULA_PREFIXES:
+        return f"'{value}"
+    return value
+
 
 @permission_required("sql.menu_sqlworkflow", raise_exception=True)
 def sql_workflow_list(request):
@@ -244,7 +271,7 @@ def select_result_download(request):
     )
 
     if fmt == "json":
-        records = [dict(zip(columns, row)) for row in data_rows]
+        records = [dict(zip(_unique_column_names(columns), row)) for row in data_rows]
         body = json.dumps(records, ensure_ascii=False, indent=2)
         response = HttpResponse(body, content_type="application/json; charset=utf-8")
         response["Content-Disposition"] = f'attachment; filename="{base}.json"'
@@ -254,7 +281,7 @@ def select_result_download(request):
     writer = csv.writer(buf)
     writer.writerow(columns)
     for row in data_rows:
-        writer.writerow("" if v is None else v for v in row)
+        writer.writerow(_csv_safe_cell(v) for v in row)
     response = HttpResponse(
         buf.getvalue().encode("utf-8-sig"), content_type="text/csv; charset=utf-8"
     )
@@ -277,8 +304,8 @@ def select_result_view(request):
             "workflow": workflow,
             "sql_id": sql_id,
             "sql_text": payload.get("sql") or "",
-            "columns_json": json.dumps(columns, ensure_ascii=False),
-            "rows_json": json.dumps(data_rows, ensure_ascii=False),
+            "columns": columns,
+            "rows": data_rows,
             "truncated": bool(payload.get("select_truncated")),
             "row_count": len(data_rows),
         },

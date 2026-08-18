@@ -2,7 +2,13 @@
 from clickhouse_driver import connect
 from clickhouse_driver.util.escape import escape_chars_map
 from sql.utils.sql_utils import get_syntax_type
-from .models import ResultSet, ReviewResult, ReviewSet, serialize_select_rows
+from .models import (
+    ResultSet,
+    ReviewResult,
+    ReviewSet,
+    serialize_select_rows,
+    apply_select_preview_limit,
+)
 from common.utils.timer import FuncTimer
 from common.config import SysConfig
 from . import EngineBase
@@ -485,12 +491,12 @@ class ClickHouseEngine(EngineBase):
             with FuncTimer() as t:
                 if is_query:
                     run_sql = self.filter_sql(
-                        sql=statement_stripped, limit_num=select_limit
+                        sql=statement_stripped, limit_num=select_limit + 1
                     )
                     result = self.query(
                         db_name=workflow.db_name,
                         sql=run_sql,
-                        limit_num=select_limit,
+                        limit_num=select_limit + 1,
                         close_conn=True,
                     )
                 else:
@@ -499,7 +505,9 @@ class ClickHouseEngine(EngineBase):
                     )
             if not result.error:
                 if is_query:
-                    rows = result.rows or []
+                    rows, truncated = apply_select_preview_limit(
+                        result.rows or [], select_limit
+                    )
                     execute_result.rows.append(
                         ReviewResult(
                             id=line,
@@ -511,7 +519,7 @@ class ClickHouseEngine(EngineBase):
                             execute_time=t.cost,
                             select_columns=list(result.column_list or []),
                             select_rows=serialize_select_rows(rows),
-                            select_truncated=len(rows) >= select_limit,
+                            select_truncated=truncated,
                         )
                     )
                 else:

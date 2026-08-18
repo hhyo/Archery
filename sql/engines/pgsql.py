@@ -17,18 +17,110 @@ from common.config import SysConfig
 from common.utils.timer import FuncTimer
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
-from .models import ResultSet, ReviewSet, ReviewResult, serialize_select_rows
+from .models import (
+    ResultSet,
+    ReviewSet,
+    ReviewResult,
+    serialize_select_rows,
+    apply_select_preview_limit,
+)
 from sql.utils.data_masking import simple_column_mask
 
 __author__ = "hhyo、yyukai"
 
 logger = logging.getLogger("default")
 
+_CTE_OUTER_KEYWORD = re.compile(
+    r"(select|insert|update|delete|merge|refresh|create|alter|drop|truncate)\b",
+    re.I,
+)
+
+
+def _cte_outer_keyword(sql: str) -> str:
+    """Return the main statement keyword after WITH cte definitions."""
+    header = re.match(r"^with\s+(?:recursive\s+)?", sql, re.I)
+    if not header:
+        return ""
+    i = header.end()
+    n = len(sql)
+    depth = 0
+    in_squote = in_dquote = in_line_comment = in_block_comment = False
+    while i < n:
+        if in_line_comment:
+            if sql[i] == "\n":
+                in_line_comment = False
+            i += 1
+            continue
+        if in_block_comment:
+            if sql[i : i + 2] == "*/":
+                in_block_comment = False
+                i += 2
+            else:
+                i += 1
+            continue
+        c = sql[i]
+        if in_squote:
+            if c == "'" and i + 1 < n and sql[i + 1] == "'":
+                i += 2
+                continue
+            if c == "'":
+                in_squote = False
+            i += 1
+            continue
+        if in_dquote:
+            if c == '"' and i + 1 < n and sql[i + 1] == '"':
+                i += 2
+                continue
+            if c == '"':
+                in_dquote = False
+            i += 1
+            continue
+        if c == "'":
+            in_squote = True
+            i += 1
+            continue
+        if c == '"':
+            in_dquote = True
+            i += 1
+            continue
+        if sql[i : i + 2] == "--":
+            in_line_comment = True
+            i += 2
+            continue
+        if sql[i : i + 2] == "/*":
+            in_block_comment = True
+            i += 2
+            continue
+        if c == "(":
+            depth += 1
+            i += 1
+            continue
+        if c == ")":
+            if depth > 0:
+                depth -= 1
+            i += 1
+            continue
+        if depth == 0:
+            matched = _CTE_OUTER_KEYWORD.match(sql, i)
+            if matched:
+                return matched.group(1).lower()
+        i += 1
+    return ""
+
 
 def _is_select_statement(statement: str) -> bool:
-    """True for SELECT / WITH ... SELECT (CTE)."""
-    s = (statement or "").strip().lower()
-    return bool(re.match(r"^(with\b|select\b)", s))
+    """True for SELECT and WITH ... SELECT. False for WITH ... INSERT/UPDATE/DELETE."""
+    try:
+        s = sqlparse.format(statement or "", strip_comments=True).strip()
+    except Exception:
+        s = (statement or "").strip()
+    if not s:
+        return False
+    if re.match(r"^select\b", s, re.I):
+        return True
+    if not re.match(r"^with\b", s, re.I):
+        return False
+    return _cte_outer_keyword(s) == "select"
 
 
 def _allow_select_in_workflow(config=None) -> bool:
@@ -279,7 +371,7 @@ class PgSQLEngine(EngineBase):
     def filter_sql(self, sql="", limit_num=0):
         # 对查询sql增加limit限制，# TODO limit改写待优化
         sql_lower = sql.lower().rstrip(";").strip()
-        if re.match(r"^select", sql_lower):
+        if _is_select_statement(sql):
             if re.search(r"limit\s+(\d+)$", sql_lower) is None:
                 if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
                     return f"{sql.rstrip(';')} limit {limit_num};"
@@ -287,7 +379,7 @@ class PgSQLEngine(EngineBase):
 
     def query_masking(self, db_name=None, sql="", resultset=None):
         """简单字段脱敏规则, 仅对select有效"""
-        if re.match(r"^select", sql, re.I):
+        if _is_select_statement(sql):
             filtered_result = simple_column_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:
@@ -403,14 +495,45 @@ class PgSQLEngine(EngineBase):
             for statement in split_sql:
                 statement = statement.rstrip(";")
                 is_select = _is_select_statement(statement)
+                run_sql = statement
+                if is_select:
+                    run_sql = self.filter_sql(
+                        sql=statement, limit_num=select_limit + 1
+                    ).rstrip(";")
                 with FuncTimer() as t:
-                    cursor.execute(statement)
+                    cursor.execute(run_sql)
                 if is_select:
                     colnames = (
                         [d[0] for d in cursor.description] if cursor.description else []
                     )
-                    rows = cursor.fetchmany(select_limit)
-                    truncated = len(rows) >= select_limit
+                    rows = (
+                        cursor.fetchmany(select_limit + 1) if cursor.description else []
+                    )
+                    rows, truncated = apply_select_preview_limit(rows, select_limit)
+                    if config.get("data_masking"):
+                        resultset = ResultSet(
+                            full_sql=statement,
+                            rows=list(rows),
+                            column_list=list(colnames),
+                        )
+                        resultset.affected_rows = len(resultset.rows)
+                        try:
+                            masked = self.query_masking(db_name, statement, resultset)
+                            if masked and not masked.error:
+                                rows = masked.rows
+                                colnames = list(masked.column_list or colnames)
+                            elif masked and masked.error:
+                                logger.warning(
+                                    "数据脱敏异常，查询语句：%s，错误信息：%s",
+                                    statement,
+                                    masked.error,
+                                )
+                        except Exception:
+                            logger.warning(
+                                "数据脱敏异常，查询语句：%s，错误信息：%s",
+                                statement,
+                                traceback.format_exc(),
+                            )
                     execute_result.rows.append(
                         ReviewResult(
                             id=line,

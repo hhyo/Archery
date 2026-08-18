@@ -647,6 +647,58 @@ def test_execute_workflow_select_stores_preview(mock_query, mock_instance):
     mock_query.assert_called_once()
 
 
+@patch.object(ClickHouseEngine, "query")
+def test_execute_workflow_select_truncated_extra_row(mock_query, mock_instance):
+    rs = ResultSet()
+    rs.error = None
+    rs.column_list = ["id"]
+    rs.rows = [(1,), (2,), (3,)]
+    mock_query.return_value = rs
+    wf = _build_workflow_mock("select id from t")
+    engine = ClickHouseEngine(instance=mock_instance)
+    mock_cfg = Mock()
+
+    def cfg_get(key, default=None):
+        if key == "admin_query_limit":
+            return 2
+        if key == "allow_select_in_workflow":
+            return True
+        return default
+
+    mock_cfg.get.side_effect = cfg_get
+    engine.config = mock_cfg
+    ret = engine.execute_workflow(wf)
+    assert ret.rows[0].select_truncated is True
+    assert ret.rows[0].select_rows == [[1], [2]]
+    assert ret.rows[0].affected_rows == 2
+    assert mock_query.call_args.kwargs["limit_num"] == 3
+
+
+@patch.object(ClickHouseEngine, "query")
+def test_execute_workflow_select_exact_limit_not_truncated(mock_query, mock_instance):
+    rs = ResultSet()
+    rs.error = None
+    rs.column_list = ["id"]
+    rs.rows = [(1,), (2,)]
+    mock_query.return_value = rs
+    wf = _build_workflow_mock("select id from t")
+    engine = ClickHouseEngine(instance=mock_instance)
+    mock_cfg = Mock()
+
+    def cfg_get(key, default=None):
+        if key == "admin_query_limit":
+            return 2
+        if key == "allow_select_in_workflow":
+            return True
+        return default
+
+    mock_cfg.get.side_effect = cfg_get
+    engine.config = mock_cfg
+    ret = engine.execute_workflow(wf)
+    assert ret.rows[0].select_truncated is False
+    assert ret.rows[0].select_rows == [[1], [2]]
+
+
 @patch.object(ClickHouseEngine, "execute")
 def test_execute_workflow_fail_stop(mock_execute, mock_instance):
     ok = ResultSet()

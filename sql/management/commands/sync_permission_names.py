@@ -8,13 +8,13 @@ class Command(BaseCommand):
     help = (
         "Rewrite auth_permission.name using gettext for the given language "
         "(default: settings.LANGUAGE_CODE). Run after migrate + compilemessages "
-        "so Django admin and group forms show Russian labels after redeploy."
+        "so Django admin and group forms show labels in the active language."
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--language",
-            default=getattr(settings, "LANGUAGE_CODE", "ru"),
+            default=getattr(settings, "LANGUAGE_CODE", "zh-hans"),
             help="Language code to activate (default: LANGUAGE_CODE)",
         )
 

@@ -657,11 +657,11 @@
                             var view = "/sqlworkflow/select_result/view/?" + q;
                             var csv = "/sqlworkflow/select_result/?" + q + "&format=csv";
                             var js = "/sqlworkflow/select_result/?" + q + "&format=json";
-                            var html = '<a href="' + view + '" target="_blank">查看结果</a>'
+                            var html = '<a href="' + view + '" target="_blank">' + gettext("查看结果") + '</a>'
                                 + ' · <a href="' + csv + '">CSV</a>'
                                 + ' · <a href="' + js + '">JSON</a>';
                             if (row.select_truncated) {
-                                html += '<br><span class="text-muted">结果已截断</span>';
+                                html += '<br><span class="text-muted">' + gettext("结果已截断") + '</span>';
                             }
                             return html;
                         }

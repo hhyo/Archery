@@ -31,7 +31,7 @@ def sync_permission_names_after_migrate(sender, **kwargs):
     After the sql app finishes migrating, refresh permission display names.
 
     create_permissions runs on post_migrate for each app; we run once when
-    sql migrates so custom Meta.permissions and model perms get Russian names.
+    sql app migrates so custom Meta.permissions and model perms match LANGUAGE_CODE.
     """
     if sender.name != "sql":
         return
@@ -39,6 +39,6 @@ def sync_permission_names_after_migrate(sender, **kwargs):
     # Late import: permission tables must exist.
     from sql.permission_i18n import sync_permission_names
 
-    language = getattr(settings, "LANGUAGE_CODE", "ru") or "ru"
+    language = getattr(settings, "LANGUAGE_CODE", "zh-hans") or "zh-hans"
     verbosity = kwargs.get("verbosity", 1)
     sync_permission_names(language=language, verbosity=verbosity)
