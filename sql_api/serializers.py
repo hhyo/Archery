@@ -288,6 +288,7 @@ class InstanceResourceListSerializer(serializers.Serializer):
 
 
 class TableInstanceLookupSerializer(serializers.Serializer):
+    db_type = serializers.CharField(label="数据库类型", max_length=32)
     table_name = serializers.CharField(label="表名", max_length=256)
 
 
