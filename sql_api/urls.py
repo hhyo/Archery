@@ -55,6 +55,8 @@ urlpatterns = [
     path("v1/instance/tunnel/", api_instance.TunnelList.as_view()),
     path("v1/instance/rds/", api_instance.AliyunRdsList.as_view()),
     path("v1/workflow/", api_workflow.WorkflowList.as_view()),
+    path("v1/workflow/batch/submit/", api_workflow.BatchWorkflowSubmit.as_view()),
+    path("v1/workflow/batch/operate/", api_workflow.BatchWorkflowOperate.as_view()),
     path("v1/workflow/sqlcheck/", api_workflow.ExecuteCheck.as_view()),
     path("v1/workflow/audit/", api_workflow.AuditWorkflow.as_view()),
     path("v1/workflow/auditlist/", api_workflow.WorkflowAuditList.as_view()),
