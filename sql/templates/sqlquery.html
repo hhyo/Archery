@@ -145,7 +145,7 @@
                                 <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
                             </div>
                             <div class="text-info">
-                                <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
+                                <li>支持注释行，可选择指定语句执行，默认执行前10条;</li>
                                 <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
                                 <li id="mongo-hint-info" style="display:none">支持mongo原生查询语句，例如：<code>db.users.find({ age: { $eq: 25 } });</code></li>
                             </div>
@@ -575,7 +575,7 @@
         }
 
         //添加执行结果页面
-        function tab_add(tab_title) {
+        function tab_add(tab_title, no_show=false) {
             var tab_number = sessionStorage.getItem('tab_num');
 
             //增加执行结果tab页
@@ -623,7 +623,11 @@
             $("#tab-content").append(div);//div添加到div
 
             //激活添加的tab
-            $("#nav-tabs a:last").tab('show')
+            if (!no_show) {
+                $("#tab-content .tab-pane").removeClass("in active");
+                $("#nav-tabs li").removeClass("active");
+                $("#nav-tabs a:last").tab('show');
+            }
 
         }
 
@@ -791,7 +795,7 @@
         }
 
         // 展示数据
-        function display_data(data, target='') {
+        function display_data(data, target='', force_new_tab=false) {
             var result = data.data;
             var query_str = target+'|'+result['full_sql'];
             //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
@@ -821,7 +825,7 @@
                     }
                 }
                 // 执行结果页默认不新增
-                else if (active_li_title.match(/^执行结果\d$/)) {
+                else if (!force_new_tab && active_li_title.match(/^执行结果\d$/)) {
                     n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
@@ -1021,7 +1025,7 @@
 
             } else {
                 //查询报错失败信息
-                if (active_li_title.match(/^执行结果\d$/)) {
+                if (!force_new_tab && active_li_title.match(/^执行结果\d$/)) {
                     n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
@@ -1116,7 +1120,8 @@
                     schema_name: $("#schema_name").val(),
                     tb_name: $("#table_name").val(),
                     sql_content: sqlContent,
-                    limit_num: $("#limit_num").val()
+                    limit_num: $("#limit_num").val(),
+                    is_multi: true
                 },
                 complete: function () {
                     $('input[type=button]').removeClass('disabled');
@@ -1125,7 +1130,15 @@
                 },
                 success: function (data) {
                     var target = $("#instance_name").val()+"/"+$("#db_name").val();
-                    display_data(data, target);
+                    if (data.status === 0 && Array.isArray(data.data) && data.data.length > 0) {
+                        for (let i = 0; i < data.data.length; i++) {
+                            let item = data.data[i];
+                            let singleData = { status: item.status, msg: item.msg, data: item.data };
+                            display_data(singleData, target, i > 0);
+                        }
+                    } else {
+                        display_data(data, target);
+                    }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);

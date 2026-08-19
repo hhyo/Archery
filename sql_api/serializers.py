@@ -370,6 +370,7 @@ class SqlQueryExecuteSerializer(serializers.Serializer):
     tb_name = serializers.CharField(required=False, allow_blank=True)
     sql_content = serializers.CharField()
     limit_num = serializers.IntegerField(min_value=0, required=False, default=0)
+    is_multi = serializers.BooleanField(required=False, default=False)
 
 
 class SqlQueryLogsQuerySerializer(serializers.Serializer):
