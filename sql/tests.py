@@ -1505,9 +1505,10 @@ class TestBinLog(TestCase):
         r = self.client.post(path="/binlog/my2sql/", data=data)
         self.assertEqual(json.loads(r.content), {"status": 0, "msg": "ok", "data": []})
 
+    @patch("sql.binlog.os.listdir")
     @patch("builtins.open")
     @patch("sql.plugins.plugin.subprocess")
-    def test_my2sql_file(self, _open, _subprocess):
+    def test_my2sql_file(self, _subprocess, _open, _listdir):
         """
         测试保存文件
         :param _subprocess:
@@ -1517,6 +1518,8 @@ class TestBinLog(TestCase):
             "some_stdout",
             "some_stderr",
         )
+        _subprocess.Popen.return_value.returncode = 0
+        _listdir.return_value = ["some_file.sql"]
         self.sys_config.set("my2sql", "/opt/archery/src/plugins/my2sql")
         args = {
             "instance_name": "test_instance",
