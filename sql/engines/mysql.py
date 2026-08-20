@@ -454,8 +454,11 @@ class MysqlEngine(EngineBase):
         """获取数据库列表, 返回一个ResultSet"""
         sql = "show databases"
         result = self.query(sql=sql)
+        is_superuser = getattr(self, "is_superuser", False)
         db_list = [
-            row[0] for row in result.rows if row[0] not in self.forbidden_databases
+            row[0]
+            for row in result.rows
+            if is_superuser or row[0] not in self.forbidden_databases
         ]
         result.rows = db_list
         return result
@@ -854,10 +857,15 @@ class MysqlEngine(EngineBase):
 
     def get_all_databases_summary(self):
         """实例数据库管理功能，获取实例所有的数据库描述信息"""
+        is_superuser = getattr(self, "is_superuser", False)
         # 获取所有数据库
-        sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
-        FROM information_schema.SCHEMATA
-        WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys');"""
+        if is_superuser:
+            sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
+            FROM information_schema.SCHEMATA;"""
+        else:
+            sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
+            FROM information_schema.SCHEMATA
+            WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys');"""
         query_result = self.query("information_schema", sql_get_db, close_conn=False)
         if not query_result.error:
             dbs = query_result.rows
@@ -1394,7 +1402,25 @@ class MysqlEngine(EngineBase):
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
         # 判断实例是否只读
-        read_only = self.query(sql="SELECT @@global.read_only;").rows[0][0]
+        read_only_result = self.query(sql="SELECT @@global.read_only;")
+        if getattr(read_only_result, "error", None) or not read_only_result.rows:
+            error_msg = getattr(read_only_result, "error", None) or "查询结果为空"
+            result = ReviewSet(
+                full_sql=workflow.sqlworkflowcontent.sql_content,
+                rows=[
+                    ReviewResult(
+                        id=1,
+                        errlevel=2,
+                        stagestatus="Execute Failed",
+                        errormessage=f"获取实例read_only状态失败: {error_msg}",
+                        sql=workflow.sqlworkflowcontent.sql_content,
+                    )
+                ],
+            )
+            result.error = (f"获取实例read_only状态失败: {error_msg}",)
+            return result
+
+        read_only = read_only_result.rows[0][0]
         if read_only in (1, "ON"):
             result = ReviewSet(
                 full_sql=workflow.sqlworkflowcontent.sql_content,

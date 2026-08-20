@@ -51,6 +51,7 @@ def list_instance_resources(
 
     try:
         query_engine = get_engine(instance=instance)
+        query_engine.is_superuser = getattr(user, "is_superuser", False)
         db_name = query_engine.escape_string(db_name)
         schema_name = query_engine.escape_string(schema_name)
         tb_name = query_engine.escape_string(tb_name)

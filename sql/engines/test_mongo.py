@@ -107,6 +107,17 @@ class TestJsonDecoder:
         val = self.de.decode("{'a':-10}")
         assert val["a"] == -10
 
+    def test_decode_regex_multiline(self):
+        val = self.de.decode(r"{'name':/archery/m}")
+        assert val["name"].flags & re.MULTILINE
+
+    def test_decode_number_decimal(self):
+        from bson.decimal128 import Decimal128
+
+        val = self.de.decode("{'price': NumberDecimal('1299.99')}")
+        assert isinstance(val["price"], Decimal128)
+        assert str(val["price"]) == "1299.99"
+
     def test_decode_regex_literal(self):
         val = self.de.decode(r"{'name':/archery.*/im}")
         assert isinstance(val["name"], Regex)
@@ -774,10 +785,10 @@ class TestExecuteCheck:
     ):
         mock_get_tables.return_value = MagicMock(rows=["test"])
         mock_sys_config.return_value.get.return_value = False
-        with pytest.raises(Exception, match="请以分号结尾"):
-            mongo_engine.execute_check(
-                db_name="test_db", sql="db.test.insertOne({'a':1})"
-            )
+        result = mongo_engine.execute_check(
+            db_name="test_db", sql="db.test.insertOne({'a':1})"
+        )
+        assert result.error_count == 0
 
     @patch("sql.engines.mongo.SysConfig")
     @patch.object(MongoEngine, "get_all_tables")

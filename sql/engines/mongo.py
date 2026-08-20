@@ -13,6 +13,7 @@ from dateutil.parser import parse
 from bson.objectid import ObjectId
 from bson.int64 import Int64
 from bson.regex import Regex
+from bson.decimal128 import Decimal128
 
 from sql.utils.data_masking import data_masking
 
@@ -234,6 +235,7 @@ class JsonDecoder:
                     "ISODate",
                     "newISODate",
                     "NumberLong",
+                    "NumberDecimal",
                 ):  # ======类似的类型比较多还需单独处理，如int()等
                     data_type = outstr
                     for c in self.__remain_str():
@@ -273,6 +275,12 @@ class JsonDecoder:
                     id_str = re.findall(r"\(.*?\)", nuStr[0])
                     nlong = id_str[0].replace(" ", "")[2:-2]
                     return Int64(nlong)
+            elif data_type.replace(" ", "") in ("NumberDecimal",):
+                ndStr = re.findall(r"NumberDecimal\(.*?\)", outstr)
+                if len(ndStr) > 0:
+                    id_str = re.findall(r"\(.*?\)", ndStr[0])
+                    ndec = id_str[0].replace(" ", "")[2:-2].strip("'\"")
+                    return Decimal128(ndec)
             elif stripped:
                 return stripped
             raise Exception('Invalid symbol "%s"' % outstr)
@@ -821,6 +829,16 @@ class MongoEngine(EngineBase):
                         f"mongo语句执行报错，语句：{exec_sql}，错误信息{traceback.format_exc()}"
                     )
                     execute_result.error = str(e)
+                    line += 1
+                    result = ReviewResult(
+                        id=line,
+                        stage="Execute failed",
+                        errlevel=2,
+                        stagestatus="异常终止",
+                        errormessage=f"mongo语句执行报错: {str(e)}",
+                        sql=exec_sql,
+                    )
+                    execute_result.rows += [result]
             # result_set.column_list = [i[0] for i in fields] if fields else []
         return execute_result
 
@@ -836,8 +854,6 @@ class MongoEngine(EngineBase):
         sql = sql.strip()
         # sql 检查过滤注释语句
         sql = re.sub(r"^\s*//.*$", "", sql, flags=re.MULTILINE)
-        if sql.find(";") < 0:
-            raise Exception("提交的语句请以分号结尾")
         # 以；切分语句，逐句执行
         sp_sql = sql.split(";")
         # 执行语句
@@ -1164,6 +1180,11 @@ class MongoEngine(EngineBase):
             db_list = conn.list_database_names()
         except OperationFailure:
             db_list = [self.db_name]
+
+        is_superuser = getattr(self, "is_superuser", False)
+        if not is_superuser:
+            db_list = [db for db in db_list if db not in self.forbidden_databases]
+
         result.rows = db_list
         return result
 
@@ -1795,8 +1816,9 @@ class MongoEngine(EngineBase):
                 db_list = [self.db_name]
 
             rows = []
+            is_superuser = getattr(self, "is_superuser", False)
             for db_name in db_list:
-                if db_name in self.forbidden_databases:
+                if not is_superuser and db_name in self.forbidden_databases:
                     continue
                 db = conn[db_name]
                 collection_names = db.list_collection_names()
@@ -1876,8 +1898,9 @@ class MongoEngine(EngineBase):
                 db_list = [self.db_name]
 
             count = 0
+            is_superuser = getattr(self, "is_superuser", False)
             for db_name in db_list:
-                if db_name in self.forbidden_databases:
+                if not is_superuser and db_name in self.forbidden_databases:
                     continue
                 db = conn[db_name]
                 collection_names = db.list_collection_names()
