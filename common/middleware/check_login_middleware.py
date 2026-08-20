@@ -15,6 +15,7 @@ IGNORE_URL = [
     "/dingding/callback/",
     "/dingding/authenticate/",
     "/cas/authenticate/",
+    "/verify_email/",
 ]
 
 IGNORE_URL_RE = r"/api/(v1|auth)/\w+"

@@ -413,11 +413,13 @@ class TestSignUp(TestCase):
         with self.assertRaises(User.DoesNotExist):
             User.objects.get(username="test")
 
+    @patch("common.auth.MsgSender.send_email")
     @patch("common.auth.init_user")
-    def test_sing_up_valid(self, mock_init):
+    def test_sing_up_valid(self, mock_init, mock_send_email):
         """
         正常注册
         """
+        mock_send_email.return_value = "success"
         self.client.post(
             "/signup/",
             data={
@@ -430,6 +432,9 @@ class TestSignUp(TestCase):
         )
         user = User.objects.get(username="test")
         self.assertTrue(user)
+        # 激活用户（模拟完成邮件验证）
+        user.is_active = True
+        user.save()
         # 注册后登录
         r = self.client.post(
             "/authenticate/",

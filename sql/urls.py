@@ -36,6 +36,7 @@ urlpatterns = [
     path("login/2fa/", views.twofa, name="twofa"),
     path("logout/", auth.sign_out),
     path("signup/", auth.sign_up),
+    path("verify_email/", auth.verify_email, name="verify_email"),
     path("sqlworkflow/", views.sqlworkflow),
     path("submitsql/", views.submit_sql),
     path("editsql/", views.submit_sql),
