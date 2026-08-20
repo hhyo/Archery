@@ -303,7 +303,6 @@ def test_del_binlog_no_binlog_selected(client_with_super_user, db_instance):
 def test_del_binlog_success(mock_get_engine, client_with_super_user, db_instance):
     """清理binlog成功"""
     mock_engine = MagicMock()
-    mock_engine.escape_string.return_value = "mysql-bin.000001"
     mock_engine.query.return_value = _make_query_result(columns=[], rows=[], error=None)
     mock_get_engine.return_value = mock_engine
 
@@ -312,17 +311,16 @@ def test_del_binlog_success(mock_get_engine, client_with_super_user, db_instance
     result = json.loads(r.content)
     assert result["status"] == 0
     assert result["msg"] == "清理成功"
-    # 验证 escape_string 被调用
-    mock_engine.escape_string.assert_called_once_with("mysql-bin.000001")
     # 验证 purge 命令被正确执行
-    mock_engine.query.assert_called_once()
+    mock_engine.query.assert_called_once_with(
+        sql="purge master logs to %s;", parameters=("mysql-bin.000001",)
+    )
 
 
 @patch("sql.binlog.get_engine")
 def test_del_binlog_fail(mock_get_engine, client_with_super_user, db_instance):
     """清理binlog失败"""
     mock_engine = MagicMock()
-    mock_engine.escape_string.return_value = "mysql-bin.000001"
     mock_engine.query.return_value = _make_query_result(
         columns=[], rows=[], error="purge error"
     )
