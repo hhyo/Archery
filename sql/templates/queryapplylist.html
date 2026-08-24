@@ -386,7 +386,15 @@
                         $("#db_name").empty();
                         $("#db_name_multiple").empty();
                         for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            // Redis 返回带展示文本的资源对象（例如
+                            // {value: "0", text: "db0[100]"}），申请时必须提交
+                            // value，否则审批通过后权限库名会变成 [object Object]。
+                            var item = result[i];
+                            var value = (typeof item === "object" && item !== null)
+                                ? item.value : item;
+                            var text = (typeof item === "object" && item !== null)
+                                ? item.text : item;
+                            var name = "<option value=\"" + value + "\">" + text + "</option>";
                             $("#db_name").append(name);
                             $("#db_name_multiple").append(name);
                         }
