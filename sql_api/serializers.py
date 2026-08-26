@@ -689,3 +689,43 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
             raise serializers.ValidationError({"errors": "不存在该工单"})
 
         return attrs
+
+
+class WorkflowListRequestSerializer(serializers.Serializer):
+    syntax_type = serializers.ListField(
+        child=serializers.IntegerField(), required=False, source="syntax_type[]"
+    )
+    navStatus = serializers.CharField(required=False, allow_blank=True)
+    instance_id = serializers.IntegerField(required=False, allow_null=True)
+    group_id = serializers.IntegerField(required=False, allow_null=True)
+    start_date = serializers.DateField(required=False)
+    end_date = serializers.DateField(required=False)
+    limit = serializers.IntegerField(required=False, min_value=0)
+    offset = serializers.IntegerField(required=False, min_value=0)
+    search = serializers.CharField(required=False, allow_blank=True)
+
+
+class WorkflowRemarkSerializer(serializers.Serializer):
+    audit_remark = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class WorkflowTerminationSerializer(serializers.Serializer):
+    cancel_remark = serializers.CharField(allow_blank=False, trim_whitespace=True)
+
+
+class WorkflowExecutionSerializer(serializers.Serializer):
+    mode = serializers.ChoiceField(choices=["auto", "manual"])
+
+
+class WorkflowScheduleSerializer(serializers.Serializer):
+    run_date = serializers.DateTimeField(input_formats=["%Y-%m-%d %H:%M"])
+
+
+class WorkflowExecutionWindowSerializer(serializers.Serializer):
+    run_date_start = serializers.DateTimeField(required=False, allow_null=True)
+    run_date_end = serializers.DateTimeField(required=False, allow_null=True)
+
+
+class WorkflowOscSerializer(serializers.Serializer):
+    sqlsha1 = serializers.CharField(allow_blank=False)
+    command = serializers.CharField(allow_blank=False)

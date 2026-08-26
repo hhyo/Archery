@@ -3,6 +3,7 @@ import datetime
 import pytest
 from pytest_mock import MockFixture
 from django.contrib.auth.models import Group
+from rest_framework.test import APIClient
 
 from common.utils.const import WorkflowStatus
 from sql.models import (
@@ -26,6 +27,13 @@ def normal_user(django_user_model):
     )
     yield user
     user.delete()
+
+
+@pytest.fixture
+def authenticated_api_client(normal_user):
+    client = APIClient()
+    client.force_authenticate(user=normal_user)
+    return client
 
 
 @pytest.fixture

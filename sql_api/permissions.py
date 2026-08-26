@@ -50,3 +50,11 @@ class IsSqlQueryPageUser(permissions.BasePermission):
         if user.is_superuser:
             return True
         return user.has_perm("sql.menu_query") or user.has_perm("sql.menu_sqlquery")
+
+
+class IsWorkflowPageUser(permissions.BasePermission):
+    """Workflow page APIs authenticate the session user; services authorize actions."""
+
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(user and user.is_authenticated)

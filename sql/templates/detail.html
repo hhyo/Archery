@@ -174,7 +174,7 @@
     {% endif %}
     <!--审核人修改可执行时间按钮-->
     {% if is_can_review %}
-        <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
+        <form id="form-execution-window" action="/api/v1/workflows/{{ workflow_detail.id }}/execution-window/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="audit_remark" name="audit_remark" value="">
@@ -184,7 +184,7 @@
     {% endif %}
     <!--审核通过按钮-->
     {% if is_can_review %}
-        <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
+        <form id="form-approval" action="/api/v1/workflows/{{ workflow_detail.id }}/approval/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="audit_remark" name="audit_remark" value="">
@@ -193,7 +193,7 @@
     {% endif %}
     <!--立即执行按钮-->
     {% if is_can_execute %}
-        <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
+        <form id="from-execute" action="/api/v1/workflows/{{ workflow_detail.id }}/execution/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="mode" value="auto">
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
@@ -201,7 +201,7 @@
                    value="立即执行"/>
         </form>
         {% if manual %}
-            <form id="from-execute-manual" action="/execute/" method="post" style="display:inline-block;">
+            <form id="from-execute-manual" action="/api/v1/workflows/{{ workflow_detail.id }}/execution/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="mode" value="manual">
                 <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
@@ -220,7 +220,7 @@
     {% endif %}
     <!--终止执行按钮-->
     {% if is_can_review or is_can_cancel %}
-        <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
+        <form id="form-cancel" action="/api/v1/workflows/{{ workflow_detail.id }}/termination/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="cancel_remark" name="cancel_remark" value="">
@@ -271,7 +271,7 @@
     {% endif %}
 
     <!-- 定时执行弹出框 -->
-    <form id="from-addsqlcronjob" action="/timingtask/" method="post" style="display:inline-block;">
+    <form id="from-addsqlcronjob" action="/api/v1/workflows/{{ workflow_detail.id }}/schedule/" method="post" style="display:inline-block;">
         <div class="modal fade" id="cronComfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -331,7 +331,7 @@
         </div>
     </div>
     <!-- 修改可执行时间弹出框 -->
-    <form id="from-alterexecutabletime" action="/alter_run_date/" method="post" style="display:inline-block;">
+    <form id="from-alterexecutabletime" action="/api/v1/workflows/{{ workflow_detail.id }}/execution-window/" method="post" style="display:inline-block;">
         <div class="modal fade" id="Executabletime" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -481,9 +481,8 @@
             } else {
                 var isContinue = confirm("请确认是否立即执行？");
             }
-            var formExecuteOnly = $("#from-execute");
             if (isContinue) {
-                formExecuteOnly.submit();
+                postWorkflowForm($("#from-execute"));
                 loading(this)
             }
         });
@@ -491,9 +490,8 @@
         // 执行确认手工执行
         $("#btnExecuteOnly-manual").click(function () {
             var isContinue = confirm("请确认是否已经手工执行结束？");
-            var formExecuteOnly = $("#from-execute-manual");
             if (isContinue) {
-                formExecuteOnly.submit();
+                postWorkflowForm($("#from-execute-manual"));
                 loading(this)
             }
         });
@@ -502,9 +500,8 @@
         $("#btnPass").click(function () {
             //获取form对象，判断输入，通过则提交
             $("#audit_remark").val($("#remark").val());
-            var formPassed = $("#from-passed");
             loading(this);
-            formPassed.submit();
+            postWorkflowForm($("#form-approval"));
         });
 
         // 审核不通过
@@ -514,7 +511,7 @@
             var formCancel = $("#form-cancel");
             if ($("#cancel_remark").val()) {
                 loading(this);
-                formCancel.submit();
+                postWorkflowForm(formCancel);
             } else {
                 alert('请填写终止原因')
             }
@@ -526,7 +523,7 @@
             var formAddsqlcronjo = $("#from-addsqlcronjob");
             if ($("#run_date").val()) {
                 loading(this);
-                formAddsqlcronjo.submit();
+                postWorkflowForm(formAddsqlcronjo);
             } else {
                 alert('请填写定时执行时间')
             }
@@ -537,8 +534,27 @@
             //获取form对象，判断输入，通过则提交
             var formAlterexecutabletime = $("#from-alterexecutabletime");
             loading(this);
-            formAlterexecutabletime.submit();
+            postWorkflowForm(formAlterexecutabletime);
         });
+
+        function postWorkflowForm(form) {
+            $.ajax({
+                type: "post",
+                url: form.attr("action"),
+                dataType: "json",
+                data: form.serialize(),
+                success: function (data) {
+                    if (data.status === 0 && data.data.redirect_url) {
+                        window.location.href = data.data.redirect_url;
+                    } else {
+                        alert(data.msg || "操作失败");
+                    }
+                },
+                error: function (xhr) {
+                    alert(xhr.responseJSON && xhr.responseJSON.detail ? xhr.responseJSON.detail : "操作失败");
+                }
+            });
+        }
 
         // 按钮禁用
         function loading(obj) {
@@ -556,7 +572,7 @@
                 escape: true,
                 method: 'get',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/sqlworkflow/detail_content/",
+                url: "/api/v1/workflows/{{ workflow_detail.id }}/content/",
                 striped: true,                      //是否显示行间隔色
                 cache: true,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -763,7 +779,7 @@
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/inception/osc_control/",
+                url: "/api/v1/workflows/{{ workflow_detail.id }}/osc/",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: false,                   //是否显示分页（*）
@@ -885,7 +901,7 @@
                     //发送请求
                     $.ajax({
                         type: "post",
-                        url: "/inception/osc_control/",
+                        url: "/api/v1/workflows/{{ workflow_detail.id }}/osc/",
                         dataType: "json",
                         data: {
                             sqlsha1: sqlsha1,
@@ -940,13 +956,10 @@
             if (workflow_id > 0) {
                 // console.log('get workflow status');
                 $.ajax({
-                    type: "post",
+                    type: "get",
                     async: false,
-                    url: "/getWorkflowStatus/",
+                    url: "/api/v1/workflows/" + workflow_id + "/status/",
                     dataType: "json",
-                    data: {
-                        workflow_id: workflow_id
-                    },
                     complete: function () {
                         if (wfStatus !== -1 && wfStatus !== "workflow_executing") {
                             window.location.reload(true);
