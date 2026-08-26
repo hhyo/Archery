@@ -303,7 +303,6 @@ def test_del_binlog_no_binlog_selected(client_with_super_user, db_instance):
 def test_del_binlog_success(mock_get_engine, client_with_super_user, db_instance):
     """清理binlog成功"""
     mock_engine = MagicMock()
-    mock_engine.escape_string.return_value = "mysql-bin.000001"
     mock_engine.query.return_value = _make_query_result(columns=[], rows=[], error=None)
     mock_get_engine.return_value = mock_engine
 
@@ -312,17 +311,16 @@ def test_del_binlog_success(mock_get_engine, client_with_super_user, db_instance
     result = json.loads(r.content)
     assert result["status"] == 0
     assert result["msg"] == "清理成功"
-    # 验证 escape_string 被调用
-    mock_engine.escape_string.assert_called_once_with("mysql-bin.000001")
     # 验证 purge 命令被正确执行
-    mock_engine.query.assert_called_once()
+    mock_engine.query.assert_called_once_with(
+        sql="purge master logs to %s;", parameters=("mysql-bin.000001",)
+    )
 
 
 @patch("sql.binlog.get_engine")
 def test_del_binlog_fail(mock_get_engine, client_with_super_user, db_instance):
     """清理binlog失败"""
     mock_engine = MagicMock()
-    mock_engine.escape_string.return_value = "mysql-bin.000001"
     mock_engine.query.return_value = _make_query_result(
         columns=[], rows=[], error="purge error"
     )
@@ -798,7 +796,10 @@ def test_my2sql_file_success(mock_makedirs, mock_my2sql_cls, db_instance, settin
 
     mock_my2sql = MagicMock()
     mock_my2sql.generate_args2cmd.return_value = ["my2sql", "-output-dir", "/tmp"]
-    mock_my2sql.execute_cmd.return_value = MagicMock()
+    mock_process = MagicMock()
+    mock_process.communicate.return_value = ("stdout", "stderr")
+    mock_process.returncode = 0
+    mock_my2sql.execute_cmd.return_value = mock_process
     mock_my2sql_cls.return_value = mock_my2sql
 
     user = MagicMock()
@@ -808,8 +809,12 @@ def test_my2sql_file_success(mock_makedirs, mock_my2sql_cls, db_instance, settin
         "work-type": "2sql",
     }
 
-    result = my2sql_file(args, user)
-    assert result == (user, os.path.join("/tmp/archery_test", "downloads/my2sql/"))
+    # Patch os.listdir for test_my2sql_file_success
+    with patch("sql.binlog.os.listdir", return_value=["some_file.sql"]):
+        result = my2sql_file(args, user)
+    assert result[0] == user
+    expected_path_prefix = os.path.join("/tmp/archery_test", "downloads", "my2sql")
+    assert result[1].startswith(expected_path_prefix)
     # 验证参数中 instance 被弹出
     call_args = mock_my2sql.generate_args2cmd.call_args[0][0]
     assert "instance" not in call_args
@@ -828,7 +833,10 @@ def test_my2sql_file_args_updated(
 
     mock_my2sql = MagicMock()
     mock_my2sql.generate_args2cmd.return_value = ["my2sql"]
-    mock_my2sql.execute_cmd.return_value = MagicMock()
+    mock_process = MagicMock()
+    mock_process.communicate.return_value = ("stdout", "stderr")
+    mock_process.returncode = 0
+    mock_my2sql.execute_cmd.return_value = mock_process
     mock_my2sql_cls.return_value = mock_my2sql
 
     user = MagicMock()
@@ -838,7 +846,8 @@ def test_my2sql_file_args_updated(
         "work-type": "2sql",
     }
 
-    my2sql_file(args, user)
+    with patch("sql.binlog.os.listdir", return_value=["some_file.sql"]):
+        my2sql_file(args, user)
     # 验证 instance 的连接信息被重新放入 args
     call_args = mock_my2sql.generate_args2cmd.call_args[0][0]
     assert call_args["host"] == db_instance.host
@@ -855,7 +864,10 @@ def test_my2sql_file_execute_cmd_called(
 
     mock_my2sql = MagicMock()
     mock_my2sql.generate_args2cmd.return_value = ["my2sql", "-output-dir", "/tmp"]
-    mock_my2sql.execute_cmd.return_value = MagicMock()
+    mock_process = MagicMock()
+    mock_process.communicate.return_value = ("stdout", "stderr")
+    mock_process.returncode = 0
+    mock_my2sql.execute_cmd.return_value = mock_process
     mock_my2sql_cls.return_value = mock_my2sql
 
     user = MagicMock()
@@ -864,5 +876,6 @@ def test_my2sql_file_execute_cmd_called(
         "start-file": "mysql-bin.000001",
     }
 
-    my2sql_file(args, user)
+    with patch("sql.binlog.os.listdir", return_value=["some_file.sql"]):
+        my2sql_file(args, user)
     mock_my2sql.execute_cmd.assert_called_once_with(["my2sql", "-output-dir", "/tmp"])

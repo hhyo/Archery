@@ -104,8 +104,9 @@ def del_binlog(request):
 
     if binlog:
         query_engine = get_engine(instance=instance)
-        binlog = query_engine.escape_string(binlog)
-        query_result = query_engine.query(sql=rf"purge master logs to '{binlog}';")
+        query_result = query_engine.query(
+            sql="purge master logs to %s;", parameters=(binlog,)
+        )
         if query_result.error is None:
             result = {"status": 0, "msg": "清理成功", "data": ""}
         else:
@@ -268,8 +269,8 @@ def my2sql(request):
         async_task(
             my2sql_file,
             args=args,
-            user=request.user,
-            hook=notify_for_my2sql,
+            user=request.user.username,
+            hook="sql.notify.notify_for_my2sql",
             timeout=-1,
             task_name=f"my2sql-{time.time()}",
         )
@@ -290,20 +291,38 @@ def my2sql_file(args, user):
     """
     my2sql = My2SQL()
     instance = args.pop("instance")
+
+    # 应该获取解密后的账号密码
+    username, password = instance.get_username_password()
+
     args.update(
         {
             "host": instance.host,
-            "user": instance.user,
-            "password": instance.password,
+            "user": username,
+            "password": password,
             "port": instance.port,
         }
     )
-    path = os.path.join(settings.BASE_DIR, "downloads/my2sql/")
+
+    # 每次生成唯一的目录，避免目录非空导致 my2sql 失败
+    dir_name = f"{instance.host}_{int(time.time())}"
+    path = os.path.join(settings.BASE_DIR, "downloads", "my2sql", dir_name)
     os.makedirs(path, exist_ok=True)
 
     # 参数转换
     args["output-dir"] = path
     cmd_args = my2sql.generate_args2cmd(args)
     # 使用output-dir参数执行命令保存sql
-    my2sql.execute_cmd(cmd_args)
+    p = my2sql.execute_cmd(cmd_args)
+    stdout, stderr = p.communicate()
+
+    if p.returncode != 0:
+        logger.error(f"my2sql_file execute failed, stderr: {stderr}, stdout: {stdout}")
+        raise RuntimeError(f"my2sql执行失败，错误信息: {stderr or stdout}")
+
+    # 如果执行成功，但目录下没有任何文件，可能是 my2sql 工具校验失败（比如参数错误、目录权限等）导致静默退出
+    if not os.listdir(path):
+        logger.error(f"my2sql_file output empty, stderr: {stderr}, stdout: {stdout}")
+        raise RuntimeError(f"my2sql执行成功但未生成文件，可能静默失败，输出: {stdout}")
+
     return user, path
