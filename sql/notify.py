@@ -144,7 +144,7 @@ class LegacyRender(Notifier):
         # 获取审核信息
         audit_id = self.audit.audit_id
         base_url = self.sys_config.get(
-            "archery_base_url", "http://127.0.0.1:8000"
+            "archery_base_url", "http://127.0.0.1:9123"
         ).rstrip("/")
         workflow_url = "{base_url}/workflow/{audit_id}".format(
             base_url=base_url, audit_id=self.audit.audit_id
@@ -281,7 +281,7 @@ class LegacyRender(Notifier):
 
     def render_execute(self):
         base_url = self.sys_config.get(
-            "archery_base_url", "http://127.0.0.1:8000"
+            "archery_base_url", "http://127.0.0.1:9123"
         ).rstrip("/")
         audit_handler = AuditV2(workflow=self.workflow, audit=self.audit)
         review_info = audit_handler.get_review_info()
