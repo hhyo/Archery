@@ -87,6 +87,22 @@ def test_workflow_list_returns_submitters_workflow(
 
 
 @pytest.mark.django_db
+def test_workflow_audit_list_returns_workflows(
+    authenticated_api_client, normal_user, workflow_api_data, mocker
+):
+    workflow, _ = workflow_api_data
+    normal_user.has_perm = mocker.Mock(return_value=True)
+
+    response = authenticated_api_client.post(
+        "/api/v1/workflows/audit-list/", {"limit": 20, "offset": 0}, format="json"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["rows"][0]["id"] == workflow.id
+
+
+@pytest.mark.django_db
 def test_workflow_content_and_status_return_compatible_responses(
     authenticated_api_client, workflow_api_data
 ):
@@ -222,6 +238,42 @@ def test_auto_execution_queues_task_and_removes_schedule_after_commit(
     assert workflow.status == "workflow_queuing"
     delete_schedule.assert_called_once_with("sqlreview-timing-8")
     queue_task.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_schedule_creates_timing_task_for_authorized_executor(
+    authenticated_api_client, normal_user, workflow_api_data, mocker
+):
+    workflow, _ = workflow_api_data
+    audit = mocker.Mock(audit_id=3)
+    normal_user.has_perm = mocker.Mock(return_value=True)
+    mocker.patch.object(api_workflow_operations, "can_timingtask", return_value=True)
+    mocker.patch.object(
+        api_workflow_operations, "on_correct_time_period", return_value=True
+    )
+    mocker.patch.object(
+        api_workflow_operations.Audit, "detail_by_workflow_id", return_value=audit
+    )
+    add_log = mocker.patch.object(api_workflow_operations.Audit, "add_log")
+    schedule = mocker.patch.object(api_workflow_operations, "add_sql_schedule")
+    mocker.patch.object(
+        api_workflow_operations.transaction,
+        "on_commit",
+        side_effect=lambda callback: callback(),
+    )
+
+    response = authenticated_api_client.post(
+        f"/api/v1/workflows/{workflow.id}/schedule/",
+        {"run_date": "2030-01-01 10:00"},
+        format="json",
+    )
+
+    workflow.refresh_from_db()
+    assert response.status_code == 200
+    assert response.json()["msg"] == "定时执行已设置"
+    assert workflow.status == "workflow_timingtask"
+    add_log.assert_called_once()
+    schedule.assert_called_once()
 
 
 def test_schedule_rejects_past_time_before_side_effects(
