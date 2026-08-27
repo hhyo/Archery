@@ -17,7 +17,14 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow
 from sql.notify import notify_for_audit, notify_for_execute
 from sql.utils.resource_group import user_groups
-from sql.utils.sql_review import can_cancel, can_execute, can_rollback, can_timingtask, can_view, on_correct_time_period
+from sql.utils.sql_review import (
+    can_cancel,
+    can_execute,
+    can_rollback,
+    can_timingtask,
+    can_view,
+    on_correct_time_period,
+)
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit, AuditException, get_auditor
 from .permissions import IsWorkflowPageUser
@@ -39,7 +46,14 @@ def get_workflow(workflow_id):
 
 
 def mutation_response(workflow_id, message):
-    return {"status": 0, "msg": message, "data": {"workflow_id": workflow_id, "redirect_url": reverse("sql:detail", args=(workflow_id,))}}
+    return {
+        "status": 0,
+        "msg": message,
+        "data": {
+            "workflow_id": workflow_id,
+            "redirect_url": reverse("sql:detail", args=(workflow_id,)),
+        },
+    }
 
 
 def should_notify(config, phase):
@@ -69,22 +83,53 @@ class WorkflowListView(WorkflowOperationAPIView):
         syntax_type = request.data.getlist("syntax_type[]")
         if syntax_type:
             filters["syntax_type__in"] = syntax_type
-        for input_name, field in (("navStatus", "status"), ("instance_id", "instance_id"), ("group_id", "group_id")):
+        for input_name, field in (
+            ("navStatus", "status"),
+            ("instance_id", "instance_id"),
+            ("group_id", "group_id"),
+        ):
             if request.data.get(input_name):
                 filters[field] = request.data[input_name]
         if request.data.get("start_date") and request.data.get("end_date"):
-            filters["create_time__range"] = (request.data["start_date"], datetime.datetime.strptime(request.data["end_date"], "%Y-%m-%d") + datetime.timedelta(days=1))
+            filters["create_time__range"] = (
+                request.data["start_date"],
+                datetime.datetime.strptime(request.data["end_date"], "%Y-%m-%d")
+                + datetime.timedelta(days=1),
+            )
         user = request.user
         if not (user.is_superuser or user.has_perm("sql.audit_user")):
-            if user.has_perm("sql.sql_review") or user.has_perm("sql.sql_execute_for_resource_group"):
-                filters["group_id__in"] = [group.group_id for group in user_groups(user)]
+            if user.has_perm("sql.sql_review") or user.has_perm(
+                "sql.sql_execute_for_resource_group"
+            ):
+                filters["group_id__in"] = [
+                    group.group_id for group in user_groups(user)
+                ]
             else:
                 filters["engineer"] = user.username
         workflows = SqlWorkflow.objects.filter(**filters)
         if request.data.get("search"):
-            workflows = workflows.filter(Q(engineer_display__icontains=request.data["search"]) | Q(workflow_name__icontains=request.data["search"]))
-        offset, limit = int(request.data.get("offset", 0)), int(request.data.get("limit", 0))
-        rows = workflows.order_by("-create_time")[offset:offset + limit if limit else None].values("id", "workflow_name", "engineer_display", "status", "is_backup", "create_time", "instance__instance_name", "db_name", "group_name", "syntax_type", "export_format")
+            workflows = workflows.filter(
+                Q(engineer_display__icontains=request.data["search"])
+                | Q(workflow_name__icontains=request.data["search"])
+            )
+        offset, limit = int(request.data.get("offset", 0)), int(
+            request.data.get("limit", 0)
+        )
+        rows = workflows.order_by("-create_time")[
+            offset : offset + limit if limit else None
+        ].values(
+            "id",
+            "workflow_name",
+            "engineer_display",
+            "status",
+            "is_backup",
+            "create_time",
+            "instance__instance_name",
+            "db_name",
+            "group_name",
+            "syntax_type",
+            "export_format",
+        )
         return Response({"total": workflows.count(), "rows": list(rows)})
 
 
@@ -96,16 +141,43 @@ class WorkflowAuditListView(WorkflowOperationAPIView):
         syntax_type = request.data.getlist("syntax_type[]")
         if syntax_type:
             filters["syntax_type__in"] = syntax_type
-        for input_name, field in (("navStatus", "status"), ("instance_id", "instance_id"), ("group_id", "group_id")):
+        for input_name, field in (
+            ("navStatus", "status"),
+            ("instance_id", "instance_id"),
+            ("group_id", "group_id"),
+        ):
             if request.data.get(input_name):
                 filters[field] = request.data[input_name]
         if request.data.get("start_date") and request.data.get("end_date"):
-            filters["create_time__range"] = (request.data["start_date"], datetime.datetime.strptime(request.data["end_date"], "%Y-%m-%d") + datetime.timedelta(days=1))
+            filters["create_time__range"] = (
+                request.data["start_date"],
+                datetime.datetime.strptime(request.data["end_date"], "%Y-%m-%d")
+                + datetime.timedelta(days=1),
+            )
         workflows = SqlWorkflow.objects.filter(**filters)
         if request.data.get("search"):
-            workflows = workflows.filter(Q(engineer_display__icontains=request.data["search"]) | Q(workflow_name__icontains=request.data["search"]))
-        offset, limit = int(request.data.get("offset", 0)), int(request.data.get("limit", 0))
-        rows = workflows.order_by("-create_time")[offset:offset + limit if limit else None].values("id", "workflow_name", "engineer_display", "status", "is_backup", "create_time", "instance__instance_name", "db_name", "group_name", "syntax_type", "export_format")
+            workflows = workflows.filter(
+                Q(engineer_display__icontains=request.data["search"])
+                | Q(workflow_name__icontains=request.data["search"])
+            )
+        offset, limit = int(request.data.get("offset", 0)), int(
+            request.data.get("limit", 0)
+        )
+        rows = workflows.order_by("-create_time")[
+            offset : offset + limit if limit else None
+        ].values(
+            "id",
+            "workflow_name",
+            "engineer_display",
+            "status",
+            "is_backup",
+            "create_time",
+            "instance__instance_name",
+            "db_name",
+            "group_name",
+            "syntax_type",
+            "export_format",
+        )
         return Response({"total": workflows.count(), "rows": list(rows)})
 
 
@@ -114,7 +186,11 @@ class WorkflowContentView(WorkflowOperationAPIView):
         workflow = get_workflow(workflow_id)
         ensure_viewable(request.user, workflow_id)
         content = workflow.sqlworkflowcontent
-        rows = content.execute_result if workflow.status in ["workflow_finish", "workflow_exception"] else content.review_content
+        rows = (
+            content.execute_result
+            if workflow.status in ["workflow_finish", "workflow_exception"]
+            else content.review_content
+        )
         try:
             loaded = json.loads(rows)
             if loaded and isinstance(loaded[-1], list):
@@ -123,7 +199,15 @@ class WorkflowContentView(WorkflowOperationAPIView):
                     result.rows.append(ReviewResult(inception_result=row))
                 rows = result.json()
         except (IndexError, json.decoder.JSONDecodeError):
-            rows = ReviewSet(rows=[ReviewResult(id=1, sql=content.sql_content, errormessage="Json decode failed.执行结果Json解析失败, 请联系管理员")]).json()
+            rows = ReviewSet(
+                rows=[
+                    ReviewResult(
+                        id=1,
+                        sql=content.sql_content,
+                        errormessage="Json decode failed.执行结果Json解析失败, 请联系管理员",
+                    )
+                ]
+            ).json()
         return Response({"rows": json.loads(rows)})
 
 
@@ -133,7 +217,9 @@ class WorkflowRollbackView(WorkflowOperationAPIView):
             raise PermissionDenied("你无权查看当前工单的回滚语句！")
         workflow = get_workflow(workflow_id)
         try:
-            rows = get_engine(instance=workflow.instance).get_rollback(workflow=workflow)
+            rows = get_engine(instance=workflow.instance).get_rollback(
+                workflow=workflow
+            )
         except Exception as exc:
             return Response({"status": 1, "msg": str(exc), "rows": []})
         return Response({"status": 0, "msg": "", "rows": rows})
@@ -142,10 +228,14 @@ class WorkflowRollbackView(WorkflowOperationAPIView):
 class WorkflowExecutionWindowView(WorkflowOperationAPIView):
     def patch(self, request, workflow_id):
         data = self.validated_data(WorkflowExecutionWindowSerializer, request)
-        if not request.user.has_perm("sql.sql_review") or not Audit.can_review(request.user, workflow_id, WorkflowType.SQL_REVIEW):
+        if not request.user.has_perm("sql.sql_review") or not Audit.can_review(
+            request.user, workflow_id, WorkflowType.SQL_REVIEW
+        ):
             raise PermissionDenied("你无权操作当前工单！")
         workflow = get_workflow(workflow_id)
-        workflow.run_date_start, workflow.run_date_end = data.get("run_date_start"), data.get("run_date_end")
+        workflow.run_date_start, workflow.run_date_end = data.get(
+            "run_date_start"
+        ), data.get("run_date_end")
         workflow.save(update_fields=["run_date_start", "run_date_end"])
         return Response(mutation_response(workflow_id, "可执行时间已更新"))
 
@@ -161,38 +251,83 @@ class WorkflowApprovalView(WorkflowOperationAPIView):
         with transaction.atomic():
             auditor = get_auditor(workflow=workflow, sys_config=config)
             try:
-                detail = auditor.operate(WorkflowAction.PASS, request.user, data["audit_remark"])
+                detail = auditor.operate(
+                    WorkflowAction.PASS, request.user, data["audit_remark"]
+                )
             except AuditException as exc:
                 raise ValidationError({"detail": f"审核失败, 错误信息: {exc}"}) from exc
             if auditor.audit.current_status == WorkflowStatus.PASSED:
                 auditor.workflow.status = "workflow_review_pass"
                 auditor.workflow.save(update_fields=["status"])
             if should_notify(config, "Pass"):
-                transaction.on_commit(lambda: async_task(notify_for_audit, workflow_audit=auditor.audit, workflow_audit_detail=detail, timeout=60, task_name=f"sqlreview-pass-{workflow_id}"))
+                transaction.on_commit(
+                    lambda: async_task(
+                        notify_for_audit,
+                        workflow_audit=auditor.audit,
+                        workflow_audit_detail=detail,
+                        timeout=60,
+                        task_name=f"sqlreview-pass-{workflow_id}",
+                    )
+                )
         return Response(mutation_response(workflow_id, "审核通过"))
 
 
 class WorkflowExecutionView(WorkflowOperationAPIView):
     def post(self, request, workflow_id):
         data = self.validated_data(WorkflowExecutionSerializer, request)
-        if not (request.user.has_perm("sql.sql_execute") or request.user.has_perm("sql.sql_execute_for_resource_group")) or not can_execute(request.user, workflow_id):
+        if not (
+            request.user.has_perm("sql.sql_execute")
+            or request.user.has_perm("sql.sql_execute_for_resource_group")
+        ) or not can_execute(request.user, workflow_id):
             raise PermissionDenied("你无权执行当前工单！")
         if not on_correct_time_period(workflow_id):
-            raise ValidationError({"detail": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"})
+            raise ValidationError(
+                {"detail": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"}
+            )
         workflow = get_workflow(workflow_id)
-        audit_id = Audit.detail_by_workflow_id(workflow_id, WorkflowType.SQL_REVIEW).audit_id
+        audit_id = Audit.detail_by_workflow_id(
+            workflow_id, WorkflowType.SQL_REVIEW
+        ).audit_id
         with transaction.atomic():
             if data["mode"] == "auto":
                 workflow.status = "workflow_queuing"
                 workflow.save(update_fields=["status"])
-                Audit.add_log(audit_id, 5, "执行工单", "工单执行排队中", request.user.username, request.user.display)
-                transaction.on_commit(lambda: del_schedule(f"sqlreview-timing-{workflow_id}"))
-                transaction.on_commit(lambda: async_task("sql.utils.execute_sql.execute", workflow_id, request.user, hook="sql.utils.execute_sql.execute_callback", timeout=-1, task_name=f"sqlreview-execute-{workflow_id}"))
+                Audit.add_log(
+                    audit_id,
+                    5,
+                    "执行工单",
+                    "工单执行排队中",
+                    request.user.username,
+                    request.user.display,
+                )
+                transaction.on_commit(
+                    lambda: del_schedule(f"sqlreview-timing-{workflow_id}")
+                )
+                transaction.on_commit(
+                    lambda: async_task(
+                        "sql.utils.execute_sql.execute",
+                        workflow_id,
+                        request.user,
+                        hook="sql.utils.execute_sql.execute_callback",
+                        timeout=-1,
+                        task_name=f"sqlreview-execute-{workflow_id}",
+                    )
+                )
                 message = "工单执行排队中"
             else:
-                workflow.status, workflow.finish_time = "workflow_finish", timezone.now()
+                workflow.status, workflow.finish_time = (
+                    "workflow_finish",
+                    timezone.now(),
+                )
                 workflow.save(update_fields=["status", "finish_time"])
-                Audit.add_log(audit_id, 6, "手工工单", "确认手工执行结束", request.user.username, request.user.display)
+                Audit.add_log(
+                    audit_id,
+                    6,
+                    "手工工单",
+                    "确认手工执行结束",
+                    request.user.username,
+                    request.user.display,
+                )
                 if should_notify(SysConfig(), "Execute"):
                     transaction.on_commit(lambda: notify_for_execute(workflow=workflow))
                 message = "已确认手工执行结束"
@@ -207,17 +342,37 @@ class WorkflowScheduleView(WorkflowOperationAPIView):
             run_date = timezone.make_aware(run_date)
         if run_date <= timezone.now():
             raise ValidationError({"run_date": "时间不能小于当前时间"})
-        if not (request.user.has_perm("sql.sql_execute") or request.user.has_perm("sql.sql_execute_for_resource_group")) or not can_timingtask(request.user, workflow_id):
+        if not (
+            request.user.has_perm("sql.sql_execute")
+            or request.user.has_perm("sql.sql_execute_for_resource_group")
+        ) or not can_timingtask(request.user, workflow_id):
             raise PermissionDenied("你无权操作当前工单！")
         if not on_correct_time_period(workflow_id, run_date):
-            raise ValidationError({"run_date": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"})
+            raise ValidationError(
+                {
+                    "run_date": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+                }
+            )
         workflow = get_workflow(workflow_id)
-        audit_id = Audit.detail_by_workflow_id(workflow_id, WorkflowType.SQL_REVIEW).audit_id
+        audit_id = Audit.detail_by_workflow_id(
+            workflow_id, WorkflowType.SQL_REVIEW
+        ).audit_id
         with transaction.atomic():
             workflow.status = "workflow_timingtask"
             workflow.save(update_fields=["status"])
-            Audit.add_log(audit_id, 4, "定时执行", f"定时执行时间：{run_date}", request.user.username, request.user.display)
-            transaction.on_commit(lambda: add_sql_schedule(f"sqlreview-timing-{workflow_id}", run_date, workflow_id))
+            Audit.add_log(
+                audit_id,
+                4,
+                "定时执行",
+                f"定时执行时间：{run_date}",
+                request.user.username,
+                request.user.display,
+            )
+            transaction.on_commit(
+                lambda: add_sql_schedule(
+                    f"sqlreview-timing-{workflow_id}", run_date, workflow_id
+                )
+            )
         return Response(mutation_response(workflow_id, "定时执行已设置"))
 
 
@@ -227,8 +382,14 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
         workflow = get_workflow(workflow_id)
         if not can_cancel(request.user, workflow_id):
             raise PermissionDenied("你无权操作当前工单！")
-        action = WorkflowAction.ABORT if request.user.username == workflow.engineer else WorkflowAction.REJECT
-        if action == WorkflowAction.REJECT and not request.user.has_perm("sql.sql_review"):
+        action = (
+            WorkflowAction.ABORT
+            if request.user.username == workflow.engineer
+            else WorkflowAction.REJECT
+        )
+        if action == WorkflowAction.REJECT and not request.user.has_perm(
+            "sql.sql_review"
+        ):
             raise PermissionDenied("你无权操作当前工单！")
         config, was_scheduled = SysConfig(), workflow.status == "workflow_timingtask"
         with transaction.atomic():
@@ -240,9 +401,19 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
             workflow.status = "workflow_abort"
             workflow.save(update_fields=["status"])
             if was_scheduled:
-                transaction.on_commit(lambda: del_schedule(f"sqlreview-timing-{workflow_id}"))
+                transaction.on_commit(
+                    lambda: del_schedule(f"sqlreview-timing-{workflow_id}")
+                )
             if should_notify(config, "Cancel"):
-                transaction.on_commit(lambda: async_task(notify_for_audit, workflow_audit=auditor.audit, workflow_audit_detail=detail, timeout=60, task_name=f"sqlreview-cancel-{workflow_id}"))
+                transaction.on_commit(
+                    lambda: async_task(
+                        notify_for_audit,
+                        workflow_audit=auditor.audit,
+                        workflow_audit_detail=detail,
+                        timeout=60,
+                        task_name=f"sqlreview-cancel-{workflow_id}",
+                    )
+                )
         return Response(mutation_response(workflow_id, "工单已终止"))
 
 
@@ -259,7 +430,9 @@ class WorkflowOscView(WorkflowOperationAPIView):
         workflow = get_workflow(workflow_id)
         ensure_viewable(request.user, workflow_id)
         try:
-            result = get_engine(workflow.instance).osc_control(command=data["command"], sqlsha1=data["sqlsha1"])
+            result = get_engine(workflow.instance).osc_control(
+                command=data["command"], sqlsha1=data["sqlsha1"]
+            )
             rows, error = result.to_dict(), result.error
         except Exception as exc:
             rows, error = [], str(exc)

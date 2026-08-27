@@ -7,7 +7,10 @@ cannot be proven by service-level unit tests.
 import pytest
 from django.urls import Resolver404, resolve
 
-from sql_api.serializers import WorkflowExecutionSerializer, WorkflowTerminationSerializer
+from sql_api.serializers import (
+    WorkflowExecutionSerializer,
+    WorkflowTerminationSerializer,
+)
 from sql_api import api_workflow_operations
 from sql_api.api_workflow_operations import mutation_response
 
@@ -40,7 +43,9 @@ def test_approval_endpoint_uses_path_id_and_session_user(
     auditor.audit.current_status = api_workflow_operations.WorkflowStatus.PASSED
     auditor.workflow = workflow
     mocker.patch.object(api_workflow_operations, "get_workflow", return_value=workflow)
-    get_auditor = mocker.patch.object(api_workflow_operations, "get_auditor", return_value=auditor)
+    get_auditor = mocker.patch.object(
+        api_workflow_operations, "get_auditor", return_value=auditor
+    )
     mocker.patch.object(api_workflow_operations, "should_notify", return_value=False)
     normal_user.has_perm = mocker.Mock(return_value=True)
 
@@ -85,7 +90,11 @@ def test_terminate_scheduled_workflow_removes_schedule_after_commit(
     mocker.patch.object(api_workflow_operations, "can_cancel", return_value=True)
     mocker.patch.object(api_workflow_operations, "get_auditor", return_value=auditor)
     mocker.patch.object(api_workflow_operations, "SysConfig")
-    on_commit = mocker.patch.object(api_workflow_operations.transaction, "on_commit", side_effect=lambda callback: callback())
+    on_commit = mocker.patch.object(
+        api_workflow_operations.transaction,
+        "on_commit",
+        side_effect=lambda callback: callback(),
+    )
     delete_schedule = mocker.patch.object(api_workflow_operations, "del_schedule")
     mocker.patch.object(api_workflow_operations, "should_notify", return_value=False)
 
@@ -108,11 +117,19 @@ def test_auto_execution_queues_task_and_removes_schedule_after_commit(
     workflow = mocker.Mock()
     audit = mocker.Mock(audit_id=3)
     mocker.patch.object(api_workflow_operations, "can_execute", return_value=True)
-    mocker.patch.object(api_workflow_operations, "on_correct_time_period", return_value=True)
+    mocker.patch.object(
+        api_workflow_operations, "on_correct_time_period", return_value=True
+    )
     mocker.patch.object(api_workflow_operations, "get_workflow", return_value=workflow)
-    mocker.patch.object(api_workflow_operations.Audit, "detail_by_workflow_id", return_value=audit)
+    mocker.patch.object(
+        api_workflow_operations.Audit, "detail_by_workflow_id", return_value=audit
+    )
     mocker.patch.object(api_workflow_operations.Audit, "add_log")
-    mocker.patch.object(api_workflow_operations.transaction, "on_commit", side_effect=lambda callback: callback())
+    mocker.patch.object(
+        api_workflow_operations.transaction,
+        "on_commit",
+        side_effect=lambda callback: callback(),
+    )
     delete_schedule = mocker.patch.object(api_workflow_operations, "del_schedule")
     queue_task = mocker.patch.object(api_workflow_operations, "async_task")
 
@@ -148,7 +165,9 @@ def test_osc_control_returns_engine_error_in_compatible_envelope(
     workflow = mocker.Mock()
     mocker.patch.object(api_workflow_operations, "get_workflow", return_value=workflow)
     mocker.patch.object(api_workflow_operations, "ensure_viewable")
-    mocker.patch.object(api_workflow_operations, "get_engine").side_effect = RuntimeError("engine failed")
+    mocker.patch.object(api_workflow_operations, "get_engine").side_effect = (
+        RuntimeError("engine failed")
+    )
 
     response = authenticated_api_client.post(
         "/api/v1/workflows/10/osc/",

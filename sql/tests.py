@@ -821,7 +821,6 @@ class TestWorkflowView(TransactionTestCase):
         SysConfig().purge()
 
 
-
 class TestOptimize(TestCase):
     """
     测试SQL优化
