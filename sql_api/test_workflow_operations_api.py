@@ -145,7 +145,10 @@ def test_execution_window_updates_workflow(
 
     response = authenticated_api_client.patch(
         f"/api/v1/workflows/{workflow.id}/execution-window/",
-        {"run_date_start": "2030-01-01T10:00:00", "run_date_end": "2030-01-01T11:00:00"},
+        {
+            "run_date_start": "2030-01-01T10:00:00",
+            "run_date_end": "2030-01-01T11:00:00",
+        },
         format="json",
     )
 
