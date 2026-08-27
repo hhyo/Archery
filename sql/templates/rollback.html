@@ -65,14 +65,6 @@
                 );
                 return html.join('');
             },
-            queryParamsType: 'limit',
-            //请求服务数据时所传参数
-            queryParams:
-                function (params) {
-                    return {
-                        workflow_id: "{{ workflow_detail.id }}",
-                    }
-                },
             locale: 'zh-CN',                    //本地化
             columns: [{
                 title: '执行语句',

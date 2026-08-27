@@ -5,7 +5,7 @@ cannot be proven by service-level unit tests.
 """
 
 import pytest
-from django.urls import Resolver404, resolve
+from sql.engines.models import ResultSet
 
 from sql_api.serializers import (
     WorkflowExecutionSerializer,
@@ -71,10 +71,88 @@ def test_execution_endpoint_rejects_invalid_mode_before_service_call(
     assert response.status_code == 400
 
 
-def test_workflow_operation_routes_replace_legacy_routes():
-    assert resolve("/api/v1/workflows/17/status/").kwargs == {"workflow_id": 17}
-    with pytest.raises(Resolver404):
-        resolve("/getWorkflowStatus/")
+@pytest.mark.django_db
+def test_workflow_list_returns_submitters_workflow(
+    authenticated_api_client, workflow_api_data
+):
+    workflow, _ = workflow_api_data
+
+    response = authenticated_api_client.post(
+        "/api/v1/workflows/", {"limit": 20, "offset": 0}, format="json"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["rows"][0]["id"] == workflow.id
+
+
+@pytest.mark.django_db
+def test_workflow_content_and_status_return_compatible_responses(
+    authenticated_api_client, workflow_api_data
+):
+    workflow, _ = workflow_api_data
+
+    content_response = authenticated_api_client.get(
+        f"/api/v1/workflows/{workflow.id}/content/"
+    )
+    status_response = authenticated_api_client.get(
+        f"/api/v1/workflows/{workflow.id}/status/"
+    )
+
+    assert content_response.status_code == 200
+    assert content_response.json()["rows"][0]["sql"] == "select 1"
+    assert status_response.json() == {
+        "status": "workflow_review_pass",
+        "msg": "",
+        "data": "",
+    }
+
+
+@pytest.mark.django_db
+def test_rollback_and_osc_return_engine_results(
+    authenticated_api_client, workflow_api_data, mocker
+):
+    workflow, _ = workflow_api_data
+    mocker.patch.object(api_workflow_operations, "can_rollback", return_value=True)
+    engine = mocker.patch.object(api_workflow_operations, "get_engine").return_value
+    engine.get_rollback.return_value = [["update t", "update t rollback"]]
+    engine.osc_control.return_value = ResultSet(rows=[])
+
+    rollback_response = authenticated_api_client.get(
+        f"/api/v1/workflows/{workflow.id}/rollback/"
+    )
+    osc_response = authenticated_api_client.post(
+        f"/api/v1/workflows/{workflow.id}/osc/",
+        {"command": "get", "sqlsha1": "hash"},
+        format="json",
+    )
+
+    assert rollback_response.json() == {
+        "status": 0,
+        "msg": "",
+        "rows": [["update t", "update t rollback"]],
+    }
+    assert osc_response.json() == {"total": 0, "rows": [], "msg": None}
+
+
+@pytest.mark.django_db
+def test_execution_window_updates_workflow(
+    authenticated_api_client, normal_user, workflow_api_data, mocker
+):
+    workflow, _ = workflow_api_data
+    normal_user.has_perm = mocker.Mock(return_value=True)
+    mocker.patch.object(api_workflow_operations.Audit, "can_review", return_value=True)
+
+    response = authenticated_api_client.patch(
+        f"/api/v1/workflows/{workflow.id}/execution-window/",
+        {"run_date_start": "2030-01-01T10:00:00", "run_date_end": "2030-01-01T11:00:00"},
+        format="json",
+    )
+
+    workflow.refresh_from_db()
+    assert response.status_code == 200
+    assert workflow.run_date_start is not None
+    assert workflow.run_date_end is not None
 
 
 @pytest.mark.django_db

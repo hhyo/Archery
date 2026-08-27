@@ -538,11 +538,17 @@
         });
 
         function postWorkflowForm(form) {
+            const data = Object.fromEntries(
+                form.serializeArray()
+                    .filter(function (item) { return item.name !== "workflow_id"; })
+                    .map(function (item) { return [item.name, item.value]; })
+            );
             $.ajax({
-                type: "post",
+                type: form.attr("action").indexOf("execution-window") !== -1 ? "PATCH" : "POST",
                 url: form.attr("action"),
                 dataType: "json",
-                data: form.serialize(),
+                contentType: "application/json",
+                data: JSON.stringify(data),
                 success: function (data) {
                     if (data.status === 0 && data.data.redirect_url) {
                         window.location.href = data.data.redirect_url;
@@ -824,7 +830,6 @@
                     function (params) {
                         return {
                             sqlsha1: $(obj).attr("sqlsha1"),
-                            workflow_id: "{{ workflow_detail.id }}",
                             command: "get"
                         }
                     },
@@ -905,7 +910,6 @@
                         dataType: "json",
                         data: {
                             sqlsha1: sqlsha1,
-                            workflow_id: "{{ workflow_detail.id }}",
                             command: command
                         },
                         complete: function () {

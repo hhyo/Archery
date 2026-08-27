@@ -692,9 +692,7 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
 
 
 class WorkflowListRequestSerializer(serializers.Serializer):
-    syntax_type = serializers.ListField(
-        child=serializers.IntegerField(), required=False, source="syntax_type[]"
-    )
+    syntax_type = serializers.ListField(child=serializers.IntegerField(), required=False)
     navStatus = serializers.CharField(required=False, allow_blank=True)
     instance_id = serializers.IntegerField(required=False, allow_null=True)
     group_id = serializers.IntegerField(required=False, allow_null=True)

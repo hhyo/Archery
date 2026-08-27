@@ -31,6 +31,7 @@ from .permissions import IsWorkflowPageUser
 from .serializers import (
     WorkflowExecutionSerializer,
     WorkflowExecutionWindowSerializer,
+    WorkflowListRequestSerializer,
     WorkflowOscSerializer,
     WorkflowRemarkSerializer,
     WorkflowScheduleSerializer,
@@ -79,8 +80,9 @@ class WorkflowOperationAPIView(views.APIView):
 
 class WorkflowListView(WorkflowOperationAPIView):
     def post(self, request):
+        data = self.validated_data(WorkflowListRequestSerializer, request)
         filters = {}
-        syntax_type = request.data.getlist("syntax_type[]")
+        syntax_type = data.get("syntax_type", [])
         if syntax_type:
             filters["syntax_type__in"] = syntax_type
         for input_name, field in (
@@ -88,13 +90,12 @@ class WorkflowListView(WorkflowOperationAPIView):
             ("instance_id", "instance_id"),
             ("group_id", "group_id"),
         ):
-            if request.data.get(input_name):
-                filters[field] = request.data[input_name]
-        if request.data.get("start_date") and request.data.get("end_date"):
+            if data.get(input_name):
+                filters[field] = data[input_name]
+        if data.get("start_date") and data.get("end_date"):
             filters["create_time__range"] = (
-                request.data["start_date"],
-                datetime.datetime.strptime(request.data["end_date"], "%Y-%m-%d")
-                + datetime.timedelta(days=1),
+                data["start_date"],
+                data["end_date"] + datetime.timedelta(days=1),
             )
         user = request.user
         if not (user.is_superuser or user.has_perm("sql.audit_user")):
@@ -107,14 +108,12 @@ class WorkflowListView(WorkflowOperationAPIView):
             else:
                 filters["engineer"] = user.username
         workflows = SqlWorkflow.objects.filter(**filters)
-        if request.data.get("search"):
+        if data.get("search"):
             workflows = workflows.filter(
-                Q(engineer_display__icontains=request.data["search"])
-                | Q(workflow_name__icontains=request.data["search"])
+                Q(engineer_display__icontains=data["search"])
+                | Q(workflow_name__icontains=data["search"])
             )
-        offset, limit = int(request.data.get("offset", 0)), int(
-            request.data.get("limit", 0)
-        )
+        offset, limit = data.get("offset", 0), data.get("limit", 0)
         rows = workflows.order_by("-create_time")[
             offset : offset + limit if limit else None
         ].values(
@@ -137,8 +136,9 @@ class WorkflowAuditListView(WorkflowOperationAPIView):
     def post(self, request):
         if not request.user.has_perm("sql.audit_user"):
             raise PermissionDenied("你无权查看审核工单列表！")
+        data = self.validated_data(WorkflowListRequestSerializer, request)
         filters = {}
-        syntax_type = request.data.getlist("syntax_type[]")
+        syntax_type = data.get("syntax_type", [])
         if syntax_type:
             filters["syntax_type__in"] = syntax_type
         for input_name, field in (
@@ -146,23 +146,20 @@ class WorkflowAuditListView(WorkflowOperationAPIView):
             ("instance_id", "instance_id"),
             ("group_id", "group_id"),
         ):
-            if request.data.get(input_name):
-                filters[field] = request.data[input_name]
-        if request.data.get("start_date") and request.data.get("end_date"):
+            if data.get(input_name):
+                filters[field] = data[input_name]
+        if data.get("start_date") and data.get("end_date"):
             filters["create_time__range"] = (
-                request.data["start_date"],
-                datetime.datetime.strptime(request.data["end_date"], "%Y-%m-%d")
-                + datetime.timedelta(days=1),
+                data["start_date"],
+                data["end_date"] + datetime.timedelta(days=1),
             )
         workflows = SqlWorkflow.objects.filter(**filters)
-        if request.data.get("search"):
+        if data.get("search"):
             workflows = workflows.filter(
-                Q(engineer_display__icontains=request.data["search"])
-                | Q(workflow_name__icontains=request.data["search"])
+                Q(engineer_display__icontains=data["search"])
+                | Q(workflow_name__icontains=data["search"])
             )
-        offset, limit = int(request.data.get("offset", 0)), int(
-            request.data.get("limit", 0)
-        )
+        offset, limit = data.get("offset", 0), data.get("limit", 0)
         rows = workflows.order_by("-create_time")[
             offset : offset + limit if limit else None
         ].values(
