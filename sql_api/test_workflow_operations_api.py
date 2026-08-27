@@ -6,6 +6,7 @@ cannot be proven by service-level unit tests.
 
 import pytest
 from sql.engines.models import ResultSet
+from sql.models import SqlWorkflow
 
 from sql_api.serializers import (
     WorkflowExecutionSerializer,
@@ -84,6 +85,36 @@ def test_workflow_list_returns_submitters_workflow(
     assert response.status_code == 200
     assert response.json()["total"] == 1
     assert response.json()["rows"][0]["id"] == workflow.id
+
+
+@pytest.mark.django_db
+def test_workflow_list_filters_json_syntax_type(
+    authenticated_api_client, workflow_api_data
+):
+    workflow, _ = workflow_api_data
+    export_workflow = SqlWorkflow.objects.create(
+        workflow_name="export workflow",
+        group_id=workflow.group_id,
+        group_name=workflow.group_name,
+        instance=workflow.instance,
+        db_name=workflow.db_name,
+        syntax_type=3,
+        is_backup=workflow.is_backup,
+        engineer=workflow.engineer,
+        engineer_display=workflow.engineer_display,
+        status=workflow.status,
+        audit_auth_groups="",
+    )
+
+    response = authenticated_api_client.post(
+        "/api/v1/workflows/",
+        {"syntax_type": [3], "limit": 20, "offset": 0},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["rows"][0]["id"] == export_workflow.id
 
 
 @pytest.mark.django_db
@@ -292,9 +323,7 @@ def test_schedule_rejects_past_time_before_side_effects(
 
 
 @pytest.mark.django_db
-def test_osc_control_returns_engine_error_in_compatible_envelope(
-    authenticated_api_client, mocker
-):
+def test_osc_control_does_not_expose_engine_error(authenticated_api_client, mocker):
     workflow = mocker.Mock()
     mocker.patch.object(api_workflow_operations, "get_workflow", return_value=workflow)
     mocker.patch.object(api_workflow_operations, "ensure_viewable")
@@ -308,4 +337,4 @@ def test_osc_control_returns_engine_error_in_compatible_envelope(
         format="json",
     )
 
-    assert response.json() == {"total": 0, "rows": [], "msg": "engine failed"}
+    assert response.json() == {"total": 0, "rows": [], "msg": "OSC 操作失败"}

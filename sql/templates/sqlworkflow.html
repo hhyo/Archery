@@ -133,8 +133,17 @@
             $('#sqlaudit-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
-                contentType: "application/x-www-form-urlencoded",
                 url: "/api/v1/workflows/",
+                ajax: function (params) {
+                    $.ajax({
+                        type: "POST",
+                        url: "/api/v1/workflows/",
+                        contentType: "application/json",
+                        data: JSON.stringify(params.data),
+                        success: params.success,
+                        error: params.error
+                    });
+                },
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）

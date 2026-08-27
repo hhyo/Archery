@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 import simplejson as json
 from django.db import transaction
@@ -37,6 +38,8 @@ from .serializers import (
     WorkflowScheduleSerializer,
     WorkflowTerminationSerializer,
 )
+
+logger = logging.getLogger("default")
 
 
 def get_workflow(workflow_id):
@@ -217,8 +220,9 @@ class WorkflowRollbackView(WorkflowOperationAPIView):
             rows = get_engine(instance=workflow.instance).get_rollback(
                 workflow=workflow
             )
-        except Exception as exc:
-            return Response({"status": 1, "msg": str(exc), "rows": []})
+        except Exception:
+            logger.exception("获取工单回滚语句失败，workflow_id=%s", workflow_id)
+            return Response({"status": 1, "msg": "获取回滚语句失败", "rows": []})
         return Response({"status": 0, "msg": "", "rows": rows})
 
 
@@ -251,8 +255,9 @@ class WorkflowApprovalView(WorkflowOperationAPIView):
                 detail = auditor.operate(
                     WorkflowAction.PASS, request.user, data["audit_remark"]
                 )
-            except AuditException as exc:
-                raise ValidationError({"detail": f"审核失败, 错误信息: {exc}"}) from exc
+            except AuditException:
+                logger.exception("审核工单失败，workflow_id=%s", workflow_id)
+                raise ValidationError({"detail": "审核工单失败"})
             if auditor.audit.current_status == WorkflowStatus.PASSED:
                 auditor.workflow.status = "workflow_review_pass"
                 auditor.workflow.save(update_fields=["status"])
@@ -393,8 +398,9 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
             auditor = get_auditor(workflow=workflow, sys_config=config)
             try:
                 detail = auditor.operate(action, request.user, data["cancel_remark"])
-            except AuditException as exc:
-                raise ValidationError({"detail": str(exc)}) from exc
+            except AuditException:
+                logger.exception("终止工单失败，workflow_id=%s", workflow_id)
+                raise ValidationError({"detail": "终止工单失败"})
             workflow.status = "workflow_abort"
             workflow.save(update_fields=["status"])
             if was_scheduled:
@@ -431,6 +437,7 @@ class WorkflowOscView(WorkflowOperationAPIView):
                 command=data["command"], sqlsha1=data["sqlsha1"]
             )
             rows, error = result.to_dict(), result.error
-        except Exception as exc:
-            rows, error = [], str(exc)
+        except Exception:
+            logger.exception("控制 OSC 执行失败，workflow_id=%s", workflow_id)
+            rows, error = [], "OSC 操作失败"
         return Response({"total": len(rows), "rows": rows, "msg": error})
