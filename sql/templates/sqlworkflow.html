@@ -175,22 +175,17 @@
                     function (params) {
                         let start_date = $("#reservation").data('daterangepicker').startDate;
                         let end_date = $("#reservation").data('daterangepicker').endDate;
-                        if (start_date.isValid() && end_date.isValid()) {
-                            start_date = start_date.format('YYYY-MM-DD');
-                            end_date = end_date.format('YYYY-MM-DD')
-                        } else {
-                            start_date = '';
-                            end_date = ''
-                        }
                         const filterParams = {
                             "syntax_type":[0,1,2], //获取类型为数据变更工单
                             limit: params.limit,
                             offset: params.offset,
                             navStatus: $("#navStatus").val(),
-                            start_date: start_date,
-                            end_date: end_date,
                             search: params.search
                         };
+                        if (start_date && start_date.isValid() && end_date && end_date.isValid()) {
+                            filterParams.start_date = start_date.format('YYYY-MM-DD');
+                            filterParams.end_date = end_date.format('YYYY-MM-DD');
+                        }
                         const instanceId = $("#instance_id").val();
                         const groupId = $("#group_id").val();
                         if (instanceId !== "" && instanceId !== null && instanceId !== undefined) {
