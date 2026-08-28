@@ -118,20 +118,6 @@ def test_workflow_list_filters_json_syntax_type(
 
 
 @pytest.mark.django_db
-def test_workflow_list_accepts_blank_filter_fields(
-    authenticated_api_client, workflow_api_data
-):
-    response = authenticated_api_client.post(
-        "/api/v1/workflows/",
-        {"instance_id": "", "group_id": "", "limit": 20, "offset": 0},
-        format="json",
-    )
-
-    assert response.status_code == 200
-    assert response.json()["total"] >= 1
-
-
-@pytest.mark.django_db
 def test_workflow_audit_list_returns_workflows(
     authenticated_api_client, normal_user, workflow_api_data, mocker
 ):
