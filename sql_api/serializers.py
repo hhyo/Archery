@@ -728,4 +728,6 @@ class WorkflowExecutionWindowSerializer(serializers.Serializer):
 
 class WorkflowOscSerializer(serializers.Serializer):
     sqlsha1 = serializers.CharField(allow_blank=False)
-    command = serializers.CharField(allow_blank=False)
+    command = serializers.ChoiceField(
+        choices=["get", "kill", "pause", "resume"], allow_blank=False
+    )

@@ -537,11 +537,62 @@
             postWorkflowForm(formAlterexecutabletime);
         });
 
+        function formatApiError(xhr) {
+            const response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+            if (!response) {
+                return "操作失败";
+            }
+
+            const messages = [];
+            const pushMessage = function (value, label) {
+                if (Array.isArray(value)) {
+                    value.forEach(function (item) {
+                        pushMessage(item, label);
+                    });
+                    return;
+                }
+                if (value === null || value === undefined) {
+                    return;
+                }
+                if (typeof value === "string" && value.trim()) {
+                    if (label) {
+                        messages.push(label + ": " + value.trim());
+                    } else {
+                        messages.push(value.trim());
+                    }
+                    return;
+                }
+                if (typeof value === "object") {
+                    Object.keys(value).forEach(function (key) {
+                        pushMessage(value[key], key);
+                    });
+                }
+            };
+
+            pushMessage(response.detail);
+            pushMessage(response.non_field_errors, "non_field_errors");
+            Object.keys(response).forEach(function (key) {
+                if (key !== "detail" && key !== "non_field_errors") {
+                    pushMessage(response[key], key);
+                }
+            });
+
+            if (messages.length > 0) {
+                return messages.join("；");
+            }
+            return "操作失败";
+        }
+
         function postWorkflowForm(form) {
             const data = Object.fromEntries(
                 form.serializeArray()
                     .filter(function (item) { return item.name !== "workflow_id"; })
-                    .map(function (item) { return [item.name, item.value]; })
+                    .map(function (item) {
+                        if ((item.name === "run_date_start" || item.name === "run_date_end") && item.value === "") {
+                            return [item.name, null];
+                        }
+                        return [item.name, item.value];
+                    })
             );
             $.ajax({
                 type: form.attr("action").indexOf("execution-window") !== -1 ? "PATCH" : "POST",
@@ -557,7 +608,7 @@
                     }
                 },
                 error: function (xhr) {
-                    alert(xhr.responseJSON && xhr.responseJSON.detail ? xhr.responseJSON.detail : "操作失败");
+                    alert(formatApiError(xhr));
                 }
             });
         }
