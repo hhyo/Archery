@@ -177,7 +177,6 @@
         <form id="form-execution-window" action="/api/v1/workflows/{{ workflow_detail.id }}/execution-window/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-            <input type="hidden" id="audit_remark" name="audit_remark" value="">
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#Executabletime"
                    value="可执行时间变更"/>
         </form>

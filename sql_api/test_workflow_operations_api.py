@@ -74,9 +74,12 @@ def test_execution_endpoint_rejects_invalid_mode_before_service_call(
 
 @pytest.mark.django_db
 def test_workflow_list_returns_submitters_workflow(
-    authenticated_api_client, workflow_api_data
+    authenticated_api_client, normal_user, workflow_api_data, mocker
 ):
     workflow, _ = workflow_api_data
+    normal_user.has_perm = mocker.Mock(
+        side_effect=lambda permission: permission == "sql.menu_sqlworkflow"
+    )
 
     response = authenticated_api_client.post(
         "/api/v1/workflows/", {"limit": 20, "offset": 0}, format="json"
@@ -89,9 +92,12 @@ def test_workflow_list_returns_submitters_workflow(
 
 @pytest.mark.django_db
 def test_workflow_list_filters_json_syntax_type(
-    authenticated_api_client, workflow_api_data
+    authenticated_api_client, normal_user, workflow_api_data, mocker
 ):
     workflow, _ = workflow_api_data
+    normal_user.has_perm = mocker.Mock(
+        side_effect=lambda permission: permission == "sql.menu_sqlworkflow"
+    )
     export_workflow = SqlWorkflow.objects.create(
         workflow_name="export workflow",
         group_id=workflow.group_id,

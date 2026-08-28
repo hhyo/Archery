@@ -28,7 +28,7 @@ from sql.utils.sql_review import (
 )
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit, AuditException, get_auditor
-from .permissions import IsWorkflowPageUser
+from .permissions import IsWorkflowListPageUser, IsWorkflowPageUser
 from .serializers import (
     WorkflowExecutionSerializer,
     WorkflowExecutionWindowSerializer,
@@ -82,6 +82,8 @@ class WorkflowOperationAPIView(views.APIView):
 
 
 class WorkflowListView(WorkflowOperationAPIView):
+    permission_classes = [IsWorkflowListPageUser]
+
     def post(self, request):
         data = self.validated_data(WorkflowListRequestSerializer, request)
         filters = {}
