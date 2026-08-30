@@ -1,0 +1,329 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-10 16:03+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+#: common/static/ace/ace-init.js:325
+msgid ""
+"-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功"
+"能。\n"
+msgstr ""
+
+#: common/static/ace/ace-init.js:341
+msgid "请在此输入命令，多个命令请换行填写，在提交时请删除此行说明"
+msgstr ""
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "iterator"
+msgstr ""
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "toStringTag"
+msgstr ""
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "native-string-replace"
+msgstr ""
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "function"
+msgstr ""
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "Object.prototype.hasOwnProperty"
+msgstr ""
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "RegExp.prototype.exec"
+msgstr ""
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "Object.prototype.toString"
+msgstr ""
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid ""
+"RegExp.prototype.flags requires a true ES5 environment that supports "
+"property descriptors"
+msgstr ""
+
+#: common/static/bootstrap-table/export-libs/pdfmake/pdfmake.min.js:2
+msgid "Promise"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:32
+msgid "阻塞PID"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:33
+#: common/static/dbdiagnostic/js/db_info.js:329
+msgid "数据库"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:34
+#: common/static/dbdiagnostic/js/db_info.js:324
+#: common/static/dbdiagnostic/js/db_info.js:573
+msgid "用户"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:35
+msgid "应用名称"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:36
+msgid "状态"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:37
+msgid "客户端地址"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:38
+#: common/static/dbdiagnostic/js/db_info.js:589
+msgid "耗时(秒)"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:39
+msgid "耗时"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:40
+msgid "查询语句"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:41
+msgid "等待事件类型"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:42
+msgid "等待事件"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:43
+msgid "查询开始时间"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:44
+msgid "后端开始时间"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:45
+msgid "父PID"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:46
+msgid "客户端主机名"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:47
+msgid "客户端端口"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:48
+msgid "事务开始时间"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:49
+msgid "状态变更时间"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:50
+msgid "后端XID"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:51
+msgid "后端XMIN"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:52
+msgid "后端类型"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:102
+#: common/static/dbdiagnostic/js/db_info.js:172
+msgid "完整INFO"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:276
+msgid "完整command"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:312
+msgid "远程地址"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:316
+msgid "本地地址"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:320
+msgid "客户端名称"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:333
+msgid "连接耗时(秒)"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:337
+msgid "空闲时间(秒)"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:341
+msgid "命令"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:345
+msgid "总内存"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:349
+msgid "输出内存"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:353
+msgid "标志"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:357
+msgid "文件描述符"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:361
+msgid "订阅数"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:365
+msgid "模式订阅数"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:369
+msgid "MULTI 队列长度"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:373
+msgid "查询缓冲区"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:377
+msgid "查询缓冲区空闲"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:381
+msgid "参数内存"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:385
+msgid "输出缓冲区长度"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:389
+msgid "输出链长度"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:393
+msgid "事件文件"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:397
+msgid "重定向"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:569
+msgid "查询ID"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:581
+msgid "端口"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:585
+msgid "库名"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:593
+msgid "总行数(预估)"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:597
+msgid "分配内存"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:601
+msgid "类型"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:605
+msgid "语句"
+msgstr ""
+
+#: common/static/dbdiagnostic/js/db_info.js:612
+msgid "完整语句"
+msgstr ""
+
+#: common/static/dist/js/formatter.js:4
+msgid "查询权限申请"
+msgstr ""
+
+#: common/static/dist/js/formatter.js:6
+msgid "SQL上线申请"
+msgstr ""
+
+#: common/static/dist/js/formatter.js:8
+msgid "数据归档申请"
+msgstr ""
+
+#: common/static/dist/js/formatter.js:14
+msgid "待审核"
+msgstr ""
+
+#: common/static/dist/js/formatter.js:16
+msgid "审核通过"
+msgstr ""
+
+#: common/static/dist/js/formatter.js:18
+msgid "审核不通过"
+msgstr ""
+
+#: common/static/dist/js/formatter.js:20
+msgid "审核取消"
+msgstr ""
+
+#: common/static/dist/js/formatter.js:56 common/static/dist/js/formatter.js:75
+#: common/static/dist/js/formatter.js:97
+msgid "未知状态"
+msgstr ""
+
+#: common/static/dist/js/utils.js:3
+msgid "权限错误，您没有权限查看该数据！"
+msgstr ""
+
+#: common/static/dist/js/utils.js:7
+msgid "未知错误，请联系管理员处理！"
+msgstr ""
+
+#: common/static/dist/js/utils.js:73 common/static/dist/js/utils.js:80
+#, javascript-format
+msgid "%s 秒后重试"
+msgstr ""
+
+#: common/static/dist/js/utils.js:84
+msgid "获取验证码"
+msgstr ""
+
+#: common/static/watermark/shuiyin.js:14
+msgid "测试水印"
+msgstr ""

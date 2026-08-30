@@ -12,7 +12,7 @@ from sql.engines import EngineBase
 from sql.engines.goinception import GoInceptionEngine
 from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.engines.redis import RedisEngine
-from sql.engines.pgsql import PgSQLEngine
+from sql.engines.pgsql import PgSQLEngine, _is_select_statement
 from sql.engines.mongo import MongoEngine
 from sql.engines.clickhouse import ClickHouseEngine
 from sql.engines.odps import ODPSEngine
@@ -605,18 +605,42 @@ class TestPgSQL(TestCase):
         self.assertEqual(masking_result, query_result)
 
     def test_execute_check_select_sql(self):
+        """Default: SELECT allowed in workflow (approve path)."""
+        self.sys_config.purge()
         sql = "select * from user;"
-        row = ReviewResult(
-            id=1,
-            errlevel=2,
-            stagestatus="驳回不支持语句",
-            errormessage="仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
-            sql=sql,
-        )
         new_engine = PgSQLEngine(instance=self.ins)
         check_result = new_engine.execute_check(db_name="archery", sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
-        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+        self.assertEqual(check_result.error_count, 0)
+        self.assertEqual(check_result.rows[0].errlevel, 0)
+        self.assertEqual(check_result.rows[0].stagestatus, "Audit completed")
+        self.assertTrue(_is_select_statement(check_result.rows[0].sql))
+
+    def test_execute_check_select_sql_disabled(self):
+        """When allow_select_in_workflow=false, SELECT is rejected."""
+        self.sys_config.set("allow_select_in_workflow", False)
+        self.sys_config.get_all_config()
+        sql = "select * from user;"
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name="archery", sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].errlevel, 2)
+        self.assertIn("DML", check_result.rows[0].errormessage)
+        self.sys_config.purge()
+
+    def test_execute_check_select_mixed_with_dml(self):
+        """SELECT + DML in one ticket is rejected."""
+        self.sys_config.purge()
+        sql = "select * from user; update user set id=1;"
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name="archery", sql=sql)
+        self.assertGreaterEqual(check_result.error_count, 1)
+        self.assertTrue(
+            any(
+                "SELECT与DML/DDL不能在同一工单中提交" in (r.errormessage or "")
+                for r in check_result.rows
+            )
+        )
 
     def test_execute_check_critical_sql(self):
         self.sys_config.set("critical_ddl_regex", "^|update")
@@ -683,6 +707,190 @@ class TestPgSQL(TestCase):
         execute_result = new_engine.execute_workflow(workflow=wf)
         self.assertIsInstance(execute_result, ReviewSet)
         self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
+
+    @patch("psycopg2.connect")
+    def test_execute_workflow_select_stores_preview(self, _conn):
+        self.sys_config.purge()
+        sql = "select id, name from user"
+        cursor = _conn.return_value.cursor.return_value
+        cursor.description = (("id",), ("name",))
+        cursor.fetchmany.return_value = [(1, "a"), (2, "b")]
+        cursor.rowcount = 2
+        wf = SqlWorkflow.objects.create(
+            workflow_name="select_wf",
+            group_id=1,
+            group_name="g1",
+            engineer_display="",
+            audit_auth_groups="some_group",
+            create_time=datetime.now() - timedelta(days=1),
+            status="workflow_finish",
+            is_backup=False,
+            instance=self.ins,
+            db_name="some_db",
+            syntax_type=2,
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        new_engine = PgSQLEngine(instance=self.ins)
+        execute_result = new_engine.execute_workflow(workflow=wf)
+        self.assertEqual(execute_result.error_count, 0)
+        self.assertEqual(execute_result.rows[0].affected_rows, 2)
+        self.assertEqual(execute_result.rows[0].select_columns, ["id", "name"])
+        self.assertEqual(execute_result.rows[0].select_rows, [[1, "a"], [2, "b"]])
+        self.assertFalse(execute_result.rows[0].select_truncated)
+        cursor.fetchmany.assert_called_with(1001)
+
+    def test_is_select_statement_cte_vs_mutating(self):
+        self.assertTrue(_is_select_statement("select id from t"))
+        self.assertTrue(_is_select_statement("WITH a AS (SELECT 1) SELECT * FROM a"))
+        self.assertTrue(
+            _is_select_statement(
+                "WITH RECURSIVE t AS (SELECT 1 AS n UNION ALL SELECT n+1 FROM t) "
+                "SELECT * FROM t"
+            )
+        )
+        self.assertFalse(
+            _is_select_statement("WITH a AS (SELECT 1) INSERT INTO t SELECT * FROM a")
+        )
+        self.assertFalse(_is_select_statement("WITH a AS (SELECT 1) UPDATE t SET x=1"))
+        self.assertFalse(_is_select_statement("WITH a AS (SELECT 1) DELETE FROM t"))
+        self.assertFalse(
+            _is_select_statement(
+                "-- comment\nWITH a AS (SELECT 1) INSERT INTO t SELECT * FROM a"
+            )
+        )
+
+    def test_execute_check_with_insert_not_select(self):
+        self.sys_config.purge()
+        sql = "WITH a AS (SELECT 1) INSERT INTO t SELECT * FROM a;"
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name="archery", sql=sql)
+        self.assertEqual(check_result.error_count, 0)
+        self.assertFalse(_is_select_statement(check_result.rows[0].sql))
+
+    def test_filter_sql_with_cte_select(self):
+        sql = "WITH a AS (SELECT 1) SELECT * FROM a"
+        new_engine = PgSQLEngine(instance=self.ins)
+        self.assertEqual(
+            new_engine.filter_sql(sql=sql, limit_num=100),
+            "WITH a AS (SELECT 1) SELECT * FROM a limit 100;",
+        )
+
+    @patch("psycopg2.connect")
+    def test_execute_workflow_select_truncated_extra_row(self, _conn):
+        self.sys_config.set("admin_query_limit", "2")
+        self.sys_config.get_all_config()
+        sql = "select id from user"
+        cursor = _conn.return_value.cursor.return_value
+        cursor.description = (("id",),)
+        cursor.fetchmany.return_value = [(1,), (2,), (3,)]
+        wf = SqlWorkflow.objects.create(
+            workflow_name="select_trunc",
+            group_id=1,
+            group_name="g1",
+            engineer_display="",
+            audit_auth_groups="some_group",
+            create_time=datetime.now() - timedelta(days=1),
+            status="workflow_finish",
+            is_backup=False,
+            instance=self.ins,
+            db_name="some_db",
+            syntax_type=2,
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        new_engine = PgSQLEngine(instance=self.ins)
+        execute_result = new_engine.execute_workflow(workflow=wf)
+        self.assertTrue(execute_result.rows[0].select_truncated)
+        self.assertEqual(execute_result.rows[0].select_rows, [[1], [2]])
+        self.assertEqual(execute_result.rows[0].affected_rows, 2)
+        cursor.fetchmany.assert_called_with(3)
+        executed_sql = cursor.execute.call_args_list[-1].args[0].lower()
+        self.assertIn("limit 3", executed_sql)
+        self.sys_config.purge()
+
+    @patch("psycopg2.connect")
+    def test_execute_workflow_select_exact_limit_not_truncated(self, _conn):
+        self.sys_config.set("admin_query_limit", "2")
+        self.sys_config.get_all_config()
+        sql = "select id from user"
+        cursor = _conn.return_value.cursor.return_value
+        cursor.description = (("id",),)
+        cursor.fetchmany.return_value = [(1,), (2,)]
+        wf = SqlWorkflow.objects.create(
+            workflow_name="select_exact",
+            group_id=1,
+            group_name="g1",
+            engineer_display="",
+            audit_auth_groups="some_group",
+            create_time=datetime.now() - timedelta(days=1),
+            status="workflow_finish",
+            is_backup=False,
+            instance=self.ins,
+            db_name="some_db",
+            syntax_type=2,
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        new_engine = PgSQLEngine(instance=self.ins)
+        execute_result = new_engine.execute_workflow(workflow=wf)
+        self.assertFalse(execute_result.rows[0].select_truncated)
+        self.assertEqual(execute_result.rows[0].select_rows, [[1], [2]])
+        self.sys_config.purge()
+
+    @patch("psycopg2.connect")
+    def test_execute_workflow_with_insert_uses_read_write(self, _conn):
+        sql = "WITH a AS (SELECT 1) INSERT INTO t SELECT * FROM a"
+        cursor = _conn.return_value.cursor.return_value
+        cursor.rowcount = 1
+        wf = SqlWorkflow.objects.create(
+            workflow_name="cte_insert",
+            group_id=1,
+            group_name="g1",
+            engineer_display="",
+            audit_auth_groups="some_group",
+            create_time=datetime.now() - timedelta(days=1),
+            status="workflow_finish",
+            is_backup=False,
+            instance=self.ins,
+            db_name="some_db",
+            syntax_type=2,
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        new_engine = PgSQLEngine(instance=self.ins)
+        execute_result = new_engine.execute_workflow(workflow=wf)
+        self.assertEqual(execute_result.error_count, 0)
+        self.assertIsNone(getattr(execute_result.rows[0], "select_columns", None))
+        txn_sql = cursor.execute.call_args_list[0].args[0]
+        self.assertIn("READ WRITE", txn_sql)
+        self.assertNotIn("READ ONLY", txn_sql)
+
+    @patch.object(PgSQLEngine, "query_masking")
+    @patch("psycopg2.connect")
+    def test_execute_workflow_select_applies_masking(self, _conn, _mask):
+        self.sys_config.set("data_masking", True)
+        self.sys_config.get_all_config()
+        sql = "select id, name from user"
+        cursor = _conn.return_value.cursor.return_value
+        cursor.description = (("id",), ("name",))
+        cursor.fetchmany.return_value = [(1, "secret")]
+        _mask.return_value = ResultSet(rows=[(1, "****")], column_list=["id", "name"])
+        wf = SqlWorkflow.objects.create(
+            workflow_name="select_mask",
+            group_id=1,
+            group_name="g1",
+            engineer_display="",
+            audit_auth_groups="some_group",
+            create_time=datetime.now() - timedelta(days=1),
+            status="workflow_finish",
+            is_backup=False,
+            instance=self.ins,
+            db_name="some_db",
+            syntax_type=2,
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        new_engine = PgSQLEngine(instance=self.ins)
+        execute_result = new_engine.execute_workflow(workflow=wf)
+        _mask.assert_called_once()
+        self.assertEqual(execute_result.rows[0].select_rows, [[1, "****"]])
+        self.sys_config.purge()
 
     @patch("psycopg2.connect.cursor.execute")
     @patch("psycopg2.connect.cursor")
@@ -1576,10 +1784,8 @@ class TestClickHouse(TestCase):
         new_engine = ClickHouseEngine(instance=self.ins1)
         select_sql = "select id,name from tb_test"
         check_result = new_engine.execute_check(db_name="some_db", sql=select_sql)
-        self.assertEqual(
-            check_result.rows[0].errormessage,
-            "仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
-        )
+        self.assertEqual(check_result.rows[0].errlevel, 0)
+        self.assertEqual(check_result.error_count, 0)
 
     @patch.object(ClickHouseEngine, "query")
     def test_execute_check_alter_sql(self, mock_query):

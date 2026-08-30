@@ -1,0 +1,478 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-10 16:03+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+#: sql_api/api_instance.py:41
+msgid "实例清单"
+msgstr ""
+
+#: sql_api/api_instance.py:44
+msgid "列出所有实例（过滤，分页）"
+msgstr ""
+
+#: sql_api/api_instance.py:54
+msgid "创建实例"
+msgstr ""
+
+#: sql_api/api_instance.py:57
+msgid "创建一个实例配置"
+msgstr ""
+
+#: sql_api/api_instance.py:81
+msgid "更新实例"
+msgstr ""
+
+#: sql_api/api_instance.py:84
+msgid "更新一个实例配置"
+msgstr ""
+
+#: sql_api/api_instance.py:94
+msgid "删除实例"
+msgstr ""
+
+#: sql_api/api_instance.py:94
+msgid "删除一个实例配置"
+msgstr ""
+
+#: sql_api/api_instance.py:111
+msgid "隧道清单"
+msgstr ""
+
+#: sql_api/api_instance.py:114
+msgid "列出所有隧道（过滤，分页）"
+msgstr ""
+
+#: sql_api/api_instance.py:124
+msgid "创建隧道"
+msgstr ""
+
+#: sql_api/api_instance.py:127
+msgid "创建一个隧道配置"
+msgstr ""
+
+#: sql_api/api_instance.py:147
+msgid "AliyunRDS清单"
+msgstr ""
+
+#: sql_api/api_instance.py:150
+msgid "列出所有AliyunRDS（过滤，分页）"
+msgstr ""
+
+#: sql_api/api_instance.py:160
+msgid "创建AliyunRDS"
+msgstr ""
+
+#: sql_api/api_instance.py:163
+msgid "创建一个AliyunRDS配置（包含一个CloudAccessKey）"
+msgstr ""
+
+#: sql_api/api_instance.py:179
+msgid "实例资源"
+msgstr ""
+
+#: sql_api/api_instance.py:182
+msgid "获取实例内的资源信息"
+msgstr ""
+
+#: sql_api/api_instance.py:239
+msgid "不支持的资源类型或者参数不完整！"
+msgstr ""
+
+#: sql_api/api_instance.py:258
+msgid "按表名查询所属实例"
+msgstr ""
+
+#: sql_api/api_instance.py:261
+msgid "输入table名，返回包含该表的实例列表（固定返回status/msg/count/data）。"
+msgstr ""
+
+#: sql_api/api_instance.py:267
+msgid "参数校验失败"
+msgstr ""
+
+#: sql_api/api_instance.py:269
+#, python-format
+msgid "参数table_name错误: %(v0)s"
+msgstr ""
+
+#: sql_api/api_instance.py:286
+msgid "查询失败: 未知错误, 请联系管理员"
+msgstr ""
+
+#: sql_api/api_instance.py:295
+msgid "查询成功"
+msgstr ""
+
+#: sql_api/api_sqlquery.py:40
+msgid "SQLQuery 可访问实例列表"
+msgstr ""
+
+#: sql_api/api_sqlquery.py:63
+msgid "SQLQuery 实例资源列表"
+msgstr ""
+
+#: sql_api/api_sqlquery.py:74
+msgid "SQLQuery 表结构"
+msgstr ""
+
+#: sql_api/api_sqlquery.py:86
+msgid "SQLQuery 执行查询"
+msgstr ""
+
+#: sql_api/api_sqlquery.py:89
+msgid "无执行查询权限"
+msgstr ""
+
+#: sql_api/api_sqlquery.py:99
+msgid "SQLQuery 历史查询记录"
+msgstr ""
+
+#: sql_api/api_sqlquery.py:117
+msgid "SQLQuery 收藏/取消收藏"
+msgstr ""
+
+#: sql_api/api_sqlquery.py:122
+msgid "无收藏操作权限"
+msgstr ""
+
+#: sql_api/api_user.py:44
+msgid "用户清单"
+msgstr ""
+
+#: sql_api/api_user.py:47
+msgid "列出所有用户（过滤，分页）"
+msgstr ""
+
+#: sql_api/api_user.py:57
+msgid "创建用户"
+msgstr ""
+
+#: sql_api/api_user.py:60
+msgid "创建一个用户"
+msgstr ""
+
+#: sql_api/api_user.py:84
+msgid "更新用户"
+msgstr ""
+
+#: sql_api/api_user.py:87
+msgid "更新一个用户"
+msgstr ""
+
+#: sql_api/api_user.py:97
+msgid "删除用户"
+msgstr ""
+
+#: sql_api/api_user.py:97
+msgid "删除一个用户"
+msgstr ""
+
+#: sql_api/api_user.py:114
+msgid "用户组清单"
+msgstr ""
+
+#: sql_api/api_user.py:117
+msgid "列出所有用户组（过滤，分页）"
+msgstr ""
+
+#: sql_api/api_user.py:127
+msgid "创建用户组"
+msgstr ""
+
+#: sql_api/api_user.py:130
+msgid "创建一个用户组"
+msgstr ""
+
+#: sql_api/api_user.py:154
+msgid "更新用户组"
+msgstr ""
+
+#: sql_api/api_user.py:157
+msgid "更新一个用户组"
+msgstr ""
+
+#: sql_api/api_user.py:167
+msgid "删除用户组"
+msgstr ""
+
+#: sql_api/api_user.py:167
+msgid "删除一个用户组"
+msgstr ""
+
+#: sql_api/api_user.py:184
+msgid "资源组清单"
+msgstr ""
+
+#: sql_api/api_user.py:187
+msgid "列出所有资源组（过滤，分页）"
+msgstr ""
+
+#: sql_api/api_user.py:197
+msgid "创建资源组"
+msgstr ""
+
+#: sql_api/api_user.py:200
+msgid "创建一个资源组"
+msgstr ""
+
+#: sql_api/api_user.py:224
+msgid "更新资源组"
+msgstr ""
+
+#: sql_api/api_user.py:227
+msgid "更新一个资源组"
+msgstr ""
+
+#: sql_api/api_user.py:237
+msgid "删除资源组"
+msgstr ""
+
+#: sql_api/api_user.py:237
+msgid "删除一个资源组"
+msgstr ""
+
+#: sql_api/api_user.py:252
+msgid "用户认证校验"
+msgstr ""
+
+#: sql_api/api_user.py:260
+msgid "认证成功"
+msgstr ""
+
+#: sql_api/api_user.py:266
+msgid "用户名或密码错误！"
+msgstr ""
+
+#: sql_api/api_user.py:278
+msgid "配置2fa"
+msgstr ""
+
+#: sql_api/api_user.py:294 sql_api/api_user.py:410
+msgid "登录用户与校验用户不一致！"
+msgstr ""
+
+#: sql_api/api_user.py:296 sql_api/api_user.py:412
+msgid "需先校验用户密码！"
+msgstr ""
+
+#: sql_api/api_user.py:329 sql_api/api_user.py:331
+msgid "查询2fa配置情况"
+msgstr ""
+
+#: sql_api/api_user.py:361
+msgid "保存2fa配置"
+msgstr ""
+
+#: sql_api/api_user.py:392
+msgid "检验2fa密码"
+msgstr ""
+
+#: sql_api/api_user.py:417
+msgid "用户未配置2FA！"
+msgstr ""
+
+#: sql_api/api_workflow.py:55
+msgid "SQL检查"
+msgstr ""
+
+#: sql_api/api_workflow.py:58
+msgid "对提供的SQL进行语法检查"
+msgstr ""
+
+#: sql_api/api_workflow.py:118
+msgid "SQL上线工单清单"
+msgstr ""
+
+#: sql_api/api_workflow.py:121
+msgid "列出所有SQL上线工单（过滤，分页）"
+msgstr ""
+
+#: sql_api/api_workflow.py:131
+msgid "提交SQL上线工单"
+msgstr ""
+
+#: sql_api/api_workflow.py:134
+msgid "提交一条SQL上线工单"
+msgstr ""
+
+#: sql_api/api_workflow.py:180 sql_api/api_workflow.py:434
+msgid "方法 “GET” 不被允许。"
+msgstr ""
+
+#: sql_api/api_workflow.py:183
+msgid "待审核清单"
+msgstr ""
+
+#: sql_api/api_workflow.py:186
+msgid "列出指定用户待审核清单（过滤，分页）"
+msgstr ""
+
+#: sql_api/api_workflow.py:223
+msgid "审核工单"
+msgstr ""
+
+#: sql_api/api_workflow.py:225
+msgid "审核一条工单（通过或终止）"
+msgstr ""
+
+#: sql_api/api_workflow.py:250
+msgid "用户无权操作此工单"
+msgstr ""
+
+#: sql_api/api_workflow.py:253
+msgid "audit_type 只能是 pass 或 cancel"
+msgstr ""
+
+#: sql_api/api_workflow.py:261
+#, python-format
+msgid "操作失败, %(v0)s"
+msgstr ""
+
+#: sql_api/api_workflow.py:313 sql_api/api_workflow.py:377
+msgid "执行工单"
+msgstr ""
+
+#: sql_api/api_workflow.py:315
+msgid "执行一条工单"
+msgstr ""
+
+#: sql_api/api_workflow.py:337 sql_api/api_workflow.py:340
+msgid "你无权执行当前工单！"
+msgstr ""
+
+#: sql_api/api_workflow.py:345
+msgid "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+msgstr ""
+
+#: sql_api/api_workflow.py:378
+msgid "工单执行排队中"
+msgstr ""
+
+#: sql_api/api_workflow.py:395
+msgid "手工工单"
+msgstr ""
+
+#: sql_api/api_workflow.py:396
+msgid "确认手工执行结束"
+msgstr ""
+
+#: sql_api/api_workflow.py:420
+msgid "开始执行，执行结果请到工单详情页查看"
+msgstr ""
+
+#: sql_api/api_workflow.py:437
+msgid "工单日志"
+msgstr ""
+
+#: sql_api/api_workflow.py:440
+msgid "获取某个工单的日志（分页）"
+msgstr ""
+
+#: sql_api/serializers.py:121 sql_api/serializers.py:139
+#: sql_api/serializers.py:170 sql_api/serializers.py:193
+msgid "不存在该用户"
+msgstr ""
+
+#: sql_api/serializers.py:125 sql_api/serializers.py:161
+#: sql_api/serializers.py:188
+msgid "缺少 phone"
+msgstr ""
+
+#: sql_api/serializers.py:165
+msgid "缺少 key"
+msgstr ""
+
+#: sql_api/serializers.py:281
+msgid "不存在该实例"
+msgstr ""
+
+#: sql_api/serializers.py:348
+msgid "instance_id 或 instance_name 必须提供一个"
+msgstr ""
+
+#: sql_api/serializers.py:352
+msgid "db_name 不能为空"
+msgstr ""
+
+#: sql_api/serializers.py:356
+msgid "column 查询需提供 db_name 和 tb_name"
+msgstr ""
+
+#: sql_api/serializers.py:408
+#, python-format
+msgid "不存在该实例：%(v0)s"
+msgstr ""
+
+#: sql_api/serializers.py:444
+#, python-format
+msgid "不存在该资源组：%(v0)s"
+msgstr ""
+
+#: sql_api/serializers.py:482
+#, python-format
+msgid "不存在用户：%(v0)s"
+msgstr ""
+
+#: sql_api/serializers.py:494
+msgid "你所在组未关联该实例！"
+msgstr ""
+
+#: sql_api/serializers.py:585 sql_api/serializers.py:604
+#: sql_api/serializers.py:682
+#, python-format
+msgid "不存在该用户：%(v0)s"
+msgstr ""
+
+#: sql_api/serializers.py:592 sql_api/serializers.py:637
+#: sql_api/serializers.py:690
+msgid "不存在该工单"
+msgstr ""
+
+#: sql_api/serializers.py:674
+msgid "缺少 mode"
+msgstr ""
+
+#: sql_api/serializers.py:676
+msgid "缺少 engineer"
+msgstr ""
+
+#: sql_api/views.py:67
+#, python-format
+msgid "获取Redis信息报错:%(v0)s"
+msgstr ""
+
+#: sql_api/views.py:110
+msgid "没有正在运行的集群信息，请检查django_q状态"
+msgstr ""
+
+#: sql_api/views.py:115
+#, python-format
+msgid "获取django_q信息报错:%(v0)s"
+msgstr ""
+
+#: sql_api/views.py:154
+#, python-format
+msgid "获取goInception信息报错:%(v0)s"
+msgstr ""
+
+#: sql_api/views.py:170
+#, python-format
+msgid ""
+"无法连接goInception备份库\n"
+"%(v0)s"
+msgstr ""

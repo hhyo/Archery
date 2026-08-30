@@ -138,7 +138,7 @@ INSTALLED_APPS = (
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_q",
-    "sql",
+    "sql.apps.SqlConfig",
     "sql_api",
     "common",
     "rest_framework",
@@ -148,6 +148,7 @@ INSTALLED_APPS = (
 
 MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -170,6 +171,7 @@ TEMPLATES = [
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
+                "django.template.context_processors.i18n",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "common.utils.global_info.global_info",
@@ -182,6 +184,15 @@ WSGI_APPLICATION = "archery.wsgi.application"
 
 # Internationalization
 LANGUAGE_CODE = "zh-hans"
+
+LANGUAGES = [
+    ("zh-hans", "简体中文"),
+    ("ru", "Русский"),
+]
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, "locale"),
+]
 
 TIME_ZONE = "Asia/Shanghai"
 

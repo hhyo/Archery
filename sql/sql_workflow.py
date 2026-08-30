@@ -1,6 +1,9 @@
 # -*- coding: UTF-8 -*-
+import csv
 import datetime
+import io
 import logging
+import re
 import traceback
 
 import simplejson as json
@@ -12,6 +15,7 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django_q.tasks import async_task
 
 from common.config import SysConfig
@@ -34,6 +38,33 @@ from sql.utils.workflow_audit import Audit, get_auditor, AuditException
 from .models import SqlWorkflow, WorkflowAudit
 
 logger = logging.getLogger("default")
+
+_CSV_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _unique_column_names(columns):
+    """Keep duplicate labels distinguishable in object-style JSON exports."""
+    used = set()
+    result = []
+    for col in columns or []:
+        base = "" if col is None else str(col)
+        label = base
+        n = 1
+        while label in used:
+            label = f"{base}_{n}"
+            n += 1
+        used.add(label)
+        result.append(label)
+    return result
+
+
+def _csv_safe_cell(value):
+    """Neutralize spreadsheet formula injection in CSV cells."""
+    if value is None:
+        return ""
+    if isinstance(value, str) and value[:1] in _CSV_FORMULA_PREFIXES:
+        return f"'{value}"
+    return value
 
 
 @permission_required("sql.menu_sqlworkflow", raise_exception=True)
@@ -181,6 +212,104 @@ def detail_content(request):
 
     result = {"rows": json.loads(rows)}
     return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+def _safe_download_filename(name: str) -> str:
+    cleaned = re.sub(r'[\\/:*?"<>|\s]+', "_", name or "result").strip("._")
+    return (cleaned or "result")[:80]
+
+
+def _select_payload_from_execute_result(execute_result_json, sql_id):
+    try:
+        loaded = json.loads(execute_result_json or "[]")
+    except (TypeError, json.JSONDecodeError):
+        return None
+    if not isinstance(loaded, list):
+        return None
+    wanted = str(sql_id)
+    fallback = None
+    for row in loaded:
+        if not isinstance(row, dict) or not row.get("select_columns"):
+            continue
+        if fallback is None:
+            fallback = row
+        if str(row.get("id")) == wanted:
+            return row
+    return fallback
+
+
+def _load_select_payload(request):
+    workflow_id = request.GET.get("workflow_id")
+    sql_id = request.GET.get("sql_id", "1")
+    workflow = get_object_or_404(SqlWorkflow, pk=workflow_id)
+    if not can_view(request.user, workflow.id):
+        raise PermissionDenied
+    if workflow.status not in ("workflow_finish", "workflow_exception"):
+        return workflow, None, HttpResponse(_("查询尚未执行"), status=400)
+    payload = _select_payload_from_execute_result(
+        workflow.sqlworkflowcontent.execute_result, sql_id
+    )
+    if not payload:
+        return workflow, None, HttpResponse(_("没有可下载的查询结果"), status=404)
+    return workflow, payload, None
+
+
+def select_result_download(request):
+    """Download SELECT rows stored on a finished SQL ticket (CSV or JSON)."""
+    fmt = (request.GET.get("format") or "csv").lower()
+    if fmt not in ("csv", "json"):
+        return HttpResponse(_("format must be csv or json"), status=400)
+    workflow, payload, err = _load_select_payload(request)
+    if err:
+        return err
+
+    sql_id = request.GET.get("sql_id", "1")
+    columns = payload.get("select_columns") or []
+    data_rows = payload.get("select_rows") or []
+    base = _safe_download_filename(
+        f"{workflow.workflow_name}_{payload.get('id', sql_id)}"
+    )
+
+    if fmt == "json":
+        records = [dict(zip(_unique_column_names(columns), row)) for row in data_rows]
+        body = json.dumps(records, ensure_ascii=False, indent=2)
+        response = HttpResponse(body, content_type="application/json; charset=utf-8")
+        response["Content-Disposition"] = f'attachment; filename="{base}.json"'
+        return response
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(columns)
+    for row in data_rows:
+        writer.writerow(_csv_safe_cell(v) for v in row)
+    response = HttpResponse(
+        buf.getvalue().encode("utf-8-sig"), content_type="text/csv; charset=utf-8"
+    )
+    response["Content-Disposition"] = f'attachment; filename="{base}.csv"'
+    return response
+
+
+def select_result_view(request):
+    """Open SELECT rows as a table in a new tab (with CSV/JSON download)."""
+    workflow, payload, err = _load_select_payload(request)
+    if err:
+        return err
+    sql_id = request.GET.get("sql_id", payload.get("id", "1"))
+    columns = payload.get("select_columns") or []
+    data_rows = payload.get("select_rows") or []
+    return render(
+        request,
+        "select_result.html",
+        {
+            "workflow": workflow,
+            "sql_id": sql_id,
+            "sql_text": payload.get("sql") or "",
+            "columns": columns,
+            "rows": data_rows,
+            "truncated": bool(payload.get("select_truncated")),
+            "row_count": len(data_rows),
+        },
+    )
 
 
 def backup_sql(request):
