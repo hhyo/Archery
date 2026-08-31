@@ -166,17 +166,17 @@ class WorkflowListView(WorkflowOperationAPIView):
         }
         row_list = list(
             rows.values(
-            "id",
-            "workflow_name",
-            "engineer_display",
-            "status",
-            "is_backup",
-            "create_time",
-            "instance__instance_name",
-            "db_name",
-            "group_name",
-            "syntax_type",
-            "export_format",
+                "id",
+                "workflow_name",
+                "engineer_display",
+                "status",
+                "is_backup",
+                "create_time",
+                "instance__instance_name",
+                "db_name",
+                "group_name",
+                "syntax_type",
+                "export_format",
             )
         )
         for row in row_list:
@@ -187,7 +187,9 @@ class WorkflowListView(WorkflowOperationAPIView):
 
 class SqlWorkflowSubmitView(WorkflowOperationAPIView):
     def post(self, request):
-        serializer = WorkflowContentSerializer(data=request.data, context={"request": request})
+        serializer = WorkflowContentSerializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         workflow_content = serializer.save()
         workflow = workflow_content.workflow
@@ -206,7 +208,12 @@ class SqlWorkflowSubmitView(WorkflowOperationAPIView):
                     task_name=f"sqlreview-submit-{workflow.id}",
                 )
             )
-        return Response(mutation_response(workflow.id, "提交成功", audit.audit_id if audit else None), status=201)
+        return Response(
+            mutation_response(
+                workflow.id, "提交成功", audit.audit_id if audit else None
+            ),
+            status=201,
+        )
 
 
 class WorkflowAuditListView(WorkflowOperationAPIView):
@@ -249,17 +256,17 @@ class WorkflowAuditListView(WorkflowOperationAPIView):
         }
         row_list = list(
             rows.values(
-            "id",
-            "workflow_name",
-            "engineer_display",
-            "status",
-            "is_backup",
-            "create_time",
-            "instance__instance_name",
-            "db_name",
-            "group_name",
-            "syntax_type",
-            "export_format",
+                "id",
+                "workflow_name",
+                "engineer_display",
+                "status",
+                "is_backup",
+                "create_time",
+                "instance__instance_name",
+                "db_name",
+                "group_name",
+                "syntax_type",
+                "export_format",
             )
         )
         for row in row_list:

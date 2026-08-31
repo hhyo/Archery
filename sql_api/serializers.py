@@ -465,7 +465,9 @@ class WorkflowSerializer(serializers.ModelSerializer):
 class SqlWorkflowDetailSerializer(serializers.ModelSerializer):
     audit_id = serializers.SerializerMethodField()
     workflow_id = serializers.IntegerField(source="id", read_only=True)
-    instance_name = serializers.CharField(source="instance.instance_name", read_only=True)
+    instance_name = serializers.CharField(
+        source="instance.instance_name", read_only=True
+    )
     status_display = serializers.CharField(source="get_status_display", read_only=True)
 
     def get_audit_id(self, obj):
@@ -548,7 +550,9 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
                 )
         except Exception:
             logger.exception("提交工单检测失败")
-            raise serializers.ValidationError({"errors": "提交工单检测失败，请联系管理员"})
+            raise serializers.ValidationError(
+                {"errors": "提交工单检测失败，请联系管理员"}
+            )
 
         # 未开启备份选项，并且engine支持备份，强制设置备份
         is_backup = (

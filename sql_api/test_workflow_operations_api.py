@@ -26,15 +26,12 @@ def test_openapi_contract_uses_audit_id_paths():
     assert "/api/v1/sql-workflows/" in paths
     assert all("workflow_id" not in path for path in paths)
     assert all(
-        path == "/api/v1/sql-workflows/" or "{audit_id}" in path
-        for path in paths
+        path == "/api/v1/sql-workflows/" or "{audit_id}" in path for path in paths
     )
 
 
 def test_legacy_workflow_operation_route_is_retired(client):
-    response = client.post(
-        "/api/v1/workflows/17/approval/", {"audit_remark": "同意"}
-    )
+    response = client.post("/api/v1/workflows/17/approval/", {"audit_remark": "同意"})
 
     assert response.status_code == 404
 
@@ -179,14 +176,17 @@ def test_workflow_detail_returns_saved_fields_for_viewable_workflow(
 
     assert response.status_code == 200
     workflow_data = response.json()
-    assert workflow_data.items() >= {
-        "id": workflow.id,
-        "workflow_name": "workflow api test",
-        "instance": workflow.instance_id,
-        "instance_name": "some_ins",
-        "db_name": "test_db",
-        "status": "workflow_review_pass",
-    }.items()
+    assert (
+        workflow_data.items()
+        >= {
+            "id": workflow.id,
+            "workflow_name": "workflow api test",
+            "instance": workflow.instance_id,
+            "instance_name": "some_ins",
+            "db_name": "test_db",
+            "status": "workflow_review_pass",
+        }.items()
+    )
 
 
 @pytest.mark.django_db
@@ -310,7 +310,9 @@ def test_terminate_scheduled_workflow_removes_schedule_after_commit(
     mocker.patch.object(api_workflow_operations, "should_notify", return_value=False)
 
     response = authenticated_api_client.post(
-        "/api/v1/sql-workflows/70/cancellation/", {"cancel_remark": "取消"}, format="json"
+        "/api/v1/sql-workflows/70/cancellation/",
+        {"cancel_remark": "取消"},
+        format="json",
     )
 
     assert response.status_code == 200
