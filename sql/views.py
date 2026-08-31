@@ -251,6 +251,7 @@ def detail(request, workflow_id):
         is_can_rollback = can_rollback(request.user, workflow_id)
 
         # 获取审核日志
+        audit_id = None
         try:
             audit_detail = Audit.detail_by_workflow_id(
                 workflow_id=workflow_id,
@@ -264,6 +265,7 @@ def detail(request, workflow_id):
             logger.debug(f"无审核日志记录，错误信息{e}")
             last_operation_info = ""
     else:
+        audit_id = None
         is_can_review = False
         is_can_execute = False
         is_can_timingtask = False
@@ -298,6 +300,7 @@ def detail(request, workflow_id):
 
     context = {
         "workflow_detail": workflow_detail,
+        "audit_id": audit_id,
         "current_reviewers": current_reviewers,
         "last_operation_info": last_operation_info,
         "is_can_review": is_can_review,
@@ -349,11 +352,13 @@ def rollback(request):
         return response
     # 异步获取，并在页面展示，如果数据量大加载会缓慢
     else:
+        workflow_audit = workflow.get_audit()
         rollback_workflow_name = (
             f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
         )
         context = {
             "workflow_detail": workflow,
+            "audit_id": workflow_audit.audit_id if workflow_audit else None,
             "rollback_workflow_name": rollback_workflow_name,
         }
         return render(request, "rollback.html", context)

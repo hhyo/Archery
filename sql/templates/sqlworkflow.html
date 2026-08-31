@@ -133,11 +133,11 @@
             $('#sqlaudit-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
-                url: "/api/v1/workflows/",
+                url: "/api/v1/sql-workflows/list/",
                 ajax: function (params) {
                     $.ajax({
                         type: "POST",
-                        url: "/api/v1/workflows/",
+                        url: "/api/v1/sql-workflows/list/",
                         contentType: "application/json",
                         data: JSON.stringify(params.data),
                         success: params.success,
@@ -203,10 +203,10 @@
                         var span = document.createElement('span');
                         span.setAttribute('title', value);
                         if (value.length > 20) {
-                            span.innerHTML = "<a href=\"/detail/" + row.id + "/\">" + value.substr(0, 20) + '...';
+                            span.innerHTML = "<a href=\"/detail/" + row.workflow_id + "/\">" + value.substr(0, 20) + '...';
                             +"</a>";
                         } else {
-                            span.innerHTML = "<a href=\"/detail/" + row.id + "/\">" + value + "</a>";
+                            span.innerHTML = "<a href=\"/detail/" + row.workflow_id + "/\">" + value + "</a>";
                         }
                         return span.outerHTML;
                     }
@@ -275,7 +275,7 @@
                     title: '操作',
                     field: 'operation',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                        return "<button class=\"btn btn-info btn-xs\" audit_id=\"" + row.audit_id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
                     }
                 }],
                 onLoadSuccess: function () {
@@ -295,16 +295,11 @@
 
         // 获取操作日志
         function getLog(obj) {
-            var workflow_id = $(obj).attr("workflow_id");
-            var workflow_type = 2;
+            var audit_id = $(obj).attr("audit_id");
             $.ajax({
-                type: "post",
-                url: "/workflow/log/",
+                type: "get",
+                url: "/api/v1/sql-workflows/" + audit_id + "/logs/",
                 dataType: "json",
-                data: {
-                    workflow_id: workflow_id,
-                    workflow_type: workflow_type,
-                },
                 complete: function () {
                 },
                 success: function (data) {
@@ -376,4 +371,3 @@
         });
     </script>
 {% endblock %}
-

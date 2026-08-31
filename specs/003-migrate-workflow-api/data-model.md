@@ -1,68 +1,137 @@
-# Data Model: Workflow Operations REST API Migration
+# Data Model: Migrate Workflow Operations API
 
-## Existing Persistent Entities
+## SQL Workflow
 
-### SQL Workflow (`SqlWorkflow`)
+Existing model: `SqlWorkflow`
 
-Represents an SQL work item.
+Fields exposed by the API should align with existing model names:
 
-| Field / concept | Role in this feature | Validation / ownership |
-|---|---|---|
-| `id` | Identifies the target workflow | Positive existing identifier required for every target-specific endpoint. |
-| `engineer` | Workflow submitter | Determines submitter abort authority and executor authority with `sql.sql_execute`. |
-| `group_id` | Resource group | Used by visibility and group-scoped review/execute permissions. |
-| `status` | Lifecycle state | Updated only by transactional operation services. |
-| `run_date_start`, `run_date_end` | Permitted execution window | Reviewer may update; execute/schedule must validate target time. |
-| `finish_time` | Manual completion time | Set only on successful manual completion. |
-| `instance` | Database target | Passed unchanged to the engine adapter for rollback and OSC. |
-| `is_backup` | Rollback eligibility | Combined with final/exception status and view permission. |
+- `id`: Legacy SQL Workflow identifier, returned for reference only.
+- `audit_id`: Operation identifier from the related Workflow Audit Record.
+- `workflow_name`: Work item title.
+- `demand_url`: Optional demand or ticket link.
+- `group_id`, `group_name`: Resource group scope.
+- `instance`, `instance_name`: Target instance reference and display name.
+- `db_name`: Target database.
+- `syntax_type`: SQL type classification from review.
+- `is_backup`: Backup flag.
+- `engineer`, `engineer_display`: Submitter identity.
+- `status`, `status_display`: SQL Workflow lifecycle status.
+- `audit_auth_groups`: Existing approval group string, returned only where existing consumers need it.
+- `run_date_start`, `run_date_end`: Optional execution window.
+- `create_time`, `finish_time`: Creation and completion timestamps.
+- `is_manual`: Manual execution marker.
+- `is_offline_export`, `export_format`, `file_name`: Existing fields returned where the SQL Workflow row represents an offline export.
 
-### Workflow Audit (`WorkflowAudit`) and Log (`WorkflowLog`)
+Validation rules:
 
-Track approval state and immutable action history. Approval, abort and reject use the existing audit operator. Automatic/manual execution and scheduling append existing log records with the session actor's username and display name.
+- Submission must validate resource group, instance access, SQL review/pre-count behavior, backup rules, and approval flow creation.
+- New read and operation APIs must not accept `id` or `workflow_id` as identifiers.
+- `workflow_id` may appear only as reference data in responses.
 
-### Scheduled Execution (`django_q.Schedule`)
+## SQL Workflow Content
 
-One schedule is identified by `sqlreview-timing-{workflow_id}`. It runs the existing SQL execution task exactly once. It is replaced on reschedule and removed after a successful auto-execute or termination commit.
+Existing model: `SqlWorkflowContent`
 
-### Workflow Content (`SqlWorkflowContent`)
+Fields:
 
-Stores review and execution result JSON. The detail endpoint selects execution results for finish/exception workflows, otherwise review results; legacy list-form result rows are converted to the existing object form before returning `{"rows": [...]}`.
+- `workflow_id`: Legacy relation to SQL Workflow, returned only as reference data when needed.
+- `sql_content`: Submitted SQL.
+- `review_content`: Review result JSON.
+- `execute_result`: Execution result JSON.
 
-## Request Models
+Validation rules:
 
-| Request | Fields | Rules |
-|---|---|---|
-| Workflow list | `syntax_type[]`, `navStatus`, `instance_id`, `group_id`, `start_date`, `end_date`, `limit`, `offset`, `search` | Preserve Bootstrap Table paging/filter inputs; visibility derives from `request.user`. |
-| Execution window update | `workflow_id`, `run_date_start`, `run_date_end` | Reviewer level 2 required; blank dates clear their respective value. |
-| Approval | `workflow_id`, `audit_remark` | `sql.sql_review` required; audit operator validates current review state. |
-| Execution | `workflow_id`, `mode` | `mode` is `auto` or `manual`; executor and time window required. |
-| Schedule | `workflow_id`, `run_date` | `run_date` is future, parseable as `%Y-%m-%d %H:%M`, allowed by workflow window and executor authority. |
-| Termination | `workflow_id`, `cancel_remark` | Nonempty reason; actor is submitter (abort) or reviewer (reject), subject to existing cancellation rules. |
-| OSC control | `workflow_id`, `sqlsha1`, `command` | Actor must be allowed to view the workflow; command validation is delegated to the engine. |
+- Content reads require workflow view permission.
+- Empty or legacy result data must be normalized into a readable result representation.
+- Raw JSON parsing failures must not expose exception text to users.
 
-## Lifecycle Transitions
+## Workflow Audit Record
 
-```text
-workflow_manreviewing --approve(final audit step)--> workflow_review_pass
-workflow_manreviewing --abort/reject---------------> workflow_abort
-workflow_review_pass --schedule--------------------> workflow_timingtask
-workflow_timingtask --schedule(replace)------------> workflow_timingtask
-workflow_review_pass/workflow_timingtask --auto----> workflow_queuing
-workflow_review_pass/workflow_timingtask --manual--> workflow_finish
-workflow_review_pass/workflow_timingtask --abort---> workflow_abort
-```
+Existing model: `WorkflowAudit`
 
-All transitions require the existing permission helper and audit rules. Invalid transitions do not mutate workflow, audit or schedule data.
+Fields:
 
-## Derived Response Models
+- `audit_id`: Primary API identifier.
+- `workflow_id`: Legacy business row identifier, returned as reference data.
+- `workflow_type`: Must be SQL review for this feature's mandatory APIs.
+- `workflow_title`, `workflow_remark`: Existing audit title and remark fields.
+- `group_id`, `group_name`: Resource group scope.
+- `audit_auth_groups`, `current_audit`, `next_audit`: Existing approval flow fields.
+- `current_status`: Audit lifecycle status.
+- `create_user`, `create_user_display`, `create_time`, `sys_time`: Audit ownership and timestamps.
 
-| Response | Compatibility shape |
-|---|---|
-| List | `{"total": number, "rows": [workflow summary]}` |
-| Detail | `{"rows": [review or execution result]}` |
-| Rollback | `{"status": 0|1, "msg": string, "rows": [statement]}` |
-| Current status | `{"status": workflow_status, "msg": "", "data": ""}` |
-| OSC control | `{"total": number, "rows": [operation], "msg": string}` |
-| Mutation success | `{"status": 0, "msg": string, "data": {"workflow_id": number, "redirect_url": string}}` |
-| Mutation validation/authorization failure | DRF 4xx structured error body; no state changes |
+Relationships:
+
+- One Workflow Audit Record references one SQL Workflow by `workflow_type=SQL_REVIEW` and `workflow_id=SqlWorkflow.id`.
+- One Workflow Audit Record has many workflow log entries.
+
+Validation rules:
+
+- New APIs must look up by `audit_id` and reject missing, malformed, nonexistent, or non-SQL-review audit records.
+- Authorization checks must use the resolved SQL Workflow and existing permission/resource-group rules.
+
+## Workflow Log
+
+Existing model: `WorkflowLog`
+
+Fields exposed by log API:
+
+- `operation_type_desc`
+- `operation_info`
+- `operator_display`
+- `operation_time`
+
+Validation rules:
+
+- Logs are read by `audit_id`.
+- Log responses must be limited to users who can view the related SQL Workflow.
+
+## Scheduled Execution
+
+Existing scheduler helper boundary: SQL schedule task name and run time.
+
+Fields represented in API behavior:
+
+- `audit_id`: Operation identifier.
+- `run_date`: Requested execution time.
+- Derived `workflow_id`: Used internally for existing schedule name and execution task payload.
+
+Validation rules:
+
+- `run_date` must be in the future.
+- `run_date` must fall within the workflow execution window when one exists.
+- Scheduling replaces or results in exactly one matching pending scheduled execution.
+- Automatic execution, cancellation, and rejection must remove matching pending scheduled execution.
+
+## Online Schema Change Operation
+
+Existing engine capability boundary: `osc_control(command, sqlsha1)`.
+
+Fields:
+
+- `audit_id`: Operation identifier.
+- `sqlsha1`: OSC statement identifier.
+- `command`: One of `get`, `pause`, `resume`, `kill`.
+- Response rows: Existing engine result columns such as `DBNAME`, `TABLENAME`, `PERCENT`, `SQLSHA1`, `REMAINTIME`, and `INFOMATION`.
+
+Validation rules:
+
+- OSC progress and control require permission to view the related SQL Workflow.
+- Unsupported commands must be rejected without changing workflow state.
+- Engine errors must be logged and returned as sanitized structured errors or status messages.
+
+## State Transitions
+
+| Action | Preconditions | Result |
+|--------|---------------|--------|
+| Submit SQL Workflow | Authenticated submitter has resource and instance access | SQL Workflow and content are created; Workflow Audit Record is created; response includes `audit_id` and `workflow_id` |
+| Approve | User has reviewer authority for current audit node | Audit advances; SQL Workflow becomes review-passed when final approval completes |
+| Reject | User has reviewer authority and supplies reason | Audit records reviewer rejection; SQL Workflow becomes aborted; pending schedule is removed |
+| Cancel | Submitter or authorized cancel operator supplies reason | Audit records cancellation or abort; SQL Workflow becomes aborted; pending schedule is removed |
+| Execute auto | User can execute and execution window is valid | SQL Workflow enters queue; pending schedule is removed; async execution starts after commit |
+| Execute manual | User can execute and execution window is valid | SQL Workflow is marked finished with finish time and manual execution log |
+| Schedule | User can schedule and run date is valid | SQL Workflow is marked scheduled and one pending schedule is created |
+| Adjust execution window | User can review current workflow | Execution window fields are updated |
+| Read detail/content/status/log/rollback/OSC progress | User can view or has specific rollback permission | Data is returned without state change |
+| OSC control | User can view workflow and command is supported | Existing engine OSC command runs and returns operation rows/status |

@@ -1,65 +1,55 @@
-# Research: Workflow Operations REST API Migration
+# Research: Migrate Workflow Operations API
 
-## Decision 1: Use a dedicated session-user workflow API module
+## Decision: Use `WorkflowAudit.audit_id` as the REST resource identifier
 
-**Decision**: Add `sql_api.api_workflow_operations` and route its views under `/api/v1/workflows/`; do not reuse `api_workflow.AuditWorkflow` or `ExecuteWorkflow` directly.
+Rationale: `audit_id` is already the primary key of `WorkflowAudit` and uniquely identifies the approval process that all new workflow operations act upon. It also gives a consistent identifier shape for future workflow types even though their business table primary keys differ.
 
-**Rationale**: Existing generic workflow views accept `engineer` from the request body and then operate as that user. The migrated page behavior must enforce the authenticated session user, matching the original views and preventing actor spoofing. A dedicated module can preserve old page field names while deriving all permissions and audit actors from `request.user`.
+Alternatives considered: Continue using `workflow_id`, but that preserves the current SQL-specific API shape. Use a composite `{workflow_type, workflow_id}`, but that makes clients understand internal table identity.
 
-**Alternatives considered**:
+## Decision: Resolve `audit_id` once at the API boundary
 
-- Extend `api_workflow.AuditWorkflow` and `ExecuteWorkflow`: rejected because their public payload and actor semantics serve a different, generic API contract.
-- Put the operation code directly in `sql_api.urls`: rejected because permission, transaction and notification behavior would not be independently testable.
+Rationale: Each request should fetch the `WorkflowAudit` by `audit_id`, verify it is `WorkflowType.SQL_REVIEW`, and then resolve the related `SqlWorkflow` through the audit record. This keeps the external contract independent from business table IDs while preserving existing model relationships.
 
-## Decision 2: Standardize paths under `/api/v1/workflows/` without legacy aliases
+Alternatives considered: Add a new Ticket table, but the feature can be completed with existing storage. Let serializers accept both `audit_id` and `workflow_id`, but that contradicts the clarified API contract.
 
-**Decision**: Route every migrated capability beneath `/api/v1/workflows/`, use plural `workflows`, and remove the corresponding `sql/urls.py` paths.
+## Decision: Prefer RESTful resources with explicit domain action endpoints
 
-**Rationale**: The project already mounts `sql_api.urls` at `/api/` and has versioned routes below `v1/`. The requested migration explicitly excludes old URLs. A single prefix makes operation discovery and frontend replacement mechanical.
+Rationale: Reads map naturally to resource endpoints, while approval, rejection, cancellation, execution, scheduling, and OSC controls are domain actions with side effects. Separate action endpoints keep permissions, request schemas, audit logs, and frontend button mappings clear.
 
-**Alternatives considered**:
+Alternatives considered: A single `/actions/` endpoint with an action enum, but it weakens schema clarity and makes per-action validation less explicit. Pure CRUD-only resources do not model execution and audit decisions well.
 
-- Keep the old routes as aliases: rejected by the user requirement and would retain two contracts to maintain.
-- Reuse `/api/v1/workflow/`: rejected because it is already a broader generic submission/audit API with different semantics.
+## Decision: Align request and response fields with existing model fields
 
-## Decision 3: Preserve form fields and page response envelopes
+Rationale: The API should avoid a separate DTO vocabulary. SQL Workflow submission and detail responses should keep names such as `workflow_name`, `demand_url`, `group_id`, `instance`, `db_name`, `is_backup`, `run_date_start`, and `run_date_end`, while adding `audit_id` where clients need the new identifier.
 
-**Decision**: Keep established input names (`workflow_id`, `audit_remark`, `cancel_remark`, `mode`, `run_date`, `run_date_start`, `run_date_end`, `sqlsha1`, `command`) and preserve data-oriented response envelopes (`total/rows`, `rows`, `status/msg/rows`, `status/msg/data`). Replace redirects with structured successful REST responses for state-changing endpoints; update the existing page success handler only where it relied on form navigation.
+Alternatives considered: Rename fields into a new generic ticket contract, but that adds mapping cost and frontend churn without a data model change.
 
-**Rationale**: URL-only frontend updates are feasible for AJAX calls and lists only when parameter names and response parsing remain stable. HTML redirects are not REST responses, so the client needs a small shared success behavior to navigate to the existing detail page after successful mutation.
+## Decision: Return both `audit_id` and `workflow_id`, but accept only `audit_id`
 
-**Alternatives considered**:
+Rationale: Returning `workflow_id` helps existing pages display legacy links and debug data, while rejecting it as an input for new endpoints prevents clients from continuing the old operation model.
 
-- Normalize every response to a new global envelope: rejected because it would widen frontend churn and risk Bootstrap Table/result parsing regressions.
-- Keep HTML redirect responses: rejected because REST endpoints should return explicit outcomes and clients need reliable error handling.
+Alternatives considered: Hide `workflow_id` entirely, but that makes migration and troubleshooting harder. Accept both IDs temporarily, but that undermines the clarified breaking change.
 
-## Decision 4: Extract transactional operation orchestration
+## Decision: Split reviewer rejection and workflow cancellation
 
-**Decision**: Move state-changing logic into service functions called by DRF views. Database workflow/audit updates occur in `transaction.atomic()`; external queue, schedule deletion/creation and notifications execute with `transaction.on_commit()`.
+Rationale: `reject` and `cancel` have different actors, authorization rules, and audit meaning. Keeping them separate makes tests and frontend controls less ambiguous, even if the implementation can reuse existing audit transition primitives internally.
 
-**Rationale**: Original views interleave database writes and external side effects. Central orchestration allows tests to assert unchanged state on failure and avoids sending notifications or queueing execution before a committed state. The termination service captures whether the workflow was scheduled before changing its status, eliminating the current unreachable cleanup condition.
+Alternatives considered: Keep a single termination endpoint, but it forces the server to infer intent from the actor and preserves a confusing contract.
 
-**Alternatives considered**:
+## Decision: Sanitize user-facing errors and log unexpected exceptions
 
-- Copy legacy logic into each API view: rejected because it duplicates correctness-sensitive state transitions and makes unit testing harder.
-- Run django-q operations inside the database transaction: rejected because external side effects cannot be rolled back and can observe uncommitted or later-rolled-back state.
+Rationale: The constitution requires raw exceptions, tracebacks, database errors, and internal details to stay out of API responses. API views should return stable structured errors and log unexpected exceptions with context such as `audit_id`, action, and username.
 
-## Decision 5: Keep multi-engine behavior at existing adapters
+Alternatives considered: Continue returning `str(exception)` from serializer/view errors, but that leaks internal failure details and violates the constitution.
 
-**Decision**: Detail normalization remains in the API layer, while rollback and OSC continue to call `get_engine(instance=workflow.instance)`.
+## Decision: Preserve existing engine and scheduler boundaries
 
-**Rationale**: Existing engines encapsulate database-specific rollback and OSC logic. The API migration changes transport and orchestration only, so it must not introduce database-type branching.
+Rationale: Multi-engine behavior belongs in existing engine adapters and scheduling helpers. The API migration should not reimplement SQL execution, rollback lookup, OSC control, or scheduler mechanics.
 
-**Alternatives considered**:
+Alternatives considered: Add new API-specific execution services, but that increases behavior duplication. Direct engine calls outside existing capability boundaries risk multi-engine regressions.
 
-- Implement rollback/OSC per database in REST views: rejected because it violates the adapter boundary and risks divergent engine behavior.
+## Decision: Use pytest unit tests first and narrow API integration tests
 
-## Decision 6: Test at the service boundary first
+Rationale: Permission checks, state transitions, audit logging, notification eligibility, and schedule lifecycle can be tested with focused unit tests using shared fixtures. Integration tests should prove URL routing, authentication, serialization, and database persistence for representative success/failure paths.
 
-**Decision**: Add pytest service tests with reusable fixtures for permissions, workflows, audits and mocks; add narrow `APIClient` tests for authenticated dispatch, routes, payload parsing and absence of legacy routes.
-
-**Rationale**: State transition, audit, scheduling and notification rules can be deterministically tested with mocks. Only URL resolving, DRF request parsing and session authentication need integration coverage.
-
-**Alternatives considered**:
-
-- Test only through API endpoints: rejected by the constitution because it would make most tests slower and duplicate fixture setup.
+Alternatives considered: Broad end-to-end template/browser tests for every operation, but that is slower and mostly duplicates unit coverage. Legacy unittest-style setup would violate the project testing constitution.

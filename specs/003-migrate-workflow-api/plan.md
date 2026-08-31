@@ -1,36 +1,38 @@
-# Implementation Plan: Workflow Operations REST API Migration
+# Implementation Plan: Migrate Workflow Operations API
 
-**Branch**: `003-migrate-workflow-api` | **Date**: 2026-08-26 | **Spec**: [spec.md](spec.md)
+**Branch**: `003-migrate-workflow-api` | **Date**: 2026-08-31 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/003-migrate-workflow-api/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-将 `sql/sql_workflow.py` 中的十项工单操作迁移到会话身份驱动的 DRF API，并删除对应的函数视图和旧路由。新接口统一置于 `/api/v1/workflows/`，页面模板只替换请求地址，保留原有请求字段、成功响应包络和业务语义。共享的操作服务负责权限校验、审计、状态变更、调度生命周期和通知；DRF 视图仅负责请求解析、响应和 HTTP 语义。
+Migrate SQL Workflow submission, read, decision, execution, schedule, rollback, status, log, and online schema change operations to REST endpoints that use `audit_id` as the single external identifier. The design keeps the external URL shape resource-oriented and action-specific where domain actions are not pure CRUD, while request and response field names stay aligned with existing `SqlWorkflow`, `SqlWorkflowContent`, `WorkflowAudit`, and `WorkflowLog` model fields to avoid inventing a parallel data vocabulary.
+
+The implementation path should not be constrained by the old `workflow_id`-based route layout. Existing data remains the source of truth, with `WorkflowAudit.audit_id` resolving to the SQL Workflow row internally. Breaking API changes are allowed when all frontend consumers in this branch are updated in the same change set.
 
 ## Technical Context
 
-**Language/Version**: Python 3.x, Django 4.x, Django REST Framework; jQuery 3 + Bootstrap 3 templates  
-**Primary Dependencies**: Django REST Framework, drf-spectacular, django-q, simplejson, existing `sql.engines` adapter layer  
-**Storage**: Existing Archery MySQL models (`SqlWorkflow`, `SqlWorkflowContent`, `WorkflowAudit`, `WorkflowLog`) and django-q `Schedule`; no new storage  
-**Testing**: pytest + pytest-django + DRF `APIClient`; mock engine, django-q and notification side effects  
-**Target Platform**: Linux-hosted Django web application
-**Project Type**: Server-rendered web application with DRF backend  
-**Performance Goals**: No additional browser request round trips; list, details and control endpoints retain existing response shape and pagination behavior; engine call remains the dominant cost for rollback/OSC  
-**Constraints**: New paths are exclusively under `/api/v1/workflows/`; do not retain legacy operation URLs or aliases; front-end changes are URL-only where request method/payload and response shape already match; use `request.user`, never a client-supplied actor; preserve multi-engine adapter use and configured notifications  
-**Scale/Scope**: Ten existing operation capabilities, seven removed form/JSON routes, three updated list-page URLs, one detail page and one rollback page; one dedicated DRF module, serializer set, service module and pytest module
+**Language/Version**: Python 3 with Django project runtime as configured by the repository
+**Primary Dependencies**: Django, Django REST Framework, django-filter, drf-spectacular, django-q2, simplejson
+**Storage**: Existing relational database tables: `workflow_audit`, `sql_workflow`, `sql_workflow_content`, workflow logs, and scheduler backing storage
+**Testing**: pytest using repository `pyproject.toml` configuration and shared `conftest.py` fixtures
+**Target Platform**: Archery web application server with browser-based frontend consumers
+**Project Type**: Django web application with REST API and server-rendered frontend templates
+**Performance Goals**: Keep read/list behavior comparable to existing workflow pages; avoid extra repeated database lookups by resolving `audit_id` to `WorkflowAudit` and related SQL Workflow once per request where feasible
+**Constraints**: `audit_id` is the only accepted identifier for new SQL Workflow operation APIs; user-facing API errors must be sanitized while unexpected exceptions are logged; all changed frontend call sites must be updated with breaking API changes
+**Scale/Scope**: SQL Workflow APIs only; query privilege and archive workflow operations are deferred unless they share SQL Workflow endpoints
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 - [x] Multi-engine compatibility impact is listed and bounded by adapter or capability layer.
-  *Rollback and OSC remain behind `get_engine(instance=workflow.instance)`; new API/service code does not branch by database type.*
 - [x] Test plan is unit-test-first with pytest; integration scope is explicitly minimized.
-  *Service tests cover state, authorization, audit, scheduling and notifications with mocks; only endpoint authentication/routing and legacy-route removal require HTTP integration tests.*
 - [x] Shared setup is designed via conftest.py fixtures; duplicate setup is eliminated.
-  *Extend existing workflow, user, resource group, instance and audit fixtures in `conftest.py`, then share API client and mocked external-side-effect fixtures across the dedicated test module.*
 - [x] Any integration test includes a written justification for why unit tests are insufficient.
-  *Route and session authentication behavior crosses Django URL resolution and DRF dispatch; each such test will state this boundary rationale.*
+- [x] API errors are sanitized for users and unexpected exceptions are logged.
+- [x] Breaking API changes include frontend consumer updates in the same change set.
 
 ## Project Structure
 
@@ -44,55 +46,52 @@ specs/003-migrate-workflow-api/
 ├── quickstart.md
 ├── contracts/
 │   └── workflow-operations.openapi.yaml
-└── tasks.md              # Created by /speckit.tasks
+└── tasks.md
 ```
 
 ### Source Code (repository root)
-```text
-archery/
-└── urls.py                            # Mounts sql_api at /api/
 
+```text
 sql_api/
-├── api_workflow_operations.py          # New session-user workflow operation views
-├── serializers.py                      # New request serializers and response schema types
-├── services/
-│   └── workflow_operations.py          # New transactional operation orchestration
-├── urls.py                             # Adds /api/v1/workflows/ routes
-└── test_workflow_operations_api.py     # New focused pytest unit and integration tests
+├── api_workflow.py
+├── api_workflow_operations.py
+├── serializers.py
+├── urls.py
+└── test_workflow_operations_api.py
 
 sql/
-├── sql_workflow.py                     # Remove migrated function views and obsolete imports
-├── urls.py                             # Remove all migrated legacy operation routes
+├── models.py
 ├── templates/
-│   ├── sqlworkflow.html                # Replace list URL only
-│   ├── audit_sqlworkflow.html          # Replace list URL only
-│   ├── sqlexportworkflow.html          # Replace list URL only
-│   ├── detail.html                     # Replace operation URLs only
-│   └── rollback.html                   # Replace rollback URL only
-└── tests.py                            # Move/replace legacy route checks
+│   ├── detail.html
+│   ├── sqlworkflow.html
+│   └── sqlexportsubmit.html
+└── utils/
+    ├── sql_review.py
+    ├── workflow_audit.py
+    ├── execute_sql.py
+    └── tasks.py
 
-conftest.py                             # Extend reusable workflow API fixtures as needed
+conftest.py
 ```
 
-**Structure Decision**: Keep the existing Django application layout. Add a dedicated `sql_api` operation module instead of extending the generic `api_workflow.py`, whose current client-supplied actor contract is not safe for page requests. Put state-changing orchestration in a small service module so views remain declarative and service tests can cover transactional outcomes without HTTP setup.
+**Structure Decision**: Keep the feature inside the existing Django app layout. Add or adjust DRF views and serializers in `sql_api/` and update server-rendered template JavaScript in `sql/templates/` so browser consumers call the new `audit_id` routes. Do not introduce new persistence models for the API contract; use `WorkflowAudit.audit_id` as the resource key and map internally to existing SQL Workflow models.
 
 ## Complexity Tracking
 
-No constitution violations. The service module is a bounded extraction required to unit-test atomic state transitions and to prevent duplicated workflow side effects across DRF views.
+No constitution violations are planned. The only accepted breaking change is the external identifier switch from `workflow_id` to `audit_id`, justified by the feature requirement and covered by same-change frontend updates.
 
----
+## Phase 0 Research
 
-## Phase 0: Research Summary
+See [research.md](./research.md). Decisions cover REST route shape, `audit_id` resolution, serializer alignment with existing models, sanitized error handling, transaction boundaries, OSC progress/control, and test strategy.
 
-See [research.md](research.md). Key decisions: new paths use `/api/v1/workflows/`; original field names and JSON envelopes remain where page JavaScript consumes them; old operation routes are deleted with no aliases; all authority derives from `request.user`; scheduling effects are coordinated with database state using transaction completion hooks.
+## Phase 1 Design
 
-## Phase 1: Design & Contracts
+See [data-model.md](./data-model.md), [contracts/workflow-operations.openapi.yaml](./contracts/workflow-operations.openapi.yaml), and [quickstart.md](./quickstart.md).
 
-See [data-model.md](data-model.md), [workflow-operations.openapi.yaml](contracts/workflow-operations.openapi.yaml), and [quickstart.md](quickstart.md).
+## Post-Design Constitution Check
 
-### Post-design Constitution Check
-
-- [x] Multi-engine access stays isolated at the existing engine adapter boundary.
-- [x] The test design is service-unit-test-first; HTTP checks only cover DRF/session/URL boundaries.
-- [x] Existing `conftest.py` workflow fixtures are extended rather than duplicated.
-- [x] Each endpoint integration test documents that unit tests cannot validate its route and session dispatch boundary.
+- [x] Multi-engine compatibility remains bounded: database execution and OSC behavior continue through existing engine capability APIs.
+- [x] Test strategy remains pytest unit-first, with integration tests only for REST authentication, routing, serialization, and persistence boundaries.
+- [x] Shared fixture requirements are captured in quickstart validation and later task generation.
+- [x] API contracts require structured sanitized errors and logging for unexpected server failures.
+- [x] Breaking route/identifier changes require matching frontend template updates before legacy views/routes are removed.

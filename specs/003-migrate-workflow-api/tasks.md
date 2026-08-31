@@ -1,118 +1,131 @@
-# Tasks: Workflow Operations REST API Migration
+# Tasks: Migrate Workflow Operations API
 
 **Input**: Design documents from `/specs/003-migrate-workflow-api/`
 **Prerequisites**: [plan.md](plan.md), [spec.md](spec.md), [research.md](research.md), [data-model.md](data-model.md), [workflow-operations.openapi.yaml](contracts/workflow-operations.openapi.yaml), [quickstart.md](quickstart.md)
 
-**Tests**: pytest unit tests are required for service behavior. Narrow DRF integration tests are required only for session authentication, URL dispatch, payload parsing, and verifying removed routes return 404; each such test must state that the Django/DRF boundary cannot be proven by a unit test.
+**Tests**: Required by the specification and constitution. Write pytest unit tests first, reuse shared fixtures from `conftest.py`, and add narrow DRF integration tests only for routing, authentication, request parsing, and persistence boundaries that unit tests cannot prove.
 
-**Organization**: Tasks are grouped by user story so each slice can be implemented, validated, and delivered independently after the shared foundation.
+**Organization**: Tasks are grouped by user story so each story can be implemented, tested, and delivered independently after the shared foundation.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Prepare reusable test support and the dedicated workflow operation module layout.
+**Purpose**: Prepare shared fixtures, module locations, and contract checks for the `audit_id` API migration.
 
-- [ ] T001 Create reusable authenticated API-client, workflow-audit, and mocked engine/schedule/notification fixtures in `conftest.py`
-- [ ] T002 Create the dedicated workflow operation API module in `sql_api/api_workflow_operations.py`
-- [ ] T003 [P] Create the focused pytest module skeleton with documented HTTP-boundary rationale in `sql_api/test_workflow_operations_api.py`
+- [X] T001 Create shared pytest fixtures for authenticated users, SQL Workflow rows, WorkflowAudit rows, SqlWorkflowContent rows, permissions, mocked engines, mocked schedules, and mocked notifications in `conftest.py`
+- [X] T002 [P] Create or normalize the focused workflow API pytest module with HTTP-boundary rationale comments in `sql_api/test_workflow_operations_api.py`
+- [X] T003 [P] Add OpenAPI contract sanity tests that parse `specs/003-migrate-workflow-api/contracts/workflow-operations.openapi.yaml` and assert every path uses `{audit_id}` except submission in `sql_api/test_workflow_operations_api.py`
+- [X] T004 [P] Inventory old `workflow_id` SQL Workflow operation consumers in `sql/templates/detail.html`, `sql/templates/sqlworkflow.html`, `sql/templates/audit_sqlworkflow.html`, and `sql/templates/sqlexportsubmit.html`
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Establish common request validation, response construction, session authentication, atomic orchestration primitives, and versioned routing that all workflow operation stories require.
+**Purpose**: Establish the shared `audit_id` lookup, sanitized errors, response envelopes, routing prefix, and serializer contracts required by all stories.
 
-**⚠️ CRITICAL**: No user story work can begin until this phase is complete.
+**CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Add workflow ID, list-filter, mutation, schedule, execution-window, and OSC request serializers that retain legacy field names in `sql_api/serializers.py`
-- [ ] T005 Add an authenticated workflow-page permission class that derives authority solely from `request.user` in `sql_api/permissions.py`
-- [ ] T006 Implement shared workflow lookup, compatible response-envelope builders, post-commit side-effect helpers, and mutation result construction in `sql_api/api_workflow_operations.py`
-- [ ] T007 Create authenticated DRF APIView base classes that validate path workflow IDs and map domain validation/permission failures to structured 4xx responses in `sql_api/api_workflow_operations.py`
-- [ ] T008 Register the `/api/v1/workflows/` API prefix and common view imports in `sql_api/urls.py`
-- [ ] T009 [P] Add unit tests for common serializer validation, session-user-only actor selection, compatible response helpers, and deferred side effects in `sql_api/test_workflow_operations_api.py`
+- [X] T005 Add `audit_id`-centric request and response serializers for mutation envelopes, SQL Workflow detail, remarks, execution, schedule, execution-window, OSC, and log responses in `sql_api/serializers.py`
+- [X] T006 Add a shared helper that resolves `WorkflowAudit.audit_id` to SQL-review `WorkflowAudit` plus related `SqlWorkflow` and rejects missing or non-SQL-review audits with sanitized errors in `sql_api/api_workflow_operations.py`
+- [X] T007 Add shared helpers for `audit_id` mutation responses that include both `audit_id` and reference-only `workflow_id` plus a frontend redirect URL in `sql_api/api_workflow_operations.py`
+- [X] T008 Add shared helpers that log unexpected exceptions with `audit_id`, action name, and username while returning sanitized DRF validation errors in `sql_api/api_workflow_operations.py`
+- [X] T009 Add shared post-commit helper usage for notifications, async execution, and schedule add/remove side effects in `sql_api/api_workflow_operations.py`
+- [X] T010 Register the new `/api/v1/sql-workflows/` route family and imports in `sql_api/urls.py`
+- [X] T011 [P] Add unit tests for `audit_id` lookup success, nonexistent audit, non-SQL-review audit, mutation response shape, and sanitized error behavior in `sql_api/test_workflow_operations_api.py`
 
-**Checkpoint**: Shared API foundation is complete; all story phases can now proceed.
+**Checkpoint**: Shared `audit_id` API foundation is complete; all story phases can now proceed.
 
 ---
 
-## Phase 3: User Story 1 - Manage Workflow Decisions (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 - Manage Workflow Decisions (Priority: P1) MVP
 
-**Goal**: Authorized reviewers can approve and authorized submitters/reviewers can terminate workflows through REST endpoints, retaining audit, status, notification, and scheduled-work semantics.
+**Goal**: Authorized reviewers can approve or reject SQL workflows, and authorized submitters/cancel operators can cancel SQL workflows, using `audit_id` as the only operation identifier.
 
-**Independent Test**: Use a session-authenticated reviewer to approve a pending workflow and a permitted submitter/reviewer to terminate eligible workflows; assert audit action, status, notification eligibility, and removal of a pre-existing timing schedule without exercising execution endpoints.
+**Independent Test**: Use session-authenticated users to approve one pending workflow, reject another pending workflow, and cancel an eligible workflow; verify audit state, SQL Workflow status, logs, notifications, schedule cleanup, and refusal of unauthorized or malformed requests.
 
 ### Tests for User Story 1
 
-- [ ] T010 [P] [US1] Add service unit tests for final approval status transition, audit detail creation, and Pass notification eligibility in `sql_api/test_workflow_operations_api.py`
-- [ ] T011 [P] [US1] Add service unit tests for submitter abort, reviewer reject, missing cancellation reason, denied cancellation, and scheduled-work removal after commit in `sql_api/test_workflow_operations_api.py`
-- [ ] T012 [US1] Add API integration tests for session-authenticated approval and termination payloads, including the rationale that DRF dispatch/session identity cannot be proven by service unit tests, in `sql_api/test_workflow_operations_api.py`
+- [ ] T012 [P] [US1] Add pytest unit tests for final and intermediate approval transitions, audit detail creation, SQL Workflow status updates, and Pass notification eligibility in `sql_api/test_workflow_operations_api.py`
+- [ ] T013 [P] [US1] Add pytest unit tests for reviewer rejection with required `reject_remark`, audit/log status, workflow abort status, Cancel notification eligibility, and scheduled-work removal in `sql_api/test_workflow_operations_api.py`
+- [ ] T014 [P] [US1] Add pytest unit tests for submitter cancellation with required `cancel_remark`, authorized cancel operator behavior, denied cancellation, and no partial state change on `AuditException` in `sql_api/test_workflow_operations_api.py`
+- [ ] T015 [US1] Add DRF integration tests for `POST /api/v1/sql-workflows/{audit_id}/approval/`, `/rejection/`, and `/cancellation/` covering session identity and request parsing in `sql_api/test_workflow_operations_api.py`
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Implement transactional approval and termination service functions using `request.user`, `get_auditor`, `WorkflowAction`, and post-commit notification/schedule side effects in `sql_api/services/workflow_operations.py`
-- [ ] T014 [US1] Implement approval and termination API views returning the compatible mutation envelope in `sql_api/api_workflow_operations.py`
-- [ ] T015 [US1] Register `POST /api/v1/workflows/<workflow_id>/approval/` and `POST /api/v1/workflows/<workflow_id>/termination/` in `sql_api/urls.py`
-- [ ] T016 [US1] Replace the approval and cancellation form actions with their new `/api/v1/workflows/<workflow_id>/.../` addresses and handle mutation success by navigating to `redirect_url` in `sql/templates/detail.html`
+- [X] T016 [US1] Implement `POST /api/v1/sql-workflows/{audit_id}/approval/` using the shared `audit_id` resolver, `get_auditor`, `WorkflowAction.PASS`, atomic updates, and sanitized errors in `sql_api/api_workflow_operations.py`
+- [X] T017 [US1] Implement `POST /api/v1/sql-workflows/{audit_id}/rejection/` using reviewer authorization, `WorkflowAction.REJECT`, required `reject_remark`, atomic abort status, schedule cleanup, and sanitized errors in `sql_api/api_workflow_operations.py`
+- [X] T018 [US1] Implement `POST /api/v1/sql-workflows/{audit_id}/cancellation/` using submitter/cancel authorization, `WorkflowAction.ABORT`, required `cancel_remark`, atomic abort status, schedule cleanup, and sanitized errors in `sql_api/api_workflow_operations.py`
+- [X] T019 [US1] Update SQL Workflow detail-page approval, rejection, and cancellation buttons to call `/api/v1/sql-workflows/{{ audit_id }}/.../` endpoints in `sql/templates/detail.html`
+- [X] T020 [US1] Ensure SQL Workflow detail rendering exposes the page's `audit_id` for JavaScript route construction without using `workflow_id` as an operation identifier in `sql/views.py` and `sql/templates/detail.html`
 
-**Checkpoint**: Approval, abort, and rejection work through the new REST paths with the original authorization, audit, schedule cleanup, and notification behavior.
+**Checkpoint**: Approval, rejection, and cancellation are fully usable through `audit_id` routes with existing audit semantics and frontend controls.
 
 ---
 
 ## Phase 4: User Story 2 - Execute and Schedule Workflows (Priority: P1)
 
-**Goal**: Authorized executors can queue automatic execution, confirm manual execution, and create or replace future schedules through REST APIs with correct audit and schedule lifecycle behavior.
+**Goal**: Authorized executors can queue automatic execution, confirm manual execution, and schedule future execution using `audit_id` as the only operation identifier.
 
-**Independent Test**: With an authorized executor and an approved workflow, test auto, manual, and schedule modes independently; verify status, timestamps, logs, deferred queue/schedule work, and rejection of invalid time/mode/permission cases.
+**Independent Test**: With an approved SQL Workflow and authorized executor, test auto execution, manual completion, and scheduling independently; verify state, timestamps, audit logs, async/schedule side effects, and rejection of invalid mode, invalid time, denied permission, or out-of-window requests.
 
 ### Tests for User Story 2
 
-- [ ] T017 [P] [US2] Add service unit tests for automatic and manual execution state changes, audit logs, Execute notification eligibility, and removal of an existing schedule after commit in `sql_api/test_workflow_operations_api.py`
-- [ ] T018 [P] [US2] Add parametrized service unit tests for schedule creation/replacement, past timestamps, execution-window violations, invalid modes, and executor authorization failures in `sql_api/test_workflow_operations_api.py`
-- [ ] T019 [US2] Add API integration tests for execution and schedule endpoints with the rationale that HTTP method/payload parsing and session dispatch require DRF integration coverage in `sql_api/test_workflow_operations_api.py`
+- [ ] T021 [P] [US2] Add pytest unit tests for automatic execution state change, execution audit log, schedule removal, async task dispatch after commit, and sanitized async setup failures in `sql_api/test_workflow_operations_api.py`
+- [ ] T022 [P] [US2] Add pytest unit tests for manual execution status, finish time, manual audit log, Execute notification eligibility, and no partial state change on validation failure in `sql_api/test_workflow_operations_api.py`
+- [ ] T023 [P] [US2] Add parametrized pytest unit tests for schedule creation or replacement, past `run_date`, execution-window violations, invalid `mode`, and executor authorization failures in `sql_api/test_workflow_operations_api.py`
+- [ ] T024 [US2] Add DRF integration tests for `POST /api/v1/sql-workflows/{audit_id}/execution/` and `/schedule/` covering JSON/form payload parsing and session-based authorization in `sql_api/test_workflow_operations_api.py`
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Implement transactional automatic execution, manual completion, and schedule replacement services using existing permission helpers, `Audit.add_log`, and post-commit django-q work in `sql_api/services/workflow_operations.py`
-- [ ] T021 [US2] Implement execution and scheduling API views that accept legacy `mode` and `run_date` fields and return compatible mutation envelopes in `sql_api/api_workflow_operations.py`
-- [ ] T022 [US2] Register `POST /api/v1/workflows/<workflow_id>/execution/` and `POST /api/v1/workflows/<workflow_id>/schedule/` in `sql_api/urls.py`
-- [ ] T023 [US2] Replace automatic execution, manual execution, and timing-task form actions with the new API paths and redirect-on-success behavior in `sql/templates/detail.html`
+- [X] T025 [US2] Implement `POST /api/v1/sql-workflows/{audit_id}/execution/` for `mode=auto` with existing `can_execute`, `on_correct_time_period`, `Audit.add_log`, schedule removal, async execution, and sanitized errors in `sql_api/api_workflow_operations.py`
+- [X] T026 [US2] Extend `POST /api/v1/sql-workflows/{audit_id}/execution/` for `mode=manual` with finish timestamp, manual log, Execute notification, and sanitized errors in `sql_api/api_workflow_operations.py`
+- [X] T027 [US2] Implement `POST /api/v1/sql-workflows/{audit_id}/schedule/` with existing `can_timingtask`, execution-window validation, one matching schedule, and sanitized errors in `sql_api/api_workflow_operations.py`
+- [X] T028 [US2] Update automatic execution, manual execution, and timing-task form actions to call `/api/v1/sql-workflows/{{ audit_id }}/execution/` and `/schedule/` in `sql/templates/detail.html`
 
-**Checkpoint**: Automatic, manual, and scheduled execution are independently usable through the new REST API with consistent logs, state, timing validation, and task lifecycle.
+**Checkpoint**: Automatic execution, manual execution, and scheduling work through `audit_id` routes without changing existing engine or scheduler boundaries.
 
 ---
 
 ## Phase 5: User Story 3 - Inspect and Adjust Workflow Operations (Priority: P2)
 
-**Goal**: Authorized users can list, inspect, retrieve rollback data, adjust execution windows, inspect status, and control OSC execution through compatible REST responses.
+**Goal**: Authorized users can submit SQL workflows, list workflows with returned `audit_id`, read details/content/status/logs/rollback, adjust execution windows, and view/control OSC progress through `audit_id` REST APIs.
 
-**Independent Test**: Use permitted and denied session users to call list, content, rollback, window, status, and OSC endpoints; verify legacy response envelopes, engine delegation, and unchanged state after denied or malformed requests.
+**Independent Test**: Use permitted and denied users to call submission, list, detail, content, status, log, rollback, execution-window, and OSC endpoints; verify model-aligned response fields, engine delegation, legacy-result normalization, sanitized errors, and unchanged state after denied or malformed requests.
 
 ### Tests for User Story 3
 
-- [ ] T024 [P] [US3] Add service unit tests for visibility-filtered list results, legacy content-row normalization, rollback permission, execution-window update authorization, status visibility, and OSC engine delegation in `sql_api/test_workflow_operations_api.py`
-- [ ] T025 [US3] Add API integration tests for Bootstrap Table list envelopes, compatible detail/rollback/status/OSC responses, and authenticated routing with the rationale that URL dispatch and form/query parsing require DRF integration coverage in `sql_api/test_workflow_operations_api.py`
+- [ ] T029 [P] [US3] Add pytest unit tests for SQL Workflow submission returning both `audit_id` and reference-only `workflow_id`, including review failure sanitization and automatic audit creation in `sql_api/test_workflow_operations_api.py`
+- [ ] T030 [P] [US3] Add pytest unit tests for list and audit-list responses including `audit_id` per row while preserving filtering, paging, search, and visibility rules in `sql_api/test_workflow_operations_api.py`
+- [ ] T031 [P] [US3] Add pytest unit tests for detail, content normalization, status, logs, rollback permission, and execution-window update by `audit_id` in `sql_api/test_workflow_operations_api.py`
+- [ ] T032 [P] [US3] Add pytest unit tests for OSC progress via GET, OSC control via POST, unsupported OSC commands, engine errors, and sanitized response messages in `sql_api/test_workflow_operations_api.py`
+- [ ] T033 [US3] Add DRF integration tests for submission, list, detail, content, logs, rollback, execution-window, status, and OSC route dispatch by `audit_id` in `sql_api/test_workflow_operations_api.py`
 
 ### Implementation for User Story 3
 
-- [ ] T026 [US3] Implement list filtering/pagination, detail-content normalization, rollback retrieval, execution-window update, status lookup, and OSC-control services using existing permission helpers and engine adapters in `sql_api/services/workflow_operations.py`
-- [ ] T027 [US3] Implement list, audit-list, content, rollback, execution-window, status, and OSC API views with legacy-compatible response envelopes in `sql_api/api_workflow_operations.py`
-- [ ] T028 [US3] Register list, audit-list, content, rollback, execution-window, status, and OSC paths under `/api/v1/workflows/` in `sql_api/urls.py`
-- [ ] T029 [P] [US3] Replace workflow list request URLs only in `sql/templates/sqlworkflow.html`, `sql/templates/audit_sqlworkflow.html`, and `sql/templates/sqlexportworkflow.html`
-- [ ] T030 [US3] Replace content, OSC, execution-window, status, and rollback request URLs only while preserving existing payloads and response parsing in `sql/templates/detail.html` and `sql/templates/rollback.html`
+- [X] T034 [US3] Implement `POST /api/v1/sql-workflows/` submission using existing `WorkflowContentSerializer` model-aligned payloads and response data containing `audit_id` plus reference-only `workflow_id` in `sql_api/api_workflow.py` and `sql_api/api_workflow_operations.py`
+- [X] T035 [US3] Update SQL Workflow list and audit-list APIs to include `audit_id` in each row while preserving existing filter and Bootstrap Table response fields in `sql_api/api_workflow_operations.py`
+- [X] T036 [US3] Implement `GET /api/v1/sql-workflows/{audit_id}/` detail response with model-aligned SQL Workflow fields and reference-only `workflow_id` in `sql_api/api_workflow_operations.py`
+- [X] T037 [US3] Implement `GET /api/v1/sql-workflows/{audit_id}/content/`, `/status/`, and `/logs/` with view authorization and existing response conventions in `sql_api/api_workflow_operations.py`
+- [X] T038 [US3] Implement `GET /api/v1/sql-workflows/{audit_id}/rollback/` with existing rollback permission checks, engine adapter delegation, and sanitized error logging in `sql_api/api_workflow_operations.py`
+- [X] T039 [US3] Implement `PATCH /api/v1/sql-workflows/{audit_id}/execution-window/` with reviewer authorization and model field updates in `sql_api/api_workflow_operations.py`
+- [X] T040 [US3] Implement `GET /api/v1/sql-workflows/{audit_id}/osc/` for progress and `POST /api/v1/sql-workflows/{audit_id}/osc/` for pause/resume/kill control in `sql_api/api_workflow_operations.py`
+- [X] T041 [US3] Update SQL Workflow list page links, log requests, and detail navigation to use returned `audit_id` in `sql/templates/sqlworkflow.html`
+- [X] T042 [US3] Update SQL Workflow submit and offline-export submit success handling to preserve returned `audit_id` for detail navigation in `sql/templates/sqlsubmit.html` and `sql/templates/sqlexportsubmit.html`
+- [X] T043 [US3] Update detail page content, status polling, logs, rollback, execution-window, and OSC JavaScript calls to use `/api/v1/sql-workflows/{{ audit_id }}/.../` routes in `sql/templates/detail.html`
 
-**Checkpoint**: All remaining read/control operations use the unified REST prefix, preserve existing page data handling, and continue to respect visibility and engine boundaries.
+**Checkpoint**: SQL Workflow submission and all read/control operations expose and consume `audit_id` while preserving model-aligned fields and existing page behavior.
 
 ---
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-**Purpose**: Remove replaced legacy code, validate the public contract, and ensure no route or template still depends on old operation URLs.
+**Purpose**: Remove replaced legacy dependencies, validate the contract, and ensure old operation identifiers do not survive in active SQL Workflow API consumers.
 
-- [ ] T031 Remove migrated function-based workflow operation views and obsolete imports from `sql/sql_workflow.py`
-- [ ] T032 Remove all migrated legacy operation route entries and the `sql_workflow` import dependency from `sql/urls.py`
-- [ ] T033 Replace legacy workflow URL tests with REST contract, old-route-404, and URL-only frontend reference checks in `sql/tests.py`
-- [ ] T034 [P] Update retired URL and client migration guidance in `specs/003-migrate-workflow-api/contracts/workflow-operations.openapi.yaml` and `specs/003-migrate-workflow-api/quickstart.md`
-- [ ] T035 Run the focused pytest validation from `sql_api/test_workflow_operations_api.py` and `sql/tests.py`
-- [ ] T036 Run the full configured pytest suite and resolve only regressions caused by this migration in `pyproject.toml`
+- [ ] T044 Remove or deprecate migrated legacy function-based SQL Workflow operation views after all new `audit_id` endpoints cover their behavior in `sql/views.py` and `sql/urls.py`
+- [X] T045 Remove migrated old SQL Workflow operation route entries that expose `workflow_id` operation paths from `sql_api/urls.py` after frontend consumers use `/api/v1/sql-workflows/`
+- [ ] T046 [P] Update retired endpoint migration notes in `specs/003-migrate-workflow-api/contracts/workflow-operations.openapi.yaml` and `specs/003-migrate-workflow-api/quickstart.md`
+- [X] T047 [P] Add repository checks that fail when migrated SQL Workflow frontend calls still build `/api/v1/workflows/<workflow_id>/` operation routes in `sql_api/test_workflow_operations_api.py`
+- [X] T048 Run focused validation commands from `specs/003-migrate-workflow-api/quickstart.md` using the project-local Python environment where applicable
+- [ ] T049 Run full configured pytest regression suite and fix only regressions caused by the SQL Workflow `audit_id` migration in `sql_api/test_workflow_operations_api.py`
 
 ---
 
@@ -121,67 +134,77 @@
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: Starts immediately.
-- **Foundational (Phase 2)**: Depends on T001-T003 and blocks all user stories.
-- **US1 (Phase 3)**: Depends on T004-T009; provides the MVP workflow decision slice.
-- **US2 (Phase 4)**: Depends on T004-T009; may be developed in parallel with US1, but its `detail.html` work must be sequenced with T016 to avoid file conflicts.
-- **US3 (Phase 5)**: Depends on T004-T009; may be developed in parallel with US1/US2, but T030 must be sequenced after T016 and T023 because all change `detail.html`.
-- **Polish (Phase 6)**: Depends on all selected user story phases and their endpoint/template updates.
+- **Foundational (Phase 2)**: Depends on T001-T004 and blocks all user stories.
+- **US1 (Phase 3)**: Depends on T005-T011 and delivers the MVP decision workflow.
+- **US2 (Phase 4)**: Depends on T005-T011 and can proceed in parallel with US1 except for shared files.
+- **US3 (Phase 5)**: Depends on T005-T011 and can proceed in parallel with US1/US2 except for shared files.
+- **Polish (Phase 6)**: Depends on completed selected story phases and all frontend consumer updates.
 
 ### User Story Dependencies
 
-- **US1 (P1)**: Independent after the foundation; it does not require execution or inspection endpoints.
-- **US2 (P1)**: Independent after the foundation; it reuses only shared service/serializer primitives.
-- **US3 (P2)**: Independent after the foundation; it reuses only shared service/serializer primitives.
+- **US1 (P1)**: Independent after the foundation; validates approval, rejection, and cancellation.
+- **US2 (P1)**: Independent after the foundation; validates execution and scheduling.
+- **US3 (P2)**: Independent after the foundation; validates submission, reads, execution-window updates, rollback, logs, and OSC.
 
-### Parallel Opportunities
+### Within Each User Story
 
-- T001, T002, and T003 can proceed together.
-- T004, T005, and T009 can proceed in parallel once the corresponding module locations exist; T006-T008 follow their required shared interfaces.
-- After Phase 2, T010-T012, T017-T019, and T024-T025 can be assigned to separate developers.
-- T013-T015, T020-T022, and T026-T028 can proceed in parallel by story; serialize edits to `sql_api/urls.py`, `sql_api/api_workflow_operations.py`, `sql_api/services/workflow_operations.py`, and `sql_api/test_workflow_operations_api.py` when they overlap.
-- T029 is parallel with service/view work because it touches only three list templates.
-- T031-T034 can proceed in parallel after all API and frontend migration tasks complete.
+- Tests must be written before implementation tasks in the same story.
+- Serializer/helper changes precede API view implementation.
+- API view implementation precedes template consumer updates.
+- Template updates that touch `sql/templates/detail.html` must be serialized across US1, US2, and US3.
 
-## Parallel Examples
+## Parallel Opportunities
 
-### User Story 1
+- T002, T003, and T004 can run in parallel after T001 begins.
+- T005, T006, T007, T008, and T011 can be split, but edits to `sql_api/api_workflow_operations.py` must be coordinated.
+- T012-T014 can run in parallel for US1 tests.
+- T021-T023 can run in parallel for US2 tests.
+- T029-T032 can run in parallel for US3 tests.
+- T041 and T042 can run in parallel with API implementation because they touch different templates from `sql_api/api_workflow_operations.py`.
+- T046 and T047 can run in parallel after all route decisions are implemented.
+
+## Parallel Example: User Story 1
 
 ```text
-Task T010: Unit tests for approval behavior in sql_api/test_workflow_operations_api.py
-Task T011: Unit tests for termination behavior in sql_api/test_workflow_operations_api.py
+Task T012: Add approval transition tests in sql_api/test_workflow_operations_api.py
+Task T013: Add rejection tests in sql_api/test_workflow_operations_api.py
+Task T014: Add cancellation tests in sql_api/test_workflow_operations_api.py
 ```
 
-### User Story 2
+## Parallel Example: User Story 2
 
 ```text
-Task T017: Unit tests for automatic/manual execution in sql_api/test_workflow_operations_api.py
-Task T018: Parametrized tests for scheduling and invalid execution cases in sql_api/test_workflow_operations_api.py
+Task T021: Add auto-execution tests in sql_api/test_workflow_operations_api.py
+Task T022: Add manual-execution tests in sql_api/test_workflow_operations_api.py
+Task T023: Add schedule validation tests in sql_api/test_workflow_operations_api.py
 ```
 
-### User Story 3
+## Parallel Example: User Story 3
 
 ```text
-Task T024: Unit tests for retrieval/control service behaviors in sql_api/test_workflow_operations_api.py
-Task T029: URL-only list-template replacements in sql/templates/sqlworkflow.html, sql/templates/audit_sqlworkflow.html, and sql/templates/sqlexportworkflow.html
+Task T029: Add submission tests in sql_api/test_workflow_operations_api.py
+Task T030: Add list/audit-list tests in sql_api/test_workflow_operations_api.py
+Task T032: Add OSC tests in sql_api/test_workflow_operations_api.py
+Task T041: Update sql/templates/sqlworkflow.html to use returned audit_id
 ```
 
 ## Implementation Strategy
 
-### MVP First (User Story 1)
+### MVP First (User Story 1 Only)
 
-1. Complete Setup and Foundational phases.
-2. Implement and validate US1 through approval and termination endpoints.
-3. Verify audit, notification eligibility, and scheduled-work removal independently.
-4. Demonstrate only `/api/v1/workflows/<workflow_id>/approval/` and `/api/v1/workflows/<workflow_id>/termination/` before adding execution or inspection behavior.
+1. Complete Phase 1 and Phase 2.
+2. Complete US1 tests T012-T015 and confirm they fail against the old `workflow_id` contract.
+3. Implement US1 tasks T016-T020.
+4. Validate approval, rejection, and cancellation independently before execution or inspection work.
 
 ### Incremental Delivery
 
-1. Complete the shared foundation.
-2. Add US1 and validate decisions.
-3. Add US2 and validate execution/scheduling without changing US1 behavior.
-4. Add US3 and validate reading/control behavior plus URL-only template replacement.
-5. Remove legacy views/routes and run focused then full regression validation.
+1. Foundation: `audit_id` resolver, serializers, sanitized error helpers, and route family.
+2. US1: decision actions and detail-page decision controls.
+3. US2: execution and scheduling actions.
+4. US3: submission, list/read/control endpoints, and remaining frontend calls.
+5. Polish: remove old route dependencies, update docs, run focused and full validation.
 
 ### Format Validation
 
-All 36 tasks use the required checklist format: checkbox, sequential task ID, optional `[P]` only for parallel work, `[US#]` on every user-story task, and exact repository file paths.
+All 49 tasks use the required checklist format: checkbox, sequential task ID, optional `[P]` only for parallel work, `[US#]` on every user-story task, and exact repository file paths.

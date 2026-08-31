@@ -5,7 +5,7 @@ from pytest_mock import MockFixture
 from django.contrib.auth.models import Group
 from rest_framework.test import APIClient
 
-from common.utils.const import WorkflowStatus
+from common.utils.const import WorkflowStatus, WorkflowType
 from sql.models import (
     Instance,
     ResourceGroup,
@@ -57,7 +57,21 @@ def workflow_api_data(normal_user, db_instance):
         review_content='[{"id": 1, "sql": "select 1", "errlevel": 0}]',
         execute_result="",
     )
-    return workflow, content
+    audit = WorkflowAudit.objects.create(
+        group_id=workflow.group_id,
+        group_name=workflow.group_name,
+        workflow_id=workflow.id,
+        workflow_type=WorkflowType.SQL_REVIEW,
+        workflow_title=workflow.workflow_name,
+        workflow_remark="",
+        audit_auth_groups="",
+        current_audit="",
+        next_audit="",
+        current_status=WorkflowStatus.PASSED,
+        create_user=normal_user.username,
+        create_user_display=normal_user.display,
+    )
+    return workflow, content, audit
 
 
 @pytest.fixture

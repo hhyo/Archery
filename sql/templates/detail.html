@@ -174,7 +174,7 @@
     {% endif %}
     <!--审核人修改可执行时间按钮-->
     {% if is_can_review %}
-        <form id="form-execution-window" action="/api/v1/workflows/{{ workflow_detail.id }}/execution-window/" method="post" style="display:inline-block;">
+        <form id="form-execution-window" action="/api/v1/sql-workflows/{{ audit_id }}/execution-window/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#Executabletime"
@@ -183,7 +183,7 @@
     {% endif %}
     <!--审核通过按钮-->
     {% if is_can_review %}
-        <form id="form-approval" action="/api/v1/workflows/{{ workflow_detail.id }}/approval/" method="post" style="display:inline-block;">
+        <form id="form-approval" action="/api/v1/sql-workflows/{{ audit_id }}/approval/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="audit_remark" name="audit_remark" value="">
@@ -192,7 +192,7 @@
     {% endif %}
     <!--立即执行按钮-->
     {% if is_can_execute %}
-        <form id="from-execute" action="/api/v1/workflows/{{ workflow_detail.id }}/execution/" method="post" style="display:inline-block;">
+        <form id="from-execute" action="/api/v1/sql-workflows/{{ audit_id }}/execution/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="mode" value="auto">
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
@@ -200,7 +200,7 @@
                    value="立即执行"/>
         </form>
         {% if manual %}
-            <form id="from-execute-manual" action="/api/v1/workflows/{{ workflow_detail.id }}/execution/" method="post" style="display:inline-block;">
+            <form id="from-execute-manual" action="/api/v1/sql-workflows/{{ audit_id }}/execution/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="mode" value="manual">
                 <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
@@ -217,9 +217,17 @@
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
         {% endif %}
     {% endif %}
+    <!--审核拒绝按钮-->
+    {% if is_can_review %}
+        <form id="form-reject" action="/api/v1/sql-workflows/{{ audit_id }}/rejection/" method="post" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" id="reject_remark" name="reject_remark" value="">
+            <input type="button" id="btnReject" class="btn btn-default" value="审核拒绝"/>
+        </form>
+    {% endif %}
     <!--终止执行按钮-->
-    {% if is_can_review or is_can_cancel %}
-        <form id="form-cancel" action="/api/v1/workflows/{{ workflow_detail.id }}/termination/" method="post" style="display:inline-block;">
+    {% if is_can_cancel %}
+        <form id="form-cancel" action="/api/v1/sql-workflows/{{ audit_id }}/cancellation/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="cancel_remark" name="cancel_remark" value="">
@@ -270,7 +278,7 @@
     {% endif %}
 
     <!-- 定时执行弹出框 -->
-    <form id="from-addsqlcronjob" action="/api/v1/workflows/{{ workflow_detail.id }}/schedule/" method="post" style="display:inline-block;">
+    <form id="from-addsqlcronjob" action="/api/v1/sql-workflows/{{ audit_id }}/schedule/" method="post" style="display:inline-block;">
         <div class="modal fade" id="cronComfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -330,7 +338,7 @@
         </div>
     </div>
     <!-- 修改可执行时间弹出框 -->
-    <form id="from-alterexecutabletime" action="/api/v1/workflows/{{ workflow_detail.id }}/execution-window/" method="post" style="display:inline-block;">
+    <form id="from-alterexecutabletime" action="/api/v1/sql-workflows/{{ audit_id }}/execution-window/" method="post" style="display:inline-block;">
         <div class="modal fade" id="Executabletime" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -503,7 +511,19 @@
             postWorkflowForm($("#form-approval"));
         });
 
-        // 审核不通过
+        // 审核拒绝
+        $("#btnReject").click(function () {
+            $("#reject_remark").val($("#remark").val());
+            var formReject = $("#form-reject");
+            if ($("#reject_remark").val()) {
+                loading(this);
+                postWorkflowForm(formReject);
+            } else {
+                alert('请填写拒绝原因')
+            }
+        });
+
+        // 终止流程
         $("#btnCancel").click(function () {
             //获取form对象，判断输入，通过则提交
             $("#cancel_remark").val($("#remark").val());
@@ -628,7 +648,7 @@
                 escape: true,
                 method: 'get',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/api/v1/workflows/{{ workflow_detail.id }}/content/",
+                url: "/api/v1/sql-workflows/{{ audit_id }}/content/",
                 striped: true,                      //是否显示行间隔色
                 cache: true,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -680,9 +700,7 @@
                 //请求服务数据时所传参数
                 queryParams:
                     function (params) {
-                        return {
-                            workflow_id: "{{ workflow_detail.id }}",
-                        }
+                        return {}
                     },
                 locale: 'zh-CN',                    //本地化
                 columns: [{
@@ -771,13 +789,9 @@
         // 获取操作日志
         function get_logs() {
             $.ajax({
-                type: "post",
-                url: "/workflow/log/",
+                type: "get",
+                url: "/api/v1/sql-workflows/{{ audit_id }}/logs/",
                 dataType: "json",
-                data: {
-                    workflow_id: "{{ workflow_detail.id }}",
-                    workflow_type: 2,
-                },
                 complete: function () {
                 },
                 success: function (data) {
@@ -835,7 +849,7 @@
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/api/v1/workflows/{{ workflow_detail.id }}/osc/",
+                url: "/api/v1/sql-workflows/{{ audit_id }}/osc/",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: false,                   //是否显示分页（*）
@@ -956,7 +970,7 @@
                     //发送请求
                     $.ajax({
                         type: "post",
-                        url: "/api/v1/workflows/{{ workflow_detail.id }}/osc/",
+                        url: "/api/v1/sql-workflows/{{ audit_id }}/osc/",
                         dataType: "json",
                         data: {
                             sqlsha1: sqlsha1,
@@ -983,6 +997,7 @@
     <!--状态控制 -->
     <script>
         var workflow_id = "{{ workflow_detail.id }}";
+        var audit_id = "{{ audit_id }}";
         var status = $("#workflow_detail_status").text();
         var key;
         var retryCnt = 1;
@@ -1012,7 +1027,7 @@
                 $.ajax({
                     type: "get",
                     async: false,
-                    url: "/api/v1/workflows/" + workflow_id + "/status/",
+                    url: "/api/v1/sql-workflows/" + audit_id + "/status/",
                     dataType: "json",
                     complete: function () {
                         if (wfStatus !== -1 && wfStatus !== "workflow_executing") {
@@ -1107,4 +1122,3 @@
     </script>
 
 {% endblock %}
-

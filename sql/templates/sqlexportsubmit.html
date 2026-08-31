@@ -580,7 +580,7 @@
             }
             $.ajax({
                 type: "post",
-                url: "/api/v1/workflow/",
+                url: "/api/v1/sql-workflows/",
                 dataType: "json",
                 contentType: 'application/json;',
                 data: JSON.stringify({
@@ -607,7 +607,7 @@
                     editor.container.style.opacity = 1;
                 },
                 success: function (data) {
-                    window.location.href = "/detail/"+ data.workflow_id
+                    window.location.href = data.data && data.data.redirect_url ? data.data.redirect_url : "/detail/" + data.workflow_id
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     if (XMLHttpRequest.responseJSON) {
