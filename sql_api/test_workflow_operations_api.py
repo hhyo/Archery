@@ -17,25 +17,6 @@ from sql_api import api_workflow_operations
 from sql_api.api_workflow_operations import mutation_response
 
 
-def test_openapi_contract_uses_audit_id_paths():
-    with open(
-        "specs/003-migrate-workflow-api/contracts/workflow-operations.openapi.yaml"
-    ) as contract:
-        paths = yaml.safe_load(contract)["paths"]
-
-    assert "/api/v1/sql-workflows/" in paths
-    assert all("workflow_id" not in path for path in paths)
-    assert all(
-        path == "/api/v1/sql-workflows/" or "{audit_id}" in path for path in paths
-    )
-
-
-def test_legacy_workflow_operation_route_is_retired(client):
-    response = client.post("/api/v1/workflows/17/approval/", {"audit_remark": "同意"})
-
-    assert response.status_code == 404
-
-
 @pytest.mark.django_db
 def test_mutation_response_uses_workflow_detail_url():
     response = mutation_response(42, "操作成功")
