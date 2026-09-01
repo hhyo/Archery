@@ -237,6 +237,20 @@ def detail(request, workflow_id):
     if not can_view(request.user, workflow_id):
         raise PermissionDenied
     review_info = audit_handler.get_review_info()
+    # The detail page uses audit_id for read-only SQL content/log endpoints even
+    # when operation buttons are disabled, such as autoreview failures.
+    audit_id = None
+    try:
+        audit_detail = Audit.detail_by_workflow_id(
+            workflow_id=workflow_id,
+            workflow_type=WorkflowType.SQL_REVIEW,
+        )
+        audit_id = audit_detail.audit_id
+        last_operation_info = Audit.logs(audit_id=audit_id).latest("id").operation_info
+    except Exception as e:
+        logger.debug(f"无审核日志记录，错误信息{e}")
+        last_operation_info = ""
+
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != "workflow_autoreviewwrong":
         # 是否可审核
@@ -249,27 +263,12 @@ def detail(request, workflow_id):
         is_can_cancel = can_cancel(request.user, workflow_id)
         # 是否可查看回滚信息
         is_can_rollback = can_rollback(request.user, workflow_id)
-
-        # 获取审核日志
-        try:
-            audit_detail = Audit.detail_by_workflow_id(
-                workflow_id=workflow_id,
-                workflow_type=WorkflowType.SQL_REVIEW,
-            )
-            audit_id = audit_detail.audit_id
-            last_operation_info = (
-                Audit.logs(audit_id=audit_id).latest("id").operation_info
-            )
-        except Exception as e:
-            logger.debug(f"无审核日志记录，错误信息{e}")
-            last_operation_info = ""
     else:
         is_can_review = False
         is_can_execute = False
         is_can_timingtask = False
         is_can_cancel = False
         is_can_rollback = False
-        last_operation_info = None
 
     # 获取定时执行任务信息
     if workflow_detail.status == "workflow_timingtask":
@@ -298,6 +297,7 @@ def detail(request, workflow_id):
 
     context = {
         "workflow_detail": workflow_detail,
+        "audit_id": audit_id,
         "current_reviewers": current_reviewers,
         "last_operation_info": last_operation_info,
         "is_can_review": is_can_review,
@@ -349,11 +349,13 @@ def rollback(request):
         return response
     # 异步获取，并在页面展示，如果数据量大加载会缓慢
     else:
+        workflow_audit = workflow.get_audit()
         rollback_workflow_name = (
             f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
         )
         context = {
             "workflow_detail": workflow,
+            "audit_id": workflow_audit.audit_id if workflow_audit else None,
             "rollback_workflow_name": rollback_workflow_name,
         }
         return render(request, "rollback.html", context)

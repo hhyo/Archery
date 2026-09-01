@@ -133,8 +133,17 @@
             $('#sqlaudit-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
-                contentType: "application/x-www-form-urlencoded",
-                url: "/sqlworkflow_list/",
+                url: "/api/v1/sql-workflows/list/",
+                ajax: function (params) {
+                    $.ajax({
+                        type: "POST",
+                        url: "/api/v1/sql-workflows/list/",
+                        contentType: "application/json",
+                        data: params.data,
+                        success: params.success,
+                        error: params.error
+                    });
+                },
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -166,24 +175,26 @@
                     function (params) {
                         let start_date = $("#reservation").data('daterangepicker').startDate;
                         let end_date = $("#reservation").data('daterangepicker').endDate;
-                        if (start_date.isValid() && end_date.isValid()) {
-                            start_date = start_date.format('YYYY-MM-DD');
-                            end_date = end_date.format('YYYY-MM-DD')
-                        } else {
-                            start_date = '';
-                            end_date = ''
-                        }
-                        return {
+                        const filterParams = {
                             "syntax_type":[0,1,2], //获取类型为数据变更工单
                             limit: params.limit,
                             offset: params.offset,
                             navStatus: $("#navStatus").val(),
-                            instance_id: $("#instance_id").val(),
-                            group_id: $("#group_id").val(),
-                            start_date: start_date,
-                            end_date: end_date,
                             search: params.search
+                        };
+                        if (start_date && start_date.isValid() && end_date && end_date.isValid()) {
+                            filterParams.start_date = start_date.format('YYYY-MM-DD');
+                            filterParams.end_date = end_date.format('YYYY-MM-DD');
                         }
+                        const instanceId = $("#instance_id").val();
+                        const groupId = $("#group_id").val();
+                        if (instanceId !== "" && instanceId !== null && instanceId !== undefined) {
+                            filterParams.instance_id = Number(instanceId);
+                        }
+                        if (groupId !== "" && groupId !== null && groupId !== undefined) {
+                            filterParams.group_id = Number(groupId);
+                        }
+                        return filterParams;
                     },
                 columns: [{
                     title: '工单名称',
@@ -192,10 +203,10 @@
                         var span = document.createElement('span');
                         span.setAttribute('title', value);
                         if (value.length > 20) {
-                            span.innerHTML = "<a href=\"/detail/" + row.id + "/\">" + value.substr(0, 20) + '...';
+                            span.innerHTML = "<a href=\"/detail/" + row.workflow_id + "/\">" + value.substr(0, 20) + '...';
                             +"</a>";
                         } else {
-                            span.innerHTML = "<a href=\"/detail/" + row.id + "/\">" + value + "</a>";
+                            span.innerHTML = "<a href=\"/detail/" + row.workflow_id + "/\">" + value + "</a>";
                         }
                         return span.outerHTML;
                     }
@@ -264,7 +275,7 @@
                     title: '操作',
                     field: 'operation',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                        return "<button class=\"btn btn-info btn-xs\" audit_id=\"" + row.audit_id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
                     }
                 }],
                 onLoadSuccess: function () {
@@ -284,16 +295,11 @@
 
         // 获取操作日志
         function getLog(obj) {
-            var workflow_id = $(obj).attr("workflow_id");
-            var workflow_type = 2;
+            var audit_id = $(obj).attr("audit_id");
             $.ajax({
-                type: "post",
-                url: "/workflow/log/",
+                type: "get",
+                url: "/api/v1/sql-workflows/" + audit_id + "/logs/",
                 dataType: "json",
-                data: {
-                    workflow_id: workflow_id,
-                    workflow_type: workflow_type,
-                },
                 complete: function () {
                 },
                 success: function (data) {
@@ -365,4 +371,3 @@
         });
     </script>
 {% endblock %}
-

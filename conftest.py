@@ -3,8 +3,9 @@ import datetime
 import pytest
 from pytest_mock import MockFixture
 from django.contrib.auth.models import Group
+from rest_framework.test import APIClient
 
-from common.utils.const import WorkflowStatus
+from common.utils.const import WorkflowStatus, WorkflowType
 from sql.models import (
     Instance,
     ResourceGroup,
@@ -26,6 +27,51 @@ def normal_user(django_user_model):
     )
     yield user
     user.delete()
+
+
+@pytest.fixture
+def authenticated_api_client(normal_user):
+    client = APIClient()
+    client.force_authenticate(user=normal_user)
+    return client
+
+
+@pytest.fixture
+def workflow_api_data(normal_user, db_instance):
+    workflow = SqlWorkflow.objects.create(
+        workflow_name="workflow api test",
+        group_id=1,
+        group_name="group_name",
+        instance=db_instance,
+        db_name="test_db",
+        syntax_type=1,
+        is_backup=True,
+        engineer=normal_user.username,
+        engineer_display=normal_user.display,
+        status="workflow_review_pass",
+        audit_auth_groups="",
+    )
+    content = SqlWorkflowContent.objects.create(
+        workflow=workflow,
+        sql_content="select 1",
+        review_content='[{"id": 1, "sql": "select 1", "errlevel": 0}]',
+        execute_result="",
+    )
+    audit = WorkflowAudit.objects.create(
+        group_id=workflow.group_id,
+        group_name=workflow.group_name,
+        workflow_id=workflow.id,
+        workflow_type=WorkflowType.SQL_REVIEW,
+        workflow_title=workflow.workflow_name,
+        workflow_remark="",
+        audit_auth_groups="",
+        current_audit="",
+        next_audit="",
+        current_status=WorkflowStatus.PASSED,
+        create_user=normal_user.username,
+        create_user_display=normal_user.display,
+    )
+    return workflow, content, audit
 
 
 @pytest.fixture

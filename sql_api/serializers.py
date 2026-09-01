@@ -462,6 +462,50 @@ class WorkflowSerializer(serializers.ModelSerializer):
         }
 
 
+class SqlWorkflowDetailSerializer(serializers.ModelSerializer):
+    audit_id = serializers.SerializerMethodField()
+    workflow_id = serializers.IntegerField(source="id", read_only=True)
+    instance_name = serializers.CharField(
+        source="instance.instance_name", read_only=True
+    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+
+    def get_audit_id(self, obj):
+        audit = obj.get_audit()
+        return audit.audit_id if audit else None
+
+    class Meta:
+        model = SqlWorkflow
+        fields = [
+            "audit_id",
+            "workflow_id",
+            "id",
+            "workflow_name",
+            "demand_url",
+            "group_id",
+            "group_name",
+            "instance",
+            "instance_name",
+            "db_name",
+            "syntax_type",
+            "is_backup",
+            "engineer",
+            "engineer_display",
+            "status",
+            "status_display",
+            "audit_auth_groups",
+            "run_date_start",
+            "run_date_end",
+            "create_time",
+            "finish_time",
+            "is_manual",
+            "is_offline_export",
+            "export_format",
+            "file_name",
+        ]
+        read_only_fields = fields
+
+
 class WorkflowContentSerializer(serializers.ModelSerializer):
     workflow = WorkflowSerializer()
 
@@ -504,8 +548,11 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
                 check_result = check_engine.execute_check(
                     db_name=workflow_data["db_name"], sql=sql_content
                 )
-        except Exception as e:
-            raise serializers.ValidationError({"errors": str(e)})
+        except Exception:
+            logger.exception("提交工单检测失败")
+            raise serializers.ValidationError(
+                {"errors": "提交工单检测失败，请联系管理员"}
+            )
 
         # 未开启备份选项，并且engine支持备份，强制设置备份
         is_backup = (
@@ -539,9 +586,9 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
                 # 自动创建工作流
                 auditor = get_auditor(workflow=workflow)
                 auditor.create_audit()
-        except Exception as e:
+        except Exception:
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
-            raise serializers.ValidationError({"errors": str(e)})
+            raise serializers.ValidationError({"errors": "提交工单失败，请联系管理员"})
         # 有时候提交后自动审批通过, 在这里改写一下 workflow 状态
         if auditor.audit.current_status == WorkflowStatus.REJECTED:
             auditor.workflow.status = "workflow_autoreviewwrong"
@@ -689,3 +736,49 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
             raise serializers.ValidationError({"errors": "不存在该工单"})
 
         return attrs
+
+
+class WorkflowListRequestSerializer(serializers.Serializer):
+    syntax_type = serializers.ListField(
+        child=serializers.IntegerField(), required=False
+    )
+    navStatus = serializers.CharField(required=False, allow_blank=True)
+    instance_id = serializers.IntegerField(required=False, allow_null=True)
+    group_id = serializers.IntegerField(required=False, allow_null=True)
+    start_date = serializers.DateField(required=False)
+    end_date = serializers.DateField(required=False)
+    limit = serializers.IntegerField(required=False, min_value=0)
+    offset = serializers.IntegerField(required=False, min_value=0)
+    search = serializers.CharField(required=False, allow_blank=True)
+
+
+class WorkflowRemarkSerializer(serializers.Serializer):
+    audit_remark = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class WorkflowTerminationSerializer(serializers.Serializer):
+    cancel_remark = serializers.CharField(allow_blank=False, trim_whitespace=True)
+
+
+class WorkflowRejectionSerializer(serializers.Serializer):
+    reject_remark = serializers.CharField(allow_blank=False, trim_whitespace=True)
+
+
+class WorkflowExecutionSerializer(serializers.Serializer):
+    mode = serializers.ChoiceField(choices=["auto", "manual"])
+
+
+class WorkflowScheduleSerializer(serializers.Serializer):
+    run_date = serializers.DateTimeField(input_formats=["%Y-%m-%d %H:%M"])
+
+
+class WorkflowExecutionWindowSerializer(serializers.Serializer):
+    run_date_start = serializers.DateTimeField(required=False, allow_null=True)
+    run_date_end = serializers.DateTimeField(required=False, allow_null=True)
+
+
+class WorkflowOscSerializer(serializers.Serializer):
+    sqlsha1 = serializers.CharField(allow_blank=False)
+    command = serializers.ChoiceField(
+        choices=["get", "kill", "pause", "resume"], allow_blank=False
+    )

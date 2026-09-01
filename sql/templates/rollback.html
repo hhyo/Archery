@@ -18,7 +18,7 @@
             escape: true,
             method: 'get',
             contentType: "application/x-www-form-urlencoded",
-            url: "/sqlworkflow/backup_sql/",
+            url: "/api/v1/sql-workflows/{{ audit_id }}/rollback/",
             striped: true,                      //是否显示行间隔色
             cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
             pagination: true,                   //是否显示分页（*）
@@ -65,14 +65,6 @@
                 );
                 return html.join('');
             },
-            queryParamsType: 'limit',
-            //请求服务数据时所传参数
-            queryParams:
-                function (params) {
-                    return {
-                        workflow_id: "{{ workflow_detail.id }}",
-                    }
-                },
             locale: 'zh-CN',                    //本地化
             columns: [{
                 title: '执行语句',

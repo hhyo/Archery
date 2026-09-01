@@ -11,7 +11,13 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from . import api_user, api_instance, api_workflow, api_sqlquery
+from . import (
+    api_user,
+    api_instance,
+    api_workflow,
+    api_sqlquery,
+    api_workflow_operations,
+)
 
 router = routers.DefaultRouter()
 
@@ -60,6 +66,63 @@ urlpatterns = [
     path("v1/workflow/auditlist/", api_workflow.WorkflowAuditList.as_view()),
     path("v1/workflow/execute/", api_workflow.ExecuteWorkflow.as_view()),
     path("v1/workflow/log/", api_workflow.WorkflowLogList.as_view()),
+    path("v1/sql-workflows/", api_workflow_operations.SqlWorkflowSubmitView.as_view()),
+    path(
+        "v1/sql-workflows/list/",
+        api_workflow_operations.WorkflowListView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/audit-list/",
+        api_workflow_operations.WorkflowAuditListView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/",
+        api_workflow_operations.WorkflowDetailView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/content/",
+        api_workflow_operations.WorkflowContentView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/logs/",
+        api_workflow_operations.WorkflowLogView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/rollback/",
+        api_workflow_operations.WorkflowRollbackView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/execution-window/",
+        api_workflow_operations.WorkflowExecutionWindowView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/approval/",
+        api_workflow_operations.WorkflowApprovalView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/rejection/",
+        api_workflow_operations.WorkflowRejectionView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/cancellation/",
+        api_workflow_operations.WorkflowTerminationView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/execution/",
+        api_workflow_operations.WorkflowExecutionView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/schedule/",
+        api_workflow_operations.WorkflowScheduleView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/status/",
+        api_workflow_operations.WorkflowStatusView.as_view(),
+    ),
+    path(
+        "v1/sql-workflows/<int:audit_id>/osc/",
+        api_workflow_operations.WorkflowOscView.as_view(),
+    ),
     path("info", views.info),
     path("debug", views.debug),
     path("do_once/mirage", views.mirage),

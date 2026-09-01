@@ -310,6 +310,43 @@ class TestView(TransactionTestCase):
         r = self.client.get(f"/workflow/{self.audit.audit_id}/", data=data)
         self.assertRedirects(r, f"/queryapplydetail/1/", fetch_redirect_response=False)
 
+    def test_detail_autoreviewwrong_keeps_audit_id_for_content(self):
+        """自动审核不通过时仍使用审核ID加载SQL内容"""
+        review_groups = [
+            Group.objects.create(name="audit_group_1"),
+            Group.objects.create(name="audit_group_2"),
+            Group.objects.create(name="audit_group_3"),
+        ]
+        audit_auth_groups = ",".join(str(group.id) for group in review_groups)
+        self.wf.status = "workflow_autoreviewwrong"
+        self.wf.save(update_fields=["status"])
+        workflow_audit = WorkflowAudit.objects.create(
+            group_id=1,
+            group_name="some_group",
+            workflow_id=self.wf.id,
+            workflow_type=WorkflowType.SQL_REVIEW,
+            workflow_title="SQL申请标题",
+            workflow_remark="SQL申请备注",
+            audit_auth_groups=audit_auth_groups,
+            current_audit=str(review_groups[0].id),
+            next_audit=str(review_groups[1].id),
+            current_status=0,
+        )
+        WorkflowLog.objects.create(
+            audit_id=workflow_audit.audit_id,
+            operation_type=WorkflowAction.SUBMIT,
+            operation_info="提交SQL",
+        )
+
+        r = self.client.get(f"/detail/{self.wf.id}/")
+
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(
+            r,
+            f"/api/v1/sql-workflows/{workflow_audit.audit_id}/content/",
+        )
+        self.assertNotContains(r, "/api/v1/sql-workflows/None/content/")
+
     def test_dbaprinciples(self):
         """测试workflows页面"""
         data = {}
@@ -819,233 +856,6 @@ class TestWorkflowView(TransactionTestCase):
         self.superuser1.delete()
         self.resource_group1.delete()
         SysConfig().purge()
-
-    def testWorkflowStatus(self):
-        """测试获取工单状态"""
-        c = Client(header={})
-        c.force_login(self.u1)
-        r = c.post("/getWorkflowStatus/", {"workflow_id": self.wf1.id})
-        r_json = r.json()
-        self.assertEqual(r_json["status"], "workflow_finish")
-
-    @patch("sql.utils.workflow_audit.Audit.can_review")
-    def test_alter_run_date_no_perm(self, _can_review):
-        """测试修改可执行时间，无权限"""
-        sql_review = Permission.objects.get(codename="sql_review")
-        self.u1.user_permissions.add(sql_review)
-        _can_review.return_value = False
-        c = Client()
-        c.force_login(self.u1)
-        data = {"workflow_id": self.wf1.id}
-        r = c.post("/alter_run_date/", data=data)
-        self.assertContains(r, "你无权操作当前工单")
-
-    @patch("sql.utils.workflow_audit.Audit.can_review")
-    def test_alter_run_date(self, _can_review):
-        """测试修改可执行时间，有权限"""
-        sql_review = Permission.objects.get(codename="sql_review")
-        self.u1.user_permissions.add(sql_review)
-        _can_review.return_value = True
-        c = Client()
-        c.force_login(self.u1)
-        data = {"workflow_id": self.wf1.id}
-        r = c.post("/alter_run_date/", data=data)
-        self.assertRedirects(
-            r, f"/detail/{self.wf1.id}/", fetch_redirect_response=False
-        )
-
-    def testWorkflowListView(self):
-        """测试工单列表"""
-        c = Client()
-        c.force_login(self.superuser1)
-        r = c.post("/sqlworkflow_list/", {"limit": 10, "offset": 0, "navStatus": ""})
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 2)
-        # 列表按创建时间倒序排列, 第二个是wf1 , 是已正常结束
-        self.assertEqual(r_json["rows"][1]["status"], "workflow_finish")
-
-        # u1拿到u1的
-        c.force_login(self.u1)
-        r = c.post("/sqlworkflow_list/", {"limit": 10, "offset": 0, "navStatus": ""})
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 1)
-        self.assertEqual(r_json["rows"][0]["id"], self.wf1.id)
-
-        # u3拿到None
-        c.force_login(self.u3)
-        r = c.post("/sqlworkflow_list/", {"limit": 10, "offset": 0, "navStatus": ""})
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 0)
-
-    def testWorkflowListViewFilter(self):
-        """测试工单列表筛选"""
-        c = Client()
-        c.force_login(self.superuser1)
-        # 工单状态
-        r = c.post(
-            "/sqlworkflow_list/",
-            {"limit": 10, "offset": 0, "navStatus": "workflow_finish"},
-        )
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 1)
-        # 列表按创建时间倒序排列
-        self.assertEqual(r_json["rows"][0]["status"], "workflow_finish")
-
-        # 实例
-        r = c.post(
-            "/sqlworkflow_list/",
-            {"limit": 10, "offset": 0, "instance_id": self.wf1.instance_id},
-        )
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 2)
-        # 列表按创建时间倒序排列, 第二个是wf1
-        self.assertEqual(r_json["rows"][1]["workflow_name"], self.wf1.workflow_name)
-
-        # 资源组
-        r = c.post(
-            "/sqlworkflow_list/",
-            {"limit": 10, "offset": 0, "resource_group_id": self.wf1.group_id},
-        )
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 2)
-        # 列表按创建时间倒序排列, 第二个是wf1
-        self.assertEqual(r_json["rows"][1]["workflow_name"], self.wf1.workflow_name)
-
-        # 时间
-        start_date = datetime.strftime(self.now, "%Y-%m-%d")
-        end_date = datetime.strftime(self.now, "%Y-%m-%d")
-        r = c.post(
-            "/sqlworkflow_list/",
-            {"limit": 10, "offset": 0, "start_date": start_date, "end_date": end_date},
-        )
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 2)
-
-    @patch("sql.sql_workflow.async_task")
-    @patch("sql.notify.auto_notify")
-    @patch("sql.utils.workflow_audit.AuditV2.operate")
-    def testWorkflowPassedView(self, mock_operate, _auto_notify, mock_async_task):
-        """测试审核工单"""
-        c = Client()
-        c.force_login(self.superuser1)
-        r = c.post("/passed/")
-        self.assertContains(r, "workflow_id参数为空.")
-        r = c.post("/passed/", {"workflow_id": 999999})
-        self.assertContains(r, "工单不存在")
-        mock_operate.side_effect = AuditException("mock audit failed")
-        r = c.post("/passed/", {"workflow_id": self.wf2.id})
-        self.assertContains(r, "mock audit failed")
-        self.wf2.refresh_from_db()
-        self.assertEqual(self.wf2.status, "workflow_manreviewing")
-        mock_operate.reset_mock(side_effect=True)
-        mock_operate.return_value = None
-        # 因为 operate 被 mock 了, 为了测试审批流通过, 这里把审批流手动设置为通过, 仅 测试 view 层的逻辑
-        # audit operate 的测试由其他测试覆盖
-        self.audit_flow.current_status = WorkflowStatus.PASSED
-        self.audit_flow.save()
-        r = c.post(
-            "/passed/",
-            data={"workflow_id": self.wf2.id, "audit_remark": "some_audit"},
-            follow=False,
-        )
-        self.assertRedirects(
-            r, "/detail/{}/".format(self.wf2.id), fetch_redirect_response=False
-        )
-        self.wf2.refresh_from_db()
-        self.assertEqual(self.wf2.status, "workflow_review_pass")
-        mock_operate.assert_called_once_with(
-            WorkflowAction.PASS, self.superuser1, "some_audit"
-        )
-        mock_async_task.assert_called_once()
-        args, kwargs = mock_async_task.call_args
-        self.assertEqual(kwargs["timeout"], 60)
-        self.assertEqual(kwargs["task_name"], f"sqlreview-pass-{self.wf2.id}")
-        c.force_login(self.u2)
-        r = c.post("/passed/", {"workflow_id": self.wf2.id})
-        self.assertEqual(r.status_code, 403)
-
-    @patch("sql.sql_workflow.notify_for_execute")
-    @patch("sql.sql_workflow.Audit.add_log")
-    @patch("sql.sql_workflow.Audit.detail_by_workflow_id")
-    @patch("sql.sql_workflow.can_execute")
-    def test_workflow_execute(self, mock_can_excute, _, _1, _2):
-        """测试工单执行"""
-        c = Client()
-        c.force_login(self.executor1)
-        r = c.post("/execute/")
-        self.assertContains(r, "workflow_id参数为空.")
-        mock_can_excute.return_value = False
-        r = c.post("/execute/", data={"workflow_id": self.wf2.id})
-        self.assertContains(r, "你无权操作当前工单！")
-        mock_can_excute.return_value = True
-        r = c.post("/execute/", data={"workflow_id": self.wf2.id, "mode": "manual"})
-        self.wf2.refresh_from_db()
-        self.assertEqual("workflow_finish", self.wf2.status)
-
-    @patch("sql.sql_workflow.Audit.add_log")
-    @patch("sql.notify.auto_notify")
-    @patch("sql.utils.workflow_audit.AuditV2.operate")
-    # patch view里的can_cancel 而不是原始位置的can_cancel ,因为在调用时, 已经 import 了真的 can_cancel ,会导致mock失效
-    # 在import 静态函数时需要注意这一点, 动态对象因为每次都会重新生成,也可以 mock 原函数/方法/对象
-    # 参见 : https://docs.python.org/3/library/unittest.mock.html#where-to-patch
-    @patch("sql.sql_workflow.can_cancel")
-    def testWorkflowCancelView(
-        self, _can_cancel, mock_audit_operate, mock_notify, _add_log
-    ):
-        """测试工单驳回、取消"""
-        c = Client()
-        c.force_login(self.u2)
-        r = c.post("/cancel/")
-        self.assertContains(r, "workflow_id参数为空.")
-        r = c.post("/cancel/", data={"workflow_id": self.wf2.id})
-        self.assertContains(r, "终止原因不能为空")
-        _can_cancel.return_value = False
-        mock_audit_operate.return_value = None
-        r = c.post(
-            "/cancel/",
-            data={"workflow_id": self.wf2.id, "cancel_remark": "some_reason"},
-        )
-        self.assertContains(r, "你无权操作当前工单！")
-        _can_cancel.return_value = True
-        _detail_by_id = 123
-        c.post(
-            "/cancel/",
-            data={"workflow_id": self.wf2.id, "cancel_remark": "some_reason"},
-        )
-        self.wf2.refresh_from_db()
-        self.assertEqual("workflow_abort", self.wf2.status)
-
-    @patch("sql.sql_workflow.get_engine")
-    def test_osc_control(self, _get_engine):
-        """测试MySQL工单osc控制"""
-        c = Client()
-        c.force_login(self.superuser1)
-        request_data = {
-            "workflow_id": self.wf1.id,
-            "sqlsha1": "sqlsha1",
-            "command": "get",
-        }
-        _get_engine.return_value.osc_control.return_value = ResultSet()
-        r = c.post("/inception/osc_control/", data=request_data, follow=False)
-        self.assertDictEqual(
-            json.loads(r.content), {"total": 0, "rows": [], "msg": None}
-        )
-
-    @patch("sql.sql_workflow.get_engine")
-    def test_osc_control_exception(self, _get_engine):
-        """测试MySQL工单OSC控制异常"""
-        c = Client()
-        c.force_login(self.superuser1)
-        request_data = {
-            "workflow_id": self.wf1.id,
-            "sqlsha1": "sqlsha1",
-            "command": "get",
-        }
-        _get_engine.return_value.osc_control.side_effect = RuntimeError("RuntimeError")
-        r = c.post("/inception/osc_control/", data=request_data, follow=False)
-        self.assertDictEqual(
-            json.loads(r.content), {"total": 0, "rows": [], "msg": "RuntimeError"}
-        )
 
 
 class TestOptimize(TestCase):

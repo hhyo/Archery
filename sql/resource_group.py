@@ -156,17 +156,6 @@ def instances(request):
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 
-def user_all_instances(request):
-    """获取用户所有实例列表（通过资源组间接关联）"""
-    result = list_user_accessible_instances(
-        user=request.user,
-        type=request.GET.get("type"),
-        db_type=request.GET.getlist("db_type[]"),
-        tag_codes=request.GET.getlist("tag_codes[]"),
-    )
-    return HttpResponse(json.dumps(result), content_type="application/json")
-
-
 @superuser_required
 def addrelation(request):
     """

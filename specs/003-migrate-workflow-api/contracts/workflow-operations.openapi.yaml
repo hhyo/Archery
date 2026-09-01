@@ -1,0 +1,499 @@
+openapi: 3.0.3
+info:
+  title: SQL Workflow Audit-ID API
+  version: 0.1.0
+  description: REST contract for SQL Workflow operations keyed by WorkflowAudit.audit_id.
+paths:
+  /api/v1/sql-workflows/:
+    post:
+      summary: Submit a SQL Workflow ticket
+      operationId: submitSqlWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SqlWorkflowSubmitRequest'
+      responses:
+        '201':
+          description: SQL Workflow submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/sql-workflows/{audit_id}/:
+    get:
+      summary: Get SQL Workflow detail by audit ID
+      operationId: getSqlWorkflow
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      responses:
+        '200':
+          description: SQL Workflow detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SqlWorkflowDetail'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/sql-workflows/{audit_id}/content/:
+    get:
+      summary: Get review or execution content by audit ID
+      operationId: getSqlWorkflowContent
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      responses:
+        '200':
+          description: Review or execution rows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RowsResponse'
+  /api/v1/sql-workflows/{audit_id}/logs/:
+    get:
+      summary: Get workflow logs by audit ID
+      operationId: getSqlWorkflowLogs
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      responses:
+        '200':
+          description: Workflow logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowLogList'
+  /api/v1/sql-workflows/{audit_id}/rollback/:
+    get:
+      summary: Get rollback SQL by audit ID
+      operationId: getSqlWorkflowRollback
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      responses:
+        '200':
+          description: Rollback rows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RowsResponse'
+  /api/v1/sql-workflows/{audit_id}/execution-window/:
+    patch:
+      summary: Update execution window by audit ID
+      operationId: updateSqlWorkflowExecutionWindow
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionWindowRequest'
+      responses:
+        '200':
+          description: Execution window updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+  /api/v1/sql-workflows/{audit_id}/approval/:
+    post:
+      summary: Approve SQL Workflow by audit ID
+      operationId: approveSqlWorkflow
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRequest'
+      responses:
+        '200':
+          description: Approval accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+  /api/v1/sql-workflows/{audit_id}/rejection/:
+    post:
+      summary: Reject SQL Workflow by audit ID
+      operationId: rejectSqlWorkflow
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectionRequest'
+      responses:
+        '200':
+          description: Rejection accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+  /api/v1/sql-workflows/{audit_id}/cancellation/:
+    post:
+      summary: Cancel SQL Workflow by audit ID
+      operationId: cancelSqlWorkflow
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancellationRequest'
+      responses:
+        '200':
+          description: Cancellation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+  /api/v1/sql-workflows/{audit_id}/execution/:
+    post:
+      summary: Execute SQL Workflow by audit ID
+      operationId: executeSqlWorkflow
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionRequest'
+      responses:
+        '200':
+          description: Execution accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+  /api/v1/sql-workflows/{audit_id}/schedule/:
+    post:
+      summary: Schedule SQL Workflow by audit ID
+      operationId: scheduleSqlWorkflow
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleRequest'
+      responses:
+        '200':
+          description: Schedule accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+  /api/v1/sql-workflows/{audit_id}/status/:
+    get:
+      summary: Get SQL Workflow status by audit ID
+      operationId: getSqlWorkflowStatus
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      responses:
+        '200':
+          description: Current status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+  /api/v1/sql-workflows/{audit_id}/osc/:
+    get:
+      summary: Get OSC progress by audit ID
+      operationId: getSqlWorkflowOscProgress
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+        - name: sqlsha1
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OSC progress rows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RowsResponse'
+    post:
+      summary: Control OSC by audit ID
+      operationId: controlSqlWorkflowOsc
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OscControlRequest'
+      responses:
+        '200':
+          description: OSC control result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RowsResponse'
+components:
+  parameters:
+    AuditId:
+      name: audit_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    ValidationError:
+      description: Invalid request with sanitized details
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    PermissionDenied:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: SQL Workflow audit record not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    SqlWorkflowSubmitRequest:
+      type: object
+      required: [workflow, sql_content]
+      properties:
+        workflow:
+          type: object
+          required: [workflow_name, group_id, instance, db_name, is_offline_export]
+          properties:
+            workflow_name:
+              type: string
+              maxLength: 50
+            demand_url:
+              type: string
+              maxLength: 500
+            group_id:
+              type: integer
+            instance:
+              type: integer
+            db_name:
+              type: string
+              maxLength: 64
+            is_backup:
+              type: boolean
+            run_date_start:
+              type: string
+              format: date-time
+              nullable: true
+            run_date_end:
+              type: string
+              format: date-time
+              nullable: true
+            is_offline_export:
+              type: integer
+              enum: [0, 1]
+            export_format:
+              type: string
+              nullable: true
+              enum: [csv, xlsx, sql, json, xml]
+            file_name:
+              type: string
+              nullable: true
+        sql_content:
+          type: string
+    SqlWorkflowDetail:
+      type: object
+      required: [audit_id, workflow_id, workflow_name, status]
+      properties:
+        audit_id:
+          type: integer
+        workflow_id:
+          type: integer
+          description: Legacy SQL Workflow id returned for reference only.
+        workflow_name:
+          type: string
+        demand_url:
+          type: string
+        group_id:
+          type: integer
+        group_name:
+          type: string
+        instance:
+          type: integer
+        instance_name:
+          type: string
+        db_name:
+          type: string
+        syntax_type:
+          type: integer
+        is_backup:
+          type: boolean
+        engineer:
+          type: string
+        engineer_display:
+          type: string
+        status:
+          type: string
+        status_display:
+          type: string
+        audit_auth_groups:
+          type: string
+        run_date_start:
+          type: string
+          format: date-time
+          nullable: true
+        run_date_end:
+          type: string
+          format: date-time
+          nullable: true
+        create_time:
+          type: string
+          format: date-time
+        finish_time:
+          type: string
+          format: date-time
+          nullable: true
+        is_manual:
+          type: integer
+        is_offline_export:
+          type: integer
+        export_format:
+          type: string
+          nullable: true
+        file_name:
+          type: string
+          nullable: true
+    ApprovalRequest:
+      type: object
+      properties:
+        audit_remark:
+          type: string
+    RejectionRequest:
+      type: object
+      required: [reject_remark]
+      properties:
+        reject_remark:
+          type: string
+    CancellationRequest:
+      type: object
+      required: [cancel_remark]
+      properties:
+        cancel_remark:
+          type: string
+    ExecutionRequest:
+      type: object
+      required: [mode]
+      properties:
+        mode:
+          type: string
+          enum: [auto, manual]
+    ScheduleRequest:
+      type: object
+      required: [run_date]
+      properties:
+        run_date:
+          type: string
+          example: '2026-09-01 10:00'
+    ExecutionWindowRequest:
+      type: object
+      properties:
+        run_date_start:
+          type: string
+          format: date-time
+          nullable: true
+        run_date_end:
+          type: string
+          format: date-time
+          nullable: true
+    OscControlRequest:
+      type: object
+      required: [sqlsha1, command]
+      properties:
+        sqlsha1:
+          type: string
+        command:
+          type: string
+          enum: [pause, resume, kill]
+    MutationResponse:
+      type: object
+      required: [status, msg, data]
+      properties:
+        status:
+          type: integer
+          enum: [0]
+        msg:
+          type: string
+        data:
+          type: object
+          required: [audit_id, workflow_id, redirect_url]
+          properties:
+            audit_id:
+              type: integer
+            workflow_id:
+              type: integer
+              description: Legacy SQL Workflow id returned for reference only.
+            redirect_url:
+              type: string
+              description: Frontend detail URL that should carry or resolve audit_id.
+    StatusResponse:
+      type: object
+      required: [status, msg, data]
+      properties:
+        status:
+          type: string
+        msg:
+          type: string
+        data:
+          nullable: true
+    RowsResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        msg:
+          type: string
+    WorkflowLogList:
+      type: object
+      properties:
+        total:
+          type: integer
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              operation_type_desc:
+                type: string
+              operation_info:
+                type: string
+              operator_display:
+                type: string
+              operation_time:
+                type: string
+                format: date-time
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+        errors:
+          type: object
+          additionalProperties: true

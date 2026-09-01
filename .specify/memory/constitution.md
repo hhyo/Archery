@@ -1,23 +1,13 @@
 <!--
 Sync Impact Report
-- Version change: N/A (template) -> 1.0.0
+- Version change: 1.0.0 -> 1.1.0
 - Modified principles:
-	- Template Principle 1 -> I. Multi-Engine Compatibility First
-	- Template Principle 2 -> II. Unit Test Priority for Engine Logic
-	- Template Principle 3 -> III. Pytest Standardization and Shared Fixtures
-	- Template Principle 4 -> IV. Bounded Integration Testing
-	- Template Principle 5 -> V. Safe Query and Debuggability
+	- V. Safe Query and Debuggability -> V. Safe Query, API Errors, and Debuggability
+	- Delivery Workflow & Quality Gates: added breaking-change migration rule
 - Added sections:
-	- Testing Standards
-	- Delivery Workflow & Quality Gates
+	- None
 - Removed sections:
 	- None
-- Templates requiring updates:
-	- ✅ .specify/templates/plan-template.md
-	- ✅ .specify/templates/spec-template.md
-	- ✅ .specify/templates/tasks-template.md
-	- ✅ README.md
-	- ✅ .specify/templates/commands/*.md (directory not present; no update required)
 - Follow-up TODOs:
 	- None
 -->
@@ -52,11 +42,16 @@ Any new integration test MUST state why unit-level validation is insufficient.
 Rationale: selective integration testing keeps pipelines efficient while guarding
 high-risk interfaces.
 
-### V. Safe Query and Debuggability
-All query execution and debug flows MUST remain auditable with explicit logging,
-deterministic error messages, and permission-aware safeguards. Tests for these
-flows MUST assert both success and failure paths. Rationale: predictable debugging
-and safe execution are core trust requirements for a database operations platform.
+### V. Safe Query, API Errors, and Debuggability
+All query execution, API, and debug flows MUST remain auditable with explicit
+logging, deterministic error messages, and permission-aware safeguards. API
+responses MUST NOT expose raw exception objects, tracebacks, database errors, or
+internal implementation details to users. Unexpected exceptions MUST be logged
+with enough context for operators to investigate, while user-facing responses MUST
+use stable, sanitized error messages and appropriate status codes. Tests for these
+flows MUST assert both success and failure paths. Rationale: predictable debugging,
+safe execution, and controlled error disclosure are core trust requirements for a
+database operations platform.
 
 ## Testing Standards
 
@@ -76,6 +71,9 @@ and safe execution are core trust requirements for a database operations platfor
 	fixtures.
 - Reviewers MUST require explicit rationale when integration tests outnumber unit
 	tests for a change set.
+- Breaking API changes MAY be accepted when they simplify or correct the contract,
+	but the same change set MUST update every frontend call site, client-side schema,
+	and user-facing workflow that consumes the changed API.
 - Before merge, CI MUST pass for pytest suite and static checks.
 
 ## Governance
@@ -92,4 +90,4 @@ Versioning policy follows semantic versioning for governance:
 Compliance review is mandatory in planning and PR review. Constitution checks in
 planning artifacts MUST pass or carry an explicit, approved exception record.
 
-**Version**: 1.0.0 | **Ratified**: 2026-04-28 | **Last Amended**: 2026-04-28
+**Version**: 1.1.0 | **Ratified**: 2026-04-28 | **Last Amended**: 2026-08-31

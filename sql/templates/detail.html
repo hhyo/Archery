@@ -174,17 +174,16 @@
     {% endif %}
     <!--审核人修改可执行时间按钮-->
     {% if is_can_review %}
-        <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
+        <form id="form-execution-window" action="/api/v1/sql-workflows/{{ audit_id }}/execution-window/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-            <input type="hidden" id="audit_remark" name="audit_remark" value="">
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#Executabletime"
                    value="可执行时间变更"/>
         </form>
     {% endif %}
     <!--审核通过按钮-->
     {% if is_can_review %}
-        <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
+        <form id="form-approval" action="/api/v1/sql-workflows/{{ audit_id }}/approval/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="audit_remark" name="audit_remark" value="">
@@ -193,7 +192,7 @@
     {% endif %}
     <!--立即执行按钮-->
     {% if is_can_execute %}
-        <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
+        <form id="from-execute" action="/api/v1/sql-workflows/{{ audit_id }}/execution/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="mode" value="auto">
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
@@ -201,7 +200,7 @@
                    value="立即执行"/>
         </form>
         {% if manual %}
-            <form id="from-execute-manual" action="/execute/" method="post" style="display:inline-block;">
+            <form id="from-execute-manual" action="/api/v1/sql-workflows/{{ audit_id }}/execution/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="mode" value="manual">
                 <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
@@ -218,9 +217,17 @@
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
         {% endif %}
     {% endif %}
+    <!--审核拒绝按钮-->
+    {% if is_can_review %}
+        <form id="form-reject" action="/api/v1/sql-workflows/{{ audit_id }}/rejection/" method="post" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" id="reject_remark" name="reject_remark" value="">
+            <input type="button" id="btnReject" class="btn btn-default" value="审核拒绝"/>
+        </form>
+    {% endif %}
     <!--终止执行按钮-->
-    {% if is_can_review or is_can_cancel %}
-        <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
+    {% if is_can_cancel %}
+        <form id="form-cancel" action="/api/v1/sql-workflows/{{ audit_id }}/cancellation/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="cancel_remark" name="cancel_remark" value="">
@@ -271,7 +278,7 @@
     {% endif %}
 
     <!-- 定时执行弹出框 -->
-    <form id="from-addsqlcronjob" action="/timingtask/" method="post" style="display:inline-block;">
+    <form id="from-addsqlcronjob" action="/api/v1/sql-workflows/{{ audit_id }}/schedule/" method="post" style="display:inline-block;">
         <div class="modal fade" id="cronComfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -331,7 +338,7 @@
         </div>
     </div>
     <!-- 修改可执行时间弹出框 -->
-    <form id="from-alterexecutabletime" action="/alter_run_date/" method="post" style="display:inline-block;">
+    <form id="from-alterexecutabletime" action="/api/v1/sql-workflows/{{ audit_id }}/execution-window/" method="post" style="display:inline-block;">
         <div class="modal fade" id="Executabletime" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -481,9 +488,8 @@
             } else {
                 var isContinue = confirm("请确认是否立即执行？");
             }
-            var formExecuteOnly = $("#from-execute");
             if (isContinue) {
-                formExecuteOnly.submit();
+                postWorkflowForm($("#from-execute"));
                 loading(this)
             }
         });
@@ -491,9 +497,8 @@
         // 执行确认手工执行
         $("#btnExecuteOnly-manual").click(function () {
             var isContinue = confirm("请确认是否已经手工执行结束？");
-            var formExecuteOnly = $("#from-execute-manual");
             if (isContinue) {
-                formExecuteOnly.submit();
+                postWorkflowForm($("#from-execute-manual"));
                 loading(this)
             }
         });
@@ -502,19 +507,30 @@
         $("#btnPass").click(function () {
             //获取form对象，判断输入，通过则提交
             $("#audit_remark").val($("#remark").val());
-            var formPassed = $("#from-passed");
             loading(this);
-            formPassed.submit();
+            postWorkflowForm($("#form-approval"));
         });
 
-        // 审核不通过
+        // 审核拒绝
+        $("#btnReject").click(function () {
+            $("#reject_remark").val($("#remark").val());
+            var formReject = $("#form-reject");
+            if ($("#reject_remark").val()) {
+                loading(this);
+                postWorkflowForm(formReject);
+            } else {
+                alert('请填写拒绝原因')
+            }
+        });
+
+        // 终止流程
         $("#btnCancel").click(function () {
             //获取form对象，判断输入，通过则提交
             $("#cancel_remark").val($("#remark").val());
             var formCancel = $("#form-cancel");
             if ($("#cancel_remark").val()) {
                 loading(this);
-                formCancel.submit();
+                postWorkflowForm(formCancel);
             } else {
                 alert('请填写终止原因')
             }
@@ -526,7 +542,7 @@
             var formAddsqlcronjo = $("#from-addsqlcronjob");
             if ($("#run_date").val()) {
                 loading(this);
-                formAddsqlcronjo.submit();
+                postWorkflowForm(formAddsqlcronjo);
             } else {
                 alert('请填写定时执行时间')
             }
@@ -537,8 +553,84 @@
             //获取form对象，判断输入，通过则提交
             var formAlterexecutabletime = $("#from-alterexecutabletime");
             loading(this);
-            formAlterexecutabletime.submit();
+            postWorkflowForm(formAlterexecutabletime);
         });
+
+        function formatApiError(xhr) {
+            const response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+            if (!response) {
+                return "操作失败";
+            }
+
+            const messages = [];
+            const pushMessage = function (value, label) {
+                if (Array.isArray(value)) {
+                    value.forEach(function (item) {
+                        pushMessage(item, label);
+                    });
+                    return;
+                }
+                if (value === null || value === undefined) {
+                    return;
+                }
+                if (typeof value === "string" && value.trim()) {
+                    if (label) {
+                        messages.push(label + ": " + value.trim());
+                    } else {
+                        messages.push(value.trim());
+                    }
+                    return;
+                }
+                if (typeof value === "object") {
+                    Object.keys(value).forEach(function (key) {
+                        pushMessage(value[key], key);
+                    });
+                }
+            };
+
+            pushMessage(response.detail);
+            pushMessage(response.non_field_errors, "non_field_errors");
+            Object.keys(response).forEach(function (key) {
+                if (key !== "detail" && key !== "non_field_errors") {
+                    pushMessage(response[key], key);
+                }
+            });
+
+            if (messages.length > 0) {
+                return messages.join("；");
+            }
+            return "操作失败";
+        }
+
+        function postWorkflowForm(form) {
+            const data = Object.fromEntries(
+                form.serializeArray()
+                    .filter(function (item) { return item.name !== "workflow_id"; })
+                    .map(function (item) {
+                        if ((item.name === "run_date_start" || item.name === "run_date_end") && item.value === "") {
+                            return [item.name, null];
+                        }
+                        return [item.name, item.value];
+                    })
+            );
+            $.ajax({
+                type: form.attr("action").indexOf("execution-window") !== -1 ? "PATCH" : "POST",
+                url: form.attr("action"),
+                dataType: "json",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (data) {
+                    if (data.status === 0 && data.data.redirect_url) {
+                        window.location.href = data.data.redirect_url;
+                    } else {
+                        alert(data.msg || "操作失败");
+                    }
+                },
+                error: function (xhr) {
+                    alert(formatApiError(xhr));
+                }
+            });
+        }
 
         // 按钮禁用
         function loading(obj) {
@@ -556,7 +648,7 @@
                 escape: true,
                 method: 'get',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/sqlworkflow/detail_content/",
+                url: "/api/v1/sql-workflows/{{ audit_id }}/content/",
                 striped: true,                      //是否显示行间隔色
                 cache: true,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -608,9 +700,7 @@
                 //请求服务数据时所传参数
                 queryParams:
                     function (params) {
-                        return {
-                            workflow_id: "{{ workflow_detail.id }}",
-                        }
+                        return {}
                     },
                 locale: 'zh-CN',                    //本地化
                 columns: [{
@@ -699,13 +789,9 @@
         // 获取操作日志
         function get_logs() {
             $.ajax({
-                type: "post",
-                url: "/workflow/log/",
+                type: "get",
+                url: "/api/v1/sql-workflows/{{ audit_id }}/logs/",
                 dataType: "json",
-                data: {
-                    workflow_id: "{{ workflow_detail.id }}",
-                    workflow_type: 2,
-                },
                 complete: function () {
                 },
                 success: function (data) {
@@ -763,7 +849,7 @@
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/inception/osc_control/",
+                url: "/api/v1/sql-workflows/{{ audit_id }}/osc/",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: false,                   //是否显示分页（*）
@@ -808,7 +894,6 @@
                     function (params) {
                         return {
                             sqlsha1: $(obj).attr("sqlsha1"),
-                            workflow_id: "{{ workflow_detail.id }}",
                             command: "get"
                         }
                     },
@@ -885,11 +970,10 @@
                     //发送请求
                     $.ajax({
                         type: "post",
-                        url: "/inception/osc_control/",
+                        url: "/api/v1/sql-workflows/{{ audit_id }}/osc/",
                         dataType: "json",
                         data: {
                             sqlsha1: sqlsha1,
-                            workflow_id: "{{ workflow_detail.id }}",
                             command: command
                         },
                         complete: function () {
@@ -913,6 +997,7 @@
     <!--状态控制 -->
     <script>
         var workflow_id = "{{ workflow_detail.id }}";
+        var audit_id = "{{ audit_id }}";
         var status = $("#workflow_detail_status").text();
         var key;
         var retryCnt = 1;
@@ -940,13 +1025,10 @@
             if (workflow_id > 0) {
                 // console.log('get workflow status');
                 $.ajax({
-                    type: "post",
+                    type: "get",
                     async: false,
-                    url: "/getWorkflowStatus/",
+                    url: "/api/v1/sql-workflows/" + audit_id + "/status/",
                     dataType: "json",
-                    data: {
-                        workflow_id: workflow_id
-                    },
                     complete: function () {
                         if (wfStatus !== -1 && wfStatus !== "workflow_executing") {
                             window.location.reload(true);
@@ -1040,4 +1122,3 @@
     </script>
 
 {% endblock %}
-
