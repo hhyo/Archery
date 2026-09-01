@@ -310,6 +310,44 @@ class TestView(TransactionTestCase):
         r = self.client.get(f"/workflow/{self.audit.audit_id}/", data=data)
         self.assertRedirects(r, f"/queryapplydetail/1/", fetch_redirect_response=False)
 
+    def test_detail_autoreviewwrong_keeps_audit_id_for_content(self):
+        """自动审核不通过时仍使用审核ID加载SQL内容"""
+        Group.objects.bulk_create(
+            [
+                Group(name="audit_group_1"),
+                Group(name="audit_group_2"),
+                Group(name="audit_group_3"),
+            ]
+        )
+        self.wf.status = "workflow_autoreviewwrong"
+        self.wf.save(update_fields=["status"])
+        workflow_audit = WorkflowAudit.objects.create(
+            group_id=1,
+            group_name="some_group",
+            workflow_id=self.wf.id,
+            workflow_type=WorkflowType.SQL_REVIEW,
+            workflow_title="SQL申请标题",
+            workflow_remark="SQL申请备注",
+            audit_auth_groups="1,2,3",
+            current_audit="1",
+            next_audit="2",
+            current_status=0,
+        )
+        WorkflowLog.objects.create(
+            audit_id=workflow_audit.audit_id,
+            operation_type=WorkflowAction.SUBMIT,
+            operation_info="提交SQL",
+        )
+
+        r = self.client.get(f"/detail/{self.wf.id}/")
+
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(
+            r,
+            f"/api/v1/sql-workflows/{workflow_audit.audit_id}/content/",
+        )
+        self.assertNotContains(r, "/api/v1/sql-workflows/None/content/")
+
     def test_dbaprinciples(self):
         """测试workflows页面"""
         data = {}

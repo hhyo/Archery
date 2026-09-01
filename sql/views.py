@@ -237,6 +237,20 @@ def detail(request, workflow_id):
     if not can_view(request.user, workflow_id):
         raise PermissionDenied
     review_info = audit_handler.get_review_info()
+    # The detail page uses audit_id for read-only SQL content/log endpoints even
+    # when operation buttons are disabled, such as autoreview failures.
+    audit_id = None
+    try:
+        audit_detail = Audit.detail_by_workflow_id(
+            workflow_id=workflow_id,
+            workflow_type=WorkflowType.SQL_REVIEW,
+        )
+        audit_id = audit_detail.audit_id
+        last_operation_info = Audit.logs(audit_id=audit_id).latest("id").operation_info
+    except Exception as e:
+        logger.debug(f"无审核日志记录，错误信息{e}")
+        last_operation_info = ""
+
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != "workflow_autoreviewwrong":
         # 是否可审核
@@ -249,29 +263,12 @@ def detail(request, workflow_id):
         is_can_cancel = can_cancel(request.user, workflow_id)
         # 是否可查看回滚信息
         is_can_rollback = can_rollback(request.user, workflow_id)
-
-        # 获取审核日志
-        audit_id = None
-        try:
-            audit_detail = Audit.detail_by_workflow_id(
-                workflow_id=workflow_id,
-                workflow_type=WorkflowType.SQL_REVIEW,
-            )
-            audit_id = audit_detail.audit_id
-            last_operation_info = (
-                Audit.logs(audit_id=audit_id).latest("id").operation_info
-            )
-        except Exception as e:
-            logger.debug(f"无审核日志记录，错误信息{e}")
-            last_operation_info = ""
     else:
-        audit_id = None
         is_can_review = False
         is_can_execute = False
         is_can_timingtask = False
         is_can_cancel = False
         is_can_rollback = False
-        last_operation_info = None
 
     # 获取定时执行任务信息
     if workflow_detail.status == "workflow_timingtask":
