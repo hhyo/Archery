@@ -653,6 +653,31 @@ def test_workflow_log_view_returns_logs_by_audit_id(
 
 
 @pytest.mark.django_db
+def test_workflow_log_view_allows_audit_user_when_workflow_is_not_viewable(
+    authenticated_api_client, normal_user, workflow_api_data, mocker
+):
+    workflow, _, audit = workflow_api_data
+    mocker.patch.object(api_workflow_operations, "can_view", return_value=False)
+    normal_user.has_perm = mocker.Mock(side_effect=lambda perm: perm == "sql.audit_user")
+    WorkflowLog.objects.create(
+        audit_id=audit.audit_id,
+        operation_type=api_workflow_operations.WorkflowAction.PASS,
+        operation_type_desc="审核通过",
+        operation_info="同意上线",
+        operator=normal_user.username,
+        operator_display=normal_user.display,
+    )
+
+    response = authenticated_api_client.get(
+        f"/api/v1/sql-workflows/{audit.audit_id}/logs/"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["rows"][0]["operation_info"] == "同意上线"
+
+
+@pytest.mark.django_db
 def test_workflow_log_view_denies_unviewable_workflow(
     authenticated_api_client, workflow_api_data, mocker
 ):

@@ -97,6 +97,12 @@ def ensure_viewable(user, workflow_id):
         raise PermissionDenied("你无权查看当前工单！")
 
 
+def ensure_log_viewable(user, workflow_id):
+    if user.is_superuser or user.has_perm("sql.audit_user"):
+        return
+    ensure_viewable(user, workflow_id)
+
+
 class WorkflowOperationAPIView(views.APIView):
     """Base view for session-authenticated workflow operation endpoints."""
 
@@ -595,7 +601,7 @@ class WorkflowOscView(WorkflowOperationAPIView):
 class WorkflowLogView(WorkflowOperationAPIView):
     def get(self, request, audit_id):
         audit, workflow = self.get_audit_workflow(audit_id)
-        ensure_viewable(request.user, workflow.id)
+        ensure_log_viewable(request.user, workflow.id)
         rows = list(
             WorkflowLog.objects.filter(audit_id=audit_id)
             .order_by("-id")
