@@ -7,7 +7,7 @@ cannot be proven by service-level unit tests.
 import pytest
 import yaml
 from sql.engines.models import ResultSet
-from sql.models import SqlWorkflow
+from sql.models import SqlWorkflow, WorkflowLog
 
 from sql_api.serializers import (
     WorkflowExecutionSerializer,
@@ -15,6 +15,21 @@ from sql_api.serializers import (
 )
 from sql_api import api_workflow_operations
 from sql_api.api_workflow_operations import mutation_response
+
+
+def test_should_notify_defaults_to_enabled_when_config_is_empty(mocker):
+    config = mocker.Mock()
+    config.get.return_value = ""
+
+    assert api_workflow_operations.should_notify(config, "Apply") is True
+
+
+def test_should_notify_checks_configured_phase_list(mocker):
+    config = mocker.Mock()
+    config.get.return_value = "Apply,Pass"
+
+    assert api_workflow_operations.should_notify(config, "Apply") is True
+    assert api_workflow_operations.should_notify(config, "Cancel") is False
 
 
 @pytest.mark.django_db
@@ -94,7 +109,6 @@ def test_workflow_list_returns_submitters_workflow(
     assert response.json()["total"] == 1
     assert response.json()["rows"][0]["id"] == workflow.id
     assert response.json()["rows"][0]["audit_id"] == audit.audit_id
-    assert response.json()["rows"][0]["audit_id"] == audit.audit_id
 
 
 @pytest.mark.django_db
@@ -144,6 +158,82 @@ def test_workflow_audit_list_returns_workflows(
     assert response.status_code == 200
     assert response.json()["total"] == 1
     assert response.json()["rows"][0]["id"] == workflow.id
+    assert response.json()["rows"][0]["audit_id"] == audit.audit_id
+
+
+@pytest.mark.django_db
+def test_sql_workflow_submit_view_returns_audit_id_and_queues_apply_notification(
+    authenticated_api_client, mocker
+):
+    workflow = mocker.Mock(id=88, status="workflow_manreviewing")
+    audit = mocker.Mock(audit_id=188)
+    workflow.get_audit.return_value = audit
+    workflow_content = mocker.Mock(workflow=workflow)
+    serializer = mocker.Mock()
+    serializer.save.return_value = workflow_content
+    serializer_class = mocker.patch.object(
+        api_workflow_operations, "WorkflowContentSerializer", return_value=serializer
+    )
+    mocker.patch.object(api_workflow_operations, "SysConfig")
+    mocker.patch.object(api_workflow_operations, "should_notify", return_value=True)
+    on_commit = mocker.patch.object(
+        api_workflow_operations.transaction,
+        "on_commit",
+        side_effect=lambda callback: callback(),
+    )
+    queue_task = mocker.patch.object(api_workflow_operations, "async_task")
+
+    response = authenticated_api_client.post(
+        "/api/v1/sql-workflows/",
+        {"workflow": {"workflow_name": "上线"}, "sql_content": "select 1"},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.json()["data"] == {
+        "audit_id": audit.audit_id,
+        "workflow_id": workflow.id,
+        "redirect_url": f"/detail/{workflow.id}/",
+    }
+    serializer_class.assert_called_once()
+    serializer.is_valid.assert_called_once_with(raise_exception=True)
+    serializer.save.assert_called_once_with()
+    on_commit.assert_called_once()
+    queue_task.assert_called_once_with(
+        api_workflow_operations.notify_for_audit,
+        workflow_audit=audit,
+        timeout=60,
+        task_name=f"sqlreview-submit-{workflow.id}",
+    )
+
+
+@pytest.mark.django_db
+def test_sql_workflow_submit_view_skips_apply_notification_when_disabled(
+    authenticated_api_client, mocker
+):
+    workflow = mocker.Mock(id=89, status="workflow_manreviewing")
+    audit = mocker.Mock(audit_id=189)
+    workflow.get_audit.return_value = audit
+    serializer = mocker.Mock()
+    serializer.save.return_value = mocker.Mock(workflow=workflow)
+    mocker.patch.object(
+        api_workflow_operations, "WorkflowContentSerializer", return_value=serializer
+    )
+    mocker.patch.object(api_workflow_operations, "SysConfig")
+    mocker.patch.object(api_workflow_operations, "should_notify", return_value=False)
+    on_commit = mocker.patch.object(api_workflow_operations.transaction, "on_commit")
+    queue_task = mocker.patch.object(api_workflow_operations, "async_task")
+
+    response = authenticated_api_client.post(
+        "/api/v1/sql-workflows/",
+        {"workflow": {"workflow_name": "上线"}, "sql_content": "select 1"},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.json()["data"]["audit_id"] == audit.audit_id
+    on_commit.assert_not_called()
+    queue_task.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -303,6 +393,111 @@ def test_terminate_scheduled_workflow_removes_schedule_after_commit(
 
 
 @pytest.mark.django_db
+def test_rejection_view_aborts_workflow_and_removes_schedule_after_commit(
+    authenticated_api_client, normal_user, mocker
+):
+    normal_user.has_perm = mocker.Mock(return_value=True)
+    workflow = mocker.Mock(id=71, status="workflow_timingtask")
+    audit = mocker.Mock(audit_id=171)
+    detail = mocker.Mock()
+    auditor = mocker.Mock(audit=audit)
+    auditor.operate.return_value = detail
+    mocker.patch.object(
+        api_workflow_operations,
+        "get_sql_workflow_by_audit_id",
+        return_value=(audit, workflow),
+    )
+    mocker.patch.object(api_workflow_operations, "get_auditor", return_value=auditor)
+    mocker.patch.object(api_workflow_operations, "SysConfig")
+    mocker.patch.object(api_workflow_operations, "should_notify", return_value=True)
+    mocker.patch.object(
+        api_workflow_operations.transaction,
+        "on_commit",
+        side_effect=lambda callback: callback(),
+    )
+    delete_schedule = mocker.patch.object(api_workflow_operations, "del_schedule")
+    queue_task = mocker.patch.object(api_workflow_operations, "async_task")
+
+    response = authenticated_api_client.post(
+        "/api/v1/sql-workflows/171/rejection/",
+        {"reject_remark": "SQL 风险太高"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["audit_id"] == audit.audit_id
+    auditor.operate.assert_called_once_with(
+        api_workflow_operations.WorkflowAction.REJECT,
+        normal_user,
+        "SQL 风险太高",
+    )
+    assert workflow.status == "workflow_abort"
+    workflow.save.assert_called_once_with(update_fields=["status"])
+    delete_schedule.assert_called_once_with("sqlreview-timing-71")
+    queue_task.assert_called_once_with(
+        api_workflow_operations.notify_for_audit,
+        workflow_audit=audit,
+        workflow_audit_detail=detail,
+        timeout=60,
+        task_name="sqlreview-reject-71",
+    )
+
+
+@pytest.mark.django_db
+def test_rejection_view_requires_reject_remark_before_side_effects(
+    authenticated_api_client, normal_user, mocker
+):
+    normal_user.has_perm = mocker.Mock(return_value=True)
+    resolver = mocker.patch.object(
+        api_workflow_operations, "get_sql_workflow_by_audit_id"
+    )
+    get_auditor = mocker.patch.object(api_workflow_operations, "get_auditor")
+
+    response = authenticated_api_client.post(
+        "/api/v1/sql-workflows/171/rejection/", {}, format="json"
+    )
+
+    assert response.status_code == 400
+    resolver.assert_not_called()
+    get_auditor.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_rejection_view_sanitizes_audit_exception(
+    authenticated_api_client, normal_user, mocker
+):
+    normal_user.has_perm = mocker.Mock(return_value=True)
+    workflow = mocker.Mock(id=72, status="workflow_review_pass")
+    audit = mocker.Mock(audit_id=172)
+    auditor = mocker.Mock(audit=audit)
+    auditor.operate.side_effect = api_workflow_operations.AuditException(
+        "internal approval graph detail"
+    )
+    mocker.patch.object(
+        api_workflow_operations,
+        "get_sql_workflow_by_audit_id",
+        return_value=(audit, workflow),
+    )
+    mocker.patch.object(api_workflow_operations, "get_auditor", return_value=auditor)
+    mocker.patch.object(api_workflow_operations, "SysConfig")
+    delete_schedule = mocker.patch.object(api_workflow_operations, "del_schedule")
+    queue_task = mocker.patch.object(api_workflow_operations, "async_task")
+
+    response = authenticated_api_client.post(
+        "/api/v1/sql-workflows/172/rejection/",
+        {"reject_remark": "不通过"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "拒绝工单失败"}
+    assert "internal approval graph detail" not in response.content.decode()
+    assert workflow.status == "workflow_review_pass"
+    delete_schedule.assert_not_called()
+    queue_task.assert_not_called()
+
+
+@pytest.mark.django_db
 def test_auto_execution_queues_task_and_removes_schedule_after_commit(
     authenticated_api_client, normal_user, mocker
 ):
@@ -416,3 +611,56 @@ def test_osc_control_does_not_expose_engine_error(authenticated_api_client, mock
     )
 
     assert response.json() == {"total": 0, "rows": [], "msg": "OSC 操作失败"}
+
+
+@pytest.mark.django_db
+def test_workflow_log_view_returns_logs_by_audit_id(
+    authenticated_api_client, normal_user, workflow_api_data, mocker
+):
+    workflow, _, audit = workflow_api_data
+    mocker.patch.object(api_workflow_operations, "can_view", return_value=True)
+    WorkflowLog.objects.create(
+        audit_id=audit.audit_id,
+        operation_type=api_workflow_operations.WorkflowAction.PASS,
+        operation_type_desc="审核通过",
+        operation_info="同意上线",
+        operator=normal_user.username,
+        operator_display=normal_user.display,
+    )
+    WorkflowLog.objects.create(
+        audit_id=audit.audit_id + 1,
+        operation_type=api_workflow_operations.WorkflowAction.REJECT,
+        operation_type_desc="审核不通过",
+        operation_info="其他工单",
+        operator=normal_user.username,
+        operator_display=normal_user.display,
+    )
+
+    response = authenticated_api_client.get(
+        f"/api/v1/sql-workflows/{audit.audit_id}/logs/"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert (
+        response.json()["rows"][0].items()
+        >= {
+            "operation_type_desc": "审核通过",
+            "operation_info": "同意上线",
+            "operator_display": normal_user.display,
+        }.items()
+    )
+
+
+@pytest.mark.django_db
+def test_workflow_log_view_denies_unviewable_workflow(
+    authenticated_api_client, workflow_api_data, mocker
+):
+    workflow, _, audit = workflow_api_data
+    mocker.patch.object(api_workflow_operations, "can_view", return_value=False)
+
+    response = authenticated_api_client.get(
+        f"/api/v1/sql-workflows/{audit.audit_id}/logs/"
+    )
+
+    assert response.status_code == 403

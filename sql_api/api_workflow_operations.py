@@ -573,10 +573,6 @@ class WorkflowStatusView(WorkflowOperationAPIView):
 
 
 class WorkflowOscView(WorkflowOperationAPIView):
-    def get(self, request, audit_id):
-        data = self.validated_query_params(WorkflowOscSerializer, request)
-        return self._operate(request, audit_id, data)
-
     def post(self, request, audit_id):
         data = self.validated_data(WorkflowOscSerializer, request)
         return self._operate(request, audit_id, data)
