@@ -118,6 +118,22 @@ def ensure_log_viewable(user, workflow_id):
     ensure_viewable(user, workflow_id)
 
 
+def can_execute_workflow(user, workflow):
+    if user.is_superuser:
+        return True
+    if workflow.engineer == user.username and user.has_perm("sql.sql_execute"):
+        return True
+    if user.has_perm("sql.sql_execute_for_resource_group"):
+        group_ids = [group.group_id for group in user_groups(user)]
+        return workflow.group_id in group_ids
+    return False
+
+
+def ensure_workflow_executable(user, workflow):
+    if not can_execute_workflow(user, workflow):
+        raise PermissionDenied("你无权执行当前工单！")
+
+
 class WorkflowOperationAPIView(views.APIView):
     """Base view for session-authenticated workflow operation endpoints."""
 
@@ -592,6 +608,8 @@ class WorkflowOscView(WorkflowOperationAPIView):
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
         ensure_viewable(request.user, workflow_id)
+        if data["command"] != "get":
+            ensure_workflow_executable(request.user, workflow)
         try:
             result = get_engine(workflow.instance).osc_control(
                 command=data["command"], sqlsha1=data["sqlsha1"]

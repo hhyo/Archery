@@ -333,6 +333,98 @@ def test_rollback_and_osc_return_engine_results(
 
 
 @pytest.mark.django_db
+def test_osc_progress_get_only_requires_view_permission(
+    authenticated_api_client, workflow_api_data, mocker
+):
+    workflow, _, audit = workflow_api_data
+    workflow.status = "workflow_executing"
+    workflow.save(update_fields=["status"])
+    engine = mocker.patch.object(api_workflow_operations, "get_engine").return_value
+    engine.osc_control.return_value = ResultSet(rows=[])
+
+    response = authenticated_api_client.post(
+        f"/api/v1/sql-workflows/{audit.audit_id}/osc/",
+        {"command": "get", "sqlsha1": "hash"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    engine.osc_control.assert_called_once_with(command="get", sqlsha1="hash")
+
+
+@pytest.mark.django_db
+def test_osc_control_requires_workflow_execution_permission(
+    authenticated_api_client, workflow_api_data, mocker
+):
+    workflow, _, audit = workflow_api_data
+    workflow.status = "workflow_executing"
+    workflow.save(update_fields=["status"])
+    engine = mocker.patch.object(api_workflow_operations, "get_engine").return_value
+
+    response = authenticated_api_client.post(
+        f"/api/v1/sql-workflows/{audit.audit_id}/osc/",
+        {"command": "kill", "sqlsha1": "hash"},
+        format="json",
+    )
+
+    assert response.status_code == 403
+    engine.osc_control.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_osc_control_allows_submitter_with_execution_permission(
+    authenticated_api_client, normal_user, workflow_api_data, mocker
+):
+    workflow, _, audit = workflow_api_data
+    workflow.status = "workflow_executing"
+    workflow.save(update_fields=["status"])
+    normal_user.has_perm = mocker.Mock(
+        side_effect=lambda perm: perm == "sql.sql_execute"
+    )
+    engine = mocker.patch.object(api_workflow_operations, "get_engine").return_value
+    engine.osc_control.return_value = ResultSet(rows=[])
+
+    response = authenticated_api_client.post(
+        f"/api/v1/sql-workflows/{audit.audit_id}/osc/",
+        {"command": "pause", "sqlsha1": "hash"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    engine.osc_control.assert_called_once_with(command="pause", sqlsha1="hash")
+
+
+@pytest.mark.django_db
+def test_osc_control_allows_resource_group_execution_permission(
+    authenticated_api_client, normal_user, workflow_api_data, mocker
+):
+    workflow, _, audit = workflow_api_data
+    workflow.status = "workflow_executing"
+    workflow.engineer = "submitter"
+    workflow.save(update_fields=["status", "engineer"])
+    normal_user.has_perm = mocker.Mock(
+        side_effect=lambda perm: perm == "sql.sql_execute_for_resource_group"
+    )
+    mocker.patch.object(api_workflow_operations, "can_view", return_value=True)
+    mocker.patch.object(
+        api_workflow_operations,
+        "user_groups",
+        return_value=[mocker.Mock(group_id=workflow.group_id)],
+    )
+    engine = mocker.patch.object(api_workflow_operations, "get_engine").return_value
+    engine.osc_control.return_value = ResultSet(rows=[])
+
+    response = authenticated_api_client.post(
+        f"/api/v1/sql-workflows/{audit.audit_id}/osc/",
+        {"command": "resume", "sqlsha1": "hash"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    engine.osc_control.assert_called_once_with(command="resume", sqlsha1="hash")
+
+
+@pytest.mark.django_db
 def test_execution_window_updates_workflow(
     authenticated_api_client, normal_user, workflow_api_data, mocker
 ):
@@ -700,7 +792,9 @@ def test_workflow_log_view_allows_audit_user_when_workflow_is_not_viewable(
 ):
     workflow, _, audit = workflow_api_data
     mocker.patch.object(api_workflow_operations, "can_view", return_value=False)
-    normal_user.has_perm = mocker.Mock(side_effect=lambda perm: perm == "sql.audit_user")
+    normal_user.has_perm = mocker.Mock(
+        side_effect=lambda perm: perm == "sql.audit_user"
+    )
     WorkflowLog.objects.create(
         audit_id=audit.audit_id,
         operation_type=api_workflow_operations.WorkflowAction.PASS,
