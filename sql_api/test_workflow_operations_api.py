@@ -534,6 +534,48 @@ def test_auto_execution_queues_task_and_removes_schedule_after_commit(
 
 
 @pytest.mark.django_db
+def test_auto_execution_queues_task_when_schedule_cleanup_fails(
+    authenticated_api_client, normal_user, mocker
+):
+    normal_user.display = "执行人"
+    normal_user.has_perm = mocker.Mock(return_value=True)
+    workflow = mocker.Mock(id=8)
+    audit = mocker.Mock(audit_id=3)
+    mocker.patch.object(api_workflow_operations, "can_execute", return_value=True)
+    mocker.patch.object(
+        api_workflow_operations, "on_correct_time_period", return_value=True
+    )
+    mocker.patch.object(
+        api_workflow_operations,
+        "get_sql_workflow_by_audit_id",
+        return_value=(audit, workflow),
+    )
+    mocker.patch.object(api_workflow_operations.Audit, "add_log")
+    mocker.patch.object(
+        api_workflow_operations.transaction,
+        "on_commit",
+        side_effect=lambda callback: callback(),
+    )
+    delete_schedule = mocker.patch.object(
+        api_workflow_operations, "del_schedule", side_effect=Exception("db error")
+    )
+    queue_task = mocker.patch.object(api_workflow_operations, "async_task")
+    log_exception = mocker.patch.object(api_workflow_operations.logger, "exception")
+
+    response = authenticated_api_client.post(
+        "/api/v1/sql-workflows/3/execution/", {"mode": "auto"}, format="json"
+    )
+
+    assert response.status_code == 200
+    assert workflow.status == "workflow_queuing"
+    delete_schedule.assert_called_once_with("sqlreview-timing-8")
+    log_exception.assert_called_once_with(
+        "删除SQL定时执行任务失败，workflow_id=%s", workflow.id
+    )
+    queue_task.assert_called_once()
+
+
+@pytest.mark.django_db
 def test_schedule_creates_timing_task_for_authorized_executor(
     authenticated_api_client, normal_user, workflow_api_data, mocker
 ):

@@ -92,6 +92,21 @@ def should_notify(config, phase):
     return phase in phases.split(",") if phases else True
 
 
+def submit_auto_execution(workflow_id, user):
+    try:
+        del_schedule(f"sqlreview-timing-{workflow_id}")
+    except Exception:
+        logger.exception("删除SQL定时执行任务失败，workflow_id=%s", workflow_id)
+    async_task(
+        "sql.utils.execute_sql.execute",
+        workflow_id,
+        user,
+        hook="sql.utils.execute_sql.execute_callback",
+        timeout=-1,
+        task_name=f"sqlreview-execute-{workflow_id}",
+    )
+
+
 def ensure_viewable(user, workflow_id):
     if not can_view(user, workflow_id):
         raise PermissionDenied("你无权查看当前工单！")
@@ -454,17 +469,7 @@ class WorkflowExecutionView(WorkflowOperationAPIView):
                     request.user.display,
                 )
                 transaction.on_commit(
-                    lambda: del_schedule(f"sqlreview-timing-{workflow_id}")
-                )
-                transaction.on_commit(
-                    lambda: async_task(
-                        "sql.utils.execute_sql.execute",
-                        workflow_id,
-                        request.user,
-                        hook="sql.utils.execute_sql.execute_callback",
-                        timeout=-1,
-                        task_name=f"sqlreview-execute-{workflow_id}",
-                    )
+                    lambda: submit_auto_execution(workflow_id, request.user)
                 )
                 message = "工单执行排队中"
             else:
