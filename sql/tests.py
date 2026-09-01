@@ -312,13 +312,12 @@ class TestView(TransactionTestCase):
 
     def test_detail_autoreviewwrong_keeps_audit_id_for_content(self):
         """自动审核不通过时仍使用审核ID加载SQL内容"""
-        Group.objects.bulk_create(
-            [
-                Group(name="audit_group_1"),
-                Group(name="audit_group_2"),
-                Group(name="audit_group_3"),
-            ]
-        )
+        review_groups = [
+            Group.objects.create(name="audit_group_1"),
+            Group.objects.create(name="audit_group_2"),
+            Group.objects.create(name="audit_group_3"),
+        ]
+        audit_auth_groups = ",".join(str(group.id) for group in review_groups)
         self.wf.status = "workflow_autoreviewwrong"
         self.wf.save(update_fields=["status"])
         workflow_audit = WorkflowAudit.objects.create(
@@ -328,9 +327,9 @@ class TestView(TransactionTestCase):
             workflow_type=WorkflowType.SQL_REVIEW,
             workflow_title="SQL申请标题",
             workflow_remark="SQL申请备注",
-            audit_auth_groups="1,2,3",
-            current_audit="1",
-            next_audit="2",
+            audit_auth_groups=audit_auth_groups,
+            current_audit=str(review_groups[0].id),
+            next_audit=str(review_groups[1].id),
             current_status=0,
         )
         WorkflowLog.objects.create(
