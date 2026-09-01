@@ -206,10 +206,10 @@
                         var span = document.createElement('span');
                         span.setAttribute('title', value);
                         if (value.length > 20) {
-                            span.innerHTML = "<a href=\"/detail/" + row.workflow_id + "/\">" + value.substr(0, 20) + '...';
+                            span.innerHTML = "<a href=\"/workflow/" + row.audit_id + "/\">" + value.substr(0, 20) + '...';
                             +"</a>";
                         } else {
-                            span.innerHTML = "<a href=\"/detail/" + row.workflow_id + "/\">" + value + "</a>";
+                            span.innerHTML = "<a href=\"/workflow/" + row.audit_id + "/\">" + value + "</a>";
                         }
                         return span.outerHTML;
                     }

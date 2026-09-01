@@ -58,6 +58,7 @@ class TestView(TransactionTestCase):
         self.res_group = ResourceGroup.objects.create(
             group_id=1, group_name="group_name"
         )
+        self.audit_group = Group.objects.create(id=1, name="audit_group")
         self.wf = SqlWorkflow.objects.create(
             workflow_name="some_name",
             group_id=1,
@@ -89,13 +90,13 @@ class TestView(TransactionTestCase):
         self.audit = WorkflowAudit.objects.create(
             group_id=1,
             group_name="some_group",
-            workflow_id=1,
+            workflow_id=self.query_apply.apply_id,
             workflow_type=1,
             workflow_title="申请标题",
             workflow_remark="申请备注",
-            audit_auth_groups="1,2,3",
+            audit_auth_groups=str(self.audit_group.id),
             current_audit="1",
-            next_audit="2",
+            next_audit="-1",
             current_status=0,
         )
         self.wl = WorkflowLog.objects.create(
@@ -138,6 +139,7 @@ class TestView(TransactionTestCase):
         WorkflowLog.objects.all().delete()
         QueryPrivilegesApply.objects.all().delete()
         ResourceGroup.objects.all().delete()
+        Group.objects.all().delete()
         with connection.cursor() as cursor:
             if connection.vendor == "sqlite":
                 cursor.execute("DROP TABLE IF EXISTS mysql_slow_query_review")
@@ -165,6 +167,14 @@ class TestView(TransactionTestCase):
         data = {}
         r = self.client.get("/sqlworkflow/", data=data)
         self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
+
+    def test_sqlexportworkflow(self):
+        """测试sqlexportworkflow页面"""
+        data = {}
+        r = self.client.get("/sqlexportworkflow/", data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
 
     def test_submitsql(self):
         """测试submitsql页面"""
@@ -195,6 +205,7 @@ class TestView(TransactionTestCase):
         data = {}
         r = self.client.get("/queryapplylist/", data=data)
         self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
 
     def test_queryuserprivileges(self):
         """测试queryuserprivileges页面"""
@@ -261,6 +272,7 @@ class TestView(TransactionTestCase):
         data = {}
         r = self.client.get(f"/archive/", data=data)
         self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
 
     def test_config(self):
         """测试config页面"""
@@ -308,7 +320,71 @@ class TestView(TransactionTestCase):
         """测试workflows页面"""
         data = {}
         r = self.client.get(f"/workflow/{self.audit.audit_id}/", data=data)
-        self.assertRedirects(r, f"/queryapplydetail/1/", fetch_redirect_response=False)
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, "queryapplydetail.html")
+        self.assertEqual(r.context["workflow_detail"], self.query_apply)
+        self.assertEqual(r.context["review_info"].nodes[0].group, self.audit_group)
+        self.assertIn("is_can_review", r.context)
+
+    def test_workflowsdetail_sqlworkflow_renders_detail(self):
+        """统一工单详情直接渲染SQL工单详情页"""
+        workflow_audit = WorkflowAudit.objects.create(
+            group_id=1,
+            group_name="some_group",
+            workflow_id=self.wf.id,
+            workflow_type=WorkflowType.SQL_REVIEW,
+            workflow_title="SQL申请标题",
+            workflow_remark="SQL申请备注",
+            audit_auth_groups=str(self.audit_group.id),
+            current_audit=str(self.audit_group.id),
+            next_audit="-1",
+            current_status=WorkflowStatus.WAITING,
+        )
+        WorkflowLog.objects.create(
+            audit_id=workflow_audit.audit_id,
+            operation_type=WorkflowAction.SUBMIT,
+            operation_info="提交SQL",
+        )
+
+        r = self.client.get(f"/workflow/{workflow_audit.audit_id}/")
+
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, "detail.html")
+        self.assertEqual(r.context["workflow_detail"], self.wf)
+        self.assertEqual(r.context["audit_id"], workflow_audit.audit_id)
+        self.assertEqual(r.context["review_info"].nodes[0].group, self.audit_group)
+
+    def test_workflowsdetail_offline_download_renders_sql_detail(self):
+        """统一工单详情将离线下载作为SQL工单变体渲染"""
+        self.wf.is_offline_export = True
+        self.wf.export_format = "csv"
+        self.wf.file_name = "offline.zip"
+        self.wf.save(update_fields=["is_offline_export", "export_format", "file_name"])
+        workflow_audit = WorkflowAudit.objects.create(
+            group_id=1,
+            group_name="some_group",
+            workflow_id=self.wf.id,
+            workflow_type=WorkflowType.SQL_REVIEW,
+            workflow_title="数据导出申请",
+            workflow_remark="导出备注",
+            audit_auth_groups=str(self.audit_group.id),
+            current_audit=str(self.audit_group.id),
+            next_audit="-1",
+            current_status=WorkflowStatus.WAITING,
+        )
+
+        r = self.client.get(f"/workflow/{workflow_audit.audit_id}/")
+
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, "detail.html")
+        self.assertEqual(r.context["workflow_detail"], self.wf)
+        self.assertTrue(r.context["workflow_detail"].is_offline_export)
+
+    def test_workflowsdetail_missing_audit_id_returns_404(self):
+        """不存在的audit_id返回404"""
+        r = self.client.get("/workflow/999999/")
+
+        self.assertEqual(r.status_code, 404)
 
     def test_detail_autoreviewwrong_keeps_audit_id_for_content(self):
         """自动审核不通过时仍使用审核ID加载SQL内容"""

@@ -306,10 +306,10 @@
                         var span = document.createElement('span');
                         span.setAttribute('title', value);
                         if (value.length > 10) {
-                            span.innerHTML = "<a href=\"/archive/" + row.id + "/\">" + value.substr(0, 10) + '...';
+                            span.innerHTML = "<a href=\"/workflow/" + row.audit_id + "/\">" + value.substr(0, 10) + '...';
                             +"</a>";
                         } else {
-                            span.innerHTML = "<a href=\"/archive/" + row.id + "/\">" + value + "</a>";
+                            span.innerHTML = "<a href=\"/workflow/" + row.audit_id + "/\">" + value + "</a>";
                         }
                         return span.outerHTML;
                     }

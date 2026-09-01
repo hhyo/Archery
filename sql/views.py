@@ -7,7 +7,6 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, FileResponse, Http404, JsonResponse
-from django.urls import reverse
 
 from django.conf import settings
 from common.config import SysConfig
@@ -230,8 +229,7 @@ def submit_sql(request):
     return render(request, "sqlsubmit.html", context)
 
 
-def detail(request, workflow_id):
-    """展示SQL工单详细页面"""
+def _sqlworkflow_detail_context(request, workflow_id):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
     audit_handler = AuditV2(workflow=workflow_detail)
     if not can_view(request.user, workflow_id):
@@ -309,6 +307,12 @@ def detail(request, workflow_id):
         "manual": manual,
         "run_date": run_date,
     }
+    return context
+
+
+def detail(request, workflow_id):
+    """展示SQL工单详细页面"""
+    context = _sqlworkflow_detail_context(request, workflow_id)
     return render(request, "detail.html", context)
 
 
@@ -406,8 +410,7 @@ def queryapplylist(request):
     return render(request, "queryapplylist.html", context)
 
 
-def queryapplydetail(request, apply_id):
-    """查询权限申请详情页面"""
+def _queryapplydetail_context(request, apply_id):
     workflow_detail = QueryPrivilegesApply.objects.get(apply_id=apply_id)
     # 获取当前审批和审批流程
     audit_handler = AuditV2(workflow=workflow_detail)
@@ -448,6 +451,12 @@ def queryapplydetail(request, apply_id):
         "last_operation_info": last_operation_info,
         "is_can_review": is_can_review,
     }
+    return context
+
+
+def queryapplydetail(request, apply_id):
+    """查询权限申请详情页面"""
+    context = _queryapplydetail_context(request, apply_id)
     return render(request, "queryapplydetail.html", context)
 
 
@@ -545,8 +554,7 @@ def archive(request):
     )
 
 
-def archive_detail(request, id):
-    """归档详情页面"""
+def _archive_detail_context(request, id):
     archive_config = ArchiveConfig.objects.get(pk=id)
     # 获取当前审批和审批流程、是否可审核
     audit_handler = AuditV2(
@@ -591,6 +599,12 @@ def archive_detail(request, id):
         "last_operation_info": last_operation_info,
         "can_review": can_review,
     }
+    return context
+
+
+def archive_detail(request, id):
+    """归档详情页面"""
+    context = _archive_detail_context(request, id)
     return render(request, "archivedetail.html", context)
 
 
@@ -663,17 +677,15 @@ def workflowsdetail(request, audit_id):
     if not audit_detail:
         raise Http404("不存在对应的工单记录")
     if audit_detail.workflow_type == WorkflowType.QUERY:
-        return HttpResponseRedirect(
-            reverse("sql:queryapplydetail", args=(audit_detail.workflow_id,))
-        )
+        context = _queryapplydetail_context(request, audit_detail.workflow_id)
+        return render(request, "queryapplydetail.html", context)
     elif audit_detail.workflow_type == WorkflowType.SQL_REVIEW:
-        return HttpResponseRedirect(
-            reverse("sql:detail", args=(audit_detail.workflow_id,))
-        )
+        context = _sqlworkflow_detail_context(request, audit_detail.workflow_id)
+        return render(request, "detail.html", context)
     elif audit_detail.workflow_type == WorkflowType.ARCHIVE:
-        return HttpResponseRedirect(
-            reverse("sql:archive_detail", args=(audit_detail.workflow_id,))
-        )
+        context = _archive_detail_context(request, audit_detail.workflow_id)
+        return render(request, "archivedetail.html", context)
+    raise Http404("不支持的工单类型")
 
 
 @permission_required("sql.menu_document", raise_exception=True)

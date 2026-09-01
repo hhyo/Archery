@@ -931,7 +931,7 @@ def test_query_privilege_audit(
     assertRedirects(
         response,
         fetch_redirect_response=False,
-        expected_url=f"/queryapplydetail/{sql_query_apply.apply_id}/",
+        expected_url=f"/workflow/{auditor.audit.audit_id}/",
     )
     sql_query_apply.refresh_from_db()
     assert sql_query_apply.status == WorkflowStatus.PASSED

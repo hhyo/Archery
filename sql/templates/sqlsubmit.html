@@ -681,7 +681,11 @@
                     $('#btn-submitsql').button('reset')
                 },
                 success: function (data) {
-                    window.location.href = data.data && data.data.redirect_url ? data.data.redirect_url : "/detail/" + data.workflow_id
+                    if (data.data && data.data.audit_id) {
+                        window.location.href = "/workflow/" + data.data.audit_id + "/";
+                    } else {
+                        window.location.href = data.data && data.data.redirect_url ? data.data.redirect_url : "/detail/" + data.workflow_id
+                    }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     if (XMLHttpRequest.responseJSON) {
