@@ -434,7 +434,9 @@ def test_instance_detail_put_and_delete_still_work_for_authenticated_superuser(
         },
         format="json",
     )
-    delete_response = api_client.delete(CANONICAL["instance_detail"].format(instance.id))
+    delete_response = api_client.delete(
+        CANONICAL["instance_detail"].format(instance.id)
+    )
 
     assert put_response.status_code == 200
     assert put_response.json()["instance_name"] == "managed_instance_new"
