@@ -24,6 +24,18 @@ Rationale: Current SQL and export list templates link titles to `/detail/<workfl
 
 Alternatives considered: Only update the todo workflow list, but it already uses `/workflow/<audit_id>/` and would leave the main list pages inconsistent. Show both old and new links, but that preserves the old mental model.
 
+## Decision: Use legacy detail fallback for historical rows without audit ID
+
+Rationale: Older persisted work orders may appear in list pages without an associated `WorkflowAudit` row. Generating `/workflow/None/`, `/workflow//`, or equivalent broken links would make those records unreachable from lists. A link formatter should branch per row: use `/workflow/<audit_id>/` when present, otherwise keep the appropriate legacy URL for that work order type.
+
+Alternatives considered: Require a historical backfill before the web migration, but that increases release risk and changes the scope from web migration to data repair. Hide no-audit rows from lists, but that would remove existing visibility. Always attempt unified resolution from legacy IDs at click time, but the list already knows whether an audit ID is available and can choose the safer URL.
+
+## Decision: Always create audit records for new web-visible work orders
+
+Rationale: The unified web model depends on audit ID as the user-facing identifier. New SQL Workflow, query privilege, archive, and offline download work orders that remain visible in web lists/details must create at least a display-only audit record, including no-review and auto-rejected paths. The existing auto-reject branch is the reference pattern because it preserves a lifecycle record even when manual approval is skipped or fails early.
+
+Alternatives considered: Let no-review or auto-rejected work orders remain without audit records and rely on legacy detail URLs, but that perpetuates two mental models for new data. Backfill later only, but new records would continue adding exceptions. Introduce a separate display identifier outside `WorkflowAudit`, but that duplicates the audit ID contract from feature 003.
+
 ## Decision: Keep legacy detail URLs usable during this feature
 
 Rationale: Existing bookmarks, notifications, and direct links may still target `/detail/<workflow_id>/`, `/queryapplydetail/<apply_id>/`, or `/archive/<id>/`. The requested migration changes normal navigation, not backwards compatibility for these URLs.

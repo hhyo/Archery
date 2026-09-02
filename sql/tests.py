@@ -167,14 +167,20 @@ class TestView(TransactionTestCase):
         data = {}
         r = self.client.get("/sqlworkflow/", data=data)
         self.assertEqual(r.status_code, 200)
-        self.assertContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
+        self.assertContains(r, "function workflowDetailUrl(row)")
+        self.assertContains(r, 'return "/workflow/" + row.audit_id + "/";')
+        self.assertContains(r, 'return "/detail/" + row.id + "/";')
+        self.assertNotContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
 
     def test_sqlexportworkflow(self):
         """测试sqlexportworkflow页面"""
         data = {}
         r = self.client.get("/sqlexportworkflow/", data=data)
         self.assertEqual(r.status_code, 200)
-        self.assertContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
+        self.assertContains(r, "function workflowDetailUrl(row)")
+        self.assertContains(r, 'return "/workflow/" + row.audit_id + "/";')
+        self.assertContains(r, 'return "/detail/" + row.id + "/";')
+        self.assertNotContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
 
     def test_submitsql(self):
         """测试submitsql页面"""
@@ -205,7 +211,10 @@ class TestView(TransactionTestCase):
         data = {}
         r = self.client.get("/queryapplylist/", data=data)
         self.assertEqual(r.status_code, 200)
-        self.assertContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
+        self.assertContains(r, "function queryApplyDetailUrl(row)")
+        self.assertContains(r, 'return "/workflow/" + row.audit_id + "/";')
+        self.assertContains(r, 'return "/queryapplydetail/" + row.apply_id + "/";')
+        self.assertNotContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
 
     def test_queryuserprivileges(self):
         """测试queryuserprivileges页面"""
@@ -272,7 +281,10 @@ class TestView(TransactionTestCase):
         data = {}
         r = self.client.get(f"/archive/", data=data)
         self.assertEqual(r.status_code, 200)
-        self.assertContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
+        self.assertContains(r, "function archiveDetailUrl(row)")
+        self.assertContains(r, 'return "/workflow/" + row.audit_id + "/";')
+        self.assertContains(r, 'return "/archive/" + row.id + "/";')
+        self.assertNotContains(r, 'href=\\"/workflow/" + row.audit_id + "/\\"')
 
     def test_config(self):
         """测试config页面"""

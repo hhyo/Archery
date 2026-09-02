@@ -48,23 +48,34 @@ Expected behavior:
 
 - Existing direct rendering remains intact.
 - These paths are compatibility entries, not the normal target for list-page detail links.
+- Historical list rows without `audit_id` may still link to these entries to preserve access.
+
+## New Work Order Creation Contract
+
+For new SQL Workflow, query privilege, archive, and offline download work orders that appear in web lists or detail pages:
+
+- An audit record must be created and persisted.
+- The created row exposed to list/detail rendering must include a non-empty `audit_id`.
+- No-review, display-only, and auto-rejected paths follow the same requirement.
+- The audit record must preserve enough type and lifecycle information for `/workflow/<audit_id>/` to choose the renderer and show the audit history safely.
 
 ## List Link Contract
 
 List pages should point title/detail links at the unified entry when an `audit_id` is available:
 
-| Page | Current Legacy Detail Target | New Target |
-|------|------------------------------|------------|
-| `sqlworkflow.html` | `/detail/<workflow_id>/` | `/workflow/<audit_id>/` |
-| `sqlexportworkflow.html` | `/detail/<workflow_id>/` | `/workflow/<audit_id>/` |
-| `queryapplylist.html` | `/queryapplydetail/<apply_id>/` | `/workflow/<audit_id>/` |
-| `archive.html` | `/archive/<id>/` | `/workflow/<audit_id>/` |
-| `workflow.html` | `/workflow/<audit_id>/` | unchanged |
+| Page | When `audit_id` exists | When historical row lacks `audit_id` |
+|------|------------------------|--------------------------------------|
+| `sqlworkflow.html` | `/workflow/<audit_id>/` | `/detail/<workflow_id>/` |
+| `sqlexportworkflow.html` | `/workflow/<audit_id>/` | `/detail/<workflow_id>/` |
+| `queryapplylist.html` | `/workflow/<audit_id>/` | `/queryapplydetail/<apply_id>/` |
+| `archive.html` | `/workflow/<audit_id>/` | `/archive/<id>/` |
+| `workflow.html` | `/workflow/<audit_id>/` | Existing behavior for the row source |
 
 Fallback behavior:
 
-- If a transitional list row lacks `audit_id`, keep the old link only where needed to preserve usability.
-- Tests should prefer fixtures/rows that include `audit_id`, because that is the target navigation model.
+- A list row with a non-empty `audit_id` must use the unified entry.
+- A historical list row without `audit_id` must use the appropriate legacy detail URL for its type.
+- List templates and row serializers must not emit `/workflow/None/`, `/workflow//`, or equivalent invalid audit links.
 
 ## Test Contract
 
@@ -74,6 +85,9 @@ Required assertions:
 - SQL offline download rows navigate to `/workflow/<audit_id>/` and render via the SQL Workflow branch.
 - Existing `test_workflowsdetail` redirect assertion is replaced with direct-render assertions.
 - List template/link tests are updated to expect `/workflow/<audit_id>/` where row data includes `audit_id`.
+- List fallback tests cover old rows without `audit_id` and assert the matching legacy detail URL.
+- New creation-path tests cover display-only/no-review/auto-rejected visible work orders and assert a non-empty `audit_id`.
+- Tests assert that no rendered list link contains `/workflow/None/` or an empty audit ID segment.
 
 Out of scope:
 

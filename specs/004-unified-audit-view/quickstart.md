@@ -53,6 +53,15 @@ If the repository has no local virtual environment, ask before creating one or i
    - Open SQL Workflow, SQL export/offline download, query privilege, and archive list pages.
    - Expected: title/detail links use `/workflow/<audit_id>/` when `audit_id` is available.
 
-7. Error and permission handling
+7. Historical no-audit list fallback
+   - Locate or fixture an old SQL Workflow, query privilege, or archive list row without an associated audit ID.
+   - Open the relevant list page.
+   - Expected: the row links to its legacy detail URL (`/detail/<workflow_id>/`, `/queryapplydetail/<apply_id>/`, or `/archive/<id>/`) and does not render `/workflow/None/` or `/workflow//`.
+
+8. New display-only audit creation
+   - Create or fixture a web-visible work order path that has no human review or is automatically rejected before manual review, following the existing auto-reject branch where applicable.
+   - Expected: the created work order has a non-empty audit ID, appears in lists with `/workflow/<audit_id>/`, and opens directly in the unified detail view.
+
+9. Error and permission handling
    - Open `/workflow/<missing_or_unauthorized_audit_id>/`.
    - Expected: not-found or permission-denied behavior is clear and no unrelated work order data is shown.

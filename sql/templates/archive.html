@@ -257,6 +257,13 @@
             archive_apply_list();
         });
 
+        function archiveDetailUrl(row) {
+            if (row.audit_id) {
+                return "/workflow/" + row.audit_id + "/";
+            }
+            return "/archive/" + row.id + "/";
+        }
+
         //获取申请列表
         function archive_apply_list() {
             $('#archive-list').bootstrapTable('destroy').bootstrapTable({
@@ -305,11 +312,12 @@
                     formatter: function (value, row, index) {
                         var span = document.createElement('span');
                         span.setAttribute('title', value);
+                        var detailUrl = archiveDetailUrl(row);
                         if (value.length > 10) {
-                            span.innerHTML = "<a href=\"/workflow/" + row.audit_id + "/\">" + value.substr(0, 10) + '...';
+                            span.innerHTML = "<a href=\"" + detailUrl + "\">" + value.substr(0, 10) + '...';
                             +"</a>";
                         } else {
-                            span.innerHTML = "<a href=\"/workflow/" + row.audit_id + "/\">" + value + "</a>";
+                            span.innerHTML = "<a href=\"" + detailUrl + "\">" + value + "</a>";
                         }
                         return span.outerHTML;
                     }
