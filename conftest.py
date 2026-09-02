@@ -99,6 +99,16 @@ def db_instance(db):
 
 
 @pytest.fixture
+def public_instance_permission_data(normal_user, db_instance):
+    group = ResourceGroup.objects.create(group_id=101, group_name="public instance")
+    can_write = InstanceTag.objects.create(tag_code="can_write", tag_name="支持上线")
+    can_read = InstanceTag.objects.create(tag_code="can_read", tag_name="支持查询")
+    normal_user.resource_group.add(group)
+    db_instance.resource_group.add(group)
+    return group, can_write, can_read
+
+
+@pytest.fixture
 def resource_group(db) -> ResourceGroup:
     res_group = ResourceGroup.objects.create(group_id=1, group_name="group_name")
     yield res_group

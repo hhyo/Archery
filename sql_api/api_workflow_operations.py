@@ -33,14 +33,18 @@ from sql.utils.workflow_audit import Audit, AuditException, get_auditor
 from .permissions import IsWorkflowListPageUser, IsWorkflowPageUser
 from .serializers import (
     SqlWorkflowDetailSerializer,
+    WorkflowActionResultSerializer,
     WorkflowContentSerializer,
+    WorkflowContentResponseSerializer,
     WorkflowExecutionSerializer,
     WorkflowExecutionWindowSerializer,
+    WorkflowLogListResponseSerializer,
     WorkflowListRequestSerializer,
     WorkflowOscSerializer,
     WorkflowRemarkSerializer,
     WorkflowRejectionSerializer,
     WorkflowScheduleSerializer,
+    WorkflowStatusResponseSerializer,
     WorkflowTerminationSerializer,
 )
 
@@ -325,6 +329,10 @@ class WorkflowDetailView(WorkflowOperationAPIView):
 
 
 class WorkflowContentView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Get SQL workflow content",
+        responses={200: WorkflowContentResponseSerializer},
+    )
     def get(self, request, audit_id):
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
@@ -390,6 +398,11 @@ class WorkflowExecutionWindowView(WorkflowOperationAPIView):
 
 
 class WorkflowApprovalView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Approve SQL workflow",
+        request=WorkflowRemarkSerializer,
+        responses={200: WorkflowActionResultSerializer},
+    )
     def post(self, request, audit_id):
         data = self.validated_data(WorkflowRemarkSerializer, request)
         if not request.user.has_perm("sql.sql_review"):
@@ -459,6 +472,11 @@ class WorkflowRejectionView(WorkflowOperationAPIView):
 
 
 class WorkflowExecutionView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Execute SQL workflow",
+        request=WorkflowExecutionSerializer,
+        responses={200: WorkflowActionResultSerializer},
+    )
     def post(self, request, audit_id):
         data = self.validated_data(WorkflowExecutionSerializer, request)
         audit, workflow = self.get_audit_workflow(audit_id)
@@ -592,6 +610,10 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
 
 
 class WorkflowStatusView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Get SQL workflow status",
+        responses={200: WorkflowStatusResponseSerializer},
+    )
     def get(self, request, audit_id):
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
@@ -622,6 +644,10 @@ class WorkflowOscView(WorkflowOperationAPIView):
 
 
 class WorkflowLogView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Get SQL workflow logs",
+        responses={200: WorkflowLogListResponseSerializer},
+    )
     def get(self, request, audit_id):
         audit, workflow = self.get_audit_workflow(audit_id)
         ensure_log_viewable(request.user, workflow.id)

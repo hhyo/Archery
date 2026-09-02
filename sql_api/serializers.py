@@ -214,6 +214,13 @@ class InstanceDetailSerializer(serializers.ModelSerializer):
         }
 
 
+class PublicInstanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Instance
+        fields = ["id", "instance_name", "db_type", "type"]
+        read_only_fields = fields
+
+
 class TunnelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tunnel
@@ -694,6 +701,40 @@ class WorkflowLogListSerializer(serializers.ModelSerializer):
             "operator_display",
             "operation_time",
         ]
+
+
+class WorkflowStatusResponseSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    msg = serializers.CharField(allow_blank=True)
+    data = serializers.JSONField()
+
+
+class WorkflowActionResultDataSerializer(serializers.Serializer):
+    audit_id = serializers.IntegerField(allow_null=True)
+    workflow_id = serializers.IntegerField()
+    redirect_url = serializers.CharField()
+
+
+class WorkflowActionResultSerializer(serializers.Serializer):
+    status = serializers.IntegerField()
+    msg = serializers.CharField()
+    data = WorkflowActionResultDataSerializer()
+
+
+class WorkflowContentResponseSerializer(serializers.Serializer):
+    rows = serializers.ListField(child=serializers.DictField())
+
+
+class WorkflowLogRowResponseSerializer(serializers.Serializer):
+    operation_type_desc = serializers.CharField()
+    operation_info = serializers.CharField()
+    operator_display = serializers.CharField()
+    operation_time = serializers.DateTimeField()
+
+
+class WorkflowLogListResponseSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    rows = WorkflowLogRowResponseSerializer(many=True)
 
 
 class ExecuteWorkflowSerializer(serializers.Serializer):
