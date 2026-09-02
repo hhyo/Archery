@@ -126,6 +126,13 @@
 
     </script>
     <script>
+        function workflowDetailUrl(row) {
+            if (row.audit_id) {
+                return "/workflow/" + row.audit_id + "/";
+            }
+            return "/detail/" + row.id + "/";
+        }
+
         //获取SQL工单列表
         function get_workflow_list() {
             //采取异步请求
@@ -202,11 +209,12 @@
                     formatter: function (value, row, index) {
                         var span = document.createElement('span');
                         span.setAttribute('title', value);
+                        var detailUrl = workflowDetailUrl(row);
                         if (value.length > 20) {
-                            span.innerHTML = "<a href=\"/detail/" + row.workflow_id + "/\">" + value.substr(0, 20) + '...';
+                            span.innerHTML = "<a href=\"" + detailUrl + "\">" + value.substr(0, 20) + '...';
                             +"</a>";
                         } else {
-                            span.innerHTML = "<a href=\"/detail/" + row.workflow_id + "/\">" + value + "</a>";
+                            span.innerHTML = "<a href=\"" + detailUrl + "\">" + value + "</a>";
                         }
                         return span.outerHTML;
                     }

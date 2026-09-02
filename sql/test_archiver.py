@@ -266,7 +266,7 @@ class TestArchiver(TestCase):
         self.client.force_login(self.superuser)
         r = self.client.post(path="/archive/audit/", data=data)
         self.assertRedirects(
-            r, f"/archive/{self.archive_apply.id}/", fetch_redirect_response=False
+            r, f"/workflow/{self.audit_flow.audit_id}/", fetch_redirect_response=False
         )
         self.archive_apply.refresh_from_db()
         assert self.archive_apply.state == True
@@ -321,3 +321,13 @@ def test_archive_detail_view(
         fake_generate_audit_setting.return_value.audit_auth_groups
     )
     assert review_info.nodes[0].group.name == create_auth_group.name
+
+    unified_response = admin_client.get(f"/workflow/{audit.audit.audit_id}/")
+    assert unified_response.status_code == 200
+    assertTemplateUsed(unified_response, "archivedetail.html")
+    assert unified_response.context["archive_config"] == archive_apply
+    unified_review_info = unified_response.context["review_info"]
+    assert len(unified_review_info.nodes) == len(
+        fake_generate_audit_setting.return_value.audit_auth_groups
+    )
+    assert unified_review_info.nodes[0].group.name == create_auth_group.name

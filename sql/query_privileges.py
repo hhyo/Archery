@@ -17,13 +17,18 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.urls import reverse
 from django_q.tasks import async_task
 
 from common.config import SysConfig
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.models import QueryPrivilegesApply, QueryPrivileges, Instance, ResourceGroup
+from sql.models import (
+    QueryPrivilegesApply,
+    QueryPrivileges,
+    Instance,
+    ResourceGroup,
+    WorkflowAudit,
+)
 from sql.notify import notify_for_audit
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.workflow_audit import Audit, AuditException, get_auditor
@@ -179,6 +184,15 @@ def query_priv_apply_list(request):
 
     # QuerySet 序列化
     rows = [row for row in lists]
+    audit_by_workflow_id = {
+        audit.workflow_id: audit.audit_id
+        for audit in WorkflowAudit.objects.filter(
+            workflow_type=WorkflowType.QUERY,
+            workflow_id__in=[row["apply_id"] for row in rows],
+        )
+    }
+    for row in rows:
+        row["audit_id"] = audit_by_workflow_id.get(row["apply_id"])
 
     result = {"total": count, "rows": rows}
     # 返回查询结果
@@ -483,7 +497,7 @@ def query_priv_audit(request):
         task_name=f"query-priv-audit-{apply_id}",
     )
 
-    return HttpResponseRedirect(reverse("sql:queryapplydetail", args=(apply_id,)))
+    return HttpResponseRedirect(f"/workflow/{auditor.audit.audit_id}/")
 
 
 def _table_ref(sql_content, instance, db_name):
