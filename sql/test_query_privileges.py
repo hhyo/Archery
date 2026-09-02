@@ -142,7 +142,8 @@ class TestQueryPrivilegesApply(TestCase):
         self.client.force_login(self.superuser)
         r = self.client.post(path="/query/applylist/", data=data)
         self.assertEqual(json.loads(r.content)["total"], 1)
-        keys = list(json.loads(r.content)["rows"][0].keys())
+        row = json.loads(r.content)["rows"][0]
+        keys = list(row.keys())
         self.assertListEqual(
             keys,
             [
@@ -158,8 +159,10 @@ class TestQueryPrivilegesApply(TestCase):
                 "status",
                 "create_time",
                 "group_name",
+                "audit_id",
             ],
         )
+        self.assertIsNone(row["audit_id"])
 
     def test_query_priv_apply_rejects_table_priv_for_gaussdb(self):
         """测试 GaussDB 实例不允许绕过页面直接申请表级权限"""
@@ -211,7 +214,8 @@ class TestQueryPrivilegesApply(TestCase):
         self.client.force_login(self.user)
         r = self.client.post(path="/query/applylist/", data=data)
         self.assertEqual(json.loads(r.content)["total"], 1)
-        keys = list(json.loads(r.content)["rows"][0].keys())
+        row = json.loads(r.content)["rows"][0]
+        keys = list(row.keys())
         self.assertListEqual(
             keys,
             [
@@ -227,8 +231,10 @@ class TestQueryPrivilegesApply(TestCase):
                 "status",
                 "create_time",
                 "group_name",
+                "audit_id",
             ],
         )
+        self.assertIsNone(row["audit_id"])
 
     def test_query_priv_apply_list_no_query_review_perm(self):
         """
