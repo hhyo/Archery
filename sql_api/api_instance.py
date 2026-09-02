@@ -80,7 +80,11 @@ class InstanceDetail(views.APIView):
     """
 
     serializer_class = InstanceDetailSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
 
     def get_object(self, pk):
         try:
