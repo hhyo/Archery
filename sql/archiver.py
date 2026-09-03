@@ -215,7 +215,7 @@ def archive_apply(request):
         try:
             audit_handler.create_audit()
         except AuditException as e:
-            logger.error(f"新建审批流失败: {str(e)}")
+            logger.info("新建审批流失败, reason=%s", e)
             return JsonResponse(
                 {"status": 1, "msg": "新建审批流失败, 请联系管理员", "data": {}}
             )
@@ -278,7 +278,7 @@ def archive_audit(request):
                 audit_status, request.user, audit_remark
             )
         except AuditException as e:
-            return render(request, "error.html", {"errMsg": f"审核失败: {str(e)}"})
+            return render(request, "error.html", {"errMsg": f"审核失败: {e}"})
         auditor.workflow.status = auditor.audit.current_status
         if auditor.audit.current_status == WorkflowStatus.PASSED:
             auditor.workflow.state = True

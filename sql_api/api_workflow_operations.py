@@ -416,9 +416,9 @@ class WorkflowApprovalView(WorkflowOperationAPIView):
                 detail = auditor.operate(
                     WorkflowAction.PASS, request.user, data["audit_remark"]
                 )
-            except AuditException:
-                logger.exception("审核工单失败，audit_id=%s", audit_id)
-                raise ValidationError({"detail": "审核工单失败"})
+            except AuditException as e:
+                logger.info("审核工单失败，audit_id=%s, reason=%s", audit_id, e)
+                raise ValidationError({"detail": f"审核工单失败, 失败原因: {e}"})
             if auditor.audit.current_status == WorkflowStatus.PASSED:
                 auditor.workflow.status = "workflow_review_pass"
                 auditor.workflow.save(update_fields=["status"])
@@ -449,9 +449,9 @@ class WorkflowRejectionView(WorkflowOperationAPIView):
                 detail = auditor.operate(
                     WorkflowAction.REJECT, request.user, data["reject_remark"]
                 )
-            except AuditException:
-                logger.exception("拒绝工单失败，audit_id=%s", audit_id)
-                raise ValidationError({"detail": "拒绝工单失败"})
+            except AuditException as e:
+                logger.info("拒绝工单失败，audit_id=%s, reason=%s", audit_id, e)
+                raise ValidationError({"detail": f"拒绝工单失败, 失败原因: {e}"})
             workflow.status = "workflow_abort"
             workflow.save(update_fields=["status"])
             if was_scheduled:
@@ -587,9 +587,9 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
             auditor = get_auditor(workflow=workflow, sys_config=config)
             try:
                 detail = auditor.operate(action, request.user, data["cancel_remark"])
-            except AuditException:
-                logger.exception("取消工单失败，audit_id=%s", audit_id)
-                raise ValidationError({"detail": "终止工单失败"})
+            except AuditException as e:
+                logger.info("取消工单失败，audit_id=%s, reason=%s", audit_id, e)
+                raise ValidationError({"detail": f"终止工单失败, 失败原因: {e}"})
             workflow.status = "workflow_abort"
             workflow.save(update_fields=["status"])
             if was_scheduled:
@@ -661,4 +661,7 @@ class WorkflowLogView(WorkflowOperationAPIView):
                 "operation_time",
             )
         )
-        return Response({"total": len(rows), "rows": rows})
+        serializer = WorkflowLogListResponseSerializer(
+            {"total": len(rows), "rows": rows}
+        )
+        return Response(serializer.data)

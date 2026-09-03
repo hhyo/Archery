@@ -265,6 +265,8 @@ components:
         create_time:
           type: string
           format: date-time
+          description: RFC3339-compatible timestamp rendered with a UTC suffix.
+          example: '2017-07-21T17:32:28Z'
           nullable: true
     WorkflowContent:
       type: object
@@ -307,6 +309,8 @@ components:
         operation_time:
           type: string
           format: date-time
+          description: RFC3339-compatible timestamp rendered with a UTC suffix.
+          example: '2017-07-21T17:32:28Z'
     WorkflowLogList:
       type: object
       additionalProperties: true

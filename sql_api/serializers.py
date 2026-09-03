@@ -470,16 +470,12 @@ class WorkflowSerializer(serializers.ModelSerializer):
 
 
 class SqlWorkflowDetailSerializer(serializers.ModelSerializer):
-    audit_id = serializers.SerializerMethodField()
+    audit_id = serializers.IntegerField(read_only=True, allow_null=True)
     workflow_id = serializers.IntegerField(source="id", read_only=True)
     instance_name = serializers.CharField(
         source="instance.instance_name", read_only=True
     )
     status_display = serializers.CharField(source="get_status_display", read_only=True)
-
-    def get_audit_id(self, obj):
-        audit = obj.get_audit()
-        return audit.audit_id if audit else None
 
     class Meta:
         model = SqlWorkflow

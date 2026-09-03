@@ -1,11 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 -> 1.1.0
+- Version change: 1.1.0 -> 1.2.0
 - Modified principles:
-	- V. Safe Query and Debuggability -> V. Safe Query, API Errors, and Debuggability
-	- Delivery Workflow & Quality Gates: added breaking-change migration rule
-- Added sections:
 	- None
+- Added sections:
+	- VI. DRF Serializer-First API Responses
 - Removed sections:
 	- None
 - Follow-up TODOs:
@@ -53,6 +52,16 @@ flows MUST assert both success and failure paths. Rationale: predictable debuggi
 safe execution, and controlled error disclosure are core trust requirements for a
 database operations platform.
 
+### VI. DRF Serializer-First API Responses
+API implementations SHOULD return response data through Django REST Framework
+serializers when fields require typed representation, validation, or public
+contract stability. Endpoints MUST NOT hand-encode JSON or bypass serializers for
+typed fields such as datetimes, identifiers, booleans, decimals, or nested
+contract objects unless the exception is explicitly documented and covered by a
+targeted test. Rationale: serializer-driven responses keep runtime output,
+OpenAPI schemas, and generated clients aligned, and prevent ad hoc JSON encoding
+from producing field formats that violate the public API contract.
+
 ## Testing Standards
 
 - Test suites MUST default to pytest invocation and naming conventions configured in
@@ -90,4 +99,4 @@ Versioning policy follows semantic versioning for governance:
 Compliance review is mandatory in planning and PR review. Constitution checks in
 planning artifacts MUST pass or carry an explicit, approved exception record.
 
-**Version**: 1.1.0 | **Ratified**: 2026-04-28 | **Last Amended**: 2026-08-31
+**Version**: 1.2.0 | **Ratified**: 2026-04-28 | **Last Amended**: 2026-09-03

@@ -257,7 +257,7 @@ class AuditWorkflow(views.APIView):
                 action, user, serializer.data["audit_remark"]
             )
         except AuditException as e:
-            raise serializers.ValidationError({"errors": f"操作失败, {str(e)}"})
+            raise serializers.ValidationError({"errors": f"操作失败, {e}"})
 
         # 最后处置一下原本工单的状态
         if auditor.workflow_type == WorkflowType.QUERY:

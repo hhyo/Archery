@@ -312,7 +312,7 @@ def query_priv_apply(request):
         with transaction.atomic():
             audit_handler.create_audit()
     except AuditException as e:
-        logger.error(f"新建审批流失败, {str(e)}")
+        logger.info("新建审批流失败, reason=%s", e)
         result["status"] = 1
         result["msg"] = "新建审批流失败, 请联系管理员"
         return HttpResponse(json.dumps(result), content_type="application/json")
@@ -482,7 +482,7 @@ def query_priv_audit(request):
                 audit_status, request.user, audit_remark
             )
         except AuditException as e:
-            return render(request, "error.html", {"errMsg": f"审核失败: {str(e)}"})
+            return render(request, "error.html", {"errMsg": f"审核失败: {e}"})
         # 统一 call back, 内部做授权和更新数据库内容
         _query_apply_audit_call_back(
             auditor.audit.workflow_id, auditor.audit.current_status

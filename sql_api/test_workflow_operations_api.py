@@ -615,7 +615,7 @@ def test_rejection_view_requires_reject_remark_before_side_effects(
 
 
 @pytest.mark.django_db
-def test_rejection_view_sanitizes_audit_exception(
+def test_rejection_view_returns_audit_exception_message(
     authenticated_api_client, normal_user, mocker
 ):
     normal_user.has_perm = mocker.Mock(return_value=True)
@@ -642,8 +642,9 @@ def test_rejection_view_sanitizes_audit_exception(
     )
 
     assert response.status_code == 400
-    assert response.json() == {"detail": "拒绝工单失败"}
-    assert "internal approval graph detail" not in response.content.decode()
+    assert response.json() == {
+        "detail": "拒绝工单失败, 失败原因: internal approval graph detail"
+    }
     assert workflow.status == "workflow_review_pass"
     delete_schedule.assert_not_called()
     queue_task.assert_not_called()
@@ -844,6 +845,7 @@ def test_workflow_log_view_returns_logs_by_audit_id(
             "operator_display": normal_user.display,
         }.items()
     )
+    assert response.json()["rows"][0]["operation_time"].endswith("Z")
 
 
 @pytest.mark.django_db

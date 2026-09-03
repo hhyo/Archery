@@ -11,6 +11,10 @@
 
 - Q: 现有 SQL Workflow logs/status/approval/execution API 是否缺少 OpenAPI request/response body 契约？ → A: 是；补齐现有接口 schema，不新增重复接口。
 
+### Session 2026-09-03
+
+- Q: API responses that document fields as `date-time` should use which wire format? → A: Preserve the existing datetime value and render it as an RFC3339-compatible UTC-suffixed string, such as `2017-07-21T17:32:28Z`.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Preserve CLI Review Text From Workflow Results (Priority: P1)
@@ -98,6 +102,7 @@ As a CLI or generated-client consumer, I can rely on a documented extension stra
 - **FR-019**: The existing SQL Workflow approval endpoint MUST document that the acting user and workflow are derived from the authenticated session and path audit identifier, that the request body may contain `audit_remark`, and that the response body is the standard action result.
 - **FR-020**: The existing SQL Workflow execution endpoint MUST document that the acting user and workflow are derived from the authenticated session and path audit identifier, that the request body requires execution `mode`, and that the response body is the standard action result.
 - **FR-021**: SQL Workflow approval and execution contracts MUST NOT require or document an `engineer` request field for these existing audit-id endpoints.
+- **FR-022**: API response fields documented with OpenAPI `format: date-time`, including workflow `create_time` and log `operation_time`, MUST preserve the existing datetime value and render it as an RFC3339-compatible UTC-suffixed string ending in `Z`.
 
 ### Test Strategy Constraints *(mandatory)*
 
@@ -126,6 +131,7 @@ As a CLI or generated-client consumer, I can rely on a documented extension stra
 - **SC-005**: Existing CLI review text and structured review JSON fixtures remain unchanged for all covered happy-path workflow examples.
 - **SC-006**: 100% of unauthorized, missing, and invalid instance or workflow lookup tests return sanitized deterministic failures.
 - **SC-007**: Generated OpenAPI output shows response bodies for SQL Workflow logs and status, and request/response bodies for SQL Workflow approval and execution, in 100% of contract validation runs.
+- **SC-008**: 100% of workflow API `date-time` response fields checked in this feature end in `Z` and parse as RFC3339-compatible timestamps.
 
 ## Assumptions
 
