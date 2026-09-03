@@ -5,12 +5,16 @@ cannot be proven by service-level unit tests.
 """
 
 import pytest
-import yaml
 from sql.engines.models import ResultSet
 from sql.models import SqlWorkflow, WorkflowLog
 
 from sql_api.serializers import (
+    SqlWorkflowDetailSerializer,
+    WorkflowActionResultSerializer,
+    WorkflowLogListResponseSerializer,
+    WorkflowRemarkSerializer,
     WorkflowExecutionSerializer,
+    WorkflowStatusResponseSerializer,
     WorkflowTerminationSerializer,
 )
 from sql_api import api_workflow_operations
@@ -49,6 +53,62 @@ def test_workflow_mutation_serializers_retain_legacy_field_names():
 
     assert execution.is_valid(), execution.errors
     assert termination.is_valid(), termination.errors
+
+
+@pytest.mark.django_db
+def test_sql_workflow_detail_serializer_documents_instance_id(workflow_api_data):
+    workflow, _, audit = workflow_api_data
+
+    data = SqlWorkflowDetailSerializer(workflow).data
+
+    assert data["instance"] == workflow.instance_id
+    assert isinstance(data["instance"], int)
+    assert data["audit_id"] == audit.audit_id
+
+
+def test_workflow_status_response_serializer_shape():
+    serializer = WorkflowStatusResponseSerializer(
+        data={"status": "workflow_review_pass", "msg": "", "data": ""}
+    )
+
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data["status"] == "workflow_review_pass"
+
+
+def test_workflow_action_serializers_use_session_identity_not_engineer():
+    approval = WorkflowRemarkSerializer(data={"audit_remark": ""})
+    execution = WorkflowExecutionSerializer(data={"mode": "auto", "engineer": "evil"})
+    result = WorkflowActionResultSerializer(
+        data={
+            "status": 0,
+            "msg": "审核通过",
+            "data": {"audit_id": 1, "workflow_id": 2, "redirect_url": "/detail/2/"},
+        }
+    )
+
+    assert approval.is_valid(), approval.errors
+    assert execution.is_valid(), execution.errors
+    assert "engineer" not in execution.validated_data
+    assert result.is_valid(), result.errors
+
+
+def test_workflow_log_response_serializer_shape():
+    serializer = WorkflowLogListResponseSerializer(
+        data={
+            "total": 1,
+            "rows": [
+                {
+                    "operation_type_desc": "审核通过",
+                    "operation_info": "同意上线",
+                    "operator_display": "审核人",
+                    "operation_time": "2030-01-01T10:00:00Z",
+                }
+            ],
+        }
+    )
+
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data["rows"][0]["operation_type_desc"] == "审核通过"
 
 
 @pytest.mark.django_db
@@ -555,7 +615,7 @@ def test_rejection_view_requires_reject_remark_before_side_effects(
 
 
 @pytest.mark.django_db
-def test_rejection_view_sanitizes_audit_exception(
+def test_rejection_view_returns_audit_exception_message(
     authenticated_api_client, normal_user, mocker
 ):
     normal_user.has_perm = mocker.Mock(return_value=True)
@@ -582,8 +642,9 @@ def test_rejection_view_sanitizes_audit_exception(
     )
 
     assert response.status_code == 400
-    assert response.json() == {"detail": "拒绝工单失败"}
-    assert "internal approval graph detail" not in response.content.decode()
+    assert response.json() == {
+        "detail": "拒绝工单失败, 失败原因: internal approval graph detail"
+    }
     assert workflow.status == "workflow_review_pass"
     delete_schedule.assert_not_called()
     queue_task.assert_not_called()

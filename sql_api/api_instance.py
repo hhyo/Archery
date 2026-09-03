@@ -7,6 +7,7 @@ from sql.utils.sql_utils import filter_db_list
 from .serializers import (
     InstanceSerializer,
     InstanceDetailSerializer,
+    PublicInstanceSerializer,
     TunnelSerializer,
     AliyunRdsSerializer,
     InstanceResourceSerializer,
@@ -21,9 +22,19 @@ from sql.engines import get_engine
 from sql.utils.resource_group import user_instances
 from .table_instance_locator import resolve_table_instances
 from django.http import Http404
+from rest_framework.exceptions import PermissionDenied
 import MySQLdb
 
 logger = logging.getLogger(__name__)
+
+
+def can_read_public_instance(user, instance):
+    if not user or not user.is_authenticated:
+        return False
+    return (
+        user_instances(user, tag_codes=["can_write"]).filter(pk=instance.pk).exists()
+        or user_instances(user, tag_codes=["can_read"]).filter(pk=instance.pk).exists()
+    )
 
 
 class InstanceList(generics.ListAPIView):
@@ -70,11 +81,27 @@ class InstanceDetail(views.APIView):
 
     serializer_class = InstanceDetailSerializer
 
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
+
     def get_object(self, pk):
         try:
             return Instance.objects.get(pk=pk)
         except Instance.DoesNotExist:
             raise Http404
+
+    @extend_schema(
+        summary="实例详情",
+        responses={200: PublicInstanceSerializer},
+        description="获取当前登录用户有提交或查询权限的实例公开详情",
+    )
+    def get(self, request, pk):
+        instance = self.get_object(pk)
+        if not can_read_public_instance(request.user, instance):
+            raise PermissionDenied("你无权查看该实例！")
+        return Response(PublicInstanceSerializer(instance).data)
 
     @extend_schema(
         summary="更新实例",

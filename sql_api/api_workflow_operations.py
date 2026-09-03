@@ -33,14 +33,18 @@ from sql.utils.workflow_audit import Audit, AuditException, get_auditor
 from .permissions import IsWorkflowListPageUser, IsWorkflowPageUser
 from .serializers import (
     SqlWorkflowDetailSerializer,
+    WorkflowActionResultSerializer,
     WorkflowContentSerializer,
+    WorkflowContentResponseSerializer,
     WorkflowExecutionSerializer,
     WorkflowExecutionWindowSerializer,
+    WorkflowLogListResponseSerializer,
     WorkflowListRequestSerializer,
     WorkflowOscSerializer,
     WorkflowRemarkSerializer,
     WorkflowRejectionSerializer,
     WorkflowScheduleSerializer,
+    WorkflowStatusResponseSerializer,
     WorkflowTerminationSerializer,
 )
 
@@ -325,6 +329,10 @@ class WorkflowDetailView(WorkflowOperationAPIView):
 
 
 class WorkflowContentView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Get SQL workflow content",
+        responses={200: WorkflowContentResponseSerializer},
+    )
     def get(self, request, audit_id):
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
@@ -390,6 +398,11 @@ class WorkflowExecutionWindowView(WorkflowOperationAPIView):
 
 
 class WorkflowApprovalView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Approve SQL workflow",
+        request=WorkflowRemarkSerializer,
+        responses={200: WorkflowActionResultSerializer},
+    )
     def post(self, request, audit_id):
         data = self.validated_data(WorkflowRemarkSerializer, request)
         if not request.user.has_perm("sql.sql_review"):
@@ -403,9 +416,9 @@ class WorkflowApprovalView(WorkflowOperationAPIView):
                 detail = auditor.operate(
                     WorkflowAction.PASS, request.user, data["audit_remark"]
                 )
-            except AuditException:
-                logger.exception("审核工单失败，audit_id=%s", audit_id)
-                raise ValidationError({"detail": "审核工单失败"})
+            except AuditException as e:
+                logger.info("审核工单失败，audit_id=%s, reason=%s", audit_id, e)
+                raise ValidationError({"detail": f"审核工单失败, 失败原因: {e}"})
             if auditor.audit.current_status == WorkflowStatus.PASSED:
                 auditor.workflow.status = "workflow_review_pass"
                 auditor.workflow.save(update_fields=["status"])
@@ -436,9 +449,9 @@ class WorkflowRejectionView(WorkflowOperationAPIView):
                 detail = auditor.operate(
                     WorkflowAction.REJECT, request.user, data["reject_remark"]
                 )
-            except AuditException:
-                logger.exception("拒绝工单失败，audit_id=%s", audit_id)
-                raise ValidationError({"detail": "拒绝工单失败"})
+            except AuditException as e:
+                logger.info("拒绝工单失败，audit_id=%s, reason=%s", audit_id, e)
+                raise ValidationError({"detail": f"拒绝工单失败, 失败原因: {e}"})
             workflow.status = "workflow_abort"
             workflow.save(update_fields=["status"])
             if was_scheduled:
@@ -459,6 +472,11 @@ class WorkflowRejectionView(WorkflowOperationAPIView):
 
 
 class WorkflowExecutionView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Execute SQL workflow",
+        request=WorkflowExecutionSerializer,
+        responses={200: WorkflowActionResultSerializer},
+    )
     def post(self, request, audit_id):
         data = self.validated_data(WorkflowExecutionSerializer, request)
         audit, workflow = self.get_audit_workflow(audit_id)
@@ -569,9 +587,9 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
             auditor = get_auditor(workflow=workflow, sys_config=config)
             try:
                 detail = auditor.operate(action, request.user, data["cancel_remark"])
-            except AuditException:
-                logger.exception("取消工单失败，audit_id=%s", audit_id)
-                raise ValidationError({"detail": "终止工单失败"})
+            except AuditException as e:
+                logger.info("取消工单失败，audit_id=%s, reason=%s", audit_id, e)
+                raise ValidationError({"detail": f"终止工单失败, 失败原因: {e}"})
             workflow.status = "workflow_abort"
             workflow.save(update_fields=["status"])
             if was_scheduled:
@@ -592,6 +610,10 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
 
 
 class WorkflowStatusView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Get SQL workflow status",
+        responses={200: WorkflowStatusResponseSerializer},
+    )
     def get(self, request, audit_id):
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
@@ -622,6 +644,10 @@ class WorkflowOscView(WorkflowOperationAPIView):
 
 
 class WorkflowLogView(WorkflowOperationAPIView):
+    @extend_schema(
+        summary="Get SQL workflow logs",
+        responses={200: WorkflowLogListResponseSerializer},
+    )
     def get(self, request, audit_id):
         audit, workflow = self.get_audit_workflow(audit_id)
         ensure_log_viewable(request.user, workflow.id)
@@ -635,4 +661,7 @@ class WorkflowLogView(WorkflowOperationAPIView):
                 "operation_time",
             )
         )
-        return Response({"total": len(rows), "rows": rows})
+        serializer = WorkflowLogListResponseSerializer(
+            {"total": len(rows), "rows": rows}
+        )
+        return Response(serializer.data)

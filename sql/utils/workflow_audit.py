@@ -33,7 +33,7 @@ logger = logging.getLogger("default")
 
 
 class AuditException(Exception):
-    pass
+    """审核流程中的业务异常，异常消息会直接展示给终端用户。"""
 
 
 class ReviewNodeType(Enum):

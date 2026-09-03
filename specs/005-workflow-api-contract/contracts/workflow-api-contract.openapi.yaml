@@ -1,0 +1,428 @@
+openapi: 3.0.3
+info:
+  title: Workflow API Contract Completeness
+  version: 0.1.0
+  description: Contract additions for resolving workflow instance display metadata and preserving workflow extension data.
+paths:
+  /api/v1/instance/{id}/:
+    get:
+      summary: Get public instance detail
+      operationId: getPublicInstance
+      description: >
+        Returns read-only instance metadata for authenticated users who have either
+        submit access or query access to the requested instance. Sensitive and
+        administrator-only configuration fields are not exposed.
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      responses:
+        '200':
+          description: Public instance detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicInstance'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update instance configuration
+      operationId: updateInstance
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      responses:
+        '200':
+          description: Existing administrator instance update response
+    delete:
+      summary: Delete instance configuration
+      operationId: deleteInstance
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      responses:
+        '204':
+          description: Existing administrator instance delete response
+  /api/v1/workflow/:
+    get:
+      summary: List workflows
+      operationId: listWorkflows
+      responses:
+        '200':
+          description: Existing paginated workflow list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WorkflowContent'
+  /api/v1/workflow/log/:
+    post:
+      summary: List workflow logs
+      operationId: listWorkflowLogs
+      responses:
+        '200':
+          description: Existing paginated workflow logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowLogList'
+  /api/v1/sql-workflows/{audit_id}/:
+    get:
+      summary: Get SQL workflow detail by audit ID
+      operationId: getSqlWorkflowByAuditId
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      responses:
+        '200':
+          description: SQL workflow detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+  /api/v1/sql-workflows/{audit_id}/content/:
+    get:
+      summary: Get SQL workflow content by audit ID
+      operationId: getSqlWorkflowContentByAuditId
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      responses:
+        '200':
+          description: SQL workflow content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowContent'
+  /api/v1/sql-workflows/{audit_id}/logs/:
+    get:
+      summary: Get SQL workflow logs by audit ID
+      operationId: getSqlWorkflowLogsByAuditId
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      responses:
+        '200':
+          description: SQL workflow logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowLogList'
+  /api/v1/sql-workflows/{audit_id}/status/:
+    get:
+      summary: Get SQL workflow status by audit ID
+      operationId: getSqlWorkflowStatusByAuditId
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      responses:
+        '200':
+          description: SQL workflow status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowStatus'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/sql-workflows/{audit_id}/approval/:
+    post:
+      summary: Approve SQL workflow by audit ID
+      operationId: approveSqlWorkflowByAuditId
+      description: Actor is derived from the authenticated session; workflow is derived from the path audit id.
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowRemark'
+      responses:
+        '200':
+          description: Approval action result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowActionResult'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/sql-workflows/{audit_id}/execution/:
+    post:
+      summary: Execute SQL workflow by audit ID
+      operationId: executeSqlWorkflowByAuditId
+      description: Actor is derived from the authenticated session; workflow is derived from the path audit id.
+      parameters:
+        - $ref: '#/components/parameters/AuditId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowExecution'
+      responses:
+        '200':
+          description: Execution action result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowActionResult'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  parameters:
+    InstanceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    AuditId:
+      name: audit_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  schemas:
+    PublicInstance:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - instance_name
+        - db_type
+        - type
+      properties:
+        id:
+          type: integer
+        instance_name:
+          type: string
+        db_type:
+          type: string
+        type:
+          type: string
+          description: Instance role/type used in CLI review text.
+    Workflow:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - instance
+        - status
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          type: integer
+          nullable: true
+        audit_id:
+          type: integer
+          nullable: true
+        workflow_name:
+          type: string
+        status:
+          type: string
+        instance:
+          type: integer
+          description: Instance identifier. This field is not an embedded object or display name.
+        instance_name:
+          type: string
+          nullable: true
+        db_name:
+          type: string
+          nullable: true
+        group_name:
+          type: string
+          nullable: true
+        engineer_display:
+          type: string
+          nullable: true
+        syntax_type:
+          type: integer
+          nullable: true
+        create_time:
+          type: string
+          format: date-time
+          description: RFC3339-compatible timestamp rendered with a UTC suffix.
+          example: '2017-07-21T17:32:28Z'
+          nullable: true
+    WorkflowContent:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          type: integer
+          nullable: true
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        sql_content:
+          type: string
+          nullable: true
+        review_content:
+          nullable: true
+        execute_result:
+          nullable: true
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    WorkflowLog:
+      type: object
+      additionalProperties: true
+      required:
+        - operation_type_desc
+        - operation_info
+        - operator_display
+        - operation_time
+      properties:
+        operation_type_desc:
+          type: string
+        operation_info:
+          type: string
+        operator_display:
+          type: string
+        operation_time:
+          type: string
+          format: date-time
+          description: RFC3339-compatible timestamp rendered with a UTC suffix.
+          example: '2017-07-21T17:32:28Z'
+    WorkflowLogList:
+      type: object
+      additionalProperties: true
+      required:
+        - rows
+      properties:
+        total:
+          type: integer
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowLog'
+    WorkflowStatus:
+      type: object
+      additionalProperties: true
+      required:
+        - status
+        - msg
+        - data
+      properties:
+        status:
+          type: string
+          description: Current workflow status code.
+        msg:
+          type: string
+        data:
+          nullable: true
+    WorkflowRemark:
+      type: object
+      additionalProperties: false
+      properties:
+        audit_remark:
+          type: string
+          default: ''
+          description: Optional approval remark. The acting user is derived from the authenticated session.
+    WorkflowExecution:
+      type: object
+      additionalProperties: false
+      required:
+        - mode
+      properties:
+        mode:
+          type: string
+          enum:
+            - auto
+            - manual
+          description: Execution mode. The acting user is derived from the authenticated session.
+    WorkflowActionResult:
+      type: object
+      additionalProperties: true
+      required:
+        - status
+        - msg
+        - data
+      properties:
+        status:
+          type: integer
+        msg:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+          required:
+            - audit_id
+            - workflow_id
+            - redirect_url
+          properties:
+            audit_id:
+              type: integer
+              nullable: true
+            workflow_id:
+              type: integer
+            redirect_url:
+              type: string
+    ErrorResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        detail:
+          type: string
+        errors:
+          type: string
+    ValidationErrorResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        detail:
+          type: string
+        errors:
+          type: string
+  responses:
+    Unauthenticated:
+      description: Authentication credentials were not provided or are invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    PermissionDenied:
+      description: The authenticated user is not allowed to access the requested resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: The requested instance or workflow does not exist or is not visible.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationError:
+      description: The request body is missing required data or contains invalid values.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
