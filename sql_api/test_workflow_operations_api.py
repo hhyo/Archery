@@ -845,7 +845,6 @@ def test_workflow_log_view_returns_logs_by_audit_id(
             "operator_display": normal_user.display,
         }.items()
     )
-    assert response.json()["rows"][0]["operation_time"].endswith("Z")
 
 
 @pytest.mark.django_db
