@@ -593,6 +593,16 @@
             };
         }
 
+        function query_result_active_sql_cache() {
+            var tabs = document.querySelectorAll('#nav-tabs li');
+            for (var i = 0; i < tabs.length; i++) {
+                if (tabs[i].getAttribute('class') === 'active' && tabs[i].children[1]) {
+                    return tabs[i].children[1].getAttribute('sql_cache');
+                }
+            }
+            return '';
+        }
+
         function query_result_copy(content) {
             // 内网 HTTP 部署中 clipboard API 不可用时，回退到 execCommand 复制纯文本。
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -626,7 +636,7 @@
                 var markdown_rows = [];
                 var titles = [];
                 $.each(result.columns, function (index, column) {
-                    titles.push(query_result_cell_text(column.title).replace(/<[^>]*>/g, '').replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' '));
+                    titles.push(query_result_cell_text(column.title).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' '));
                 });
                 markdown_rows.push('| ' + titles.join(' | ') + ' |');
                 markdown_rows.push('| ' + $.map(titles, function () { return '---'; }).join(' | ') + ' |');
@@ -639,6 +649,17 @@
                 });
                 query_result_copy(markdown_rows.join('\n')).then(function (copied) {
                     button.prop('disabled', false).text(copied === false ? '复制失败' : '已复制');
+                    if (copied !== false) {
+                        $.ajax({
+                            type: 'post',
+                            url: '/audit/input/',
+                            dataType: 'json',
+                            data: {
+                                action: '复制Markdown',
+                                extra_info: $('#instance_name').val() + '/' + $('#db_name').val() + '|' + query_result_active_sql_cache() + '|' + result.rows.length
+                            }
+                        });
+                    }
                     setTimeout(function () {
                         button.text('复制为Markdown');
                     }, 1500);
@@ -656,16 +677,21 @@
             }
         }
 
-        function query_result_build_buttons(query_result_id) {
+        function query_result_build_buttons(showExport, query_result_id) {
+            if (!showExport) {
+                return {};
+            }
             return {
                 copyMarkdown: {
                     html: '<button class="btn btn-default" type="button" name="copyMarkdown" title="复制查询结果为Markdown表格">复制为Markdown</button>',
                     event: function () {
                         var button = $(this.$toolbar).find('button[name="copyMarkdown"]');
                         button.prop('disabled', true).text('复制中…');
-                        setTimeout(function () {
+                        try {
                             query_result_copy_markdown(query_result_id, button);
-                        }, 50);
+                        } catch (e) {
+                            button.prop('disabled', false).text('复制失败');
+                        }
                     }
                 }
             };
@@ -931,6 +957,7 @@
                 $("#execute_result_tab"+n).append("<p style=\"display:none\">"+query_str+"</p>");
 
                 //显示查询结果
+                var can_download_flag = {{can_download}}===1;
                 if (result['column_list']) {
                     //异步获取要动态生成的列
                     let columns = [];
@@ -988,6 +1015,7 @@
                                     },
                                 }
                                 ],
+                                buttons: query_result_build_buttons(can_download_flag, "query_result" + n),
                                 locale: 'zh-CN'
                             }
                         );
@@ -998,7 +1026,7 @@
                         if (optgroup === 'Mongo' || optgroup === 'Redis') {
                             isdetail = true
                         }
-                        var showExport = {{can_download}}===1
+                        var showExport = can_download_flag;
                         var query_result_id=(`query_result${n}`);
                         $(`#${query_result_id}`).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
@@ -1007,7 +1035,7 @@
                             showExport: showExport,
                             exportDataType: "all",
                             exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
-                            buttons: query_result_build_buttons(query_result_id),
+                            buttons: query_result_build_buttons(showExport, query_result_id),
                             exportOptions: {
                                 //ignoreColumn: [0],  //忽略某些列的索引数组
                                 fileName: function () {
