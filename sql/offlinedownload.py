@@ -77,10 +77,10 @@ class OffLineDownLoad(EngineBase):
             # 获取系统配置
             config = SysConfig()
             # 先进行 max_execution_time 变量的判断是否存在以及是否为空,默认值60
-            max_execution_time_str = config.get("max_export_rows", "60")
-            max_execution_time = (
-                int(max_execution_time_str) if max_execution_time_str else 60
-            )
+            max_execution_time = int(config.get("max_execution_time", 60))
+            max_export_rows_str = config.get("max_export_rows", "10000")
+            max_export_rows = int(max_export_rows_str) if max_export_rows_str else 10000
+
             # 获取前端提交的 SQL 和其他工单信息
             full_sql = workflow.sqlworkflowcontent.sql_content
             full_sql = sqlparse.format(full_sql, strip_comments=True)
@@ -89,7 +89,7 @@ class OffLineDownLoad(EngineBase):
             instance = workflow.instance
             execute_result = ReviewSet(full_sql=sql)
             check_engine = get_engine(instance=instance)
-
+            limit_num = max_export_rows + 1
             start_time = time.time()
 
             try:
@@ -98,6 +98,7 @@ class OffLineDownLoad(EngineBase):
                 results = check_engine.query(
                     db_name=workflow.db_name,
                     sql=sql,
+                    limit_num=limit_num,
                     max_execution_time=max_execution_time * 1000,
                 )
                 if results.error:
