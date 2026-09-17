@@ -204,7 +204,8 @@
             success: function (data) {
                 if (data.status === 0) {
                     $("#sign-up").modal('hide');
-                    alert('注册成功, 请输入密码登录!');
+                    let successMsg = data.msg === 'ok' ? '注册成功, 请输入密码登录!' : data.msg;
+                    alert(successMsg);
                 } else {
                     alert(data.msg);
                 }
