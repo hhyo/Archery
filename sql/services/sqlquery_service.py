@@ -5,6 +5,7 @@ import logging
 import re
 import time
 import traceback
+import sqlparse
 
 from django.db import close_old_connections, connection
 
@@ -19,37 +20,17 @@ from sql.utils.tasks import add_kill_conn_schedule, del_schedule
 logger = logging.getLogger("default")
 
 
-def execute_sql_query(
+def _execute_single_query(
     user,
-    instance_name,
+    instance,
     db_name,
     sql_content,
     limit_num,
     schema_name=None,
     tb_name=None,
 ):
-    """执行 SQL 查询并返回与旧接口一致的响应结构。"""
+    """执行单条 SQL 查询，供 execute_sql_query 调用"""
     result = {"status": 0, "msg": "ok", "data": {}}
-
-    try:
-        limit_num = int(limit_num)
-    except (TypeError, ValueError):
-        result["status"] = 1
-        result["msg"] = "limit_num 非法"
-        return result
-
-    try:
-        instance = user_instances(user).get(instance_name=instance_name)
-    except Instance.DoesNotExist:
-        result["status"] = 1
-        result["msg"] = "你所在组未关联该实例"
-        return result
-
-    if None in [sql_content, db_name, instance_name, limit_num]:
-        result["status"] = 1
-        result["msg"] = "页面提交参数可能为空"
-        return result
-
     priv_check = False
     try:
         config = SysConfig()
@@ -173,3 +154,83 @@ def execute_sql_query(
         result["status"] = 1
         result["msg"] = f"查询异常报错，错误信息：{e}"
     return result
+
+
+def execute_sql_query(
+    user,
+    instance_name,
+    db_name,
+    sql_content,
+    limit_num,
+    schema_name=None,
+    tb_name=None,
+    is_multi=False,
+):
+    """执行 SQL 查询并返回与旧接口一致的响应结构。支持多条语句执行。"""
+    result = {"status": 0, "msg": "ok", "data": {}}
+
+    try:
+        limit_num = int(limit_num)
+    except (TypeError, ValueError):
+        result["status"] = 1
+        result["msg"] = "limit_num 非法"
+        return (
+            result if not is_multi else {"status": 1, "msg": result["msg"], "data": []}
+        )
+
+    try:
+        instance = user_instances(user).get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result["status"] = 1
+        result["msg"] = "你所在组未关联该实例"
+        return (
+            result if not is_multi else {"status": 1, "msg": result["msg"], "data": []}
+        )
+
+    if None in [sql_content, db_name, instance_name, limit_num]:
+        result["status"] = 1
+        result["msg"] = "页面提交参数可能为空"
+        return (
+            result if not is_multi else {"status": 1, "msg": result["msg"], "data": []}
+        )
+
+    if is_multi:
+        if instance.db_type == "Redis":
+            statements = [
+                stmt.strip() for stmt in sql_content.split("\n") if stmt.strip()
+            ]
+        else:
+            # 使用 sqlparse 进行拆分
+            statements = sqlparse.split(sql_content)
+            statements = [stmt.strip() for stmt in statements if stmt.strip()]
+
+        # 限制单次提交最大允许的语句条数为 10 条
+        statements = statements[:10]
+
+        if not statements:
+            return {"status": 1, "msg": "SQL内容不能为空", "data": []}
+
+        multi_data = []
+        for stmt in statements:
+            res = _execute_single_query(
+                user=user,
+                instance=instance,
+                db_name=db_name,
+                sql_content=stmt,
+                limit_num=limit_num,
+                schema_name=schema_name,
+                tb_name=tb_name,
+            )
+            multi_data.append(res)
+
+        return {"status": 0, "msg": "ok", "data": multi_data}
+    else:
+        return _execute_single_query(
+            user=user,
+            instance=instance,
+            db_name=db_name,
+            sql_content=sql_content,
+            limit_num=limit_num,
+            schema_name=schema_name,
+            tb_name=tb_name,
+        )
