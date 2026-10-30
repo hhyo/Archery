@@ -3708,3 +3708,614 @@ class TemplateDisplayTextTests(SimpleTestCase):
     def test_parser_ignores_script_style_and_comments(self):
         html = "<SCRIPT>hidden</SCRIPT ><STYLE>hidden</STYLE ><!-- hidden --><h1>Visible &amp; text</h1>"
         self.assertEqual(display_text(html), "Visible & text")
+
+
+class ApiValidationGuardLanguageTests(SimpleTestCase):
+    def test_twofactor_missing_inputs_do_not_save_configuration(self):
+        from sql_api import serializers as api
+        from sql.models import TwoFactorAuthConfig
+        from rest_framework.exceptions import ValidationError
+
+        cases = [
+            (
+                api.TwoFASerializer,
+                {"engineer": "fixture", "enable": "true", "auth_type": "sms"},
+                "phone",
+            ),
+            (
+                api.TwoFASaveSerializer,
+                {"engineer": "fixture", "auth_type": "sms"},
+                "phone",
+            ),
+            (
+                api.TwoFASaveSerializer,
+                {"engineer": "fixture", "auth_type": "totp"},
+                "key",
+            ),
+            (
+                api.TwoFAVerifySerializer,
+                {"engineer": "fixture", "auth_type": "sms", "otp": 1},
+                "phone",
+            ),
+        ]
+        for language in ["en", "zh-hans"]:
+            for serializer, attrs, field in cases:
+                with override(language), patch.object(
+                    api.Users.objects, "get", return_value=SimpleNamespace()
+                ), patch.object(TwoFactorAuthConfig.objects, "create") as save:
+                    with self.assertRaises(ValidationError) as error:
+                        serializer().validate(attrs)
+                    self.assertEqual(
+                        str(error.exception.detail["errors"]),
+                        f"{field} is required" if language == "en" else f"缺少 {field}",
+                    )
+                    save.assert_not_called()
+
+    def test_missing_users_in_auth_and_audit_validation_preserve_identifiers(self):
+        from sql_api import serializers as api
+        from rest_framework.exceptions import ValidationError
+
+        for language in ["en", "zh-hans"]:
+            with override(language), patch.object(
+                api.Users.objects, "get", side_effect=api.Users.DoesNotExist
+            ), patch.object(api.WorkflowAudit.objects, "get") as audits:
+                for serializer, attrs in [
+                    (api.TwoFASerializer, {"engineer": "原始用户"}),
+                    (api.TwoFAStateSerializer, {"engineer": "原始用户"}),
+                    (
+                        api.TwoFASaveSerializer,
+                        {"engineer": "原始用户", "auth_type": "disabled"},
+                    ),
+                    (
+                        api.TwoFAVerifySerializer,
+                        {"engineer": "原始用户", "auth_type": "totp"},
+                    ),
+                    (api.AuditWorkflowSerializer, {"engineer": "原始用户"}),
+                    (
+                        api.ExecuteWorkflowSerializer,
+                        {"engineer": "原始用户", "workflow_type": 2, "mode": "auto"},
+                    ),
+                ]:
+                    with self.assertRaises(ValidationError) as error:
+                        serializer().validate(attrs)
+                    message = str(error.exception.detail["errors"])
+                    self.assertIn(
+                        "User does not exist" if language == "en" else "不存在", message
+                    )
+                with self.assertRaises(ValidationError) as error:
+                    api.WorkflowAuditSerializer().validate_engineer("原始用户")
+                self.assertIn("原始用户", str(error.exception.detail["errors"]))
+                audits.assert_not_called()
+
+    def test_missing_workflows_in_validators_do_not_create_records(self):
+        from sql_api import serializers as api
+        from rest_framework.exceptions import ValidationError
+
+        for language in ["en", "zh-hans"]:
+            with override(language), patch.object(
+                api.Users.objects, "get", return_value=SimpleNamespace()
+            ), patch.object(
+                api.WorkflowAudit.objects,
+                "get",
+                side_effect=api.WorkflowAudit.DoesNotExist,
+            ), patch.object(
+                api.WorkflowAudit.objects, "create"
+            ) as create:
+                for serializer in [
+                    api.AuditWorkflowSerializer,
+                    api.WorkflowLogSerializer,
+                    api.ExecuteWorkflowSerializer,
+                ]:
+                    with self.assertRaises(ValidationError) as error:
+                        serializer().validate(
+                            {
+                                "engineer": "fixture",
+                                "workflow_id": -1,
+                                "workflow_type": 3,
+                            }
+                        )
+                    self.assertEqual(
+                        str(error.exception.detail["errors"]),
+                        (
+                            "Workflow does not exist"
+                            if language == "en"
+                            else "不存在该工单"
+                        ),
+                    )
+                create.assert_not_called()
+
+
+class WorkflowGuardCoverageTests(SimpleTestCase):
+    def test_operation_permission_guards_do_not_save_or_queue(self):
+        from sql_api import api_workflow_operations as api
+        from rest_framework.exceptions import PermissionDenied
+        from unittest.mock import Mock
+
+        user = SimpleNamespace(
+            username="fixture", is_superuser=False, has_perm=lambda code: False
+        )
+        request = SimpleNamespace(user=user)
+        workflow = Mock(id=1, engineer="another-user")
+        cases = [
+            (api.WorkflowRollbackView, "get"),
+            (api.WorkflowExecutionWindowView, "post"),
+            (api.WorkflowApprovalView, "post"),
+            (api.WorkflowRejectionView, "post"),
+            (api.WorkflowExecutionView, "post"),
+            (api.WorkflowTerminationView, "post"),
+        ]
+        for language in ["en", "zh-hans"]:
+            for view, method in cases:
+                with override(language), patch.object(
+                    api.WorkflowOperationAPIView, "validated_data", return_value={}
+                ), patch.object(
+                    api.WorkflowOperationAPIView,
+                    "get_audit_workflow",
+                    return_value=(Mock(), workflow),
+                ), patch.object(
+                    api, "can_rollback", return_value=False
+                ), patch.object(
+                    api, "can_cancel", return_value=False
+                ), patch.object(
+                    api, "get_engine"
+                ) as engine, patch.object(
+                    api, "async_task"
+                ) as task:
+                    with self.assertRaises(PermissionDenied) as error:
+                        getattr(view(), method)(request, 1)
+                    self.assertIn(
+                        "permission" if language == "en" else "无权",
+                        str(error.exception.detail),
+                    )
+                    engine.assert_not_called()
+                    task.assert_not_called()
+                    workflow.save.assert_not_called()
+            with override(language), self.assertRaises(PermissionDenied):
+                api.WorkflowAuditListView().post(request)
+            with override(language), self.assertRaises(PermissionDenied):
+                api.ensure_workflow_executable(user, workflow)
+
+    def test_auditor_failures_preserve_error_without_saving_or_notifying(self):
+        from sql_api import api_workflow_operations as api
+        from rest_framework.exceptions import ValidationError
+        from unittest.mock import Mock
+        from contextlib import nullcontext
+
+        request = SimpleNamespace(
+            user=SimpleNamespace(username="fixture", has_perm=lambda code: True)
+        )
+        workflow = Mock(id=1, engineer="fixture", status="workflow_manreviewing")
+        for language in ["en", "zh-hans"]:
+            for view, field in [
+                (api.WorkflowApprovalView, "audit_remark"),
+                (api.WorkflowRejectionView, "reject_remark"),
+                (api.WorkflowTerminationView, "cancel_remark"),
+            ]:
+                auditor = Mock()
+                auditor.operate.side_effect = api.AuditException("原始错误")
+                with override(language), patch.object(
+                    api.WorkflowOperationAPIView,
+                    "validated_data",
+                    return_value={field: "fixture"},
+                ), patch.object(
+                    api.WorkflowOperationAPIView,
+                    "get_audit_workflow",
+                    return_value=(Mock(), workflow),
+                ), patch.object(
+                    api, "can_cancel", return_value=True
+                ), patch.object(
+                    api, "SysConfig"
+                ), patch.object(
+                    api.transaction, "atomic", return_value=nullcontext()
+                ), patch.object(
+                    api, "get_auditor", return_value=auditor
+                ), patch.object(
+                    api, "async_task"
+                ) as task:
+                    with self.assertRaises(ValidationError) as error:
+                        view().post(request, 1)
+                    self.assertIn("原始错误", str(error.exception.detail))
+                    self.assertIn(
+                        "failed" if language == "en" else "失败",
+                        str(error.exception.detail),
+                    )
+                    workflow.save.assert_not_called()
+                    task.assert_not_called()
+
+    def test_rollback_read_error_is_translated_with_empty_rows(self):
+        from sql_api import api_workflow_operations as api
+        from unittest.mock import Mock
+
+        for language, expected in [
+            ("en", "Failed to retrieve rollback SQL"),
+            ("zh-hans", "获取回滚语句失败"),
+        ]:
+            with override(language), patch.object(
+                api.WorkflowOperationAPIView,
+                "get_audit_workflow",
+                return_value=(Mock(), Mock(id=1)),
+            ), patch.object(api, "can_rollback", return_value=True), patch.object(
+                api, "get_engine"
+            ) as engine, patch.object(
+                api, "logger"
+            ):
+                engine.return_value.get_rollback.side_effect = RuntimeError("fixture")
+                result = (
+                    api.WorkflowRollbackView().get(SimpleNamespace(user=Mock()), 1).data
+                )
+                self.assertEqual(result, {"status": 1, "msg": expected, "rows": []})
+
+
+class InstanceManagementGuardLanguageTests(SimpleTestCase):
+    def test_missing_instances_block_account_database_and_diagnostic_operations(self):
+        from sql import instance_account, instance_database, db_diagnostic
+
+        cases = [
+            (
+                instance_account,
+                ["users", "create", "edit", "grant", "reset_pwd", "lock", "delete"],
+            ),
+            (instance_database, ["databases", "create", "edit"]),
+            (
+                db_diagnostic,
+                [
+                    "process",
+                    "create_kill_session",
+                    "kill_session",
+                    "tablespace",
+                    "trxandlocks",
+                    "innodb_trx",
+                ],
+            ),
+        ]
+        for language in ["en", "zh-hans"]:
+            for module, names in cases:
+                for name in names:
+                    request = RequestFactory().post(
+                        "/",
+                        {
+                            "instance_id": -1,
+                            "instance_name": "fixture",
+                            "db_name": "fixture",
+                            "user_host": "fixture",
+                            "ThreadIDs": "[]",
+                        },
+                    )
+                    request.user = SimpleNamespace()
+                    with override(language), patch.object(
+                        module, "user_instances"
+                    ) as instances, patch.object(module, "get_engine") as engine:
+                        instances.return_value.get.side_effect = (
+                            module.Instance.DoesNotExist
+                        )
+                        result = json.loads(
+                            getattr(module, name).__wrapped__(request).content
+                        )
+                        self.assertEqual(result["status"], 1)
+                        self.assertIn(
+                            "not associated" if language == "en" else "未关联",
+                            result["msg"],
+                        )
+                        engine.assert_not_called()
+
+    def test_password_and_privilege_validation_do_not_change_accounts(self):
+        from sql import instance_account as api
+
+        for language in ["en", "zh-hans"]:
+            for name, payload in [
+                (
+                    "create",
+                    {
+                        "user": "fixture",
+                        "host": "localhost",
+                        "password1": "mock-one",
+                        "password2": "mock-two",
+                    },
+                ),
+                (
+                    "reset_pwd",
+                    {
+                        "user": "fixture",
+                        "host": "localhost",
+                        "reset_pwd1": "mock-one",
+                        "reset_pwd2": "mock-two",
+                    },
+                ),
+                ("grant", {"privs": "{"}),
+            ]:
+                request = RequestFactory().post("/", payload)
+                request.user = SimpleNamespace()
+                with override(language), patch.object(
+                    api, "user_instances"
+                ) as instances, patch.object(api, "get_engine") as engine:
+                    instances.return_value.get.return_value = SimpleNamespace(
+                        db_type="mysql"
+                    )
+                    result = json.loads(getattr(api, name).__wrapped__(request).content)
+                    self.assertEqual(result["status"], 1)
+                    if name == "grant":
+                        self.assertIn(
+                            "Invalid" if language == "en" else "不合法", result["msg"]
+                        )
+                        engine.return_value.execute.assert_not_called()
+                    else:
+                        self.assertIn(
+                            "match" if language == "en" else "不一致", result["msg"]
+                        )
+                        engine.assert_not_called()
+
+    def test_connection_check_failures_preserve_external_error_text(self):
+        from common import check
+        from unittest.mock import MagicMock
+
+        for language in ["en", "zh-hans"]:
+            request = RequestFactory().post(
+                "/",
+                {"go_inception_port": "3306", "inception_remote_backup_port": "3306"},
+            )
+            request.user = SimpleNamespace(is_superuser=True)
+            for backup in [False, True]:
+                connection = MagicMock()
+                outcomes = (
+                    [connection, RuntimeError("原始错误")]
+                    if backup
+                    else [RuntimeError("原始错误")]
+                )
+                with override(language), patch.object(
+                    check.MySQLdb, "connect", side_effect=outcomes
+                ), patch.object(check, "logger"):
+                    result = json.loads(check.go_inception(request).content)
+                    self.assertEqual(result["status"], 1)
+                    self.assertIn("原始错误", result["msg"])
+                    self.assertIn(
+                        "Unable to connect" if language == "en" else "无法连接",
+                        result["msg"],
+                    )
+                    if backup:
+                        connection.close.assert_called_once()
+            with override(language), patch.object(
+                check, "DynamicStorage"
+            ) as storage, patch.object(check.logging, "error"):
+                storage.return_value.check_connection.return_value = (False, "fixture")
+                result = json.loads(check.file_storage_connect(request).content)
+                self.assertIn("failed" if language == "en" else "失败", result["msg"])
+                storage.side_effect = RuntimeError("fixture")
+                result = json.loads(check.file_storage_connect(request).content)
+                self.assertIn("error" if language == "en" else "异常", result["msg"])
+
+
+class OptimizationGuardCoverageTests(SimpleTestCase):
+    def test_validation_failures_do_not_query_engines_or_start_tools(self):
+        from sql import sql_optimize as api
+
+        funcs = [
+            api.optimize_sqladvisor,
+            api.optimize_soar,
+            api.optimize_sqltuning,
+            api.explain,
+            api.optimize_sqltuningadvisor,
+        ]
+        full = {
+            "instance_name": "fixture",
+            "db_name": "fixture",
+            "sql_content": "SELECT 1",
+            "sql": "SELECT 1",
+            "sqltext": "SELECT 1",
+        }
+        for language in ["en", "zh-hans"]:
+            for func in funcs:
+                request = RequestFactory().post("/", full)
+                request.user = SimpleNamespace()
+                with override(language), patch.object(
+                    api, "user_instances"
+                ) as instances, patch.object(api, "get_engine") as engine, patch.object(
+                    api, "SQLAdvisor"
+                ) as advisor, patch.object(
+                    api, "Soar"
+                ) as soar, patch.object(
+                    api, "SqlTuning"
+                ) as tuning:
+                    instances.return_value.get.side_effect = api.Instance.DoesNotExist
+                    result = json.loads(
+                        getattr(func, "__wrapped__", func)(request).content
+                    )
+                    self.assertEqual(result["status"], 1)
+                    if language == "en":
+                        self.assertIsNone(re.search(r"[\u4e00-\u9fff]", result["msg"]))
+                    else:
+                        self.assertIsNotNone(
+                            re.search(r"[\u4e00-\u9fff]", result["msg"])
+                        )
+                    engine.assert_not_called()
+                    advisor.assert_not_called()
+                    soar.assert_not_called()
+                    tuning.assert_not_called()
+            for func in [api.explain, api.optimize_sqltuningadvisor]:
+                for payload in [{}, dict(full, sql_content="")]:
+                    request = RequestFactory().post("/", payload)
+                    request.user = SimpleNamespace()
+                    with override(language), patch.object(
+                        api, "user_instances"
+                    ) as instances, patch.object(api, "get_engine") as engine:
+                        instances.return_value.get.return_value = SimpleNamespace(
+                            db_type="mysql"
+                        )
+                        result = json.loads(
+                            getattr(func, "__wrapped__", func)(request).content
+                        )
+                        self.assertEqual(result["status"], 1)
+                        engine.assert_not_called()
+            request = RequestFactory().post("/", full)
+            request.user = SimpleNamespace()
+            with override(language), patch.object(
+                api, "user_instances"
+            ) as instances, patch.object(api, "get_engine") as engine:
+                instances.return_value.get.return_value = SimpleNamespace(
+                    db_type="mysql"
+                )
+                result = json.loads(
+                    getattr(
+                        api.optimize_sqltuningadvisor,
+                        "__wrapped__",
+                        api.optimize_sqltuningadvisor,
+                    )(request).content
+                )
+                self.assertEqual(result["status"], 1)
+                self.assertIn("Oracle" if language == "en" else "oracle", result["msg"])
+                engine.assert_not_called()
+
+
+class AdminFilterCoverageTests(SimpleTestCase):
+    def test_workflow_status_filter_and_form_keep_stable_codes(self):
+        from sql.admin import SqlWorkflowStatusFilter, SqlWorkflowAdmin
+        from sql.models import SqlWorkflow
+        from django.contrib import admin
+
+        source = {
+            "display": "旧的显示名",
+            "query_string": "?status__exact=workflow_finish",
+            "selected": True,
+        }
+        status_filter = SqlWorkflowStatusFilter.__new__(SqlWorkflowStatusFilter)
+        status_filter.field = SimpleNamespace(
+            flatchoices=[("workflow_finish", "旧的显示名")]
+        )
+        request = RequestFactory().get("/admin/sql/sqlworkflow/")
+        for language, expected in [
+            ("en", "Workflow finished"),
+            ("zh-hans", "已正常结束"),
+        ]:
+            with override(language), patch.object(
+                admin.ChoicesFieldListFilter, "choices", return_value=iter([source])
+            ):
+                choices = list(status_filter.choices(None))
+                self.assertEqual(choices[0]["display"], expected)
+                self.assertEqual(choices[0]["query_string"], source["query_string"])
+                self.assertTrue(choices[0]["selected"])
+                model_admin = SqlWorkflowAdmin(SqlWorkflow, admin.site)
+                self.assertEqual(
+                    model_admin.workflow_status(
+                        SimpleNamespace(status="workflow_finish")
+                    ),
+                    expected,
+                )
+                field = model_admin.formfield_for_choice_field(
+                    SqlWorkflow._meta.get_field("status"), request
+                )
+                self.assertEqual(str(dict(field.choices)["workflow_finish"]), expected)
+                self.assertIn("workflow_finish", dict(field.choices))
+
+    def test_log_operation_filter_translates_label_only(self):
+        from sql.admin import WorkflowLogOperationFilter
+        from django.contrib import admin
+
+        source = {
+            "display": "提交",
+            "query_string": "?operation_type_desc=submit",
+            "selected": False,
+        }
+        log_filter = WorkflowLogOperationFilter.__new__(WorkflowLogOperationFilter)
+        for language in ["en", "zh-hans"]:
+            with override(language), patch.object(
+                admin.AllValuesFieldListFilter, "choices", return_value=iter([source])
+            ):
+                result = list(log_filter.choices(None))[0]
+                self.assertEqual(result["query_string"], source["query_string"])
+                self.assertEqual(result["selected"], False)
+                if language == "en":
+                    self.assertNotEqual(str(result["display"]), "提交")
+                else:
+                    self.assertEqual(str(result["display"]), "提交")
+
+
+class RemainingValidationCoverageTests(SimpleTestCase):
+    def test_resource_and_execution_required_fields_fail_before_lookup(self):
+        from sql_api import serializers as api
+        from rest_framework.exceptions import ValidationError
+
+        for language in ["en", "zh-hans"]:
+            with override(language), patch.object(api.Users.objects, "get") as users:
+                for kind in ["table", "schema", "column"]:
+                    with self.assertRaises(ValidationError) as error:
+                        api.SqlQueryResourceQuerySerializer().validate(
+                            {"instance_id": 1, "resource_type": kind}
+                        )
+                    self.assertIn("db_name", str(error.exception.detail))
+                with self.assertRaises(ValidationError) as error:
+                    api.ExecuteWorkflowSerializer().validate(
+                        {"workflow_type": 2, "mode": "auto"}
+                    )
+                self.assertIn("engineer", str(error.exception.detail))
+                users.assert_not_called()
+            with override(language), patch.object(
+                api.ResourceGroup.objects,
+                "get",
+                side_effect=api.ResourceGroup.DoesNotExist,
+            ):
+                with self.assertRaises(ValidationError) as error:
+                    api.WorkflowSerializer.validate_group_id(-123)
+                self.assertIn("-123", str(error.exception.detail))
+
+    def test_sms_without_provider_or_with_wrong_code_never_sends(self):
+        from common.twofa import sms
+
+        for language in ["en", "zh-hans"]:
+            with override(language), patch.object(
+                sms, "SysConfig"
+            ) as config, patch.object(
+                sms, "get_redis_connection"
+            ) as redis, patch.object(
+                sms.time, "time", return_value=110
+            ):
+                config.return_value.get.return_value = "disabled"
+                authenticator = sms.SMS()
+                for cached in [None, b'{"update_time":0}']:
+                    redis.return_value.get.return_value = cached
+                    result = authenticator.get_captcha(phone="fixture")
+                    self.assertEqual(result["status"], 1)
+                    self.assertIn("SMS" if language == "en" else "短信", result["msg"])
+                redis.return_value.get.return_value = b'{"otp":"fixture"}'
+                result = authenticator.verify("wrong", phone="fixture")
+                self.assertEqual(result["status"], 1)
+                self.assertIn(
+                    "Incorrect" if language == "en" else "不正确", result["msg"]
+                )
+                self.assertIsNone(authenticator.client)
+                redis.return_value.set.assert_not_called()
+
+    def test_storage_invalid_row_limit_does_not_initialize_storage(self):
+        from common import check
+
+        for language in ["en", "zh-hans"]:
+            request = RequestFactory().post("/", {"max_export_rows": "invalid"})
+            request.user = SimpleNamespace(is_superuser=True)
+            with override(language), patch.object(check, "DynamicStorage") as storage:
+                result = json.loads(check.file_storage_connect(request).content)
+                self.assertEqual(result["status"], 1)
+                self.assertIn("max_export_rows", result["msg"])
+                storage.assert_not_called()
+
+    def test_twofactor_setup_requires_matching_verified_session(self):
+        from sql_api import api_user as api
+
+        payload = {"engineer": "fixture", "enable": "true", "auth_type": "totp"}
+        for language in ["en", "zh-hans"]:
+            for session in [{}, {"user": "another-user"}]:
+                request = SimpleNamespace(
+                    data=payload,
+                    user=SimpleNamespace(is_authenticated=False),
+                    session=session,
+                )
+                with override(language), patch.object(
+                    api.Users.objects, "get", return_value=SimpleNamespace()
+                ), patch.object(api, "get_authenticator") as authenticator:
+                    result = api.TwoFA().post(request).data
+                    self.assertEqual(result["status"], 1)
+                    self.assertTrue(result["msg"])
+                    if language == "en":
+                        self.assertIsNone(re.search(r"[\u4e00-\u9fff]", result["msg"]))
+                    else:
+                        self.assertIsNotNone(
+                            re.search(r"[\u4e00-\u9fff]", result["msg"])
+                        )
+                    authenticator.assert_not_called()
