@@ -6,11 +6,15 @@ on:
       - 'master'
     paths:
       - 'src/docker/Dockerfile-base'
+      - 'src/docker/setup.sh'
+      - '.github/workflows/docker-base-image.yml'
   pull_request:
     branches:
       - 'master'
     paths:
       - 'src/docker/Dockerfile-base'
+      - 'src/docker/setup.sh'
+      - '.github/workflows/docker-base-image.yml'
 
 jobs:
   push_to_registries:

@@ -1,4 +1,4 @@
-ARG PYTHON_BASE_IMAGE=library/python:3.11-bullseye
+ARG PYTHON_BASE_IMAGE=library/python:3.11-bookworm
 FROM ${PYTHON_BASE_IMAGE}
 
 ENV SOAR_VERSION 0.11.0
