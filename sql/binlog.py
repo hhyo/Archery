@@ -8,6 +8,8 @@ import time
 import traceback
 import shlex
 
+from django.utils.translation import gettext as _
+
 import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
@@ -69,7 +71,7 @@ def binlog_list(request):
     try:
         instance = Instance.objects.get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "实例不存在", "data": []}
+        result = {"status": 1, "msg": _("实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     query_engine = get_engine(instance=instance)
     query_result = query_engine.query("information_schema", "show binary logs;")
@@ -99,7 +101,7 @@ def del_binlog(request):
     try:
         instance = Instance.objects.get(id=instance_id)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "实例不存在", "data": []}
+        result = {"status": 1, "msg": _("实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     if binlog:
@@ -108,15 +110,15 @@ def del_binlog(request):
             sql="purge master logs to %s;", parameters=(binlog,)
         )
         if query_result.error is None:
-            result = {"status": 0, "msg": "清理成功", "data": ""}
+            result = {"status": 0, "msg": _("清理成功"), "data": ""}
         else:
             result = {
                 "status": 2,
-                "msg": f"清理失败,Error:{query_result.error}",
+                "msg": _("清理失败,Error:%(error)s") % {"error": query_result.error},
                 "data": "",
             }
     else:
-        result = {"status": 1, "msg": "Error:未选择binlog！", "data": ""}
+        result = {"status": 1, "msg": _("Error:未选择binlog！"), "data": ""}
     return HttpResponse(
         json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
         content_type="application/json",

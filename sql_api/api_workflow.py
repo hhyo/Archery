@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _, pgettext_lazy
 import datetime
 import logging
 import traceback
@@ -51,10 +52,10 @@ class ExecuteCheck(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
-        summary="SQL检查",
+        summary=pgettext_lazy("API documentation", "SQL检查"),
         request=ExecuteCheckSerializer,
         responses={200: ExecuteCheckResultSerializer},
-        description="对提供的SQL进行语法检查",
+        description=pgettext_lazy("API documentation", "对提供的SQL进行语法检查"),
     )
     @method_decorator(permission_required("sql.sql_submit", raise_exception=True))
     def post(self, request):
@@ -114,10 +115,12 @@ class WorkflowList(generics.ListAPIView):
         )
 
     @extend_schema(
-        summary="SQL上线工单清单",
+        summary=pgettext_lazy("API documentation", "SQL上线工单清单"),
         request=WorkflowContentSerializer,
         responses={200: WorkflowContentSerializer},
-        description="列出所有SQL上线工单（过滤，分页）",
+        description=pgettext_lazy(
+            "API documentation", "列出所有SQL上线工单（过滤，分页）"
+        ),
     )
     def get(self, request):
         workflows = self.filter_queryset(self.get_queryset())
@@ -127,10 +130,10 @@ class WorkflowList(generics.ListAPIView):
         return self.get_paginated_response(data)
 
     @extend_schema(
-        summary="提交SQL上线工单",
+        summary=pgettext_lazy("API documentation", "提交SQL上线工单"),
         request=WorkflowContentSerializer,
         responses={201: WorkflowContentSerializer},
-        description="提交一条SQL上线工单",
+        description=pgettext_lazy("API documentation", "提交一条SQL上线工单"),
     )
     @method_decorator(permission_required("sql.sql_submit", raise_exception=True))
     def post(self, request):
@@ -179,10 +182,12 @@ class WorkflowAuditList(generics.ListAPIView):
         return Response({"detail": "方法 “GET” 不被允许。"})
 
     @extend_schema(
-        summary="待审核清单",
+        summary=pgettext_lazy("API documentation", "待审核清单"),
         request=WorkflowAuditSerializer,
         responses={200: WorkflowAuditListSerializer},
-        description="列出指定用户待审核清单（过滤，分页）",
+        description=pgettext_lazy(
+            "API documentation", "列出指定用户待审核清单（过滤，分页）"
+        ),
     )
     def post(self, request):
         # 参数验证
@@ -219,9 +224,9 @@ class AuditWorkflow(views.APIView):
     """
 
     @extend_schema(
-        summary="审核工单",
+        summary=pgettext_lazy("API documentation", "审核工单"),
         request=AuditWorkflowSerializer,
-        description="审核一条工单（通过或终止）",
+        description=pgettext_lazy("API documentation", "审核一条工单（通过或终止）"),
     )
     def post(self, request):
         # 参数验证
@@ -246,10 +251,10 @@ class AuditWorkflow(views.APIView):
             if auditor.workflow.engineer == serializer.data["engineer"]:
                 action = WorkflowAction.ABORT
             else:
-                raise serializers.ValidationError({"errors": "用户无权操作此工单"})
+                raise serializers.ValidationError({"errors": _("用户无权操作此工单")})
         else:
             raise serializers.ValidationError(
-                {"errors": "audit_type 只能是 pass 或 cancel"}
+                {"errors": _("audit_type 只能是 pass 或 cancel")}
             )
 
         try:
@@ -257,7 +262,9 @@ class AuditWorkflow(views.APIView):
                 action, user, serializer.data["audit_remark"]
             )
         except AuditException as e:
-            raise serializers.ValidationError({"errors": f"操作失败, {e}"})
+            raise serializers.ValidationError(
+                {"errors": _("操作失败, %(error)s") % {"error": e}}
+            )
 
         # 最后处置一下原本工单的状态
         if auditor.workflow_type == WorkflowType.QUERY:
@@ -309,9 +316,9 @@ class ExecuteWorkflow(views.APIView):
     """
 
     @extend_schema(
-        summary="执行工单",
+        summary=pgettext_lazy("API documentation", "执行工单"),
         request=ExecuteWorkflowSerializer,
-        description="执行一条工单",
+        description=pgettext_lazy("API documentation", "执行一条工单"),
     )
     def post(self, request):
         # 参数验证
@@ -333,15 +340,17 @@ class ExecuteWorkflow(views.APIView):
                 user.has_perm("sql.sql_execute")
                 or user.has_perm("sql.sql_execute_for_resource_group")
             ):
-                raise serializers.ValidationError({"errors": "你无权执行当前工单！"})
+                raise serializers.ValidationError({"errors": _("你无权执行当前工单！")})
 
             if can_execute(user, workflow_id) is False:
-                raise serializers.ValidationError({"errors": "你无权执行当前工单！"})
+                raise serializers.ValidationError({"errors": _("你无权执行当前工单！")})
 
             if on_correct_time_period(workflow_id) is False:
                 raise serializers.ValidationError(
                     {
-                        "errors": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+                        "errors": _(
+                            "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+                        )
                     }
                 )
 
@@ -416,7 +425,7 @@ class ExecuteWorkflow(views.APIView):
                 task_name=f"archive-{workflow_id}",
             )
 
-        return Response({"msg": "开始执行，执行结果请到工单详情页查看"})
+        return Response({"msg": _("开始执行，执行结果请到工单详情页查看")})
 
 
 class WorkflowLogList(generics.ListAPIView):
@@ -433,10 +442,10 @@ class WorkflowLogList(generics.ListAPIView):
         return Response({"detail": "方法 “GET” 不被允许。"})
 
     @extend_schema(
-        summary="工单日志",
+        summary=pgettext_lazy("API documentation", "工单日志"),
         request=WorkflowLogSerializer,
         responses={200: WorkflowLogListSerializer},
-        description="获取某个工单的日志（分页）",
+        description=pgettext_lazy("API documentation", "获取某个工单的日志（分页）"),
     )
     def post(self, request):
         # 参数验证

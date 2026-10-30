@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="btn-group right">
-        <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
+        <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">{% translate "提交回滚请求" context "remaining pages" %}</a>
     </div>
     <table id="tb-rollback" data-toggle="table" class="table table-condensed"
            style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
@@ -65,9 +66,9 @@
                 );
                 return html.join('');
             },
-            locale: 'zh-CN',                    //本地化
+            locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
             columns: [{
-                title: '执行语句',
+                title: '{% translate "执行语句" context "remaining pages" %}',
                 field: 0,
                 formatter: function (value, row, index) {
                     if (value.length > 50) {
@@ -77,11 +78,11 @@
                     }
                 }
             }, {
-                title: '完整执行语句',
+                title: '{% translate "完整执行语句" context "remaining pages" %}',
                 field: 0,
                 visible: false
             }, {
-                title: '回滚语句',
+                title: '{% translate "回滚语句" context "remaining pages" %}',
                 field: 1,
                 formatter: function (value, row, index) {
                     var sql=row[1];
@@ -92,14 +93,14 @@
                     }
                 }
             }, {
-                title: '完整回滚语句',
+                title: '{% translate "完整回滚语句" context "remaining pages" %}',
                 field: 1,
                 visible: false // 默认不显示
             }],
             onLoadSuccess: function (data) {
                 // 设置回滚语句，供快速提交
                 if (data.status !== 0) {
-                    alert("数据加载失败！" + data.msg);
+                    alert("{% translate "数据加载失败！" context "remaining pages" %}" + data.msg);
                 } else {
                     let backup_sql = '';
                     for (let sql of data.rows) {

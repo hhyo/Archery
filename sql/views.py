@@ -9,6 +9,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, FileResponse, Http404, JsonResponse
 
 from django.conf import settings
+from django.utils.translation import gettext as _, get_language
 from common.config import SysConfig
 from sql.engines import get_engine, engine_map
 from common.utils.permission import superuser_required
@@ -66,7 +67,7 @@ def login(request):
             "oidc_enabled": settings.ENABLE_OIDC,
             "dingding_enabled": settings.ENABLE_DINGDING,
             "cas_enabled": settings.ENABLE_CAS,
-            "oidc_btn_name": SysConfig().get("oidc_btn_name", "以OIDC登录"),
+            "oidc_btn_name": SysConfig().get("oidc_btn_name", _("以OIDC登录")),
         },
     )
 
@@ -87,9 +88,9 @@ def twofa(request):
             auth_type = {}
             auth_type["code"] = user_auth_type
             if user_auth_type == "totp":
-                auth_type["display"] = "Google身份验证器"
+                auth_type["display"] = _("Google身份验证器")
             elif user_auth_type == "sms":
-                auth_type["display"] = "短信验证码"
+                auth_type["display"] = _("短信验证码")
             auth_types.append(auth_type)
         if "sms" in user_auth_types:
             phone = TwoFactorAuthConfig.objects.get(
@@ -323,7 +324,7 @@ def rollback(request):
         raise PermissionDenied
     download = request.GET.get("download")
     if workflow_id == "" or workflow_id is None:
-        context = {"errMsg": "workflow_id参数为空."}
+        context = {"errMsg": _("workflow_id参数为空.")}
         return render(request, "error.html", context)
     workflow = SqlWorkflow.objects.get(id=int(workflow_id))
 
@@ -693,8 +694,11 @@ def dbaprinciples(request):
     """SQL文档页面"""
     #  读取MD文件
     file = os.path.join(settings.BASE_DIR, "docs/docs.md")
+    english_file = os.path.join(settings.BASE_DIR, "docs/docs.en.md")
+    if get_language() == "en" and os.path.isfile(english_file):
+        file = english_file
     with open(file, "r", encoding="utf-8") as f:
-        md = f.read().replace("\n", "\\n")
+        md = f.read()
     return render(request, "dbaprinciples.html", {"md": md})
 
 
@@ -795,7 +799,7 @@ def sqlexport_pre_check(request):
 
     if not instance_name or not db_name or not sql_content:
         result["status"] = 1
-        result["msg"] = "页面提交参数可能为空"
+        result["msg"] = _("页面提交参数可能为空")
         return JsonResponse(result)
 
     try:
@@ -804,7 +808,7 @@ def sqlexport_pre_check(request):
         )
     except Instance.DoesNotExist:
         result["status"] = 1
-        result["msg"] = "你所在组未关联该实例"
+        result["msg"] = _("你所在组未关联该实例")
         return JsonResponse(result)
 
     instance.sql_content = sql_content

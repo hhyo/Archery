@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div id="toolbar" class="form-inline pull-left">
@@ -36,7 +37,7 @@
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html('{% translate "全部数据" context "remaining pages" %}');
                 }
             }
 
@@ -48,23 +49,23 @@
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
                     // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    applyLabel: "{% translate "确定" context "remaining pages" %}",
+                    cancelLabel: "{% translate "取消" context "remaining pages" %}",
+                    fromLabel: "{% translate "开始" context "remaining pages" %}",
+                    toLabel: "{% translate "结束" context "remaining pages" %}",
+                    customRangeLabel: "{% translate "自定义" context "remaining pages" %}",
+                    daysOfWeek: ["{% translate "日" context "remaining pages" %}", "{% translate "一" context "remaining pages" %}", "{% translate "二" context "remaining pages" %}", "{% translate "三" context "remaining pages" %}", "{% translate "四" context "remaining pages" %}", "{% translate "五" context "remaining pages" %}", "{% translate "六" context "remaining pages" %}"],
+                    monthNames: ["{% translate "一月" context "remaining pages" %}", "{% translate "二月" context "remaining pages" %}", "{% translate "三月" context "remaining pages" %}", "{% translate "四月" context "remaining pages" %}", "{% translate "五月" context "remaining pages" %}", "{% translate "六" context "remaining pages" %}", "{% translate "七月" context "remaining pages" %}", "{% translate "八月" context "remaining pages" %}", "{% translate "九月" context "remaining pages" %}", "{% translate "十月" context "remaining pages" %}", "{% translate "十一月" context "remaining pages" %}", "{% translate "十二月" context "remaining pages" %}"],
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [null, null],
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    "{% translate "全部" context "remaining pages" %}": [null, null],
+                    "{% translate "今日" context "remaining pages" %}": [moment().startOf('day'), moment()],
+                    "{% translate "昨日" context "remaining pages" %}": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    "{% translate "最近7日" context "remaining pages" %}": [moment().subtract('days', 6), moment()],
+                    "{% translate "最近30日" context "remaining pages" %}": [moment().subtract('days', 29), moment()],
+                    "{% translate "本月" context "remaining pages" %}": [moment().startOf("month"), moment().endOf("month")],
+                    "{% translate "上个月" context "remaining pages" %}": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 querylist()
@@ -108,7 +109,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: true,                   //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",      //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //获取查询列表请求服务数据时所传参数
@@ -154,19 +155,19 @@
                     return html.join('');
                 },
                 columns: [{
-                    title: '用户',
+                    title: '{% translate "用户" context "remaining pages" %}',
                     field: 'user_display'
                 }, {
-                    title: '实例',
+                    title: '{% translate "实例" context "remaining pages" %}',
                     field: 'instance_name'
                 }, {
-                    title: '数据库',
+                    title: '{% translate "数据库" context "remaining pages" %}',
                     field: 'db_name'
                 }, {
-                    title: '查询时间',
+                    title: '{% translate "查询时间" context "remaining pages" %}',
                     field: 'create_time'
                 }, {
-                    title: '语句',
+                    title: '{% translate "语句" context "remaining pages" %}',
                     field: 'sqllog',
                     formatter: function (value, row, index) {
                         var _sql=row.sqllog
@@ -178,14 +179,14 @@
                         }
                     }
                 }, {
-                    title: '完整语句',
+                    title: '{% translate "完整语句" context "remaining pages" %}',
                     field: 'sqllog',
                     visible: false // 默认不显示
                 }, {
-                    title: '返回行数',
+                    title: '{% translate "返回行数" context "remaining pages" %}',
                     field: 'effect_row'
                 }, {
-                    title: '耗时(秒)',
+                    title: '{% translate "耗时(秒)" context "remaining pages" %}',
                     field: 'cost_time'
                 }],
                 onLoadSuccess: function () {

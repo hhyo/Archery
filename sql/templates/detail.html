@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load format_tags %}
+{% load format_tags i18n %}
 
 {% block title %}{{ workflow_detail.workflow_name }}-{{ block.super }}{% endblock %}
 {% block content %}
@@ -10,11 +10,11 @@
         </h4>
         <!--只允许发起人提交其他实例-->
         {% if user.username == workflow_detail.engineer and not workflow_detail.is_offline_export %}
-            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
+            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">{% translate "上线其他实例" %}</a>
         {% endif %}
         {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
             {% if not workflow_detail.is_offline_export %}
-                <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+                <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">{% translate "查看提交信息" %}</a>
             {% endif %}
         {% endif %}
     </div>
@@ -22,47 +22,49 @@
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sqlworkflowcontent.sql_content }}"/>
     <hr>
     <h4>
-        审批流
+        {% translate "审批流" %}
     </h4>
     <h5>
     {% include "workflow_display.html" %}
+    </h5>
     <h4>
-        其他信息
+        {% if workflow_detail.is_offline_export %}{% translate "申请信息" %}{% else %}{% translate "其他信息" %}{% endif %}
     </h4>
     <table data-toggle="table" class="table table-striped table-hover"
-           style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+           style="{% if workflow_detail.is_offline_export %}table-layout:fixed;white-space:normal;overflow-wrap:anywhere;{% else %}table-layout:inherit;white-space:nowrap;{% endif %}overflow:hidden;text-overflow:ellipsis;">
         <thead>
         <tr>
             <th>
-                发起人
+                {% translate "发起人" %}
             </th>
             <th>
-                目标实例
+                {% translate "目标实例" %}
             </th>
             <th>
-                数据库
+                {% translate "数据库" %}
             </th>
             <th>
-                发起时间
+                {% translate "发起时间" %}
             </th>
             <th>
-                可执行时间范围
+                {% translate "可执行时间范围" %}
             </th>
             <th>
-                结束时间
+                {% translate "结束时间" %}
             </th>
             <th>
-                备份
+                {% translate "备份" %}
             </th>
             <th>
-                当前状态
+                {% translate "当前状态" %}
             </th>
             <th>
-                组
+                {% translate "组" %}
             </th>
             <th>
-                类型
+                {% translate "类型" %}
             </th>
+
         </tr>
         </thead>
         <tbody>
@@ -83,17 +85,17 @@
                 {% if workflow_detail.run_date_start and workflow_detail.run_date_end %}
                     {{ workflow_detail.run_date_start }} / {{ workflow_detail.run_date_end }}
                 {% else %}
-                    无限制
+                    {% translate "无限制" %}
                 {% endif %}
             </td>
             <td>
-                {{ workflow_detail.finish_time }}
+                {{ workflow_detail.finish_time|default_if_none:"—" }}
             </td>
             <td>
                 {% if workflow_detail.is_backup %}
-                    是
+                    {% translate "是" %}
                 {% else %}
-                    否
+                    {% translate "否" %}
                 {% endif %}
             </td>
             <td>
@@ -102,27 +104,39 @@
                 {% else %}
                     <font color="red">
                 {% endif %}
-                <B id="workflow_detail_disaply">{{ workflow_detail.get_status_display }}</B></font>
+                <B id="workflow_detail_disaply">{% translate workflow_detail.status %}</B></font>
                 <span hidden="hidden" id="workflow_detail_status">{{ workflow_detail.status }}</span>
             </td>
             <td>
                 {{ workflow_detail.group_name }}
             </td>
             <td>
-                {{ workflow_detail.get_syntax_type_display }}
+                {% translate workflow_detail.get_syntax_type_display %}
             </td>
+
         </tr>
         </tbody>
     </table>
+    {% if workflow_detail.is_offline_export %}
+        <table class="table table-striped table-hover">
+            <thead><tr><th>{% translate "导出格式" %}</th><th>{% translate "导出文件" %}</th></tr></thead>
+            <tbody><tr>
+                <td id="export-format-display">
+                    {% if workflow_detail.export_format == "xlsx" %}Excel{% elif workflow_detail.export_format == "csv" %}CSV{% elif workflow_detail.export_format == "sql" %}SQL{% elif workflow_detail.export_format == "json" %}JSON{% elif workflow_detail.export_format == "xml" %}XML{% else %}{{ workflow_detail.export_format }}{% endif %}
+                </td>
+                <td style="overflow-wrap:anywhere;">{{ workflow_detail.file_name|default:_("尚未生成文件") }}</td>
+            </tr></tbody>
+        </table>
+    {% endif %}
     <br>
 
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
         <li id="detail_tab" class="active">
-            <a href="#detail" role="tab" data-toggle="tab">工单详情</a>
+            <a href="#detail" role="tab" data-toggle="tab">{% translate "工单详情" %}</a>
         </li>
         <li id="logs_tab">
-            <a href="#logs" role="tab" data-toggle="tab">工单日志</a>
+            <a href="#logs" role="tab" data-toggle="tab">{% translate "工单日志" %}</a>
         </li>
     </ul>
     <!-- Tab panes -->
@@ -131,7 +145,7 @@
         <div id="detail" role="tabpanel" class="tab-pane fade in active table-responsive">
             <!-- 自定义操作按钮-->
             <div id="detail-toolbar" class="btn-group right">
-                <button id="expandAllRows" class="btn btn-default navbar-btn" type="button">展开全部</button>
+                <button id="expandAllRows" class="btn btn-default navbar-btn" type="button">{% translate "展开全部" %}</button>
             </div>
             <table id="tb-detail" data-toggle="table" class="table table-condensed"
                    style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
@@ -142,7 +156,7 @@
                     <thead>
                     <tr>
                         <th>
-                            操作信息
+                            {% translate "操作信息" %}
                         </th>
                     </tr>
                     </thead>
@@ -168,8 +182,8 @@
 
     <!--审核备注输入框-->
     {% if is_can_review or is_can_cancel %}
-        <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
-                  placeholder="请填写审核备注/终止原因" rows=3></textarea>
+        <textarea id="remark" name="remark" class="form-control" data-name="{% translate "审核备注" %}"
+                  placeholder="{% translate "请填写审核备注/终止原因" %}" rows=3></textarea>
         <br>
     {% endif %}
     <!--审核人修改可执行时间按钮-->
@@ -178,7 +192,7 @@
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#Executabletime"
-                   value="可执行时间变更"/>
+                   value="{% translate "可执行时间变更" %}"/>
         </form>
     {% endif %}
     <!--审核通过按钮-->
@@ -187,7 +201,7 @@
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="audit_remark" name="audit_remark" value="">
-            <input type="button" id="btnPass" class="btn btn-success" value="审核通过"/>
+            <input type="button" id="btnPass" class="btn btn-success" value="{% translate "审核通过" context "workflow action" %}"/>
         </form>
     {% endif %}
     <!--立即执行按钮-->
@@ -197,7 +211,7 @@
             <input type="hidden" name="mode" value="auto">
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="button" id="btnExecuteOnly" class="btn btn-danger"
-                   value="立即执行"/>
+                   value="{% translate "立即执行" %}"/>
         </form>
         {% if manual %}
             <form id="from-execute-manual" action="/api/v1/sql-workflows/{{ audit_id }}/execution/" method="post" style="display:inline-block;">
@@ -205,16 +219,16 @@
                 <input type="hidden" name="mode" value="manual">
                 <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                 <input type="button" id="btnExecuteOnly-manual" class="btn btn-warning"
-                       value="已手动完成"/>
+                       value="{% translate "已手动完成" %}"/>
             </form>
         {% endif %}
     {% endif %}
     <!--定时执行按钮-->
     {% if is_can_timingtask %}
         {% if workflow_detail.status == 'workflow_review_pass' %}
-            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="定时执行"/>
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="{% translate "定时执行" %}"/>
         {% elif workflow_detail.status == 'workflow_timingtask' %}
-            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="{% translate "执行时间变更" %}"/>
         {% endif %}
     {% endif %}
     <!--审核拒绝按钮-->
@@ -222,7 +236,7 @@
         <form id="form-reject" action="/api/v1/sql-workflows/{{ audit_id }}/rejection/" method="post" style="display:inline-block;">
             {% csrf_token %}
             <input type="hidden" id="reject_remark" name="reject_remark" value="">
-            <input type="button" id="btnReject" class="btn btn-default" value="审核拒绝"/>
+            <input type="button" id="btnReject" class="btn btn-default" value="{% translate "审核拒绝" %}"/>
         </form>
     {% endif %}
     <!--终止执行按钮-->
@@ -231,14 +245,14 @@
             {% csrf_token %}
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="cancel_remark" name="cancel_remark" value="">
-            <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
+            <input type="button" id="btnCancel" class="btn btn-default" value="{% translate "终止流程" %}"/>
         </form>
     {% endif %}
     {% if workflow_detail.status == 'workflow_finish' and workflow_detail.is_offline_export %}
         <form id="form-download" class="form-horizontal">
-            <button type="button" id="btnDownload" data-loading-text="下载中..."
+            <button type="button" id="btnDownload" data-loading-text="{% translate "下载中..." %}"
                      class="btn btn-info">
-                下载文件
+                {% translate "下载文件" %}
             </button>
         </form>
     {% endif %}
@@ -249,14 +263,14 @@
                 {% csrf_token %}
                 <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                 <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default"
-                       value="查看回滚SQL"/>
+                       value="{% translate "查看回滚SQL" %}"/>
             </form>
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                 <input type="hidden" name="download" value="true">
                 <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-info"
-                       value="下载回滚SQL"/>
+                       value="{% translate "下载回滚SQL" %}"/>
             </form>
         {% endif %}
     {% endif %}
@@ -268,11 +282,11 @@
             {% if workflow_detail.is_offline_export %}
                 <!-- 离线导出工单跳转到导出提交页 -->
                 <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
-                   href="/sqlexportsubmit/?source=resubmit">重新修改</a>
+                   href="/sqlexportsubmit/?source=resubmit">{% translate "重新修改" %}</a>
             {% else %}
                 <!-- 非离线导出工单跳转到上线变更提交页 -->
                 <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
-                   href="/editsql/">重新修改</a>
+                   href="/editsql/">{% translate "重新修改" %}</a>
             {% endif %}
         {% endif %}
     {% endif %}
@@ -285,7 +299,7 @@
                     <div class="modal-header ">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                                 aria-hidden="true">×</span></button>
-                        <h4 class="modal-title text-danger">定时执行SQL</h4>
+                        <h4 class="modal-title text-danger">{% translate "定时执行SQL" %}</h4>
                     </div>
                     {% csrf_token %}
                     <div class="modal-body">
@@ -293,16 +307,16 @@
                             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                             <div class='input-group date' id='datetimepicker'>
                                 <input id="run_date" name="run_date" type='text' autocomplete="off" class="form-control"
-                                       placeholder="请选择执行时间"/>
+                                       placeholder="{% translate "请选择执行时间" %}"/>
                                 <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-info" data-dismiss="modal">{% translate "取消" %}</button>
 
                         <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-                        <input type="button" id="btnAddsqlcronjob" class="btn btn-danger" value="确认提交"/>
+                        <input type="button" id="btnAddsqlcronjob" class="btn btn-danger" value="{% translate "确认提交" %}"/>
                     </div>
 
                 </div>
@@ -313,9 +327,9 @@
     <!-- 执行进度弹出框-->
     <!-- 自定义操作按钮-->
     <div id="osc-toolbar" class="btn-group left" style="display:none;">
-        <button id="pause_osc" class="btn btn-warning" type="button">暂停</button>
-        <button id="resume_osc" class="btn btn-success" type="button">恢复</button>
-        <button id="kill_osc" class="btn btn-danger" type="button">终止</button>
+        <button id="pause_osc" class="btn btn-warning" type="button">{% translate "暂停" %}</button>
+        <button id="resume_osc" class="btn btn-success" type="button">{% translate "恢复" %}</button>
+        <button id="kill_osc" class="btn btn-danger" type="button">{% translate "终止" %}</button>
     </div>
     <div class="modal fade" id="osc_percent">
         <div class="modal-dialog modal-lg">
@@ -323,7 +337,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">执行进度</h4>
+                    <h4 class="modal-title text-danger">{% translate "执行进度" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
@@ -345,7 +359,7 @@
                     <div class="modal-header ">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                                 aria-hidden="true">×</span></button>
-                        <h4 class="modal-title text-danger">修改可执行时间</h4>
+                        <h4 class="modal-title text-danger">{% translate "修改可执行时间" %}</h4>
                     </div>
                     {% csrf_token %}
                     <div class="modal-body">
@@ -354,17 +368,17 @@
                             <input type="hidden" id="run_date_start" name="run_date_start">
                             <input type="hidden" id="run_date_end" name="run_date_end">
                             <input type="text" id="run_date_range" readonly
-                                   value="请选择可执行时间范围"
+                                   value="{% translate "请选择可执行时间范围" %}"
                                    style="background-color: #fff;color: #999 "
                                    class="form-control "/>
                             <span class="input-group-addon"><span class="fa fa-calendar"></span></span>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-info" data-dismiss="modal">{% translate "取消" %}</button>
 
                         <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-                        <input type="button" id="btnalterExecutabletime" class="btn btn-danger" value="确认提交"/>
+                        <input type="button" id="btnalterExecutabletime" class="btn btn-danger" value="{% translate "确认提交" %}"/>
                     </div>
 
                 </div>
@@ -375,6 +389,14 @@
 {% endblock content %}
 
 {% block js %}
+    <script>
+        function detailLoadError(status, jqXHR) {
+            if (jqXHR && (jqXHR.statusText === 'abort' || jqXHR.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
+    </script>
     {% load static %}
     <link href="{% static 'datetimepicker/css/bootstrap-datetimepicker.css' %}" rel="stylesheet" type="text/css"/>
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
@@ -392,7 +414,7 @@
             autoclose: true,
             todayBtn: true,
             pickerPosition: "bottom-left",
-            language: 'zh-CN',//中文，需要引用zh-CN.js包
+            language: '{% if LANGUAGE_CODE == "en" %}en{% else %}zh-CN{% endif %}' ,//中文，需要引用zh-CN.js包
             startView: 1,//天视图
             minView: 0,//分钟
             startDate: date,
@@ -411,10 +433,10 @@
             startDate: moment().startOf('hour'),
             endDate: moment().startOf('hour'),
             locale: {
-                "applyLabel": "确定",
-                "cancelLabel": "清空",
-                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
-                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "applyLabel": "{% translate "确定"|escapejs %}",
+                "cancelLabel": "{% translate "清空"|escapejs %}",
+                "daysOfWeek": ["{% translate "日"|escapejs %}", "{% translate "一"|escapejs %}", "{% translate "二"|escapejs %}", "{% translate "三"|escapejs %}", "{% translate "四"|escapejs %}", "{% translate "五"|escapejs %}", "{% translate "六"|escapejs %}"],
+                "monthNames": ["{% translate "一月"|escapejs %}", "{% translate "二月"|escapejs %}", "{% translate "三月"|escapejs %}", "{% translate "四月"|escapejs %}", "{% translate "五月"|escapejs %}", "{% translate "六月"|escapejs %}", "{% translate "七月"|escapejs %}", "{% translate "八月"|escapejs %}", "{% translate "九月"|escapejs %}", "{% translate "十月"|escapejs %}", "{% translate "十一月"|escapejs %}", "{% translate "十二月"|escapejs %}"],
                 "firstDay": 1
             },
         }).on('apply.daterangepicker', function (ev, picker) {
@@ -424,7 +446,7 @@
             $(this).val(picker.startDate.format('YYYY-MM-DD HH:mm') + ' / ' + picker.endDate.format('YYYY-MM-DD HH:mm'));
         }).on('cancel.daterangepicker', function (ev, picker) {
             $(this).css("color", "#999");
-            $(this).val('请选择可执行时间范围');
+            $(this).val('{% translate "请选择可执行时间范围"|escapejs %}');
         });
     </script>
 
@@ -442,14 +464,14 @@
         // 表格展开折叠全部行
         $("#expandAllRows").click(function () {
             $(this).trigger("blur");
-            if ($(this).text() === '展开全部') {
+            if ($(this).text() === '{% translate "展开全部"|escapejs %}') {
                 $('#tb-detail').bootstrapTable('hideColumn', 'sql');
                 $('#tb-detail').bootstrapTable('expandAllRows');
-                $(this).text('折叠全部')
-            } else if ($(this).text() === '折叠全部') {
+                $(this).text('{% translate "折叠全部"|escapejs %}')
+            } else if ($(this).text() === '{% translate "折叠全部"|escapejs %}') {
                 $('#tb-detail').bootstrapTable('showColumn', 'sql');
                 $('#tb-detail').bootstrapTable('collapseAllRows');
-                $(this).text('展开全部')
+                $(this).text('{% translate "展开全部"|escapejs %}')
             }
         });
 
@@ -484,9 +506,9 @@
         $("#btnExecuteOnly").click(function () {
             if ("{{ workflow_detail.is_backup }}" === 'False' &&
             "{{workflow_detail.is_offline_export}}" === 0) {
-                var isContinue = confirm("该工单未选择备份，将不会自动备份数据，请确认是否立即执行？");
+                var isContinue = confirm("{% translate "该工单未选择备份，将不会自动备份数据，请确认是否立即执行？"|escapejs %}");
             } else {
-                var isContinue = confirm("请确认是否立即执行？");
+                var isContinue = confirm("{% translate "请确认是否立即执行？"|escapejs %}");
             }
             if (isContinue) {
                 postWorkflowForm($("#from-execute"));
@@ -496,7 +518,7 @@
 
         // 执行确认手工执行
         $("#btnExecuteOnly-manual").click(function () {
-            var isContinue = confirm("请确认是否已经手工执行结束？");
+            var isContinue = confirm("{% translate "请确认是否已经手工执行结束？"|escapejs %}");
             if (isContinue) {
                 postWorkflowForm($("#from-execute-manual"));
                 loading(this)
@@ -519,7 +541,7 @@
                 loading(this);
                 postWorkflowForm(formReject);
             } else {
-                alert('请填写拒绝原因')
+                alert('{% translate "请填写拒绝原因"|escapejs %}')
             }
         });
 
@@ -532,7 +554,7 @@
                 loading(this);
                 postWorkflowForm(formCancel);
             } else {
-                alert('请填写终止原因')
+                alert('{% translate "请填写终止原因"|escapejs %}')
             }
         });
 
@@ -544,7 +566,7 @@
                 loading(this);
                 postWorkflowForm(formAddsqlcronjo);
             } else {
-                alert('请填写定时执行时间')
+                alert('{% translate "请填写定时执行时间"|escapejs %}')
             }
         });
 
@@ -559,7 +581,7 @@
         function formatApiError(xhr) {
             const response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
             if (!response) {
-                return "操作失败";
+                return "{% translate "操作失败"|escapejs %}";
             }
 
             const messages = [];
@@ -599,7 +621,7 @@
             if (messages.length > 0) {
                 return messages.join("；");
             }
-            return "操作失败";
+            return "{% translate "操作失败"|escapejs %}";
         }
 
         function postWorkflowForm(form) {
@@ -623,7 +645,7 @@
                     if (data.status === 0 && data.data.redirect_url) {
                         window.location.href = data.data.redirect_url;
                     } else {
-                        alert(data.msg || "操作失败");
+                        alert(data.msg || "{% translate "操作失败"|escapejs %}");
                     }
                 },
                 error: function (xhr) {
@@ -702,17 +724,17 @@
                     function (params) {
                         return {}
                     },
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}' ,                    //本地化
                 columns: [{
                     title: 'ID',
                     field: 'id',
                     sortable: true
                 }, {
-                    title: '完整SQL内容',
+                    title: '{% translate "完整SQL内容"|escapejs %}',
                     field: 'sql',
                     visible: false // 默认不显示
                 }, {
-                    title: 'SQL内容',
+                    title: '{% translate "SQL内容"|escapejs %}',
                     field: 'sql',
                     formatter: function (value, row, index) {
                         var sql=row.sql;
@@ -724,7 +746,7 @@
                     },
                     sortable: false
                 }, {
-                    title: '审核/执行状态',
+                    title: '{% translate "审核/执行状态"|escapejs %}',
                     field: 'errlevel',
                     formatter: function (value, row, index) {
                         if (String(value) === '0') {
@@ -737,33 +759,33 @@
                     },
                     sortable: true
                 }, {
-                    title: '审核/执行信息',
+                    title: '{% translate "审核/执行信息"|escapejs %}',
                     field: 'errormessage',
                     formatter: function (value, row, index) {
                         return value.replace(/\n/g, '<br>');
                     },
                     sortable: true
                 }, {
-                    title: '扫描/影响行数',
+                    title: '{% translate "扫描/影响行数"|escapejs %}',
                     field: 'affected_rows',
                     sortable: true
                 }, {
-                    title: '执行耗时',
+                    title: '{% translate "执行耗时"|escapejs %}',
                     field: 'execute_time',
                     sortable: true
                 }, {
-                    title: '备份耗时',
+                    title: '{% translate "备份耗时"|escapejs %}',
                     field: 'backup_time',
                     sortable: true
                 }, {
-                    title: '当前阶段',
+                    title: '{% translate "当前阶段"|escapejs %}',
                     field: 'stagestatus',
                     sortable: true
                 }, {
-                    title: '操作',
+                    title: '{% translate "操作"|escapejs %}',
                     field: 'sqlsha1',
                     formatter: function (value, row, index) {
-                        let btn_percent = "<button class=\"btn btn-info btn-xs\" sqlsha1=\"" + row.sqlsha1 + "\" onclick=\"get_osc_percent(this)" + "\">查看进度</button>\n";
+                        let btn_percent = "<button class=\"btn btn-info btn-xs\" sqlsha1=\"" + row.sqlsha1 + "\" onclick=\"get_osc_percent(this)" + "\">{% translate "查看进度"|escapejs %}</button>\n";
                         let status = $("#workflow_detail_status").text();
                         if (row.sqlsha1 && status === 'workflow_executing') {
                             return btn_percent;
@@ -782,7 +804,7 @@
                 },
                 onLoadSuccess: function () {
                 },
-                onLoadError: onLoadErrorCallback,
+                onLoadError: detailLoadError,
             });
         }
 
@@ -817,28 +839,28 @@
                         showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
                         cardView: false,                    //是否显示详细视图
                         detailView: false,                  //是否显示父子表
-                        locale: 'zh-CN',                    //本地化
+                        locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}' ,                    //本地化
                         data: data.rows,
                         columns: [{
-                            title: '操作',
+                            title: '{% translate "操作"|escapejs %}',
                             field: 'operation_type_desc'
                         }, {
-                            title: '操作人',
+                            title: '{% translate "操作人"|escapejs %}',
                             field: 'operator_display'
                         }, {
-                            title: '操作时间',
+                            title: '{% translate "操作时间"|escapejs %}',
                             field: 'operation_time'
                         }, {
-                            title: '操作信息',
+                            title: '{% translate "操作信息"|escapejs %}',
                             field: 'operation_info'
                         }],
                         onLoadSuccess: function () {
                         },
-                        onLoadError: onLoadErrorCallback,
+                        onLoadError: detailLoadError,
                     });
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    detailLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             })
         }
@@ -886,7 +908,7 @@
                     });
                     return html.join('');
                 },
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}' ,                    //本地化
                 toolbar: "#osc-toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -936,7 +958,7 @@
                     $("#osc-toolbar").show();
                     $('#osc_percent').modal('show');
                 },
-                onLoadError: onLoadErrorCallback,
+                onLoadError: detailLoadError,
             });
 
         }
@@ -961,10 +983,10 @@
                         break;
                     case 'kill_osc':
                         command = 'kill';
-                        isContinue = confirm("请确认是否立即终止？终止后需要手动清理触发器以及相关中间表！");
+                        isContinue = confirm("{% translate "请确认是否立即终止？终止后需要手动清理触发器以及相关中间表！"|escapejs %}");
                         break;
                     default:
-                        alert('命令错误！')
+                        alert('{% translate "命令错误！"|escapejs %}')
                 }
                 if (isContinue) {
                     //发送请求
@@ -982,14 +1004,14 @@
                             if (data.msg) {
                                 alert(data.msg);
                             } else {
-                                alert('操作成功！请稍后刷新获取最新状态');
+                                alert('{% translate "操作成功！请稍后刷新获取最新状态"|escapejs %}');
                             }
                         }
                     })
                 }
 
             } else {
-                alert("请先选择要终止进程")
+                alert("{% translate "请先选择要终止进程"|escapejs %}")
             }
 
         });
@@ -1010,7 +1032,7 @@
         });
 
         function getWorkflowStatus(workflow_id) {
-            document.getElementById("workflow_detail_disaply").innerHTML = gettext("确认中...");
+            document.getElementById("workflow_detail_disaply").innerHTML = gettext("{% translate "确认中..."|escapejs %}");
             if (retryCnt <= 120) {
                 clearTimeout(key);
                 key = setTimeout(function () {
@@ -1019,7 +1041,7 @@
                 retryCnt++;
             } else {
                 retryCnt = 1;
-                alert("该工单2分钟仍然未执行完毕，请稍后尝试手动刷新本页面");
+                alert("{% translate "该工单2分钟仍然未执行完毕，请稍后尝试手动刷新本页面"|escapejs %}");
             }
 
             if (workflow_id > 0) {
@@ -1042,7 +1064,7 @@
                     }
                 });
             } else {
-                alter("参数不正确")
+                alert("{% translate "参数不正确"|escapejs %}")
             }
         }
 
@@ -1070,11 +1092,11 @@
             const $btn = $(this);
             $btn.prop('disabled', true);
             const originalText = $btn.html();
-            $btn.html('<i class="fa fa-spinner fa-spin"></i> 准备下载...');
+            $btn.html('<i class="fa fa-spinner fa-spin"></i> {% translate "准备下载..."|escapejs %}');
                 
             try {
                 const workflow_id = "{{ workflow_detail.id }}";
-                const file_name = "{{ workflow_detail.file_name }}";
+                const file_name = "{{ workflow_detail.file_name|escapejs }}";
                 const filePath = `/downloadfile/?file_name=${encodeURIComponent(file_name)}&workflow_id=${workflow_id}`;
             
                 // 轻量级类型检查
@@ -1096,9 +1118,14 @@
                         window.location.href = data.url;
                         return;
                     }
-                    throw new Error('未知的响应格式');
+                    throw new Error('{% translate "未知的响应格式"|escapejs %}');
                 }
             
+                if (!typeCheck.ok) {
+                    throw new Error(typeCheck.status === 403
+                        ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                        : '{% translate "文件下载失败：请联系管理员。"|escapejs %}');
+                }
                 // 处理文件下载
                 const a = document.createElement('a');
                 a.href = filePath;
@@ -1108,8 +1135,8 @@
                 a.click();
             
             } catch (error) {
-                console.error('下载失败:', error);
-                alert(`下载错误: ${error.message || '服务器连接失败'}`);
+                console.error('{% translate "下载失败:"|escapejs %}', error);
+                alert(`{% translate "下载错误: "|escapejs %}${error.message || '{% translate "服务器连接失败"|escapejs %}'}`);
             } finally {
                 // 恢复按钮
                 if (!$btn.prop('disabled')) return;

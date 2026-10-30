@@ -9,6 +9,7 @@
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse, HttpResponse
+from django.utils.translation import gettext as _
 from django_redis import get_redis_connection
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -33,7 +34,7 @@ def databases(request):
             request.user, db_type=["mysql", "mongo", "gaussdb"]
         ).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     # 获取已录入数据库
     cnf_dbs = dict()
@@ -77,7 +78,7 @@ def create(request):
 
     if not all([db_name]):
         return JsonResponse(
-            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+            {"status": 1, "msg": _("参数不完整，请确认后提交"), "data": []}
         )
 
     try:
@@ -85,12 +86,12 @@ def create(request):
             request.user, db_type=["mysql", "mongo", "gaussdb"]
         ).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     try:
         owner_display = Users.objects.get(username=owner).display
     except Users.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "负责人不存在", "data": []})
+        return JsonResponse({"status": 1, "msg": _("负责人不存在"), "data": []})
 
     engine = get_engine(instance=instance)
     if instance.db_type == "mysql":
@@ -108,11 +109,15 @@ def create(request):
                 name=f"archery-{db_name}"
             )  # mongo创建数据库，需要数据库存在数据才会显示数据库名称，这里创建一个archery-{db_name}的集合
         except Exception as e:
-            exec_result.error = f"创建数据库失败, 错误信息：{str(e)}"
+            exec_result.error = _("创建数据库失败, 错误信息：%(error)s") % {
+                "error": str(e)
+            }
 
     else:
         exec_result = ResultSet()
-        exec_result.error = f"暂不支持 {instance.db_type} 类型的数据库创建"
+        exec_result.error = _("暂不支持 %(db_type)s 类型的数据库创建") % {
+            "db_type": instance.db_type
+        }
 
     # 关闭连接
     engine.close()
@@ -145,7 +150,7 @@ def edit(request):
 
     if not all([db_name]):
         return JsonResponse(
-            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+            {"status": 1, "msg": _("参数不完整，请确认后提交"), "data": []}
         )
 
     try:
@@ -153,12 +158,12 @@ def edit(request):
             request.user, db_type=["mysql", "mongo", "gaussdb"]
         ).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     try:
         owner_display = Users.objects.get(username=owner).display
     except Users.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "负责人不存在", "data": []})
+        return JsonResponse({"status": 1, "msg": _("负责人不存在"), "data": []})
 
     # 更新或者录入信息
     InstanceDatabase.objects.update_or_create(

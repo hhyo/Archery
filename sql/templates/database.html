@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
@@ -6,7 +7,7 @@
         <div id="toolbar" class="form-inline pull-left" style="position: absolute;top: 10px">
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
-                        title="请选择实例"
+                        title="{% translate '请选择实例' %}"
                         data-live-search="true">
                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
@@ -15,16 +16,16 @@
             </div>
             <div class="form-group">
                 <select id="saved" class="form-control selectpicker"
-                        title="全部">
-                    <option value="" selected="selected">全部</option>
-                    <option value="true">已录入</option>
+                        title="{% translate '全部' context 'query filter' %}">
+                    <option value="" selected="selected">{% translate "全部" context "query filter" %}</option>
+                    <option value="true">{% translate "已录入" %}</option>
                 </select>
             </div>
             <div class="form-group ">
                 <button id="btn-create-database" type="button" class="btn btn-default" disabled="disabled"
                         data-toggle="modal" data-target="#modal-create-database">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    创建数据库
+                    {% translate "创建数据库" %}
                 </button>
             </div>
         </div>
@@ -42,30 +43,30 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">创建数据库</h4>
+                    <h4 class="modal-title">{% translate "创建数据库" %}</h4>
                 </div>
                 <div class="modal-body form-group">
                     <div class="form-group row">
                         <label for="db_name" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库名称</label>
+                            <span style="color:red">*</span>{% translate "数据库名称" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="db_name" class="form-control" autocomplete="off"
                                    aria-describedby="dbHelpBlock"
-                                   placeholder="请输入数据库名称">
+                                   placeholder="{% translate '请输入数据库名称' %}">
                             <small id="dbHelpBlock" class="form-text text-muted">
-                                由字母、数字、下划线、中划线组成，字母开头，字母或数字结尾，最长64个字符
+                                {% translate "由字母、数字、下划线、中划线组成，字母开头，字母或数字结尾，最长64个字符" %}
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="owner" class="col-sm-3 col-form-label">
-                            负责人</label>
+                            {% translate "负责人" %}</label>
                         <div class="col-sm-9">
                             <select id="owner" name="owner"
                                     class="selectpicker show-tick form-control bs-select-hidden "
                                     data-live-search="true"
-                                    title="请选择数据库负责人"
-                                    data-none-selected-text="请选择数据库负责人">
+                                    title="{% translate '请选择数据库负责人' %}"
+                                    data-none-selected-text="{% translate '请选择数据库负责人' %}">
                                 {% for user_info in active_user %}
                                     <option value="{{ user_info.username }}">{{ user_info.display }}({{ user_info.username }})</option>
                                 {% endfor %}
@@ -73,17 +74,17 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="remark" class="col-sm-3 col-form-label">备注</label>
+                        <label for="remark" class="col-sm-3 col-form-label">{% translate "备注" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="请输入备注">
+                                   placeholder="{% translate '请输入备注' %}">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="btnCreateDb" onclick="create_database()">创建
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-primary" id="btnCreateDb" onclick="create_database()">{% translate "创建" %}
                     </button>
                 </div>
             </div>
@@ -96,27 +97,27 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">编辑/录入数据库信息</h4>
+                    <h4 class="modal-title">{% translate "编辑/录入数据库信息" %}</h4>
                 </div>
                 <div class="modal-body form-group">
                     <div class="form-group row">
                         <label for="edit_db_name" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库名称</label>
+                            <span style="color:red">*</span>{% translate "数据库名称" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit_db_name" class="form-control" autocomplete="off"
                                    readonly="readonly"
                                    aria-describedby="dbHelpBlock"
-                                   placeholder="请输入数据库名称">
+                                   placeholder="{% translate '请输入数据库名称' %}">
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="edit_owner" class="col-sm-3 col-form-label">
-                            负责人</label>
+                            {% translate "负责人" %}</label>
                         <div class="col-sm-9">
                             <select id="edit_owner" name="edit_owner"
                                     class="selectpicker show-tick form-control bs-select-hidden "
                                     data-live-search="true"
-                                    data-none-selected-text="请选择数据库负责人">
+                                    data-none-selected-text="{% translate '请选择数据库负责人' %}">
                                 {% for user_info in active_user %}
                                     <option value="{{ user_info.username }}">{{ user_info.display }}({{ user_info.username }})</option>
                                 {% endfor %}
@@ -124,17 +125,17 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="edit_remark" class="col-sm-3 col-form-label">备注</label>
+                        <label for="edit_remark" class="col-sm-3 col-form-label">{% translate "备注" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit_remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="请输入备注">
+                                   placeholder="{% translate '请输入备注' %}">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="btnEditDb">创建
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-primary" id="btnEditDb">{% translate "保存" %}
                     </button>
                 </div>
             </div>
@@ -142,26 +143,33 @@
     </div>
 {% endblock content %}
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
     {% load static %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        function databaseLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         // 根据数据库类型获取显示的字段
         function get_db_columns(db_type) {
             switch (db_type) {
                 case 'mysql':
                     return [
                         {
-                            title: '数据库名',
+                            title: '{% translate "数据库名"|escapejs %}',
                             field: 'db_name'
                         }, {
-                            title: '字符集',
+                            title: '{% translate "字符集"|escapejs %}',
                             field: 'charset'
                         }, {
-                            title: '排序规则',
+                            title: '{% translate "排序规则"|escapejs %}',
                             field: 'collation'
                         }, {
-                            title: '授权账号',
+                            title: '{% translate "授权账号"|escapejs %}',
                             field: 'grantees',
                             formatter: function (value, row, index) {
                                 let grantee = '';
@@ -171,24 +179,24 @@
                                 return grantee
                             }
                         }, {
-                            title: '负责人',
+                            title: '{% translate "负责人"|escapejs %}',
                             field: 'owner',
                             visible: false,
                         }, {
-                            title: '负责人',
+                            title: '{% translate "负责人"|escapejs %}',
                             field: 'owner_display'
                         }, {
-                            title: '备注',
+                            title: '{% translate "备注"|escapejs %}',
                             field: 'remark'
                         }
                     ]
                 case 'mongo':
                     return [
                         {
-                            title: '数据库名',
+                            title: '{% translate "数据库名"|escapejs %}',
                             field: 'db_name'
                         }, {
-                            title: '授权账号',
+                            title: '{% translate "授权账号"|escapejs %}',
                             field: 'grantees',
                             formatter: function (value, row, index) {
                                 let grantee = '';
@@ -198,14 +206,14 @@
                                 return grantee
                             }
                         }, {
-                            title: '负责人',
+                            title: '{% translate "负责人"|escapejs %}',
                             field: 'owner',
                             visible: false,
                         }, {
-                            title: '负责人',
+                            title: '{% translate "负责人"|escapejs %}',
                             field: 'owner_display'
                         }, {
-                            title: '备注',
+                            title: '{% translate "备注"|escapejs %}',
                             field: 'remark'
                         }
                     ]
@@ -213,23 +221,23 @@
                 case 'pgsql':
                     return [
                         {
-                            title: '数据库名',
+                            title: '{% translate "数据库名"|escapejs %}',
                             field: 'db_name'
                         }, {
-                            title: '字符集',
+                            title: '{% translate "字符集"|escapejs %}',
                             field: 'charset'
                         }, {
-                            title: '排序规则',
+                            title: '{% translate "排序规则"|escapejs %}',
                             field: 'collation'
                         }, {
-                            title: '负责人',
+                            title: '{% translate "负责人"|escapejs %}',
                             field: 'owner',
                             visible: false,
                         }, {
-                            title: '负责人',
+                            title: '{% translate "负责人"|escapejs %}',
                             field: 'owner_display'
                         }, {
-                            title: '备注',
+                            title: '{% translate "备注"|escapejs %}',
                             field: 'remark'
                         }
                     ]
@@ -274,7 +282,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
                 queryParams:
@@ -290,16 +298,16 @@
                 columns: [
                     ...get_db_columns(db_type),
                     {
-                        title: '操作',
+                        title: '{% translate "操作"|escapejs %}',
                         field: '',
                         formatter: function (value, row, index) {
-                            let btn_edit = "<button class=\"btn btn-primary btn-xs\" db_name=\"" + row.db_name + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";
+                            let btn_edit = "<button class=\"btn btn-primary btn-xs\" db_name=\"" + row.db_name + "\" onclick=\"show_edit_modal(this)" + "\">{% translate "编辑"|escapejs %}</button>\n";
                             return btn_edit
                         }
                     }],
                 onLoadSuccess: function (data) {
                     if (data.status !== 0) {
-                        alert("数据加载失败！" + data.msg);
+                        alert("{% translate '数据加载失败！'|escapejs %}" + data.msg);
                         $('#btn-create-database').addClass('disabled');
                         $('#btn-create-database').prop('disabled', true);
                     } else if ($("#instance").val()) {
@@ -313,11 +321,7 @@
                         }
                     }
                 },
-                onLoadError: onLoadErrorCallback,
-                onSearch: function (e) {
-                    //传搜索参数给服务器
-                    queryParams(e)
-                }
+                onLoadError: databaseLoadError
             });
 
         }
@@ -338,7 +342,7 @@
         //创建数据库
         function create_database() {
             if (!$("#instance").val()) {
-                alert("请选择实例！");
+                alert("{% translate '请选择实例！'|escapejs %}");
             } else {
                 $.ajax({
                     type: "post",

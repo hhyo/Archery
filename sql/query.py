@@ -5,6 +5,8 @@ import re
 import time
 import traceback
 
+from django.utils.translation import gettext as _
+
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.db import connection, close_old_connections
@@ -128,7 +130,9 @@ def generate_sql(request):
     db_type = request.POST.get("db_type")
     if not query_desc or not db_type:
         return HttpResponse(
-            json.dumps({"status": 1, "msg": "query_desc or db_type不存在", "data": []}),
+            json.dumps(
+                {"status": 1, "msg": _("query_desc or db_type不存在"), "data": []}
+            ),
             content_type="application/json",
         )
 
@@ -137,7 +141,7 @@ def generate_sql(request):
         instance = Instance.objects.get(instance_name=instance_name)
     except Instance.DoesNotExist:
         return HttpResponse(
-            json.dumps({"status": 1, "msg": "实例不存在", "data": []}),
+            json.dumps({"status": 1, "msg": _("实例不存在"), "data": []}),
             content_type="application/json",
         )
     db_name = request.POST.get("db_name")
@@ -183,7 +187,9 @@ def check_openai(request):
             json.dumps(
                 {
                     "status": 1,
-                    "msg": "openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]",
+                    "msg": _(
+                        "openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]"
+                    ),
                     "data": False,
                 }
             ),

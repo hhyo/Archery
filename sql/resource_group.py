@@ -3,6 +3,8 @@ import logging
 import traceback
 from itertools import chain
 
+from django.utils.translation import gettext as _
+
 import simplejson as json
 from django.contrib.auth.models import Group
 from django.db.models import F, Value, IntegerField
@@ -195,7 +197,7 @@ def auditors(request):
         )
     else:
         result["status"] = 1
-        result["msg"] = "参数错误"
+        result["msg"] = _("参数错误")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 获取权限组名称
@@ -206,7 +208,7 @@ def auditors(request):
                 Group.objects.get(id=auth_group_id)
             except Exception:
                 result["status"] = 1
-                result["msg"] = "审批流程权限组不存在，请重新配置！"
+                result["msg"] = _("审批流程权限组不存在，请重新配置！")
                 return HttpResponse(json.dumps(result), content_type="application/json")
         audit_auth_groups_name = "->".join(
             [

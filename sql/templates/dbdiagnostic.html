@@ -1,28 +1,29 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="process-toolbar" class="btn-group right" style="display:none;">
-        <button id="kill_process" class="btn btn-default" type="button">终止会话</button>
+        <button id="kill_process" class="btn btn-default" type="button">{% translate "终止会话" %}</button>
     </div>
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
         <li id="process_tab" class="active">
-            <a href="#process" role="tab" data-toggle="tab">进程状态</a>
+            <a href="#process" role="tab" data-toggle="tab">{% translate "进程状态" %}</a>
         </li>
         <li id="space_tab">
-            <a href="#space" role="tab" data-toggle="tab">Top表空间</a>
+            <a href="#space" role="tab" data-toggle="tab">{% translate "Top表空间" %}</a>
         </li>
         <li id="trx_tab">
-            <a href="#trx" role="tab" data-toggle="tab">事务信息</a>
+            <a href="#trx" role="tab" data-toggle="tab">{% translate "事务信息" %}</a>
         </li>
         <li id="trxandlocks_tab">
-            <a href="#trxandlocks" role="tab" data-toggle="tab">锁信息</a>
+            <a href="#trxandlocks" role="tab" data-toggle="tab">{% translate "锁信息" %}</a>
         </li>
         <div class="form-inline pull-right">
             <div class="form-group ">
                 <select id="instance_name" class="form-control selectpicker" name="instance_name_list"
-                        title="请选择实例:"
+                        title="{% translate '请选择实例:' %}"
                         data-live-search="true">
                         <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                         <optgroup id="optgroup-mongo" label="MongoDB"></optgroup>
@@ -36,7 +37,7 @@
                 </select>
             </div>
             <div id="command-div" class="form-group">
-                <select id="command" class="form-control selectpicker" name="command_type" title="command类型">
+                <select id="command" class="form-control selectpicker" name="command_type" title="{% translate 'command类型' %}">
                     <!--option value="All">All</option>
                     <option value="Query" selected="selected">Query</option>
                     <option value="Not Sleep">Not Sleep</option-->
@@ -78,15 +79,15 @@
                 <div class="modal-header ">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">确定要终止所选会话吗？</h4>
+                    <h4 class="modal-title text-danger">{% translate "确定要终止所选会话吗？" %}</h4>
                 </div>
                 <div class="modal-body">
                     <input type="text" id="request_params" hidden>
                     <b id="kill_sql"></b>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button type="button" onclick="kill_session()" class="btn btn-danger" data-dismiss="modal">确定终止
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" onclick="kill_session()" class="btn btn-danger" data-dismiss="modal">{% translate "确定终止" %}
                     </button>
                 </div>
             </div>
@@ -96,12 +97,19 @@
 {% endblock content %}
 
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
     {% load static %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script src="{% static 'dbdiagnostic/js/db_info.js' %}"></script>
     <script>
 
+        function diagnosticLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         var processListColumns  = [];
         var tablespaceListColumns = [];
         var lockListColumns = [];
@@ -176,7 +184,7 @@
                     detailView: true,                  //是否显示父子表
                     //格式化详情
                     detailFormatter: processListDetailFormatCallback,
-                    locale: 'zh-CN',                    //本地化
+                    locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                     toolbar: "#process-toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -189,14 +197,10 @@
                     columns: processListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
-                            alert("数据加载失败！" + data.msg);
+                            alert("{% translate '数据加载失败！'|escapejs %}" + data.msg);
                         }
                     },
-                    onLoadError: onLoadErrorCallback,
-                    onSearch: function (e) {
-                        //传搜索参数给服务器
-                        queryParams(e)
-                    },
+                    onLoadError: diagnosticLoadError,
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源
                         return res;
@@ -211,53 +215,53 @@
             [
                 'mysql',
                 [{
-                     title: '数据库',
+                     title: '{% translate "数据库"|escapejs %}',
                      field: 'table_schema'
                  }, {
-                     title: '表名',
+                     title: '{% translate "表名"|escapejs %}',
                      field: 'table_name'
                  }, {
-                     title: '存储引擎',
+                     title: '{% translate "存储引擎"|escapejs %}',
                      field: 'engine'
                  }, {
-                     title: '总空间(MB)',
+                     title: '{% translate "总空间(MB)"|escapejs %}',
                      field: 'total_size'
                  }, {
-                     title: '行数',
+                     title: '{% translate "行数"|escapejs %}',
                      field: 'table_rows'
                  }, {
-                     title: '数据空间(MB)',
+                     title: '{% translate "数据空间(MB)"|escapejs %}',
                      field: 'data_size'
                  }, {
-                     title: '索引空间(MB)',
+                     title: '{% translate "索引空间(MB)"|escapejs %}',
                      field: 'index_size'
                  }, {
-                     title: '碎片空间(MB)',
+                     title: '{% translate "碎片空间(MB)"|escapejs %}',
                      field: 'data_free'
                  }, {
-                     title: '碎片率(%)',
+                     title: '{% translate "碎片率(%)"|escapejs %}',
                      field: 'pct_free'
                  }]
             ],
             [
                 'oracle',
                 [{
-                    title: '表空间名',
+                    title: '{% translate "表空间名"|escapejs %}',
                     field: 'TABLESPACE_NAME'
                 }, {
-                    title: '表空间类型',
+                    title: '{% translate "表空间类型"|escapejs %}',
                     field: 'TABLESPACE_TYPE'
                 }, {
-                    title: '状态',
+                    title: '{% translate "状态"|escapejs %}',
                     field: 'STATUS'
                 }, {
-                    title: '总空间(MB)',
+                    title: '{% translate "总空间(MB)"|escapejs %}',
                     field: 'TOTAL_SPACE'
                 }, {
-                    title: '已使用空间(MB)',
+                    title: '{% translate "已使用空间(MB)"|escapejs %}',
                     field: 'USED_SPACE'
                 }, {
-                    title: '使用率(%)',
+                    title: '{% translate "使用率(%)"|escapejs %}',
                     field: 'PCT_USED'
                 }]
             ]
@@ -268,31 +272,31 @@
         tablespaceListTableInfos.push(gaussdbTableInfo)
         let clickhouseTableInfo = ['clickhouse',
             [{
-                title: '数据库',
+                title: '{% translate "数据库"|escapejs %}',
                 field: 'database'
             }, {
-                title: '表名',
+                title: '{% translate "表名"|escapejs %}',
                 field: 'table'
             }, {
-                title: '存储引擎',
+                title: '{% translate "存储引擎"|escapejs %}',
                 field: 'engine'
             }, {
-                title: '行数',
+                title: '{% translate "行数"|escapejs %}',
                 field: 'table_rows'
             }, {
-                title: '总空间',
+                title: '{% translate "总空间"|escapejs %}',
                 field: 'total_size'
             }, {
-                title: '索引空间',
+                title: '{% translate "索引空间"|escapejs %}',
                 field: 'marks_bytes'
             }, {
-                title: '数据空间(未压缩)',
+                title: '{% translate "数据空间(未压缩)"|escapejs %}',
                 field: 'data_uncompressed'
             }, {
-                title: '数据空间(压缩后)',
+                title: '{% translate "数据空间(压缩后)"|escapejs %}',
                 field: 'data_compressed'
             }, {
-                title: '压缩率',
+                title: '{% translate "压缩率"|escapejs %}',
                 field: 'compress_ratio'
             }]
         ]
@@ -300,34 +304,34 @@
         let mongoTableInfo = [
             'mongo',
             [{
-                title: '集合名',
+                title: '{% translate "集合名"|escapejs %}',
                 field: 'ns'
             }, {
-                title: '总空间(MB)',
+                title: '{% translate "总空间(MB)"|escapejs %}',
                 field: 'totalSize'
             }, {
-                title: '行数',
+                title: '{% translate "行数"|escapejs %}',
                 field: 'count'
             }, {
-                title: '未压缩的数据空间(MB)',
+                title: '{% translate "未压缩的数据空间(MB)"|escapejs %}',
                 field: 'size'
             }, {
-                title: '每行平均(B)',
+                title: '{% translate "每行平均(B)"|escapejs %}',
                 field: 'avgObjSize'
             }, {
-                title: '压缩后的数据空间(MB)',
+                title: '{% translate "压缩后的数据空间(MB)"|escapejs %}',
                 field: 'storageSize'
             }, {
-                title: '碎片空间(MB)',
+                title: '{% translate "碎片空间(MB)"|escapejs %}',
                 field: 'freeStorageSize'
             }, {
-                title: '固定集合',
+                title: '{% translate "固定集合"|escapejs %}',
                 field: 'capped'
             }, {
-                title: '索引数',
+                title: '{% translate "索引数"|escapejs %}',
                 field: 'nindexes'
             }, {
-                title: '索引空间(MB)',
+                title: '{% translate "索引空间(MB)"|escapejs %}',
                 field: 'totalIndexSize'
             }]
         ]
@@ -366,7 +370,7 @@
                     exportDataType: "all",
                     cardView: false,                    //是否显示详细视图
                     detailView: false,                  //是否显示父子表
-                    locale: 'zh-CN',                    //本地化
+                    locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -381,14 +385,10 @@
                     columns: tablespaceListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
-                            alert("数据加载失败！" + data.msg);
+                            alert("{% translate '数据加载失败！'|escapejs %}" + data.msg);
                         }
                     },
-                    onLoadError: onLoadErrorCallback,
-                    onSearch: function (e) {
-                        //传搜索参数给服务器
-                        queryParams(e)
-                    },
+                    onLoadError: diagnosticLoadError,
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源
                         return res;
@@ -438,7 +438,7 @@
                         });
                         return html.join('');
                     },
-                    locale: 'zh-CN',                    //本地化
+                    locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -500,20 +500,16 @@
                             return truncateText(value, 20);
                         }
                     }, {
-                        title: '完整INFO',
+                        title: '{% translate "完整INFO"|escapejs %}',
                         field: 'info',
                         visible: false // 默认不显示
                     }],
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
-                            alert("数据加载失败！" + data.msg);
+                            alert("{% translate '数据加载失败！'|escapejs %}" + data.msg);
                         }
                     },
-                    onLoadError: onLoadErrorCallback,
-                    onSearch: function (e) {
-                        //传搜索参数给服务器
-                        queryParams(e)
-                    }
+                    onLoadError: diagnosticLoadError,
                 });
             }
         }
@@ -524,53 +520,53 @@
             [
                 'mysql',
                 [{
-                    title: '等待的状态',
+                    title: '{% translate "等待的状态"|escapejs %}',
                     field: '等待的状态'
                 }, {
-                    title: '等待事务开始时间',
+                    title: '{% translate "等待事务开始时间"|escapejs %}',
                     field: '等待事务开始时间',
                     sortable: true
                 }, {
-                    title: '等待事务等待开始时间',
+                    title: '{% translate "等待事务等待开始时间"|escapejs %}',
                     field: '等待事务等待开始时间'
                 }, {
-                    title: '等待事务ID',
+                    title: '{% translate "等待事务ID"|escapejs %}',
                     field: '等待事务ID',
                 }, {
-                    title: '等待事务线程ID',
+                    title: '{% translate "等待事务线程ID"|escapejs %}',
                     field: '等待事务线程ID',
                 }, {
-                    title: '等待事务的sql',
+                    title: '{% translate "等待事务的sql"|escapejs %}',
                     field: '等待事务的sql',
                 }, {
-                    title: '等待的表信息',
+                    title: '{% translate "等待的表信息"|escapejs %}',
                     field: '等待的表信息',
                 }, {
-                    title: '等待的锁id',
+                    title: '{% translate "等待的锁id"|escapejs %}',
                     field: '等待的锁id'
                 }, {
-                    title: '运行的事务id',
+                    title: '{% translate "运行的事务id"|escapejs %}',
                     field: '运行的事务id'
                 }, {
-                    title: '运行的事务线程id',
+                    title: '{% translate "运行的事务线程id"|escapejs %}',
                     field: '运行的事务线程id',
                 }, {
-                    title: '运行的表信息',
+                    title: '{% translate "运行的表信息"|escapejs %}',
                     field: '运行的表信息'
                 }, {
-                    title: '运行的锁id',
+                    title: '{% translate "运行的锁id"|escapejs %}',
                     field: '运行的锁id'
                 }, {
-                    title: '运行事务的状态',
+                    title: '{% translate "运行事务的状态"|escapejs %}',
                     field: '运行事务的状态'
                 }, {
-                    title: '运行事务的时间',
+                    title: '{% translate "运行事务的时间"|escapejs %}',
                     field: '运行事务的时间',
                 }, {
-                    title: '运行事务的等待开始时间',
+                    title: '{% translate "运行事务的等待开始时间"|escapejs %}',
                     field: '运行事务的等待开始时间',
                 }, {
-                    title: '运行事务的sql',
+                    title: '{% translate "运行事务的sql"|escapejs %}',
                     field: '运行事务的sql',
                 }],
                  function (index, row) {
@@ -634,69 +630,69 @@
         lockListTableInfos.push([
             'gaussdb',
             [{
-                title: '等待PID',
+                title: '{% translate "等待PID"|escapejs %}',
                 field: 'blocked_pid',
                 sortable: true
             }, {
-                title: '等待用户',
+                title: '{% translate "等待用户"|escapejs %}',
                 field: 'blocked_user',
                 sortable: true
             }, {
-                title: '等待数据库',
+                title: '{% translate "等待数据库"|escapejs %}',
                 field: 'blocked_database',
                 sortable: true
             }, {
-                title: '等待SQL',
+                title: '{% translate "等待SQL"|escapejs %}',
                 field: 'blocked_query',
                 formatter: function (value, row, index) {
                     return truncateText(value, 30);
                 }
             }, {
-                title: '等待SQL完整内容',
+                title: '{% translate "等待SQL完整内容"|escapejs %}',
                 field: 'blocked_query',
                 visible: false
             }, {
-                title: '等待开始时间',
+                title: '{% translate "等待开始时间"|escapejs %}',
                 field: 'blocked_query_start',
                 sortable: true
             }, {
-                title: '阻塞PID',
+                title: '{% translate "阻塞PID"|escapejs %}',
                 field: 'blocking_pid',
                 sortable: true
             }, {
-                title: '阻塞用户',
+                title: '{% translate "阻塞用户"|escapejs %}',
                 field: 'blocking_user',
                 sortable: true
             }, {
-                title: '阻塞SQL',
+                title: '{% translate "阻塞SQL"|escapejs %}',
                 field: 'blocking_query',
                 formatter: function (value, row, index) {
                     return truncateText(value, 30);
                 }
             }, {
-                title: '锁类型',
+                title: '{% translate "锁类型"|escapejs %}',
                 field: 'locktype',
                 sortable: true
             }, {
-                title: '等待锁模式',
+                title: '{% translate "等待锁模式"|escapejs %}',
                 field: 'blocked_mode',
                 sortable: true
             }, {
-                title: '持有锁模式',
+                title: '{% translate "持有锁模式"|escapejs %}',
                 field: 'blocking_mode',
                 sortable: true
             }, {
-                title: '对象',
+                title: '{% translate "对象"|escapejs %}',
                 field: 'relation',
                 sortable: true
             }],
             function (index, row) {
                 var html = [];
                 if (row.blocked_query) {
-                    html.push('<div><strong>等待SQL</strong><br><span>' + formatSqlText(row.blocked_query) + '</span></div>');
+                    html.push('<div><strong>{% translate "等待SQL"|escapejs %}</strong><br><span>' + formatSqlText(row.blocked_query) + '</span></div>');
                 }
                 if (row.blocking_query) {
-                    html.push('<div><strong>阻塞SQL</strong><br><span>' + formatSqlText(row.blocking_query) + '</span></div>');
+                    html.push('<div><strong>{% translate "阻塞SQL"|escapejs %}</strong><br><span>' + formatSqlText(row.blocking_query) + '</span></div>');
                 }
                 return html.join('');
             }
@@ -736,7 +732,7 @@
                     cardView: false,                    //是否显示详细视图
                     detailView: true,                  //是否显示父子表
                     detailFormatter: lockListDetailFormatCallback,
-                    locale: 'zh-CN',                    //本地化
+                    locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -748,14 +744,10 @@
                     columns: lockListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
-                            alert("数据加载失败！" + data.msg);
+                            alert("{% translate '数据加载失败！'|escapejs %}" + data.msg);
                         }
                     },
-                    onLoadError: onLoadErrorCallback,
-                    onSearch: function (e) {
-                        //传搜索参数给服务器
-                        queryParams(e)
-                    }
+                    onLoadError: diagnosticLoadError,
                 });
             }
         }
@@ -810,7 +802,7 @@
                         }
                     })
                 } else {
-                    alert("请先选择要终止的会话")
+                    alert("{% translate '请先选择要终止的会话'|escapejs %}")
                 }
             });
         });
@@ -859,10 +851,10 @@
                         }
                     })
                 } else {
-                    alert("所选会话已终止！")
+                    alert("{% translate '所选会话已终止！'|escapejs %}")
                 }
             } else {
-                alert("请先选择要终止的会话")
+                alert("{% translate '请先选择要终止的会话'|escapejs %}")
             }
         }
 

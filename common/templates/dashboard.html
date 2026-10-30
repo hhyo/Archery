@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% load cache %}
 
 {% block content %}
-    {% cache 600 dashboard %}
+    {% cache 600 dashboard LANGUAGE_CODE %}
         <!-- /.row -->
         <div class="row">
             <div class="col-lg-3 col-md-6">
@@ -15,13 +16,13 @@
                             </div>
                             <div class="col-xs-9 text-right">
                                 <div class="huge">{{ count_stats.sql_wf_cnt }}</div>
-                                <div>SQL上线工单</div>
+                                <div>{% translate "SQL上线工单" context "remaining pages" %}</div>
                             </div>
                         </div>
                     </div>
                     <a href="/sqlworkflow/">
                         <div class="panel-footer">
-                            <span class="pull-left">更多</span>
+                            <span class="pull-left">{% translate "更多" context "remaining pages" %}</span>
                             <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
                             <div class="clearfix"></div>
                         </div>
@@ -37,13 +38,13 @@
                             </div>
                             <div class="col-xs-9 text-right">
                                 <div class="huge">{{ count_stats.query_wf_cnt }}</div>
-                                <div>SQL查询工单</div>
+                                <div>{% translate "SQL查询工单" context "remaining pages" %}</div>
                             </div>
                         </div>
                     </div>
                     <a href="/queryapplylist/">
                         <div class="panel-footer">
-                            <span class="pull-left">更多</span>
+                            <span class="pull-left">{% translate "更多" context "remaining pages" %}</span>
                             <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
                             <div class="clearfix"></div>
                         </div>
@@ -59,13 +60,13 @@
                             </div>
                             <div class="col-xs-9 text-right">
                                 <div class="huge">{{ count_stats.user_cnt }}</div>
-                                <div>有效平台用户</div>
+                                <div>{% translate "有效平台用户" context "remaining pages" %}</div>
                             </div>
                         </div>
                     </div>
                     <a href="/admin/sql/users/">
                         <div class="panel-footer">
-                            <span class="pull-left">更多</span>
+                            <span class="pull-left">{% translate "更多" context "remaining pages" %}</span>
                             <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
                             <div class="clearfix"></div>
                         </div>
@@ -81,13 +82,13 @@
                             </div>
                             <div class="col-xs-9 text-right">
                                 <div class="huge">{{ count_stats.ins_cnt }}</div>
-                                <div>实例数量</div>
+                                <div>{% translate "实例数量" context "remaining pages" %}</div>
                             </div>
                         </div>
                     </div>
                     <a href="/instance/">
                         <div class="panel-footer">
-                            <span class="pull-left">更多</span>
+                            <span class="pull-left">{% translate "更多" context "remaining pages" %}</span>
                             <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
                             <div class="clearfix"></div>
                         </div>
@@ -99,7 +100,7 @@
             <div class="col-lg-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> 数据库实例类型统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "数据库实例类型统计" context "remaining pages" %}
                     </div>
                     <div class="panel-body">
                         <div class="row">
@@ -121,7 +122,7 @@
             <div class='form-group'>
                 <div id="reservation" class="form-control"
                     style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
-                    统计时间范围：<i class="fa fa-calendar"></i>&nbsp;
+                    {% translate "统计时间范围：" context "remaining pages" %}<i class="fa fa-calendar"></i>&nbsp;
                     <span></span> <i class="fa fa-caret-down"></i>
                 </div>
             </div>
@@ -133,7 +134,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL查询统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "SQL查询统计" context "remaining pages" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-line1" class="panel-body">
@@ -144,7 +145,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线数量
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "SQL上线数量" context "remaining pages" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-bar1" class="panel-body">
@@ -156,7 +157,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线用户
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "SQL上线用户" context "remaining pages" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-bar2" class="panel-body">
@@ -167,7 +168,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线工单
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "SQL上线工单" context "remaining pages" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-bar5" class="panel-body">
@@ -177,7 +178,7 @@
                 </div>    
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> 24h慢查询db维度统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "24h慢查询db维度统计" context "remaining pages" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-bar3" class="panel-body">
@@ -191,7 +192,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "SQL上线统计" context "remaining pages" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-pie1" class="panel-body">
@@ -202,7 +203,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> DB检索行数
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "DB检索行数" context "remaining pages" %}
                     </div>
                     <div id="chart-pie5" class="panel-body">
                         {{ chart.pie5|safe }}
@@ -212,7 +213,7 @@
                 <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL查询用户
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "SQL查询用户" context "remaining pages" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-pie4" class="panel-body">
@@ -222,7 +223,7 @@
                 </div>
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线工单类型
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "SQL上线工单类型" context "remaining pages" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-pie2" class="panel-body">{{ chart.pie2|safe }}</div>
@@ -231,7 +232,7 @@
     
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> 24h慢查询db/user维度统计
+                        <i class="fa fa-bar-chart-o fa-fw"></i> {% translate "24h慢查询db/user维度统计" context "remaining pages" %}
                     </div>
                     <!-- /.panel-heading -->
                     <div id="chart-pie3" class="panel-body">
@@ -263,7 +264,7 @@
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html('{% translate "全部数据" context "remaining pages" %}');
                 }
             }
 
@@ -275,23 +276,23 @@
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
                     // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    applyLabel: "{% translate "确定" context "remaining pages" %}",
+                    cancelLabel: "{% translate "取消" context "remaining pages" %}",
+                    fromLabel: "{% translate "开始" context "remaining pages" %}",
+                    toLabel: "{% translate "结束" context "remaining pages" %}",
+                    customRangeLabel: "{% translate "自定义" context "remaining pages" %}",
+                    daysOfWeek: ["{% translate "日" context "remaining pages" %}", "{% translate "一" context "remaining pages" %}", "{% translate "二" context "remaining pages" %}", "{% translate "三" context "remaining pages" %}", "{% translate "四" context "remaining pages" %}", "{% translate "五" context "remaining pages" %}", "{% translate "六" context "remaining pages" %}"],
+                    monthNames: ["{% translate "一月" context "remaining pages" %}", "{% translate "二月" context "remaining pages" %}", "{% translate "三月" context "remaining pages" %}", "{% translate "四月" context "remaining pages" %}", "{% translate "五月" context "remaining pages" %}", "{% translate "六月" context "remaining pages" %}", "{% translate "七月" context "remaining pages" %}", "{% translate "八月" context "remaining pages" %}", "{% translate "九月" context "remaining pages" %}", "{% translate "十月" context "remaining pages" %}", "{% translate "十一月" context "remaining pages" %}", "{% translate "十二月" context "remaining pages" %}"],
                     firstDay: 1
                 },
                 ranges: {
-                    "最近7日": [moment().subtract('days', 6), moment().subtract('days', -1)],
-                    "最近30日": [moment().subtract('days', 29), moment().subtract('days', -1)],
-                    "最近365日": [moment().subtract('days', 364), moment().subtract('days', -1)],
-                    "本月": [moment().startOf("month"), moment().endOf("month").subtract('days', -1)],
-                    "本年": [moment().startOf("year"), moment().endOf("year").subtract('days', -1)],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month").subtract('days', -1)],
-                    "上一年": [moment().subtract(1, "year").startOf("year"), moment().subtract(1, "year").endOf("year").subtract('days', -1)]
+                    "{% translate "最近7日" context "remaining pages" %}": [moment().subtract('days', 6), moment().subtract('days', -1)],
+                    "{% translate "最近30日" context "remaining pages" %}": [moment().subtract('days', 29), moment().subtract('days', -1)],
+                    "{% translate "最近365日" context "remaining pages" %}": [moment().subtract('days', 364), moment().subtract('days', -1)],
+                    "{% translate "本月" context "remaining pages" %}": [moment().startOf("month"), moment().endOf("month").subtract('days', -1)],
+                    "{% translate "本年" context "remaining pages" %}": [moment().startOf("year"), moment().endOf("year").subtract('days', -1)],
+                    "{% translate "上个月" context "remaining pages" %}": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month").subtract('days', -1)],
+                    "{% translate "上一年" context "remaining pages" %}": [moment().subtract(1, "year").startOf("year"), moment().subtract(1, "year").endOf("year").subtract('days', -1)]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 let startDate = picker.startDate.format('YYYY-MM-DD');

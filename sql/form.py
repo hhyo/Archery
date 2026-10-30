@@ -9,6 +9,7 @@
 ---------------------------------------------------------
 """
 
+from django.utils.translation import pgettext_lazy
 from django.forms import ModelForm, Textarea
 from sql.models import Tunnel, Instance
 from django.core.exceptions import ValidationError
@@ -33,7 +34,10 @@ class TunnelForm(ModelForm):
                     )
             except IOError:
                 raise ValidationError(
-                    "秘钥文件不存在， 请勾选秘钥路径的清除选项再进行保存"
+                    pgettext_lazy(
+                        "ssh tunnel",
+                        "秘钥文件不存在， 请勾选秘钥路径的清除选项再进行保存",
+                    )
                 )
 
 

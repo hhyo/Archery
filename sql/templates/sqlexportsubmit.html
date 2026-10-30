@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    数据导出
+                    {% translate "数据导出" %}
                 </div>
                 <div class="panel-body">
                     <form id="form-submitsql" class="form-horizontal">
@@ -18,10 +19,10 @@
                                 <div class="notice-icon" id="noticeIcon">
                                 </div>
 			                    <div class="notice-content">
-			                        <div class="notice-title">行数统计中...</div>
-			                        <div class="notice-message">正在校验SQL语法并统计结果行数，请稍候...</div>
+			                        <div class="notice-title">{% translate "行数统计中..." %}</div>
+			                        <div class="notice-message">{% translate "正在校验SQL语法并统计结果行数，请稍候..." %}</div>
 			                    </div>
-			                    <button class="close-notice" id="closeNotice" title="关闭">
+			                    <button class="close-notice" id="closeNotice" title="{% translate "关闭" %}">
 			                        &times;
 			                    </button>
                                 <div class="progress-bar">
@@ -30,9 +31,9 @@
 			                </div>
                         </div>
                         <div style="display: none" class="col-md-8 column">
-                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
-                                      data-placeholder="SQL内容不能为空！"
-                                      placeholder="请在此提交SQL，请以分号结尾。" rows=20
+                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="{% translate "SQL内容" %}"
+                                      data-placeholder="{% translate "SQL内容不能为空！" %}"
+                                      placeholder="{% translate "请在此提交SQL，请以分号结尾。" %}" rows=20
                                       required></textarea>
                         </div>
                         <div class="col-md-3 column">
@@ -42,16 +43,16 @@
                             <div class="form-group">
                                 <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
                                        class="form-control"
-                                       data-name="导出工单名称" data-placeholder="请输入导出工单名称!"
-                                       placeholder="请输入导出工单名称，如:XX项目会员数据导出"
+                                       data-name="{% translate "导出工单名称" %}" data-placeholder="{% translate "请输入导出工单名称!" %}"
+                                       placeholder="{% translate "请输入导出工单名称，如:XX项目会员数据导出" %}"
                                        required>
                             </div>
                             <div class="form-group toggleable">
                                 <select id="export_format" name="export_format"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="离线导出数据格式" data-placeholder="请选择导出数据格式！"
-                                        title="请选择导出数据格式"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
+                                        data-name="{% translate "离线导出数据格式" %}" data-placeholder="{% translate "请选择导出数据格式！" %}"
+                                        title="{% translate "请选择导出数据格式" %}"
+                                        data-live-search="true" data-live-search-placeholder="{% translate "搜索导出格式" %}" required>
                                     <option value="csv">CSV</option>
                                     <option value="xlsx">Excel</option>
                                     <option value="sql">SQL</option>
@@ -62,9 +63,9 @@
                             <div class="form-group">
                                 <select id="group_name" name="group_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="组" data-placeholder="请选择组！"
-                                        title="请选择组"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
+                                        data-name="{% translate "组" %}" data-placeholder="{% translate "请选择组！" %}"
+                                        title="{% translate "请选择组" %}"
+                                        data-live-search="true" data-live-search-placeholder="{% translate "搜索您所在的组" %}" required>
                                     {% for group in group_list %}
                                         <option value="{{ group.group_name }}"
                                                 group-id="{{ group.group_id }}">{{ group.group_name }}</option>
@@ -74,9 +75,9 @@
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="实例" data-placeholder="请选择实例！"
-                                        title="请选择实例"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
+                                        data-name="{% translate "实例" %}" data-placeholder="{% translate "请选择实例！" %}"
+                                        title="{% translate "请选择实例" %}"
+                                        data-live-search="true" data-live-search-placeholder="{% translate "搜索您所在组的实例" %}" required>
                                 {% for name, engine in engines.items %}
                                     <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
                                 {%  endfor %}
@@ -85,11 +86,11 @@
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-name="数据库" data-placeholder="请选择数据库！"
-                                        data-live-search="true" data-live-search-placeholder="搜索要提交的数据库"
-                                        title="请选择数据库"
+                                        data-name="{% translate "数据库" %}" data-placeholder="{% translate "请选择数据库！" %}"
+                                        data-live-search="true" data-live-search-placeholder="{% translate "搜索要提交的数据库" %}"
+                                        title="{% translate "请选择数据库" %}"
                                         required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                                    <option value="is-empty" disabled="" selected="selected">{% translate "请选择数据库:" %}</option>
                                 </select>
                             </div>
                             <!--可执行范围时间-->
@@ -98,7 +99,7 @@
                                 <input type="hidden" id="run_date_end" name="run_date_end">
                                 <div class='input-group date'>
                                     <input type="text" id="run_date_range" readonly
-                                           value="请选择可执行时间范围"
+                                           value="{% translate "请选择可执行时间范围" %}"
                                            style="background-color: #fff;color: #999 "
                                            class="form-control "/>
                                     <span class="input-group-addon"><span
@@ -106,20 +107,20 @@
                                 </div>
                             </div>
                             <!--审批流程-->
-                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
-                                   data-placeholder="请配置审批流程！" required>
+                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="{% translate "审批流程" %}"
+                                   data-placeholder="{% translate "请配置审批流程！" %}" required>
                             <div id="div-workflow_auditors" class="form-group" style="display: none">
-                                <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
+                                <p class="bg-primary">&nbsp&nbsp&nbsp{% translate "审批流程：" %}<b id="workflow_auditors_display"></b></p>
                             </div>
                             <!--button-->
                             <div class="form-group">
-                                <button type="button" id="btn-format" class="btn btn-info">美化</button>
-                                <button type="button" id="btn-autoreview" data-loading-text="检测中..."
-                                        class="btn btn-danger">导出校验
+                                <button type="button" id="btn-format" class="btn btn-info">{% translate "美化" %}</button>
+                                <button type="button" id="btn-autoreview" data-loading-text="{% translate "检测中..." %}"
+                                        class="btn btn-danger">{% translate "导出校验" %}
                                 </button>
-                                <button type="button" id="btn-submitsql" data-loading-text="提交中..."
+                                <button type="button" id="btn-submitsql" data-loading-text="{% translate "提交中..." %}"
                                         class="btn btn-success" disabled>
-                                    导出提交
+                                    {% translate "导出提交" %}
                                 </button>
                             </div>
                         </div>
@@ -131,6 +132,7 @@
 {% endblock content %}
 {% block js %}
     {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
     <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'ace/ace.js' %}"></script>
@@ -162,8 +164,8 @@
             noticeIcon.classList.remove('icon-loading','icon-success','icon-error');
             noticeIcon.classList.add('icon-loading');
             validationNotice.className = 'validation-notice visible';
-            validationNotice.querySelector('.notice-title').textContent = "行数统计中...";
-            validationNotice.querySelector('.notice-message').textContent = "正在校验SQL语法并统计结果行数，请稍候...";
+            validationNotice.querySelector('.notice-title').textContent = "{% translate "行数统计中..."|escapejs %}";
+            validationNotice.querySelector('.notice-message').textContent = "{% translate "正在校验SQL语法并统计结果行数，请稍候..."|escapejs %}";
             validationNotice.classList.remove('status-success', 'status-error', 'status-warning');
         }
 
@@ -179,7 +181,7 @@
                 element = validationNotice,   // 默认使用validationNotice元素
                 noticeIconClass = '',         // 通知图标元素
                 statusClass = 'status-error', // 状态类名
-                title = '校验失败',            // 默认标题
+                title = '{% translate "校验失败"|escapejs %}',            // 默认标题
                 message = '',                 // 默认消息
                 params = {},                  // 消息中的替换参数
                 delay = 5000,                 // 默认5秒后消失
@@ -189,7 +191,7 @@
 
             // 替换消息中的占位符 {key} => value
             const formatMessage = (msg, values) => {
-                return msg.replace(/\{(\w+)\}/g, (_, key) => values[key] || '');
+                return msg.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
             };
         
             const formattedMessage = formatMessage(message, params);
@@ -254,10 +256,10 @@
             startDate: moment().startOf('hour'),
             endDate: moment().startOf('hour'),
             locale: {
-                "applyLabel": "确定",
-                "cancelLabel": "清空",
-                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
-                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "applyLabel": "{% translate "确定"|escapejs %}",
+                "cancelLabel": "{% translate "清空"|escapejs %}",
+                "daysOfWeek": ["{% translate "日"|escapejs %}", "{% translate "一"|escapejs %}", "{% translate "二"|escapejs %}", "{% translate "三"|escapejs %}", "{% translate "四"|escapejs %}", "{% translate "五"|escapejs %}", "{% translate "六"|escapejs %}"],
+                "monthNames": ["{% translate "一月"|escapejs %}", "{% translate "二月"|escapejs %}", "{% translate "三月"|escapejs %}", "{% translate "四月"|escapejs %}", "{% translate "五月"|escapejs %}", "{% translate "六月"|escapejs %}", "{% translate "七月"|escapejs %}", "{% translate "八月"|escapejs %}", "{% translate "九月"|escapejs %}", "{% translate "十月"|escapejs %}", "{% translate "十一月"|escapejs %}", "{% translate "十二月"|escapejs %}"],
                 "firstDay": 1
             },
         }).on('apply.daterangepicker', function (ev, picker) {
@@ -267,10 +269,58 @@
             $(this).val(picker.startDate.format('MM-DD HH:mm') + ' / ' + picker.endDate.format('MM-DD HH:mm'));
         }).on('cancel.daterangepicker', function (ev, picker) {
             $(this).css("color", "#999");
-            $(this).val('请选择可执行时间范围');
+            $(this).val('{% translate "请选择可执行时间范围"|escapejs %}');
             $("#run_date_start").val('');
             $("#run_date_end").val('');
         });
+    </script>
+    <!--upload -->
+    <script>
+        //初始化上传控件
+        function init_upload() {
+            $("#sql-upload").fileinput({
+                language: '{% if LANGUAGE_CODE == "en" %}en{% else %}zh{% endif %}' ,
+                allowedFileExtensions: ['sql'],//接收的文件后缀
+                showCaption: true,//是否显示标题
+                initialCaption: '{% translate "仅支持10M内的SQL文件"|escapejs %}',
+                defaultPreviewContent: '{% translate "仅支持10M内的SQL文件"|escapejs %}',
+                showUpload: false,     //不显示上传按钮
+                showPreview: false,    // 不显示预览,
+                //maxFileSize: 10240
+            }).on('fileloaded', function (event, data, previewId, index) {
+                if (data.size <= 10240 * 1024) {
+                    loadsql();
+                } else {
+                    $('#sql-upload').fileinput('reset');
+                    alert('{% translate "文件大小超过10M，请重新选择"|escapejs %}');
+                }
+            }).on('fileclear', function (event) {
+                editor.setValue("");
+            });
+        }
+
+        //读取文件并展示在输入域
+        function loadsql() {
+            //获取文件
+            var file = $("#sql-upload")[0].files[0];
+
+            //创建读取文件的对象
+            var reader = new FileReader();
+
+            //创建文件读取相关的变量
+            var sqlFile;
+
+            //为文件读取成功设置事件
+            reader.onload = function (e) {
+                var sqlFile = e.target.result;
+                var value = editor.getValue() + sqlFile;
+                editor.setValue(value);
+                editor.clearSelection();
+            };
+
+            //正式读取文件
+            reader.readAsText(file);
+        }
     </script>
     <!--ace -->
     <script>
@@ -321,7 +371,9 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    alert(XMLHttpRequest.status === 403
+                        ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                        : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
                 }
             });
         });
@@ -348,7 +400,9 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    alert(XMLHttpRequest.status === 403
+                        ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                        : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
                 }
             });
         });
@@ -372,7 +426,7 @@
                         return result;
                     }
                     if(fieldId == "workflow_name" && value.length>=50){
-                        alert("导出工单名称不能超过50个字符！");
+                        alert("{% translate "导出工单名称不能超过50个字符！"|escapejs %}");
                         result = false;
                         return result;
                     }
@@ -417,7 +471,7 @@
                 if (realGap >= gap) {
                     return true
                 } else {
-                    alert("可执行时间范围不应该短于" + gap + "分钟");
+                    alert("{% translate "可执行时间范围不应该短于{minutes}分钟"|escapejs %}".replace("{minutes}", gap));
                     return false
                 }
             }
@@ -457,16 +511,16 @@
                 .length; // 统计语句数量
 
             if (!instance_name) {
-                alert("请选择实例！");
+                alert("{% translate "请选择实例！"|escapejs %}");
                 return result = false;
             } else if (!db_name) {
-                alert("请选择数据库！");
+                alert("{% translate "请选择数据库！"|escapejs %}");
                 return result = false;
             } else if (!sqlContent) {
-                alert("SQL内容不能为空！");
+                alert("{% translate "SQL内容不能为空！"|escapejs %}");
                 return result = false;
             } else if (isOfflineExport === 1 && totalSqlCnt > 1) {
-                alert("检测到多个查询语句，只能提交一个导出查询，请选中要提交导出工单的语句重试。");
+                alert("{% translate "检测到多个查询语句，只能提交一个导出查询，请选中要提交导出工单的语句重试。"|escapejs %}");
                 return result = false;
             }
             return result;
@@ -502,7 +556,9 @@
                     validate_data(data);
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    alert(XMLHttpRequest.status === 403
+                        ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                        : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
                 }
             });
         }
@@ -513,8 +569,8 @@
             $("#sql_content").val(editor.getValue());
             if (validateForm($("#form-submitsql")) && checkRunDate()) {
                 resetValidationNotice()
-                validationNotice.querySelector('.notice-title').textContent = "工单提交中...";
-                validationNotice.querySelector('.notice-message').textContent = "后台二次校验，请稍候...";
+                validationNotice.querySelector('.notice-title').textContent = "{% translate "工单提交中..."|escapejs %}";
+                validationNotice.querySelector('.notice-message').textContent = "{% translate "后台二次校验，请稍候..."|escapejs %}";
                 editor.container.style.pointerEvents = "none";
                 editor.container.style.opacity = 0.6;
                 sqlSubmit()
@@ -527,14 +583,15 @@
             if (data.status === 0) {
                 var ActualRows = 0;
                 var maxExportRows = "{{ max_export_rows }}";
-                ActualRows = parseFloat(result['affected_rows']);
+                const countRow = result.rows && result.rows.length ? result.rows[0] : result;
+                ActualRows = Number(countRow.affected_rows);
                 if (ActualRows > maxExportRows) {
                     $("#btn-submitsql").prop("disabled", true);
                     showStatusNotice({
                         noticeIconClass: 'icon-error',
                         statusClass: 'status-error',
-                        title: '校验失败',
-                        message: '统计查询结果：{ActualRows} 行数据，超过了阈值：{maxExportRows}',
+                        title: '{% translate "校验失败"|escapejs %}',
+                        message: '{% translate "统计查询结果：{ActualRows} 行数据，超过了阈值：{maxExportRows}"|escapejs %}',
                         params: { ActualRows: ActualRows, maxExportRows: maxExportRows },
                         delay: 5000
                     });
@@ -543,8 +600,8 @@
                     showStatusNotice({
                         noticeIconClass: 'icon-success',
                         statusClass: 'status-success',
-                        title: '校验成功',
-                        message: '统计查询结果：{ActualRows} 行数据，点击提交导出按钮申请导出。',
+                        title: '{% translate "校验成功"|escapejs %}',
+                        message: '{% translate "统计查询结果：{ActualRows} 行数据，点击提交导出按钮申请导出。"|escapejs %}',
                         params: { ActualRows: ActualRows},
                         delay: 5000
                     });
@@ -559,8 +616,8 @@
                 showStatusNotice({
                     noticeIconClass: 'icon-error',
                     statusClass: 'status-error',
-                    title: '校验失败',
-                    message: '错误：{msg}',
+                    title: '{% translate "校验失败"|escapejs %}',
+                    message: '{% translate "错误：{msg}"|escapejs %}',
                     params: { msg: msg },
                     delay: 5000
                 });
@@ -617,7 +674,9 @@
                     if (XMLHttpRequest.responseJSON) {
                         alert(XMLHttpRequest.responseText)
                     } else {
-                        alert(errorThrown);
+                        alert(XMLHttpRequest.status === 403
+                        ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                        : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
                     }
                 }
             });
@@ -665,7 +724,9 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    alert(XMLHttpRequest.status === 403
+                        ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                        : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
                 }
             });
             $.ajax({
@@ -689,7 +750,9 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    alert(XMLHttpRequest.status === 403
+                        ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                        : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
                 }
             });
         });
@@ -697,6 +760,7 @@
     <!--init -->
     <script>
         $(document).ready(function () {
+            init_upload();
             // 清空id, 只允许新增不允许修改
             sessionStorage.removeItem('editWorkflowDetailId');
             //获取url参数置入对应的初始化内容

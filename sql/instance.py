@@ -8,6 +8,7 @@ import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
+from django.utils.translation import gettext as _
 from django.views.decorators.cache import cache_page
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -160,13 +161,13 @@ def param_list(request):
         int(instance_id)
     except (TypeError, ValueError) as e:
         logger.error(f"实例ID不合法：{instance_id}，异常详情：{e}")
-        result = {"status": 1, "msg": "实例ID不合法", "data": []}
+        result = {"status": 1, "msg": _("实例ID不合法"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins = Instance.objects.get(id=instance_id)
     except Instance.DoesNotExist as e:
         logger.error(f"实例不存在：{instance_id}，异常详情：{e}")
-        result = {"status": 1, "msg": "实例不存在", "data": []}
+        result = {"status": 1, "msg": _("实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     ensure_builtin_param_templates(ins.db_type)
     # 获取已配置参数列表
@@ -251,13 +252,13 @@ def param_edit(request):
         int(instance_id)
     except (TypeError, ValueError) as e:
         logger.error(f"实例ID不合法：{instance_id}，异常详情：{e}")
-        result = {"status": 1, "msg": "实例ID不合法", "data": []}
+        result = {"status": 1, "msg": _("实例ID不合法"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins = Instance.objects.get(id=instance_id)
     except Instance.DoesNotExist as e:
         logger.error(f"实例不存在：{instance_id}，异常详情：{e}")
-        result = {"status": 1, "msg": "实例不存在", "data": []}
+        result = {"status": 1, "msg": _("实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 修改参数
@@ -270,12 +271,12 @@ def param_edit(request):
         db_type=ins.db_type, variable_name=variable_name, editable=True
     ).first()
     if not param_template:
-        result = {"status": 1, "msg": "请先在参数模板中配置该参数！", "data": []}
+        result = {"status": 1, "msg": _("请先在参数模板中配置该参数！"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 获取当前运行参数值
     runtime_value = engine.get_variables(variables=[variable_name]).rows[0][1]
     if variable_value == runtime_value:
-        result = {"status": 1, "msg": "参数值与实际运行值一致，未调整！", "data": []}
+        result = {"status": 1, "msg": _("参数值与实际运行值一致，未调整！"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     set_result = engine.set_variable(
         variable_name=variable_name, variable_value=variable_value
@@ -283,7 +284,7 @@ def param_edit(request):
     if set_result.error:
         result = {
             "status": 1,
-            "msg": f"设置错误，错误信息：{set_result.error}",
+            "msg": _("设置错误，错误信息：%(error)s") % {"error": set_result.error},
             "data": [],
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
@@ -298,7 +299,11 @@ def param_edit(request):
             user_name=user.username,
             user_display=user.display,
         )
-        result = {"status": 0, "msg": "修改成功，请手动持久化到配置文件！", "data": []}
+        result = {
+            "status": 0,
+            "msg": _("修改成功，请手动持久化到配置文件！"),
+            "data": [],
+        }
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 
@@ -310,12 +315,15 @@ def param_compare(request):
     diff_only = request.POST.get("diff_only", "true") == "true"
 
     # 校验实例ID格式
-    for iid, label in [(instance_id1, "源实例ID"), (instance_id2, "目标实例ID")]:
+    for iid, label, invalid_message in [
+        (instance_id1, "源实例ID", _("源实例ID不合法")),
+        (instance_id2, "目标实例ID", _("目标实例ID不合法")),
+    ]:
         try:
             int(iid)
         except (TypeError, ValueError) as e:
             logger.error(f"{label}不合法：{iid}，异常详情：{e}")
-            result = {"status": 1, "msg": f"{label}不合法", "data": []}
+            result = {"status": 1, "msg": invalid_message, "data": []}
             return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 校验实例存在
@@ -323,20 +331,20 @@ def param_compare(request):
         ins1 = Instance.objects.get(id=instance_id1)
     except Instance.DoesNotExist as e:
         logger.error(f"源实例不存在：{instance_id1}，异常详情：{e}")
-        result = {"status": 1, "msg": "源实例不存在", "data": []}
+        result = {"status": 1, "msg": _("源实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         ins2 = Instance.objects.get(id=instance_id2)
     except Instance.DoesNotExist as e:
         logger.error(f"目标实例不存在：{instance_id2}，异常详情：{e}")
-        result = {"status": 1, "msg": "目标实例不存在", "data": []}
+        result = {"status": 1, "msg": _("目标实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 校验同类型
     if ins1.db_type != ins2.db_type:
         result = {
             "status": 1,
-            "msg": "两个实例的数据库类型不一致，无法对比",
+            "msg": _("两个实例的数据库类型不一致，无法对比"),
             "data": [],
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
@@ -346,7 +354,7 @@ def param_compare(request):
     if ins1.db_type not in _variable_supported_db_types:
         result = {
             "status": 1,
-            "msg": f"{ins1.db_type} 引擎不支持参数对比功能",
+            "msg": _("%(db_type)s 引擎不支持参数对比功能") % {"db_type": ins1.db_type},
             "data": [],
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
@@ -357,22 +365,30 @@ def param_compare(request):
         variables1 = engine1.get_variables()
     except Exception as e:
         logger.error(f"获取源实例参数失败，异常详情：{e}")
-        result = {"status": 1, "msg": "获取源实例参数失败，请联系管理员", "data": []}
+        result = {"status": 1, "msg": _("获取源实例参数失败，请联系管理员"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     if variables1.error:
         logger.error(f"获取源实例参数失败，异常详情：{variables1.error}")
-        result = {"status": 1, "msg": "获取源实例参数失败，请联系管理员", "data": []}
+        result = {"status": 1, "msg": _("获取源实例参数失败，请联系管理员"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         engine2 = get_engine(instance=ins2)
         variables2 = engine2.get_variables()
     except Exception as e:
         logger.error(f"获取目标实例参数失败，异常详情：{e}")
-        result = {"status": 1, "msg": "获取目标实例参数失败，请联系管理员", "data": []}
+        result = {
+            "status": 1,
+            "msg": _("获取目标实例参数失败，请联系管理员"),
+            "data": [],
+        }
         return HttpResponse(json.dumps(result), content_type="application/json")
     if variables2.error:
         logger.error(f"获取目标实例参数失败，异常详情：{variables2.error}")
-        result = {"status": 1, "msg": "获取目标实例参数失败，请联系管理员", "data": []}
+        result = {
+            "status": 1,
+            "msg": _("获取目标实例参数失败，请联系管理员"),
+            "data": [],
+        }
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 构建 dict {variable_name_lower: value}（保留原始值，不 strip，以便检测空白差异）

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
@@ -7,7 +8,7 @@
             <button id="btn_add" type="button" class="btn btn-default"
                     onclick="window.open('/admin/sql/resourcegroup/add/')">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加组
+                {% translate "添加组" %}
             </button>
         </div>
     </div>
@@ -20,9 +21,16 @@
 {% endblock content %}
 {% block js %}
     {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        function resourceGroupLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         //获取列表
         function grouplist() {
             //采取异步请求
@@ -55,7 +63,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -71,25 +79,21 @@
                     title: 'ID',
                     field: 'group_id'
                 }, {
-                    title: '组名称',
+                    title: '{% translate "组名称"|escapejs %}',
                     field: 'group_name',
                     formatter: function (value, row, index) {
                         return "<a target=\"_blank\" href=\"/admin/sql/resourcegroup/" + row.group_id + "/change/\">" + value + "</a>"
                     }
                 }, {
-                    title: '关联对象',
+                    title: '{% translate "关联对象"|escapejs %}',
                     field: '',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.location.href='/grouprelations/" + row.group_id + "/'\">管理</button>\n"
+                        return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.location.href='/grouprelations/" + row.group_id + "/'\">{% translate "管理"|escapejs context "resource group action" %}</button>\n"
                     }
                 }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: onLoadErrorCallback,
-                onSearch: function (e) {
-                    //传搜索参数给服务器
-                    queryParams(e)
-                }
+                onLoadError: resourceGroupLoadError
             });
 
         }
