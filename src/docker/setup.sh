@@ -20,15 +20,17 @@ mv /opt/mongodb-linux-x86_64-rhel70-3.6.20/bin/mongo /usr/local/bin/
 chmod +x /usr/local/bin/mongo
 rm -rf /opt/mongodb*
 #msodbc
-curl -q -L https://packages.microsoft.com/keys/microsoft.asc -o /etc/apt/trusted.gpg.d/microsoft.asc
-curl -q -L https://packages.microsoft.com/config/debian/11/prod.list -o /etc/apt/sources.list.d/mssql-release.list
-apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+curl -fsSL https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -o /tmp/packages-microsoft-prod.deb
+dpkg -i /tmp/packages-microsoft-prod.deb
+rm -f /tmp/packages-microsoft-prod.deb
+apt-get update
+ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
 #oracle client
 mkdir -p /opt/oracle 
 cd /opt/oracle
 curl -q -L -o oracle-install.zip https://download.oracle.com/otn_software/linux/instantclient/1921000/instantclient-basic-linux.x64-19.21.0.0.0dbru.zip
 unzip oracle-install.zip
-apt-get install libaio1
+apt-get install -yq --no-install-recommends libaio1
 sh -c "echo /opt/oracle/instantclient_19_21 > /etc/ld.so.conf.d/oracle-instantclient.conf"
 ldconfig
 rm -rf oracle-install.zip
@@ -37,9 +39,8 @@ cd -
 curl -O https://repo.percona.com/apt/percona-release_latest.generic_all.deb
 apt-get install -yq --no-install-recommends gnupg2 lsb-release ./percona-release_latest.generic_all.deb
 apt-get update
-percona-release setup -y ps-57
+percona-release enable-only pt release
 apt-get install -yq --no-install-recommends percona-toolkit
-percona-release disable  ps-57
 apt-get install -yq --no-install-recommends gcc libmariadb-dev libldap2-dev libsasl2-dev ldap-utils
 # mysql 软链, 供 sqladvisor 使用
 ln -s /usr/lib/x86_64-linux-gnu/libmariadb.so.3 /usr/lib/x86_64-linux-gnu/libmysqlclient.so.18

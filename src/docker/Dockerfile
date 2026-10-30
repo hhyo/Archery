@@ -1,5 +1,13 @@
-ARG BASE_IMAGE="hhyo/archery-base:sha-d8159f4"
-FROM ${BASE_IMAGE}
+# Build the base from this checkout unless an external base is explicitly supplied.
+ARG PYTHON_BASE_IMAGE=library/python:3.11-bookworm
+ARG BASE_IMAGE=archery-base
+FROM ${PYTHON_BASE_IMAGE} AS archery-base
+ENV SOAR_VERSION=0.11.0 TZ=Asia/Shanghai
+WORKDIR /opt
+COPY src/docker/setup.sh /opt/setup.sh
+RUN chmod +x /opt/setup.sh && /opt/setup.sh && rm -f /opt/setup.sh
+
+FROM ${BASE_IMAGE} AS runtime
 SHELL ["/bin/bash", "-c"]
 COPY . /opt/archery/
 
