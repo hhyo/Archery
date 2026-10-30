@@ -1,6 +1,7 @@
 """Language selection tests that do not require a database."""
 
 import json
+from html.parser import HTMLParser
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -17,6 +18,34 @@ from django.utils.translation import gettext, override
 from django.views.i18n import JavaScriptCatalog
 
 from common.language import set_language
+
+
+class _DisplayTextParser(HTMLParser):
+    """Collect template text for assertions; this is not an HTML sanitizer."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+        self.ignored_tag = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"script", "style"}:
+            self.ignored_tag = tag
+
+    def handle_endtag(self, tag):
+        if tag == self.ignored_tag:
+            self.ignored_tag = None
+
+    def handle_data(self, data):
+        if self.ignored_tag is None:
+            self.parts.append(data)
+
+
+def display_text(html):
+    parser = _DisplayTextParser()
+    parser.feed(html)
+    parser.close()
+    return "".join(parser.parts)
 
 
 def language_page(request):
@@ -165,15 +194,7 @@ class LanguagePreferenceTests(SimpleTestCase):
                     self.assertIn("Hello,", navigation)
                     # Include hidden menus and modal labels; allow the native language name.
                     for html in [login, navigation]:
-                        html = re.sub(
-                            r"<!--.*?-->|<script.*?</script>|<style.*?</style>",
-                            "",
-                            html,
-                            flags=re.S | re.I,
-                        )
-                        visible_text = re.sub(r"<[^>]+>", "", html).replace(
-                            "简体中文", ""
-                        )
+                        visible_text = display_text(html).replace("简体中文", "")
                         self.assertIsNone(re.search(r"[\u4e00-\u9fff]", visible_text))
 
     def test_workflow_list_translation_and_locales(self):
@@ -327,12 +348,7 @@ class LanguagePreferenceTests(SimpleTestCase):
                         )
                         self.assertIn(labels[language != "en"], html)
                         if name == "dashboard.html":
-                            visible = re.sub(
-                                r"<script.*?</script>|<!--.*?-->",
-                                "",
-                                html,
-                                flags=re.S | re.I,
-                            )
+                            visible = display_text(html)
                             self.assertIn(labels[language != "en"], visible)
                             self.assertNotIn(labels[language == "en"], visible)
                         if name in [
@@ -3686,3 +3702,9 @@ class AdditionalEngineQueryCheckLanguageTests(SimpleTestCase):
                         else "禁止使用 * 关键词\n"
                     ),
                 )
+
+
+class TemplateDisplayTextTests(SimpleTestCase):
+    def test_parser_ignores_script_style_and_comments(self):
+        html = "<SCRIPT>hidden</SCRIPT ><STYLE>hidden</STYLE ><!-- hidden --><h1>Visible &amp; text</h1>"
+        self.assertEqual(display_text(html), "Visible & text")
