@@ -7,6 +7,7 @@ import json
 from django.contrib.auth.decorators import permission_required
 
 from django.http import HttpResponse
+from django.utils.translation import gettext as _
 
 from sql.engines import get_engine
 from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderBytes
@@ -28,7 +29,7 @@ def process(request):
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
+        result = {"status": 1, "msg": _("你所在组未关联该实例"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     query_engine = get_engine(instance=instance)
@@ -58,7 +59,7 @@ def create_kill_session(request):
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
+        result = {"status": 1, "msg": _("你所在组未关联该实例"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     result = {"status": 0, "msg": "ok", "data": []}
@@ -68,7 +69,8 @@ def create_kill_session(request):
     except AttributeError:
         result = {
             "status": 1,
-            "msg": "暂时不支持{}类型数据库通过进程id构建请求".format(instance.db_type),
+            "msg": _("暂时不支持%(db_type)s类型数据库通过进程id构建请求")
+            % {"db_type": instance.db_type},
             "data": [],
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
@@ -89,7 +91,7 @@ def kill_session(request):
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
+        result = {"status": 1, "msg": _("你所在组未关联该实例"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     engine = get_engine(instance=instance)
@@ -105,7 +107,8 @@ def kill_session(request):
     else:
         result = {
             "status": 1,
-            "msg": "暂时不支持{}类型数据库终止会话".format(instance.db_type),
+            "msg": _("暂时不支持%(db_type)s类型数据库终止会话")
+            % {"db_type": instance.db_type},
             "data": [],
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
@@ -129,7 +132,7 @@ def tablespace(request):
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
+        result = {"status": 1, "msg": _("你所在组未关联该实例"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     query_engine = get_engine(instance=instance)
@@ -137,7 +140,8 @@ def tablespace(request):
     if not query_result.rows and not query_result.error:
         result = {
             "status": 1,
-            "msg": "暂时不支持{}类型数据库的表空间信息查询".format(instance.db_type),
+            "msg": _("暂时不支持%(db_type)s类型数据库的表空间信息查询")
+            % {"db_type": instance.db_type},
             "data": [],
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
@@ -164,7 +168,7 @@ def trxandlocks(request):
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
+        result = {"status": 1, "msg": _("你所在组未关联该实例"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     query_engine = get_engine(instance=instance)
@@ -175,7 +179,8 @@ def trxandlocks(request):
     else:
         result = {
             "status": 1,
-            "msg": "暂时不支持{}类型数据库的锁等待查询".format(instance.db_type),
+            "msg": _("暂时不支持%(db_type)s类型数据库的锁等待查询")
+            % {"db_type": instance.db_type},
             "data": [],
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
@@ -201,7 +206,7 @@ def innodb_trx(request):
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
+        result = {"status": 1, "msg": _("你所在组未关联该实例"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     query_engine = get_engine(instance=instance)
@@ -210,7 +215,8 @@ def innodb_trx(request):
     except AttributeError:
         result = {
             "status": 1,
-            "msg": "暂时不支持{}类型数据库的长事务查询".format(instance.db_type),
+            "msg": _("暂时不支持%(db_type)s类型数据库的长事务查询")
+            % {"db_type": instance.db_type},
             "data": [],
         }
         return HttpResponse(json.dumps(result), content_type="application/json")

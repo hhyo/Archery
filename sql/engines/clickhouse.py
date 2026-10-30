@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+
 # -*- coding: UTF-8 -*-
 from clickhouse_driver import connect
 from clickhouse_driver.util.escape import escape_chars_map
@@ -166,17 +168,17 @@ class ClickHouseEngine(EngineBase):
             result["filtered_sql"] = sql.strip()
         except IndexError:
             result["bad_query"] = True
-            result["msg"] = "没有有效的SQL语句"
+            result["msg"] = _("没有有效的SQL语句")
         if re.match(r"^select|^show|^explain|^with", sql, re.I) is None:
             result["bad_query"] = True
-            result["msg"] = "不支持的查询语法类型!"
+            result["msg"] = _("不支持的查询语法类型!")
         if "*" in sql:
             result["has_star"] = True
-            result["msg"] = "SQL语句中含有 * "
+            result["msg"] = _("SQL语句中含有 * ")
         # clickhouse 20.6.3版本开始正式支持explain语法
         if re.match(r"^explain", sql, re.I) and self.server_version < (20, 6, 3):
             result["bad_query"] = True
-            result["msg"] = f"当前ClickHouse实例版本低于20.6.3，不支持explain!"
+            result["msg"] = _("当前ClickHouse实例版本低于20.6.3，不支持explain!")
         # select语句先使用Explain判断语法是否正确
         if re.match(r"^select", sql, re.I) and self.server_version >= (20, 6, 3):
             explain_result = self.query(db_name=db_name, sql=f"explain {sql}")

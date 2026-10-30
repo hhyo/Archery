@@ -2,6 +2,7 @@ from unittest.mock import patch, MagicMock, Mock, mock_open
 from django.test import TestCase, Client
 from django.conf import settings
 from django.http import HttpRequest
+from django.utils.translation import override
 from datetime import datetime, date
 from io import BytesIO
 import tempfile
@@ -122,6 +123,42 @@ class TestOfflineDownload(TestCase):
 
         self.assertEqual(sql_list, [])
         self.assertEqual(normalized_sql, "")
+
+    def test_missing_export_file_error_follows_request_language(self):
+        request = HttpRequest()
+        request.GET = {"workflow_id": str(self.workflow.pk)}
+        request.method = "HEAD"
+        for language, message in [
+            ("en", "No download file has been generated for this workflow."),
+            ("zh-hans", "该工单未生成下载文件"),
+        ]:
+            with self.subTest(language=language), override(language):
+                response = offline_file_download(request)
+                self.assertEqual(response.status_code, 404)
+                self.assertEqual(json.loads(response.content)["error"], message)
+
+    @patch("sql.offlinedownload.get_engine")
+    def test_export_validation_messages_follow_request_language(self, mock_get_engine):
+        for language, messages in [
+            (
+                "en",
+                [
+                    "No valid query statement was found.",
+                    "Only one export query can be submitted.",
+                ],
+            ),
+            (
+                "zh-hans",
+                ["没有有效的查询语句", "检测到多个查询语句，只能提交一个导出查询。"],
+            ),
+        ]:
+            for sql, message in zip(["", "select 1; select 2;"], messages):
+                with self.subTest(language=language, sql=sql), override(language):
+                    self.workflow.sql_content = sql
+                    result = OffLineDownLoad().pre_count_check(self.workflow)
+                    self.assertEqual(result.error_count, 1)
+                    self.assertEqual(result.rows[0].errormessage, message)
+        mock_get_engine.return_value.query.assert_not_called()
 
     @patch("sql.offlinedownload.get_engine")
     def test_pre_count_check_empty_sql(self, mock_get_engine):

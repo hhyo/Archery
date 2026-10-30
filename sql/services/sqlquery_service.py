@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from django.utils.translation import gettext as _
 
 import datetime
 import logging
@@ -35,19 +36,19 @@ def execute_sql_query(
         limit_num = int(limit_num)
     except (TypeError, ValueError):
         result["status"] = 1
-        result["msg"] = "limit_num 非法"
+        result["msg"] = _("limit_num 非法")
         return result
 
     try:
         instance = user_instances(user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
         result["status"] = 1
-        result["msg"] = "你所在组未关联该实例"
+        result["msg"] = _("你所在组未关联该实例")
         return result
 
     if None in [sql_content, db_name, instance_name, limit_num]:
         result["status"] = 1
-        result["msg"] = "页面提交参数可能为空"
+        result["msg"] = _("页面提交参数可能为空")
         return result
 
     priv_check = False
@@ -114,7 +115,9 @@ def execute_sql_query(
                 if masking_result.error:
                     if config.get("query_check"):
                         result["status"] = 1
-                        result["msg"] = f"数据脱敏异常：{masking_result.error}"
+                        result["msg"] = _("数据脱敏异常：%(error)s") % {
+                            "error": masking_result.error
+                        }
                     else:
                         logger.warning(
                             "数据脱敏异常，按照配置放行，查询语句：%s，错误信息：%s",
@@ -129,7 +132,9 @@ def execute_sql_query(
                 logger.error(traceback.format_exc())
                 if config.get("query_check"):
                     result["status"] = 1
-                    result["msg"] = f"数据脱敏异常，请联系管理员，错误信息：{msg}"
+                    result["msg"] = _(
+                        "数据脱敏异常，请联系管理员，错误信息：%(error)s"
+                    ) % {"error": msg}
                 else:
                     logger.warning(
                         "数据脱敏异常，按照配置放行，查询语句：%s，错误信息：%s",
@@ -171,5 +176,5 @@ def execute_sql_query(
             traceback.format_exc(),
         )
         result["status"] = 1
-        result["msg"] = f"查询异常报错，错误信息：{e}"
+        result["msg"] = _("查询异常报错，错误信息：%(error)s") % {"error": e}
     return result

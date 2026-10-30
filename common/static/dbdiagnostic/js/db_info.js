@@ -29,27 +29,27 @@ const pgsqlDiagnosticInfo = {
         [
             { title: '', field: 'checkbox', checkbox: true },
             { title: 'PId', field: 'pid', sortable: true },
-            { title: '阻塞PID', field: 'block_pids', sortable: false },
-            { title: '数据库', field: 'datname', sortable: true },
-            { title: '用户', field: 'usename', sortable: true },
-            { title: '应用名称', field: 'application_name', sortable: true },
-            { title: '状态', field: 'state', sortable: true },
-            { title: '客户端地址', field: 'client_addr', sortable: true },
-            { title: '耗时(秒)', field: 'elapsed_time_seconds', sortable: true },
-            { title: '耗时', field: 'elapsed_time', sortable: true },
-            { title: '查询语句', field: 'query', sortable: true },
-            { title: '等待事件类型', field: 'wait_event_type', sortable: true },
-            { title: '等待事件', field: 'wait_event', sortable: true },
-            { title: '查询开始时间', field: 'query_start', sortable: true },
-            { title: '后端开始时间', field: 'backend_start', sortable: true },
-            { title: '父PID', field: 'leader_pid', sortable: true },
-            { title: '客户端主机名', field: 'client_hostname', sortable: true },
-            { title: '客户端端口', field: 'client_port', sortable: true },
-            { title: '事务开始时间', field: 'transaction_start_time', sortable: true },
-            { title: '状态变更时间', field: 'state_change', sortable: true },
-            { title: '后端XID', field: 'backend_xid', sortable: true },
-            { title: '后端XMIN', field: 'backend_xmin', sortable: true },
-            { title: '后端类型', field: 'backend_type', sortable: true },
+            { title: gettext("阻塞PID"), field: 'block_pids', sortable: false },
+            { title: gettext("数据库"), field: 'datname', sortable: true },
+            { title: gettext("用户"), field: 'usename', sortable: true },
+            { title: gettext("应用名称"), field: 'application_name', sortable: true },
+            { title: gettext("状态"), field: 'state', sortable: true },
+            { title: gettext("客户端地址"), field: 'client_addr', sortable: true },
+            { title: gettext("耗时(秒)"), field: 'elapsed_time_seconds', sortable: true },
+            { title: gettext("耗时"), field: 'elapsed_time', sortable: true },
+            { title: gettext("查询语句"), field: 'query', sortable: true },
+            { title: gettext("等待事件类型"), field: 'wait_event_type', sortable: true },
+            { title: gettext("等待事件"), field: 'wait_event', sortable: true },
+            { title: gettext("查询开始时间"), field: 'query_start', sortable: true },
+            { title: gettext("后端开始时间"), field: 'backend_start', sortable: true },
+            { title: gettext("父PID"), field: 'leader_pid', sortable: true },
+            { title: gettext("客户端主机名"), field: 'client_hostname', sortable: true },
+            { title: gettext("客户端端口"), field: 'client_port', sortable: true },
+            { title: gettext("事务开始时间"), field: 'transaction_start_time', sortable: true },
+            { title: gettext("状态变更时间"), field: 'state_change', sortable: true },
+            { title: gettext("后端XID"), field: 'backend_xid', sortable: true },
+            { title: gettext("后端XMIN"), field: 'backend_xmin', sortable: true },
+            { title: gettext("后端类型"), field: 'backend_type', sortable: true },
         ]
     ],
 
@@ -64,7 +64,7 @@ const mysqlDiagnosticInfo = {
             field: 'checkbox',
             checkbox: true
         }, {
-            title: 'THEEAD ID',
+            title: 'THREAD ID',
             field: 'id',
             sortable: true
         }, {
@@ -99,7 +99,7 @@ const mysqlDiagnosticInfo = {
                 return truncateText(value, 30);
             }
         }, {
-            title: '完整INFO',
+            title: gettext("完整INFO"),
             field: 'info',
             sortable: true,
             visible: false // 默认不显示
@@ -125,7 +125,7 @@ const dorisDiagnosticInfo = {
             field: 'checkbox',
             checkbox: true
         }, {
-            title: 'THEEAD ID',
+            title: 'THREAD ID',
             field: 'id',
             sortable: true
         }, {
@@ -169,7 +169,7 @@ const dorisDiagnosticInfo = {
             sortable: true,
             visible: false // 默认不显示
         }, {
-            title: '完整INFO',
+            title: gettext("完整INFO"),
             field: 'info',
             sortable: true,
             visible: false // 默认不显示
@@ -273,7 +273,7 @@ const mongoDiagnosticInfo = {
                 }
             }
         }, {
-            title: '完整command',
+            title: gettext("完整command"),
             field: 'command',
             sortable: true,
             formatter: function (value, row, index) {
@@ -309,92 +309,92 @@ const redisDiagnosticInfo = {
             field: 'id',
             sortable: true
         }, {
-            title: '远程地址',
+            title: gettext("远程地址"),
             field: 'addr',
             sortable: true
         }, {
-            title: '本地地址',
+            title: gettext("本地地址"),
             field: 'laddr',
             sortable: true
         }, {
-            title: '客户端名称',
+            title: gettext("客户端名称"),
             field: 'name',
             sortable: true
         }, {
-            title: '用户',
+            title: gettext("用户"),
             field: 'user',
             sortable: true
         },
         {
-            title: '数据库',
+            title: gettext("数据库"),
             field: 'db',
             sortable: true
         }, {
-            title: '连接耗时(秒)',
+            title: gettext("连接耗时(秒)"),
             field: 'age',
             sortable: true
         }, {
-            title: '空闲时间(秒)',
+            title: gettext("空闲时间(秒)"),
             field: 'idle',
             sortable: true
         }, {
-            title: '命令',
+            title: gettext("命令"),
             field: 'cmd',
             sortable: true
         }, {
-            title: '总内存',
+            title: gettext("总内存"),
             field: 'tot-mem',
             sortable: true
         }, {
-            title: '输出内存',
+            title: gettext("输出内存"),
             field: 'omem',
             sortable: true
         }, {
-            title: '标志',
+            title: gettext("标志"),
             field: 'flags',
             sortable: true
         }, {
-            title: '文件描述符',
+            title: gettext("文件描述符"),
             field: 'fd',
             sortable: true
         }, {
-            title: '订阅数',
+            title: gettext("订阅数"),
             field: 'sub',
             sortable: true
         }, {
-            title: '模式订阅数',
+            title: gettext("模式订阅数"),
             field: 'psub',
             sortable: true
         }, {
-            title: 'MULTI 队列长度',
+            title: gettext("MULTI 队列长度"),
             field: 'multi',
             sortable: true
         }, {
-            title: '查询缓冲区',
+            title: gettext("查询缓冲区"),
             field: 'qbuf',
             sortable: true
         }, {
-            title: '查询缓冲区空闲',
+            title: gettext("查询缓冲区空闲"),
             field: 'qbuf-free',
             sortable: true
         }, {
-            title: '参数内存',
+            title: gettext("参数内存"),
             field: 'argv-mem',
             sortable: true
         }, {
-            title: '输出缓冲区长度',
+            title: gettext("输出缓冲区长度"),
             field: 'obl',
             sortable: true
         }, {
-            title: '输出链长度',
+            title: gettext("输出链长度"),
             field: 'oll',
             sortable: true
         }, {
-            title: '事件文件',
+            title: gettext("事件文件"),
             field: 'events',
             sortable: true
         }, {
-            title: '重定向',
+            title: gettext("重定向"),
             field: 'redir',
             sortable: true
         }],
@@ -566,11 +566,11 @@ const clickhouseDiagnosticInfo = {
             field: 'checkbox',
             checkbox: true
         }, {
-            title: '查询ID',
+            title: gettext("查询ID"),
             field: 'query_id',
             sortable: false
         }, {
-            title: '用户',
+            title: gettext("用户"),
             field: 'user',
             sortable: true
         }, {
@@ -578,38 +578,38 @@ const clickhouseDiagnosticInfo = {
             field: 'ip',
             sortable: true
         }, {
-            title: '端口',
+            title: gettext("端口"),
             field: 'port',
             sortable: false
         }, {
-            title: '库名',
+            title: gettext("库名"),
             field: 'current_database',
             sortable: true
         }, {
-            title: '耗时(秒)',
+            title: gettext("耗时(秒)"),
             field: 'time',
             sortable: true
         }, {
-            title: '总行数(预估)',
+            title: gettext("总行数(预估)"),
             field: 'total_rows_approx',
             sortable: true
         }, {
-            title: '分配内存',
+            title: gettext("分配内存"),
             field: 'memory',
             sortable: true
         }, {
-            title: '类型',
+            title: gettext("类型"),
             field: 'query_kind',
             sortable: true
         }, {
-            title: '语句',
+            title: gettext("语句"),
             field: 'query',
             sortable: true,
             formatter: function (value, row, index) {
                 return truncateText(value, 30);
             }
         }, {
-            title: '完整语句',
+            title: gettext("完整语句"),
             field: 'query',
             sortable: false,
             visible: false // 默认不显示

@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    分析选项
+                    {% translate "分析选项" context "remaining pages" %}
                 </div>
                 <div class="panel-body form-inline">
                     <div class="form-group">
@@ -14,19 +15,19 @@
                     <div class="form-group">
                         <select id="instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择实例:"
-                                data-placeholder="请选择实例:" required>
+                                title="{% translate "请选择实例:" context "remaining pages" %}"
+                                data-placeholder="{% translate "请选择实例:" context "remaining pages" %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
-                                title="请选择数据库:"
-                                data-live-search="true" data-placeholder="请选择数据库:" required>
-                            <option value="all">全部</option>
+                                title="{% translate "请选择数据库:" context "remaining pages" %}"
+                                data-live-search="true" data-placeholder="{% translate "请选择数据库:" context "remaining pages" %}" required>
+                            <option value="all">{% translate "全部" context "remaining pages" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <input id="btn-analyze" type="button" class="btn btn-warning" value="开始分析"
+                        <input id="btn-analyze" type="button" class="btn btn-warning" value="{% translate "开始分析" context "remaining pages" %}"
                                onclick="analyze()"/>
                     </div>
                 </div>
@@ -35,7 +36,7 @@
         <div class="col-md-12 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL列表
+                    {% translate "SQL列表" context "remaining pages" %}
                 </div>
                 <div class="panel-body">
                     <div class="table-responsive">
@@ -53,7 +54,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">分析报告</h4>
+                    <h4 class="modal-title text-danger">{% translate "分析报告" context "remaining pages" %}</h4>
                 </div>
                 <div id="reports-body" class="modal-body">
                 </div>
@@ -76,7 +77,7 @@
         //初始化上传控件
         $(function init_upload() {
             $("#sql-upload").fileinput({
-                language: 'zh',
+                language: '{% if LANGUAGE_CODE == "en" %}en{% else %}zh{% endif %}',
                 allowedFileExtensions: ['sql', 'xml'],//接收的文件后缀
                 showCaption: true,//是否显示标题
                 initialCaption: 'SQL/MyBatis3 Mapper XML file',
@@ -88,7 +89,7 @@
                     loadsql();
                 } else {
                     $('#sql-upload').fileinput('reset');
-                    alert('文件大小超过5M，请重新选择');
+                    alert('{% translate "文件大小超过5M，请重新选择" context "remaining pages" %}');
                 }
             }).on('fileclear', function (event) {
                 generate();
@@ -164,7 +165,7 @@
                     });
                     return html.join('');
                 },
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -179,7 +180,7 @@
                     title: 'SQLID',
                     field: 'sql_id'
                 }, {
-                    title: 'SQL内容',
+                    title: '{% translate "SQL内容" context "remaining pages" %}',
                     field: 'sql',
                     formatter: function (value, row, index) {
                         if (value.length > 100) {
@@ -190,7 +191,7 @@
                         }
                     }
                 }, {
-                    title: '完整SQL内容',
+                    title: '{% translate "完整SQL内容" context "remaining pages" %}',
                     field: 'sql',
                     visible: false // 默认不显示
                 }],
@@ -301,7 +302,7 @@
                         });
                         return html.join('');
                     },
-                    locale: 'zh-CN',                    //本地化
+                    locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -318,7 +319,7 @@
                         title: 'SQLID',
                         field: 'sql_id'
                     }, {
-                        title: 'SQL内容',
+                        title: '{% translate "SQL内容" context "remaining pages" %}',
                         field: 'sql',
                         formatter: function (value, row, index) {
                             if (value.length > 100) {
@@ -329,14 +330,14 @@
                             }
                         }
                     }, {
-                        title: '完整SQL内容',
+                        title: '{% translate "完整SQL内容" context "remaining pages" %}',
                         field: 'sql',
                         visible: false // 默认不显示
                     }, {
-                        title: '分析报告',
+                        title: '{% translate "分析报告" context "remaining pages" %}',
                         field: 'operation',
                         formatter: function (value, row, index) {
-                            return "<button class=\"btn btn-info btn-xs\" report=\"" + row.report.replace(/"<>\.*/gm,'<\>才是标准SQL中的不等于运算符') + "\"\n" + "onclick=\"getReport(this)\" >查看\n" + "</button>"
+                            return "<button class=\"btn btn-info btn-xs\" report=\"" + row.report.replace(/"<>\.*/gm,'<\>{% translate "才是标准SQL中的不等于运算符" context "remaining pages" %}') + "\"\n" + "onclick=\"getReport(this)\" >{% translate "查看" context "remaining pages" %}\n" + "</button>"
                         }
                     }],
                     onLoadSuccess: function () {
@@ -355,12 +356,12 @@
                 });
                 // 提示信息
                 if ($('#instance_name').val() && $('#db_name').val()) {
-                    alert('已提交SOAR分析，请耐心等待分析结果!');
+                    alert('{% translate "已提交SOAR分析，请耐心等待分析结果!" context "remaining pages" %}');
                 } else {
-                    alert('已提交SOAR分析，未选择实例和数据库将不会输出执行计划和索引建议，请耐心等待分析结果!');
+                    alert('{% translate "已提交SOAR分析，未选择实例和数据库将不会输出执行计划和索引建议，请耐心等待分析结果!" context "remaining pages" %}');
                 }
             } else {
-                alert('请先解析SQL/MyBatis3 Mapper XML文件');
+                alert('{% translate "请先解析SQL/MyBatis3 Mapper XML文件" context "remaining pages" %}');
             }
 
         }

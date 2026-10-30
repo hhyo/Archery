@@ -1,6 +1,14 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.contrib.auth.models import Group
+from django.utils.translation import (
+    get_language,
+    gettext,
+    gettext_lazy,
+    pgettext,
+    pgettext_lazy,
+)
 
 # Register your models here.
 from django.forms import PasswordInput
@@ -34,6 +42,44 @@ from .models import (
 from sql.form import TunnelForm, InstanceForm
 
 
+def user_permission_label(permission):
+    """Localize choice labels without updating stored permission names or IDs."""
+    if get_language() != "en":
+        return str(permission)
+    content_type = permission.content_type
+    model = content_type.model_class()
+    model_name = (
+        str(model._meta.verbose_name) if model is not None else content_type.model
+    )
+    model_label = pgettext("user permission model", model_name)
+    verbs = {
+        "add": "Can add",
+        "change": "Can change",
+        "delete": "Can delete",
+        "view": "Can view",
+    }
+    label = pgettext("user permission", permission.name)
+    for action, verb in verbs.items():
+        if permission.codename == f"{action}_{content_type.model}":
+            label = f"{verb} {model_label}"
+            break
+    return f"{content_type.app_label} | {model_label} | {label}"
+
+
+admin.site.unregister(Group)
+
+
+@admin.register(Group)
+class RoleAdmin(GroupAdmin):
+    """Keep Django's role management behavior; localize permission choices."""
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        field = super().formfield_for_manytomany(db_field, request, **kwargs)
+        if field is not None and db_field.name == "permissions":
+            field.label_from_instance = user_permission_label
+        return field
+
+
 # 用户管理
 @admin.register(Users)
 class UsersAdmin(UserAdmin):
@@ -54,9 +100,12 @@ class UsersAdmin(UserAdmin):
     ordering = ("id",)
     # 编辑页显示内容
     fieldsets = (
-        ("认证信息", {"fields": ("username", "password")}),
         (
-            "个人信息",
+            pgettext_lazy("user admin section", "认证信息"),
+            {"fields": ("username", "password")},
+        ),
+        (
+            pgettext_lazy("user admin section", "个人信息"),
             {
                 "fields": (
                     "display",
@@ -68,7 +117,7 @@ class UsersAdmin(UserAdmin):
             },
         ),
         (
-            "权限信息",
+            pgettext_lazy("user admin section", "权限信息"),
             {
                 "fields": (
                     "is_superuser",
@@ -79,14 +128,23 @@ class UsersAdmin(UserAdmin):
                 )
             },
         ),
-        ("资源组", {"fields": ("resource_group",)}),
-        ("其他信息", {"fields": ("date_joined", "failed_login_count")}),
+        (
+            pgettext_lazy("user admin section", "资源组"),
+            {"fields": ("resource_group",)},
+        ),
+        (
+            pgettext_lazy("user admin section", "其他信息"),
+            {"fields": ("date_joined", "failed_login_count")},
+        ),
     )
     # 添加页显示内容
     add_fieldsets = (
-        ("认证信息", {"fields": ("username", "password1", "password2")}),
         (
-            "个人信息",
+            pgettext_lazy("user admin section", "认证信息"),
+            {"fields": ("username", "password1", "password2")},
+        ),
+        (
+            pgettext_lazy("user admin section", "个人信息"),
             {
                 "fields": (
                     "display",
@@ -98,7 +156,7 @@ class UsersAdmin(UserAdmin):
             },
         ),
         (
-            "权限信息",
+            pgettext_lazy("user admin section", "权限信息"),
             {
                 "fields": (
                     "is_superuser",
@@ -109,10 +167,19 @@ class UsersAdmin(UserAdmin):
                 )
             },
         ),
-        ("资源组", {"fields": ("resource_group",)}),
+        (
+            pgettext_lazy("user admin section", "资源组"),
+            {"fields": ("resource_group",)},
+        ),
     )
     filter_horizontal = ("groups", "user_permissions", "resource_group")
     list_filter = ("is_staff", "is_superuser", "is_active", "groups", "resource_group")
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        field = super().formfield_for_manytomany(db_field, request, **kwargs)
+        if field is not None and db_field.name == "user_permissions":
+            field.label_from_instance = user_permission_label
+        return field
 
 
 # 用户2fa管理
@@ -225,9 +292,12 @@ class TunnelAdmin(admin.ModelAdmin):
     ordering = ("id",)
     # 添加页显示内容
     add_fieldsets = (
-        ("隧道信息", {"fields": ("tunnel_name", "host", "port")}),
         (
-            "连接信息",
+            pgettext_lazy("ssh tunnel", "隧道信息"),
+            {"fields": ("tunnel_name", "host", "port")},
+        ),
+        (
+            pgettext_lazy("ssh tunnel", "连接信息"),
             {"fields": ("user", "password", "pkey_path", "pkey_password", "pkey")},
         ),
     )
@@ -248,6 +318,14 @@ class SqlWorkflowContentInline(admin.TabularInline):
     model = SqlWorkflowContent
 
 
+class SqlWorkflowStatusFilter(admin.ChoicesFieldListFilter):
+    def choices(self, changelist):
+        labels = {str(label): code for code, label in self.field.flatchoices}
+        for choice in super().choices(changelist):
+            code = labels.get(str(choice["display"]))
+            yield {**choice, "display": gettext(code) if code else choice["display"]}
+
+
 # SQL工单
 @admin.register(SqlWorkflow)
 class SqlWorkflowAdmin(admin.ModelAdmin):
@@ -258,7 +336,7 @@ class SqlWorkflowAdmin(admin.ModelAdmin):
         "instance",
         "engineer_display",
         "create_time",
-        "status",
+        "workflow_status",
         "is_backup",
     )
     search_fields = [
@@ -270,7 +348,7 @@ class SqlWorkflowAdmin(admin.ModelAdmin):
     list_filter = (
         "group_name",
         "instance__instance_name",
-        "status",
+        ("status", SqlWorkflowStatusFilter),
         "syntax_type",
     )
     list_display_links = (
@@ -278,6 +356,17 @@ class SqlWorkflowAdmin(admin.ModelAdmin):
         "workflow_name",
     )
     inlines = [SqlWorkflowContentInline]
+
+    @admin.display(description=gettext_lazy("Status"), ordering="status")
+    def workflow_status(self, obj):
+        return gettext(obj.status)
+
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name == "status":
+            kwargs["choices"] = [
+                (code, gettext_lazy(code)) for code, label in db_field.choices
+            ]
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
 
 
 # SQL查询日志
@@ -391,16 +480,35 @@ class WorkflowAuditAdmin(admin.ModelAdmin):
     )
 
 
+class WorkflowLogOperationFilter(admin.AllValuesFieldListFilter):
+    def choices(self, changelist):
+        for choice in super().choices(changelist):
+            yield {
+                **choice,
+                "display": pgettext("workflow log action", str(choice["display"])),
+            }
+
+
 # 工作流日志表
 @admin.register(WorkflowLog)
 class WorkflowLogAdmin(admin.ModelAdmin):
     list_display = (
-        "operation_type_desc",
+        "operation_description",
         "operation_info",
         "operator_display",
         "operation_time",
     )
-    list_filter = ("operation_type_desc", "operator_display")
+    list_filter = (
+        ("operation_type_desc", WorkflowLogOperationFilter),
+        "operator_display",
+    )
+
+    @admin.display(
+        description=pgettext_lazy("workflow log admin", "操作类型描述"),
+        ordering="operation_type_desc",
+    )
+    def operation_description(self, obj):
+        return pgettext("workflow log action", obj.operation_type_desc)
 
 
 # 实例数据库列表
@@ -513,7 +621,62 @@ class ArchiveConfigAdmin(admin.ModelAdmin):
 # 云服务认证信息配置
 @admin.register(CloudAccessKey)
 class CloudAccessKeyAdmin(admin.ModelAdmin):
-    list_display = ("type", "key_id", "key_secret", "remark")
+    list_display = (
+        "cloud_provider",
+        "access_key_id",
+        "access_key_secret",
+        "description",
+    )
+
+    @admin.display(
+        description=pgettext_lazy("cloud credential", "云服务商"), ordering="type"
+    )
+    def cloud_provider(self, obj):
+        return (
+            pgettext("cloud credential", "阿里云") if obj.type == "aliyun" else obj.type
+        )
+
+    @admin.display(
+        description=pgettext_lazy("cloud credential", "访问密钥ID"), ordering="key_id"
+    )
+    def access_key_id(self, obj):
+        return obj.key_id
+
+    @admin.display(
+        description=pgettext_lazy("cloud credential", "访问密钥"), ordering="key_secret"
+    )
+    def access_key_secret(self, obj):
+        return obj.key_secret
+
+    @admin.display(
+        description=pgettext_lazy("cloud credential", "备注"), ordering="remark"
+    )
+    def description(self, obj):
+        return obj.remark
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        field = super().formfield_for_dbfield(db_field, request, **kwargs)
+        labels = {
+            "type": "云服务商",
+            "key_id": "访问密钥ID",
+            "key_secret": "访问密钥",
+            "remark": "备注",
+        }
+        if field is not None and db_field.name in labels:
+            field.label = pgettext_lazy("cloud credential", labels[db_field.name])
+            if db_field.name == "type":
+                field.choices = [
+                    (
+                        value,
+                        (
+                            pgettext_lazy("cloud credential", "阿里云")
+                            if value == "aliyun"
+                            else label
+                        ),
+                    )
+                    for value, label in field.choices
+                ]
+        return field
 
 
 # 登录审计日志

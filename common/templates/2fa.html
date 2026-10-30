@@ -1,7 +1,9 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
-    <title>Archery - 两步验证</title>
+    <title>{% translate "Archery - 两步验证" context "remaining pages" %}</title>
     {% load static %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 引入 Bootstrap -->
@@ -24,54 +26,54 @@
             {% csrf_token %}
             {% if verify_mode == 'verify_config' %}
                 <div class="form-group">
-                    <h4 style="font-weight: bold">启用两步验证</h4>
+                    <h4 style="font-weight: bold">{% translate "启用两步验证" context "remaining pages" %}</h4>
                 </div>
                 <div class="form-group">
-                    <label for="auth_type">验证方式:</label>
+                    <label for="auth_type">{% translate "验证方式:" context "remaining pages" %}</label>
                     <select id="auth_type" class="form-control show-tick selectpicker" name="auth_type"
-                            title="选择额外验证方式:"
+                            title="{% translate "选择额外验证方式:" context "remaining pages" %}"
                             data-live-search="true">
-                        <option value="totp" selected="selected">Google身份验证器</option>
-                        <option value="sms">短信验证码</option>
+                        <option value="totp" selected="selected">{% translate "Google身份验证器" context "remaining pages" %}</option>
+                        <option value="sms">{% translate "短信验证码" context "remaining pages" %}</option>
                     </select>
                 </div>
 
                 <div id="totp-form" class="form-group" style="display: grid">
-                    <label class="control-label" for="qrcode-img">1. 使用Google身份验证器扫码：</label>
+                    <label class="control-label" for="qrcode-img">{% translate "1. 使用Google身份验证器扫码：" context "remaining pages" %}</label>
                     <img id="qrcode-img" key="" src="" style="width: 100%;height: auto;">
                 </div>
                 <div id="sms-form" class="form-group" style="display:none;">
-                    <label class="control-label" for="phone">1. 输入要绑定的手机号码：</label>
+                    <label class="control-label" for="phone">{% translate "1. 输入要绑定的手机号码：" context "remaining pages" %}</label>
                     <input class="form-control ng-valid ng-dirty ng-touched" id="phone" name="phone" type="text"
                            oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                 </div>
                 <div class="form-group">
-                    <label class="control-label" for="otpCode">2. 输入6位验证码完成验证：</label>
+                    <label class="control-label" for="otpCode">{% translate "2. 输入6位验证码完成验证：" context "remaining pages" %}</label>
                     <input class="form-control ng-valid ng-dirty ng-touched" id="otpCode" name="otpCode" type="text"
                            oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                 </div>
                 <div class="form-group" style="text-align: center">
-                    <button id="btnCaptcha" type="button" class="btn btn-primary btn-block" style="display: none">获取验证码</button>
-                    <button id="btnAuth" type="button" class="btn btn-success btn-block"><i class="fa-lock"></i>验证</button>
+                    <button id="btnCaptcha" type="button" class="btn btn-primary btn-block" style="display: none">{% translate "获取验证码" context "remaining pages" %}</button>
+                    <button id="btnAuth" type="button" class="btn btn-success btn-block"><i class="fa-lock"></i>{% translate "验证" context "remaining pages" %}</button>
                 </div>
             {% else %}
                 <div class="form-group">
-                    <label for="auth_type">选择验证方式:</label>
+                    <label for="auth_type">{% translate "选择验证方式:" context "remaining pages" %}</label>
                     <select id="auth_type" class="form-control show-tick selectpicker" name="auth_type"
-                            title="选择额外验证方式:"
+                            title="{% translate "选择额外验证方式:" context "remaining pages" %}"
                             data-live-search="true">
                     </select>
                 </div>
                 <div class="form-group">
-                    <label id="totp-form" class="control-label" for="otpCode">OTP验证码</label>
-                    <label id="sms-form" class="control-label" for="otpCode">短信验证码</label>
+                    <label id="totp-form" class="control-label" for="otpCode">{% translate "OTP验证码" context "remaining pages" %}</label>
+                    <label id="sms-form" class="control-label" for="otpCode">{% translate "短信验证码" context "remaining pages" %}</label>
                     <input class="form-control ng-valid ng-dirty ng-touched" id="otpCode" name="otpCode" type="text"
                            oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                 </div>
                 <input id="phone" value="{{ phone }}" style="display: none">
                 <div class="form-group">
-                    <button id="btnCaptcha" type="button" class="btn btn-primary btn-block" >获取验证码</button>
-                    <button id="btnAuth" type="button" class="btn btn-success btn-block"><i class="fa-lock"></i>验证</button>
+                    <button id="btnCaptcha" type="button" class="btn btn-primary btn-block" >{% translate "获取验证码" context "remaining pages" %}</button>
+                    <button id="btnAuth" type="button" class="btn btn-success btn-block"><i class="fa-lock"></i>{% translate "验证" context "remaining pages" %}</button>
                 </div>
             {% endif %}
             <input type="text" style="display:none">
@@ -86,7 +88,10 @@
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
 <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
 <script src="{% static 'bootstrap-select/js/bootstrap-select.min.js' %}"></script>
+{% if LANGUAGE_CODE != "en" %}
 <script src="{% static 'bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
+{% endif %}
+<script src="{% url 'sql:javascript-catalog' %}"></script>
 <script src="{% static 'dist/js/utils.js' %}"></script>
 </body>
 <!-- 解决CSRF-->
@@ -122,7 +127,7 @@
             if (event.keyCode === 13) {
                 let otp = $('#otpCode').val();
                 if (!otp) {
-                    alert('请输入验证码！')
+                    alert('{% translate "请输入验证码！" context "remaining pages" %}')
                     return
                 }
                 authOTP(otp);
@@ -153,7 +158,7 @@
     $('#btnAuth').click(function () {
         let otp = $('#otpCode').val();
         if (!otp) {
-            alert('请输入验证码！')
+            alert('{% translate "请输入验证码！" context "remaining pages" %}')
             return
         }
         authOTP(otp);
@@ -163,14 +168,14 @@
         if ('{{ verify_mode }}' === 'verify_config') {
             let phone = $("#phone").val();
             if (!phone) {
-                alert('请输入手机号！')
+                alert('{% translate "请输入手机号！" context "remaining pages" %}')
                 return
             }
         }
         let data = config_2fa();
         if (data.status === 0) {
             init_countdown(this);
-            alert('验证码已发送，5分钟内有效')
+            alert('{% translate "验证码已发送，5分钟内有效" context "remaining pages" %}')
         }
     })
 
@@ -234,7 +239,7 @@
             },
             success: function (data) {
                 if (data.status === 0) {
-                    alert("已开启两步验证！");
+                    alert("{% translate "已开启两步验证！" context "remaining pages" %}");
                 } else {
                     alert(data.msg)
                 }

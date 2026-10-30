@@ -6,7 +6,11 @@ from typing import Optional
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from mirage import fields
-from django.utils.translation import gettext as _
+from django.utils.translation import (
+    gettext as _,
+    gettext_lazy as _lazy,
+    pgettext_lazy as _p_lazy,
+)
 from django.conf import settings
 from mirage.crypto import Crypto
 
@@ -33,16 +37,22 @@ class ResourceGroup(models.Model):
     资源组
     """
 
-    group_id = models.AutoField("组ID", primary_key=True)
-    group_name = models.CharField("组名称", max_length=100, unique=True)
-    group_parent_id = models.BigIntegerField("父级id", default=0)
-    group_sort = models.IntegerField("排序", default=1)
-    group_level = models.IntegerField("层级", default=1)
-    ding_webhook = models.CharField("钉钉webhook地址", max_length=255, blank=True)
-    feishu_webhook = models.CharField("飞书webhook地址", max_length=255, blank=True)
-    qywx_webhook = models.CharField("企业微信webhook地址", max_length=255, blank=True)
+    group_id = models.AutoField(_lazy("组ID"), primary_key=True)
+    group_name = models.CharField(_lazy("组名称"), max_length=100, unique=True)
+    group_parent_id = models.BigIntegerField(_lazy("父级id"), default=0)
+    group_sort = models.IntegerField(_lazy("排序"), default=1)
+    group_level = models.IntegerField(_lazy("层级"), default=1)
+    ding_webhook = models.CharField(
+        _lazy("钉钉webhook地址"), max_length=255, blank=True
+    )
+    feishu_webhook = models.CharField(
+        _lazy("飞书webhook地址"), max_length=255, blank=True
+    )
+    qywx_webhook = models.CharField(
+        _lazy("企业微信webhook地址"), max_length=255, blank=True
+    )
     is_deleted = models.IntegerField(
-        "是否删除", choices=((0, "否"), (1, "是")), default=0
+        _lazy("是否删除"), choices=((0, _lazy("否")), (1, _lazy("是"))), default=0
     )
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -53,8 +63,8 @@ class ResourceGroup(models.Model):
     class Meta:
         managed = True
         db_table = "resource_group"
-        verbose_name = "资源组管理"
-        verbose_name_plural = "资源组管理"
+        verbose_name = _lazy("资源组管理")
+        verbose_name_plural = _lazy("资源组管理")
 
 
 class Users(AbstractUser):
@@ -62,16 +72,26 @@ class Users(AbstractUser):
     用户信息扩展
     """
 
-    display = models.CharField("显示的中文名", max_length=50, default="")
-    ding_user_id = models.CharField("钉钉UserID", max_length=64, blank=True)
-    wx_user_id = models.CharField("企业微信UserID", max_length=64, blank=True)
-    feishu_open_id = models.CharField("飞书OpenID", max_length=64, blank=True)
-    failed_login_count = models.IntegerField("失败计数", default=0)
+    display = models.CharField(
+        _p_lazy("user field", "显示的中文名"), max_length=50, default=""
+    )
+    ding_user_id = models.CharField(
+        _p_lazy("user field", "钉钉UserID"), max_length=64, blank=True
+    )
+    wx_user_id = models.CharField(
+        _p_lazy("user field", "企业微信UserID"), max_length=64, blank=True
+    )
+    feishu_open_id = models.CharField(
+        _p_lazy("user field", "飞书OpenID"), max_length=64, blank=True
+    )
+    failed_login_count = models.IntegerField(
+        _p_lazy("user field", "失败计数"), default=0
+    )
     last_login_failed_at = models.DateTimeField(
-        "上次失败登录时间", blank=True, null=True
+        _p_lazy("user field", "上次失败登录时间"), blank=True, null=True
     )
     resource_group = models.ManyToManyField(
-        ResourceGroup, verbose_name="资源组", blank=True
+        ResourceGroup, verbose_name=_p_lazy("user field", "资源组"), blank=True
     )
 
     def save(self, *args, **kwargs):
@@ -87,8 +107,8 @@ class Users(AbstractUser):
     class Meta:
         managed = True
         db_table = "sql_users"
-        verbose_name = "用户管理"
-        verbose_name_plural = "用户管理"
+        verbose_name = _p_lazy("user model", "用户管理")
+        verbose_name_plural = _p_lazy("user model plural", "用户管理")
 
 
 class TwoFactorAuthConfig(models.Model):
@@ -97,37 +117,47 @@ class TwoFactorAuthConfig(models.Model):
     """
 
     auth_type_choice = (
-        ("totp", "Google身份验证器"),
-        ("sms", "短信验证码"),
+        ("totp", _p_lazy("2fa", "Google身份验证器")),
+        ("sms", _p_lazy("2fa", "短信验证码")),
     )
 
-    username = fields.EncryptedCharField(verbose_name="用户名", max_length=200)
+    username = fields.EncryptedCharField(
+        verbose_name=_p_lazy("2fa", "用户名"), max_length=200
+    )
     auth_type = fields.EncryptedCharField(
-        verbose_name="认证类型", max_length=128, choices=auth_type_choice
+        verbose_name=_p_lazy("2fa", "认证类型"),
+        max_length=128,
+        choices=auth_type_choice,
     )
     phone = fields.EncryptedCharField(
-        verbose_name="手机号码", max_length=64, null=True, default=""
+        verbose_name=_p_lazy("2fa", "手机号码"), max_length=64, null=True, default=""
     )
     secret_key = fields.EncryptedCharField(
-        verbose_name="用户密钥", max_length=256, null=True
+        verbose_name=_p_lazy("2fa", "用户密钥"), max_length=256, null=True
     )
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
 
     class Meta:
         managed = True
         db_table = "2fa_config"
-        verbose_name = "2FA配置"
-        verbose_name_plural = "2FA配置"
+        verbose_name = _p_lazy("2fa", "2FA配置")
+        verbose_name_plural = _p_lazy("2fa", "2FA配置")
         unique_together = ("user", "auth_type")
 
 
 class InstanceTag(models.Model):
     """实例标签配置"""
 
-    tag_code = models.CharField("标签代码", max_length=20, unique=True)
-    tag_name = models.CharField("标签名称", max_length=20, unique=True)
-    active = models.BooleanField("激活状态", default=True)
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
+    tag_code = models.CharField(
+        _p_lazy("instance tag", "标签代码"), max_length=20, unique=True
+    )
+    tag_name = models.CharField(
+        _p_lazy("instance tag", "标签名称"), max_length=20, unique=True
+    )
+    active = models.BooleanField(_p_lazy("instance tag", "激活状态"), default=True)
+    create_time = models.DateTimeField(
+        _p_lazy("instance tag", "创建时间"), auto_now_add=True
+    )
 
     def __str__(self):
         return self.tag_name
@@ -135,8 +165,8 @@ class InstanceTag(models.Model):
     class Meta:
         managed = True
         db_table = "sql_instance_tag"
-        verbose_name = "实例标签"
-        verbose_name_plural = "实例标签"
+        verbose_name = _lazy("实例标签")
+        verbose_name_plural = _lazy("实例标签")
 
 
 DB_TYPE_CHOICES = (
@@ -165,24 +195,45 @@ class Tunnel(models.Model):
     SSH隧道配置
     """
 
-    tunnel_name = models.CharField("隧道名称", max_length=50, unique=True)
-    host = models.CharField("隧道连接", max_length=200)
-    port = models.IntegerField("端口", default=0)
+    tunnel_name = models.CharField(
+        _p_lazy("ssh tunnel", "隧道名称"), max_length=50, unique=True
+    )
+    host = models.CharField(_p_lazy("ssh tunnel", "隧道连接"), max_length=200)
+    port = models.IntegerField(_p_lazy("ssh tunnel", "端口"), default=0)
     user = fields.EncryptedCharField(
-        verbose_name="用户名", max_length=200, default="", blank=True, null=True
+        verbose_name=_p_lazy("ssh tunnel", "用户名"),
+        max_length=200,
+        default="",
+        blank=True,
+        null=True,
     )
     password = fields.EncryptedCharField(
-        verbose_name="密码", max_length=300, default="", blank=True, null=True
+        verbose_name=_p_lazy("ssh tunnel", "密码"),
+        max_length=300,
+        default="",
+        blank=True,
+        null=True,
     )
-    pkey = fields.EncryptedTextField(verbose_name="密钥", blank=True, null=True)
+    pkey = fields.EncryptedTextField(
+        verbose_name=_p_lazy("ssh tunnel", "密钥"), blank=True, null=True
+    )
     pkey_path = models.FileField(
-        verbose_name="密钥地址", blank=True, null=True, upload_to="keys/"
+        verbose_name=_p_lazy("ssh tunnel", "密钥地址"),
+        blank=True,
+        null=True,
+        upload_to="keys/",
     )
     pkey_password = fields.EncryptedCharField(
-        verbose_name="密钥密码", max_length=300, default="", blank=True, null=True
+        verbose_name=_p_lazy("ssh tunnel", "密钥密码"),
+        max_length=300,
+        default="",
+        blank=True,
+        null=True,
     )
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    update_time = models.DateTimeField("更新时间", auto_now=True)
+    create_time = models.DateTimeField(
+        _p_lazy("ssh tunnel", "创建时间"), auto_now_add=True
+    )
+    update_time = models.DateTimeField(_p_lazy("ssh tunnel", "更新时间"), auto_now=True)
 
     def __str__(self):
         return self.tunnel_name
@@ -196,8 +247,8 @@ class Tunnel(models.Model):
     class Meta:
         managed = True
         db_table = "ssh_tunnel"
-        verbose_name = "隧道配置"
-        verbose_name_plural = "隧道配置"
+        verbose_name = _lazy("隧道配置")
+        verbose_name_plural = _lazy("隧道配置")
 
 
 class Instance(models.Model, PasswordMixin):
@@ -205,65 +256,71 @@ class Instance(models.Model, PasswordMixin):
     各个线上实例配置
     """
 
-    instance_name = models.CharField("实例名称", max_length=50, unique=True)
+    instance_name = models.CharField(_lazy("实例名称"), max_length=50, unique=True)
     type = models.CharField(
-        "实例类型", max_length=6, choices=(("master", "主库"), ("slave", "从库"))
+        _lazy("实例类型"),
+        max_length=6,
+        choices=(("master", _lazy("主库")), ("slave", _lazy("从库"))),
     )
-    db_type = models.CharField("数据库类型", max_length=20, choices=DB_TYPE_CHOICES)
+    db_type = models.CharField(
+        _lazy("数据库类型"), max_length=20, choices=DB_TYPE_CHOICES
+    )
     mode = models.CharField(
-        "运行模式",
+        _lazy("运行模式"),
         max_length=10,
         default="",
         blank=True,
-        choices=(("standalone", "单机"), ("cluster", "集群")),
+        choices=(("standalone", _lazy("单机")), ("cluster", _lazy("集群"))),
     )
-    host = models.CharField("实例连接", max_length=200)
-    port = models.IntegerField("端口", default=0)
+    host = models.CharField(_lazy("实例连接"), max_length=200)
+    port = models.IntegerField(_lazy("端口"), default=0)
     user = fields.EncryptedCharField(
-        verbose_name="用户名", max_length=200, default="", blank=True
+        verbose_name=_lazy("用户名"), max_length=200, default="", blank=True
     )
     password = fields.EncryptedCharField(
-        verbose_name="密码", max_length=300, default="", blank=True
+        verbose_name=_lazy("密码"), max_length=300, default="", blank=True
     )
-    is_ssl = models.BooleanField("是否启用SSL", default=False)
-    verify_ssl = models.BooleanField("是否验证服务端SSL证书", default=True)
-    db_name = models.CharField("数据库", max_length=64, default="", blank=True)
+    is_ssl = models.BooleanField(_lazy("是否启用SSL"), default=False)
+    verify_ssl = models.BooleanField(_lazy("是否验证服务端SSL证书"), default=True)
+    db_name = models.CharField(_lazy("数据库"), max_length=64, default="", blank=True)
     show_db_name_regex = models.CharField(
-        "显示的数据库列表正则",
+        _lazy("显示的数据库列表正则"),
         max_length=1024,
         default="",
         blank=True,
-        help_text="正则表达式。示例：^(test_db|dmp_db|za.*)$。Redis示例: ^(0|4|6|11|12|13)$",
+        help_text=_lazy(
+            "正则表达式。示例：^(test_db|dmp_db|za.*)$。Redis示例: ^(0|4|6|11|12|13)$"
+        ),
     )
     denied_db_name_regex = models.CharField(
-        "隐藏的数据库列表正则",
+        _lazy("隐藏的数据库列表正则"),
         max_length=1024,
         default="",
         blank=True,
-        help_text="正则表达式。隐藏大于显示，此规则优先。",
+        help_text=_lazy("正则表达式。隐藏大于显示，此规则优先。"),
     )
 
-    charset = models.CharField("字符集", max_length=20, default="", blank=True)
+    charset = models.CharField(_lazy("字符集"), max_length=20, default="", blank=True)
     service_name = models.CharField(
         "Oracle service name", max_length=50, null=True, blank=True
     )
     sid = models.CharField("Oracle sid", max_length=50, null=True, blank=True)
     resource_group = models.ManyToManyField(
-        ResourceGroup, verbose_name="资源组", blank=True
+        ResourceGroup, verbose_name=_lazy("资源组"), blank=True
     )
     instance_tag = models.ManyToManyField(
-        InstanceTag, verbose_name="实例标签", blank=True
+        InstanceTag, verbose_name=_lazy("实例标签"), blank=True
     )
     tunnel = models.ForeignKey(
         Tunnel,
-        verbose_name="连接隧道",
+        verbose_name=_lazy("连接隧道"),
         blank=True,
         null=True,
         on_delete=models.CASCADE,
         default=None,
     )
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    update_time = models.DateTimeField("更新时间", auto_now=True)
+    create_time = models.DateTimeField(_lazy("创建时间"), auto_now_add=True)
+    update_time = models.DateTimeField(_lazy("更新时间"), auto_now=True)
 
     def __str__(self):
         return self.instance_name
@@ -271,8 +328,8 @@ class Instance(models.Model, PasswordMixin):
     class Meta:
         managed = True
         db_table = "sql_instance"
-        verbose_name = "实例配置"
-        verbose_name_plural = "实例配置"
+        verbose_name = _lazy("实例配置")
+        verbose_name_plural = _lazy("实例配置")
 
 
 SQL_WORKFLOW_CHOICES = (
@@ -327,48 +384,81 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     存放各个SQL上线工单的基础内容
     """
 
-    workflow_name = models.CharField("工单内容", max_length=50)
-    demand_url = models.CharField("需求链接", max_length=500, blank=True)
-    group_id = models.IntegerField("组ID")
-    group_name = models.CharField("组名称", max_length=100)
+    workflow_name = models.CharField(
+        _p_lazy("sql workflow admin", "工单内容"), max_length=50
+    )
+    demand_url = models.CharField(
+        _p_lazy("sql workflow admin", "需求链接"), max_length=500, blank=True
+    )
+    group_id = models.IntegerField(_p_lazy("sql workflow admin", "组ID"))
+    group_name = models.CharField(
+        _p_lazy("sql workflow admin", "组名称"), max_length=100
+    )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = models.CharField("数据库", max_length=64)
+    db_name = models.CharField(_p_lazy("sql workflow admin", "数据库"), max_length=64)
     syntax_type = models.IntegerField(
-        "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单",
-        choices=((0, "其他"), (1, "DDL"), (2, "DML"), (3, "离线导出工单")),
+        _p_lazy(
+            "sql workflow admin", "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单"
+        ),
+        choices=(
+            (0, _p_lazy("sql workflow admin", "其他")),
+            (1, "DDL"),
+            (2, "DML"),
+            (3, _p_lazy("sql workflow admin", "离线导出工单")),
+        ),
         default=0,
     )
     is_backup = models.BooleanField(
-        "是否备份",
+        _p_lazy("sql workflow admin", "是否备份"),
         choices=(
-            (False, "否"),
-            (True, "是"),
+            (False, _p_lazy("sql workflow admin", "否")),
+            (True, _p_lazy("sql workflow admin", "是")),
         ),
         default=True,
     )
-    engineer = models.CharField("发起人", max_length=30)
-    engineer_display = models.CharField("发起人中文名", max_length=50, default="")
-    status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
-    audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
-    run_date_start = models.DateTimeField("可执行起始时间", null=True, blank=True)
-    run_date_end = models.DateTimeField("可执行结束时间", null=True, blank=True)
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    finish_time = models.DateTimeField("结束时间", null=True, blank=True)
+    engineer = models.CharField(_p_lazy("sql workflow admin", "发起人"), max_length=30)
+    engineer_display = models.CharField(
+        _p_lazy("sql workflow admin", "发起人中文名"), max_length=50, default=""
+    )
+    status = models.CharField(
+        max_length=50,
+        choices=SQL_WORKFLOW_CHOICES,
+    )
+    audit_auth_groups = models.CharField(
+        _p_lazy("sql workflow admin", "审批权限组列表"), max_length=255
+    )
+    run_date_start = models.DateTimeField(
+        _p_lazy("sql workflow admin", "可执行起始时间"), null=True, blank=True
+    )
+    run_date_end = models.DateTimeField(
+        _p_lazy("sql workflow admin", "可执行结束时间"), null=True, blank=True
+    )
+    create_time = models.DateTimeField(
+        _p_lazy("sql workflow admin", "创建时间"), auto_now_add=True
+    )
+    finish_time = models.DateTimeField(
+        _p_lazy("sql workflow admin", "结束时间"), null=True, blank=True
+    )
     is_manual = models.IntegerField(
-        "是否原生执行", choices=((0, "否"), (1, "是")), default=0
+        _p_lazy("sql workflow admin", "是否原生执行"),
+        choices=(
+            (0, _p_lazy("sql workflow admin", "否")),
+            (1, _p_lazy("sql workflow admin", "是")),
+        ),
+        default=0,
     )
     is_offline_export = models.IntegerField(
-        "是否为离线导出工单",
+        _p_lazy("sql workflow admin", "是否为离线导出工单"),
         choices=(
-            (0, "否"),
-            (1, "是"),
+            (0, _p_lazy("sql workflow admin", "否")),
+            (1, _p_lazy("sql workflow admin", "是")),
         ),
         default=0,
     )
 
     # 导出格式
     export_format = models.CharField(
-        "导出格式",
+        _p_lazy("sql workflow admin", "导出格式"),
         max_length=10,
         choices=(
             ("csv", "CSV"),
@@ -383,7 +473,7 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     )
 
     file_name = models.CharField(
-        "文件名",
+        _p_lazy("sql workflow admin", "文件名"),
         max_length=255,  # 适当调整最大长度
         null=True,  # 允许为空
         blank=True,  # 允许为空字符串
@@ -395,8 +485,8 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     class Meta:
         managed = True
         db_table = "sql_workflow"
-        verbose_name = "SQL工单"
-        verbose_name_plural = "SQL工单"
+        verbose_name = _p_lazy("sql workflow admin", "SQL工单")
+        verbose_name_plural = _p_lazy("sql workflow admin", "SQL工单")
 
 
 class SqlWorkflowContent(models.Model):
@@ -406,9 +496,13 @@ class SqlWorkflowContent(models.Model):
     """
 
     workflow = models.OneToOneField(SqlWorkflow, on_delete=models.CASCADE)
-    sql_content = models.TextField("具体sql内容")
-    review_content = models.TextField("自动审核内容的JSON格式")
-    execute_result = models.TextField("执行结果的JSON格式", blank=True)
+    sql_content = models.TextField(_p_lazy("sql workflow admin", "具体sql内容"))
+    review_content = models.TextField(
+        _p_lazy("sql workflow admin", "自动审核内容的JSON格式")
+    )
+    execute_result = models.TextField(
+        _p_lazy("sql workflow admin", "执行结果的JSON格式"), blank=True
+    )
 
     def __str__(self):
         return self.workflow.workflow_name
@@ -416,8 +510,8 @@ class SqlWorkflowContent(models.Model):
     class Meta:
         managed = True
         db_table = "sql_workflow_content"
-        verbose_name = "SQL工单内容"
-        verbose_name_plural = "SQL工单内容"
+        verbose_name = _p_lazy("sql workflow admin", "SQL工单内容")
+        verbose_name_plural = _p_lazy("sql workflow admin", "SQL工单内容")
 
 
 class WorkflowAudit(models.Model):
@@ -426,22 +520,51 @@ class WorkflowAudit(models.Model):
     """
 
     audit_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField("组ID")
-    group_name = models.CharField("组名称", max_length=100)
-    workflow_id = models.BigIntegerField("关联业务id")
-    workflow_type = models.IntegerField("申请类型", choices=WorkflowType.choices)
-    workflow_title = models.CharField("申请标题", max_length=50)
-    workflow_remark = models.CharField(
-        "申请备注", default="", max_length=140, blank=True
+    group_id = models.IntegerField(_p_lazy("workflow approval admin", "组ID"))
+    group_name = models.CharField(
+        _p_lazy("workflow approval admin", "组名称"), max_length=100
     )
-    audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
-    current_audit = models.CharField("当前审批权限组", max_length=20)
-    next_audit = models.CharField("下级审批权限组", max_length=20)
-    current_status = models.IntegerField("审核状态", choices=WorkflowStatus.choices)
-    create_user = models.CharField("申请人", max_length=30)
-    create_user_display = models.CharField("申请人中文名", max_length=50, default="")
-    create_time = models.DateTimeField("申请时间", auto_now_add=True)
-    sys_time = models.DateTimeField("系统时间", auto_now=True)
+    workflow_id = models.BigIntegerField(
+        _p_lazy("workflow approval admin", "关联业务id")
+    )
+    workflow_type = models.IntegerField(
+        _p_lazy("workflow approval admin", "申请类型"),
+        choices=[(value, _lazy(label)) for value, label in WorkflowType.choices],
+    )
+    workflow_title = models.CharField(
+        _p_lazy("workflow approval admin", "申请标题"), max_length=50
+    )
+    workflow_remark = models.CharField(
+        _p_lazy("workflow approval admin", "申请备注"),
+        default="",
+        max_length=140,
+        blank=True,
+    )
+    audit_auth_groups = models.CharField(
+        _p_lazy("workflow approval admin", "审批权限组列表"), max_length=255
+    )
+    current_audit = models.CharField(
+        _p_lazy("workflow approval admin", "当前审批权限组"), max_length=20
+    )
+    next_audit = models.CharField(
+        _p_lazy("workflow approval admin", "下级审批权限组"), max_length=20
+    )
+    current_status = models.IntegerField(
+        _p_lazy("workflow approval admin", "审核状态"),
+        choices=[(value, _lazy(label)) for value, label in WorkflowStatus.choices],
+    )
+    create_user = models.CharField(
+        _p_lazy("workflow approval admin", "申请人"), max_length=30
+    )
+    create_user_display = models.CharField(
+        _p_lazy("workflow approval admin", "申请人中文名"), max_length=50, default=""
+    )
+    create_time = models.DateTimeField(
+        _p_lazy("workflow approval admin", "申请时间"), auto_now_add=True
+    )
+    sys_time = models.DateTimeField(
+        _p_lazy("workflow approval admin", "系统时间"), auto_now=True
+    )
 
     def get_workflow(self):
         """尝试从 audit 中取出 workflow"""
@@ -460,8 +583,8 @@ class WorkflowAudit(models.Model):
         managed = True
         db_table = "workflow_audit"
         unique_together = ("workflow_id", "workflow_type")
-        verbose_name = "工作流审批列表"
-        verbose_name_plural = "工作流审批列表"
+        verbose_name = _p_lazy("workflow approval admin", "工作流审批列表")
+        verbose_name_plural = _p_lazy("workflow approval admin", "工作流审批列表")
 
 
 class WorkflowAuditDetail(models.Model):
@@ -519,15 +642,27 @@ class WorkflowLog(models.Model):
     """
 
     id = models.AutoField(primary_key=True)
-    audit_id = models.IntegerField("工单审批id", db_index=True)
+    audit_id = models.IntegerField(
+        _p_lazy("workflow log admin", "工单审批id"), db_index=True
+    )
     operation_type = models.SmallIntegerField(
-        "操作类型", choices=WorkflowAction.choices
+        _p_lazy("workflow log admin", "操作类型"),
+        choices=[
+            (value, _p_lazy("workflow log action", label))
+            for value, label in WorkflowAction.choices
+        ],
     )
     # operation_type_desc 字段实际无意义
-    operation_type_desc = models.CharField("操作类型描述", max_length=10)
-    operation_info = models.CharField("操作信息", max_length=1000)
-    operator = models.CharField("操作人", max_length=30)
-    operator_display = models.CharField("操作人中文名", max_length=50, default="")
+    operation_type_desc = models.CharField(
+        _p_lazy("workflow log admin", "操作类型描述"), max_length=10
+    )
+    operation_info = models.CharField(
+        _p_lazy("workflow log admin", "操作信息"), max_length=1000
+    )
+    operator = models.CharField(_p_lazy("workflow log admin", "操作人"), max_length=30)
+    operator_display = models.CharField(
+        _p_lazy("workflow log admin", "操作人中文名"), max_length=50, default=""
+    )
     operation_time = models.DateTimeField(auto_now_add=True)
 
     def __int__(self):
@@ -536,8 +671,8 @@ class WorkflowLog(models.Model):
     class Meta:
         managed = True
         db_table = "workflow_log"
-        verbose_name = "工作流日志"
-        verbose_name_plural = "工作流日志"
+        verbose_name = _p_lazy("workflow log admin", "工作流日志")
+        verbose_name_plural = _p_lazy("workflow log admin", "工作流日志")
 
 
 class QueryPrivilegesApply(models.Model, WorkflowAuditMixin):
@@ -546,27 +681,48 @@ class QueryPrivilegesApply(models.Model, WorkflowAuditMixin):
     """
 
     apply_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField("组ID")
-    group_name = models.CharField("组名称", max_length=100)
-    title = models.CharField("申请标题", max_length=50)
+    group_id = models.IntegerField(_p_lazy("query access application admin", "组ID"))
+    group_name = models.CharField(
+        _p_lazy("query access application admin", "组名称"), max_length=100
+    )
+    title = models.CharField(
+        _p_lazy("query access application admin", "申请标题"), max_length=50
+    )
     # TODO user_name display 改为外键
-    user_name = models.CharField("申请人", max_length=30)
-    user_display = models.CharField("申请人中文名", max_length=50, default="")
+    user_name = models.CharField(
+        _p_lazy("query access application admin", "申请人"), max_length=30
+    )
+    user_display = models.CharField(
+        _p_lazy("query access application admin", "申请人中文名"),
+        max_length=50,
+        default="",
+    )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_list = models.TextField("数据库", default="")  # 逗号分隔的数据库列表
-    table_list = models.TextField("表", default="")  # 逗号分隔的表列表
-    valid_date = models.DateField("有效时间")
-    limit_num = models.IntegerField("行数限制", default=100)
+    db_list = models.TextField(
+        _p_lazy("query access application admin", "数据库"), default=""
+    )  # 逗号分隔的数据库列表
+    table_list = models.TextField(
+        _p_lazy("query access application admin", "表"), default=""
+    )  # 逗号分隔的表列表
+    valid_date = models.DateField(_p_lazy("query access application admin", "有效时间"))
+    limit_num = models.IntegerField(
+        _p_lazy("query access application admin", "行数限制"), default=100
+    )
     priv_type = models.IntegerField(
-        "权限类型",
+        _p_lazy("query access application admin", "权限类型"),
         choices=(
             (1, "DATABASE"),
             (2, "TABLE"),
         ),
         default=0,
     )
-    status = models.IntegerField("审核状态", choices=WorkflowStatus.choices)
-    audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
+    status = models.IntegerField(
+        _p_lazy("query access application admin", "审核状态"),
+        choices=[(value, _lazy(label)) for value, label in WorkflowStatus.choices],
+    )
+    audit_auth_groups = models.CharField(
+        _p_lazy("query access application admin", "审批权限组列表"), max_length=255
+    )
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -576,8 +732,10 @@ class QueryPrivilegesApply(models.Model, WorkflowAuditMixin):
     class Meta:
         managed = True
         db_table = "query_privileges_apply"
-        verbose_name = "查询权限申请记录表"
-        verbose_name_plural = "查询权限申请记录表"
+        verbose_name = _p_lazy("query access application admin", "查询权限申请记录表")
+        verbose_name_plural = _p_lazy(
+            "query access application admin", "查询权限申请记录表"
+        )
 
 
 class QueryPrivileges(models.Model):
@@ -586,22 +744,34 @@ class QueryPrivileges(models.Model):
     """
 
     privilege_id = models.AutoField(primary_key=True)
-    user_name = models.CharField("用户名", max_length=30)
-    user_display = models.CharField("申请人中文名", max_length=50, default="")
+    user_name = models.CharField(
+        _p_lazy("query privilege admin", "用户名"), max_length=30
+    )
+    user_display = models.CharField(
+        _p_lazy("query privilege admin", "申请人中文名"), max_length=50, default=""
+    )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = models.CharField("数据库", max_length=64, default="")
-    table_name = models.CharField("表", max_length=64, default="")
-    valid_date = models.DateField("有效时间")
-    limit_num = models.IntegerField("行数限制", default=100)
+    db_name = models.CharField(
+        _p_lazy("query privilege admin", "数据库"), max_length=64, default=""
+    )
+    table_name = models.CharField(
+        _p_lazy("query privilege admin", "表"), max_length=64, default=""
+    )
+    valid_date = models.DateField(_p_lazy("query privilege admin", "有效时间"))
+    limit_num = models.IntegerField(
+        _p_lazy("query privilege admin", "行数限制"), default=100
+    )
     priv_type = models.IntegerField(
-        "权限类型",
+        _p_lazy("query privilege admin", "权限类型"),
         choices=(
             (1, "DATABASE"),
             (2, "TABLE"),
         ),
         default=0,
     )
-    is_deleted = models.IntegerField("是否删除", default=0)
+    is_deleted = models.IntegerField(
+        _p_lazy("query privilege admin", "是否删除"), default=0
+    )
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -614,8 +784,8 @@ class QueryPrivileges(models.Model):
         indexes = [
             models.Index(fields=["user_name", "instance", "db_name", "table_name"]),
         ]
-        verbose_name = "查询权限记录"
-        verbose_name_plural = "查询权限记录"
+        verbose_name = _p_lazy("query privilege admin", "查询权限记录")
+        verbose_name_plural = _p_lazy("query privilege admin", "查询权限记录")
 
 
 class QueryLog(models.Model):
@@ -624,52 +794,65 @@ class QueryLog(models.Model):
     """
 
     # TODO 改为实例外键
-    instance_name = models.CharField("实例名称", max_length=50)
-    db_name = models.CharField("数据库名称", max_length=64)
-    sqllog = models.TextField("执行的查询语句")
-    effect_row = models.BigIntegerField("返回行数")
-    cost_time = models.CharField("执行耗时", max_length=10, default="")
+    instance_name = models.CharField(
+        _p_lazy("query log admin", "实例名称"), max_length=50
+    )
+    db_name = models.CharField(_p_lazy("query log admin", "数据库名称"), max_length=64)
+    sqllog = models.TextField(_p_lazy("query log admin", "执行的查询语句"))
+    effect_row = models.BigIntegerField(_p_lazy("query log admin", "返回行数"))
+    cost_time = models.CharField(
+        _p_lazy("query log admin", "执行耗时"), max_length=10, default=""
+    )
     # TODO 改为user 外键
-    username = models.CharField("操作人", max_length=30)
-    user_display = models.CharField("操作人中文名", max_length=50, default="")
+    username = models.CharField(_p_lazy("query log admin", "操作人"), max_length=30)
+    user_display = models.CharField(
+        _p_lazy("query log admin", "操作人中文名"), max_length=50, default=""
+    )
     priv_check = models.BooleanField(
-        "查询权限是否正常校验",
+        _p_lazy("query log admin", "查询权限是否正常校验"),
         choices=(
-            (False, "跳过"),
-            (True, "正常"),
+            (False, _p_lazy("query log admin", "跳过")),
+            (True, _p_lazy("query log admin", "正常")),
         ),
         default=False,
     )
     hit_rule = models.BooleanField(
-        "查询是否命中脱敏规则",
-        choices=((False, "未命中/未知"), (True, "命中")),
+        _p_lazy("query log admin", "查询是否命中脱敏规则"),
+        choices=(
+            (False, _p_lazy("query log admin", "未命中/未知")),
+            (True, _p_lazy("query log admin", "命中")),
+        ),
         default=False,
     )
     masking = models.BooleanField(
-        "查询结果是否正常脱敏",
+        _p_lazy("query log admin", "查询结果是否正常脱敏"),
         choices=(
-            (False, "否"),
-            (True, "是"),
+            (False, _p_lazy("query log admin", "否")),
+            (True, _p_lazy("query log admin", "是")),
         ),
         default=False,
     )
     favorite = models.BooleanField(
-        "是否收藏",
+        _p_lazy("query log admin", "是否收藏"),
         choices=(
-            (False, "否"),
-            (True, "是"),
+            (False, _p_lazy("query log admin", "否")),
+            (True, _p_lazy("query log admin", "是")),
         ),
         default=False,
     )
-    alias = models.CharField("语句标识", max_length=64, default="", blank=True)
-    create_time = models.DateTimeField("操作时间", auto_now_add=True)
+    alias = models.CharField(
+        _p_lazy("query log admin", "语句标识"), max_length=64, default="", blank=True
+    )
+    create_time = models.DateTimeField(
+        _p_lazy("query log admin", "操作时间"), auto_now_add=True
+    )
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = True
         db_table = "query_log"
-        verbose_name = "查询日志"
-        verbose_name_plural = "查询日志"
+        verbose_name = _p_lazy("query log admin", "查询日志")
+        verbose_name_plural = _p_lazy("query log admin", "查询日志")
 
 
 rule_type_choices = (
@@ -688,21 +871,42 @@ class DataMaskingColumns(models.Model):
     脱敏字段配置
     """
 
-    column_id = models.AutoField("字段id", primary_key=True)
+    column_id = models.AutoField(
+        _p_lazy("masking column admin", "字段id"), primary_key=True
+    )
     rule_type = models.IntegerField(
-        "规则类型",
-        choices=rule_type_choices,
-        help_text="三段式通用脱敏规则：根据字段长度自动分成三份，中间段脱敏。",
+        _p_lazy("masking column admin", "规则类型"),
+        choices=[
+            (value, _p_lazy("masking rule type", label))
+            for value, label in rule_type_choices
+        ],
+        help_text=_p_lazy(
+            "masking column admin",
+            "三段式通用脱敏规则：根据字段长度自动分成三份，中间段脱敏。",
+        ),
     )
     active = models.BooleanField(
-        "激活状态", choices=((False, "未激活"), (True, "激活"))
+        _p_lazy("masking column admin", "激活状态"),
+        choices=(
+            (False, _p_lazy("masking column admin", "未激活")),
+            (True, _p_lazy("masking column admin", "激活")),
+        ),
     )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    table_schema = models.CharField("字段所在库名", max_length=64)
-    table_name = models.CharField("字段所在表名", max_length=64)
-    column_name = models.CharField("字段名", max_length=64)
+    table_schema = models.CharField(
+        _p_lazy("masking column admin", "字段所在库名"), max_length=64
+    )
+    table_name = models.CharField(
+        _p_lazy("masking column admin", "字段所在表名"), max_length=64
+    )
+    column_name = models.CharField(
+        _p_lazy("masking column admin", "字段名"), max_length=64
+    )
     column_comment = models.CharField(
-        "字段描述", max_length=1024, default="", blank=True
+        _p_lazy("masking column admin", "字段描述"),
+        max_length=1024,
+        default="",
+        blank=True,
     )
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -710,8 +914,8 @@ class DataMaskingColumns(models.Model):
     class Meta:
         managed = True
         db_table = "data_masking_columns"
-        verbose_name = "脱敏字段配置"
-        verbose_name_plural = "脱敏字段配置"
+        verbose_name = _p_lazy("masking column admin", "脱敏字段配置")
+        verbose_name_plural = _p_lazy("masking column admin", "脱敏字段配置")
 
 
 class DataMaskingRules(models.Model):
@@ -719,20 +923,35 @@ class DataMaskingRules(models.Model):
     脱敏规则配置
     """
 
-    rule_type = models.IntegerField("规则类型", choices=rule_type_choices, unique=True)
+    rule_type = models.IntegerField(
+        _p_lazy("masking rule admin", "规则类型"),
+        choices=[
+            (value, _p_lazy("masking rule type", label))
+            for value, label in rule_type_choices
+        ],
+        unique=True,
+    )
     rule_regex = models.CharField(
-        "规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替",
+        _p_lazy(
+            "masking rule admin",
+            "规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替",
+        ),
         max_length=255,
     )
-    hide_group = models.IntegerField("需要隐藏的组")
-    rule_desc = models.CharField("规则描述", max_length=100, default="", blank=True)
+    hide_group = models.IntegerField(_p_lazy("masking rule admin", "需要隐藏的组"))
+    rule_desc = models.CharField(
+        _p_lazy("masking rule admin", "规则描述"),
+        max_length=100,
+        default="",
+        blank=True,
+    )
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = True
         db_table = "data_masking_rules"
-        verbose_name = "脱敏规则配置"
-        verbose_name_plural = "脱敏规则配置"
+        verbose_name = _p_lazy("masking rule admin", "脱敏规则配置")
+        verbose_name_plural = _p_lazy("masking rule admin", "脱敏规则配置")
 
 
 class InstanceAccount(models.Model):
@@ -741,25 +960,32 @@ class InstanceAccount(models.Model):
     """
 
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    user = fields.EncryptedCharField(verbose_name="账号", max_length=128)
+    user = fields.EncryptedCharField(
+        verbose_name=_p_lazy("instance account admin", "账号"), max_length=128
+    )
     host = models.CharField(
-        verbose_name="主机", max_length=64
+        verbose_name=_p_lazy("instance account admin", "主机"), max_length=64
     )  # mysql数据库存储主机信息
     db_name = models.CharField(
-        verbose_name="数据库名称", max_length=128
+        verbose_name=_p_lazy("instance account admin", "数据库名称"), max_length=128
     )  # mongo数据库存储数据库名称
     password = fields.EncryptedCharField(
-        verbose_name="密码", max_length=128, default="", blank=True
+        verbose_name=_p_lazy("instance account admin", "密码"),
+        max_length=128,
+        default="",
+        blank=True,
     )
-    remark = models.CharField("备注", max_length=255)
-    sys_time = models.DateTimeField("系统修改时间", auto_now=True)
+    remark = models.CharField(_p_lazy("instance account admin", "备注"), max_length=255)
+    sys_time = models.DateTimeField(
+        _p_lazy("instance account admin", "系统修改时间"), auto_now=True
+    )
 
     class Meta:
         managed = True
         db_table = "instance_account"
         unique_together = ("instance", "user", "host", "db_name")
-        verbose_name = "实例账号列表"
-        verbose_name_plural = "实例账号列表"
+        verbose_name = _p_lazy("instance account admin", "实例账号列表")
+        verbose_name_plural = _p_lazy("instance account admin", "实例账号列表")
 
 
 class InstanceDatabase(models.Model):
@@ -768,20 +994,37 @@ class InstanceDatabase(models.Model):
     """
 
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = models.CharField("数据库名", max_length=128)
-    owner = models.CharField("负责人", max_length=50, default="", blank=True)
-    owner_display = models.CharField(
-        "负责人中文名", max_length=50, default="", blank=True
+    db_name = models.CharField(
+        _p_lazy("instance database admin", "数据库名"), max_length=128
     )
-    remark = models.CharField("备注", max_length=255, default="", blank=True)
-    sys_time = models.DateTimeField("系统修改时间", auto_now=True)
+    owner = models.CharField(
+        _p_lazy("instance database admin", "负责人"),
+        max_length=50,
+        default="",
+        blank=True,
+    )
+    owner_display = models.CharField(
+        _p_lazy("instance database admin", "负责人中文名"),
+        max_length=50,
+        default="",
+        blank=True,
+    )
+    remark = models.CharField(
+        _p_lazy("instance database admin", "备注"),
+        max_length=255,
+        default="",
+        blank=True,
+    )
+    sys_time = models.DateTimeField(
+        _p_lazy("instance database admin", "系统修改时间"), auto_now=True
+    )
 
     class Meta:
         managed = True
         db_table = "instance_database"
         unique_together = ("instance", "db_name")
-        verbose_name = "实例数据库"
-        verbose_name_plural = "实例数据库列表"
+        verbose_name = _p_lazy("instance database admin", "实例数据库")
+        verbose_name_plural = _p_lazy("instance database admin", "实例数据库列表")
 
 
 class ParamTemplate(models.Model):
@@ -789,23 +1032,27 @@ class ParamTemplate(models.Model):
     实例参数模板配置
     """
 
-    db_type = models.CharField("数据库类型", max_length=20, choices=DB_TYPE_CHOICES)
-    variable_name = models.CharField("参数名", max_length=64)
-    default_value = models.CharField("默认参数值", max_length=1024)
-    editable = models.BooleanField("是否支持修改", default=False)
-    valid_values = models.CharField(
-        "有效参数值，范围参数[1-65535]，值参数[ON|OFF]", max_length=1024, blank=True
+    db_type = models.CharField(
+        _lazy("数据库类型"), max_length=20, choices=DB_TYPE_CHOICES
     )
-    description = models.CharField("参数描述", max_length=1024, blank=True)
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    sys_time = models.DateTimeField("系统时间修改", auto_now=True)
+    variable_name = models.CharField(_lazy("参数名"), max_length=64)
+    default_value = models.CharField(_lazy("默认参数值"), max_length=1024)
+    editable = models.BooleanField(_lazy("是否支持修改"), default=False)
+    valid_values = models.CharField(
+        _lazy("有效参数值，范围参数[1-65535]，值参数[ON|OFF]"),
+        max_length=1024,
+        blank=True,
+    )
+    description = models.CharField(_lazy("参数描述"), max_length=1024, blank=True)
+    create_time = models.DateTimeField(_lazy("创建时间"), auto_now_add=True)
+    sys_time = models.DateTimeField(_lazy("系统时间修改"), auto_now=True)
 
     class Meta:
         managed = True
         db_table = "param_template"
         unique_together = ("db_type", "variable_name")
-        verbose_name = "实例参数模板配置"
-        verbose_name_plural = "实例参数模板配置"
+        verbose_name = _lazy("实例参数模板配置")
+        verbose_name_plural = _lazy("实例参数模板配置")
 
 
 class ParamHistory(models.Model):
@@ -814,20 +1061,32 @@ class ParamHistory(models.Model):
     """
 
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    variable_name = models.CharField("参数名", max_length=64)
-    old_var = models.CharField("修改前参数值", max_length=1024)
-    new_var = models.CharField("修改后参数值", max_length=1024)
-    set_sql = models.CharField("在线变更配置执行的SQL语句", max_length=1024)
-    user_name = models.CharField("修改人", max_length=30)
-    user_display = models.CharField("修改人中文名", max_length=50)
-    create_time = models.DateTimeField("参数被修改时间点", auto_now_add=True)
+    variable_name = models.CharField(
+        _p_lazy("parameter history", "参数名"), max_length=64
+    )
+    old_var = models.CharField(
+        _p_lazy("parameter history", "修改前参数值"), max_length=1024
+    )
+    new_var = models.CharField(
+        _p_lazy("parameter history", "修改后参数值"), max_length=1024
+    )
+    set_sql = models.CharField(
+        _p_lazy("parameter history", "在线变更配置执行的SQL语句"), max_length=1024
+    )
+    user_name = models.CharField(_p_lazy("parameter history", "修改人"), max_length=30)
+    user_display = models.CharField(
+        _p_lazy("parameter history", "修改人中文名"), max_length=50
+    )
+    create_time = models.DateTimeField(
+        _p_lazy("parameter history", "参数被修改时间点"), auto_now_add=True
+    )
 
     class Meta:
         managed = True
         ordering = ["-create_time"]
         db_table = "param_history"
-        verbose_name = "实例参数修改历史"
-        verbose_name_plural = "实例参数修改历史"
+        verbose_name = _p_lazy("parameter history", "实例参数修改历史")
+        verbose_name_plural = _p_lazy("parameter history", "实例参数修改历史")
 
 
 class ArchiveConfig(models.Model, WorkflowAuditMixin):
@@ -835,14 +1094,22 @@ class ArchiveConfig(models.Model, WorkflowAuditMixin):
     归档配置表
     """
 
-    title = models.CharField("归档配置说明", max_length=50)
+    title = models.CharField(
+        _p_lazy("archive config admin", "归档配置说明"), max_length=50
+    )
     resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
-    audit_auth_groups = models.CharField("审批权限组列表", max_length=255, blank=True)
+    audit_auth_groups = models.CharField(
+        _p_lazy("archive config admin", "审批权限组列表"), max_length=255, blank=True
+    )
     src_instance = models.ForeignKey(
         Instance, related_name="src_instance", on_delete=models.CASCADE
     )
-    src_db_name = models.CharField("源数据库", max_length=64)
-    src_table_name = models.CharField("源表", max_length=64)
+    src_db_name = models.CharField(
+        _p_lazy("archive config admin", "源数据库"), max_length=64
+    )
+    src_table_name = models.CharField(
+        _p_lazy("archive config admin", "源表"), max_length=64
+    )
     dest_instance = models.ForeignKey(
         Instance,
         related_name="dest_instance",
@@ -850,33 +1117,64 @@ class ArchiveConfig(models.Model, WorkflowAuditMixin):
         blank=True,
         null=True,
     )
-    dest_db_name = models.CharField("目标数据库", max_length=64, blank=True, null=True)
-    dest_table_name = models.CharField("目标表", max_length=64, blank=True, null=True)
-    condition = models.CharField("归档条件，where条件", max_length=1000)
+    dest_db_name = models.CharField(
+        _p_lazy("archive config admin", "目标数据库"),
+        max_length=64,
+        blank=True,
+        null=True,
+    )
+    dest_table_name = models.CharField(
+        _p_lazy("archive config admin", "目标表"), max_length=64, blank=True, null=True
+    )
+    condition = models.CharField(
+        _p_lazy("archive config admin", "归档条件，where条件"), max_length=1000
+    )
     mode = models.CharField(
-        "归档模式",
+        _p_lazy("archive config admin", "归档模式"),
         max_length=10,
-        choices=(("file", "文件"), ("dest", "其他实例"), ("purge", "直接删除")),
+        choices=(
+            ("file", _p_lazy("archive config admin", "文件")),
+            ("dest", _p_lazy("archive config admin", "其他实例")),
+            ("purge", _p_lazy("archive config admin", "直接删除")),
+        ),
     )
-    no_delete = models.BooleanField("是否保留源数据")
-    sleep = models.IntegerField("归档limit行后的休眠秒数", default=1)
+    no_delete = models.BooleanField(_p_lazy("archive config admin", "是否保留源数据"))
+    sleep = models.IntegerField(
+        _p_lazy("archive config admin", "归档limit行后的休眠秒数"), default=1
+    )
     status = models.IntegerField(
-        "审核状态", choices=WorkflowStatus.choices, blank=True, default=1
+        _p_lazy("archive config admin", "审核状态"),
+        choices=[(value, _lazy(label)) for value, label in WorkflowStatus.choices],
+        blank=True,
+        default=1,
     )
-    state = models.BooleanField("是否启用归档", default=True)
-    user_name = models.CharField("申请人", max_length=30, blank=True, default="")
+    state = models.BooleanField(
+        _p_lazy("archive config admin", "是否启用归档"), default=True
+    )
+    user_name = models.CharField(
+        _p_lazy("archive config admin", "申请人"), max_length=30, blank=True, default=""
+    )
     user_display = models.CharField(
-        "申请人中文名", max_length=50, blank=True, default=""
+        _p_lazy("archive config admin", "申请人中文名"),
+        max_length=50,
+        blank=True,
+        default="",
     )
-    create_time = models.DateTimeField("创建时间", auto_now_add=True)
-    last_archive_time = models.DateTimeField("最近归档时间", blank=True, null=True)
-    sys_time = models.DateTimeField("系统时间修改", auto_now=True)
+    create_time = models.DateTimeField(
+        _p_lazy("archive config admin", "创建时间"), auto_now_add=True
+    )
+    last_archive_time = models.DateTimeField(
+        _p_lazy("archive config admin", "最近归档时间"), blank=True, null=True
+    )
+    sys_time = models.DateTimeField(
+        _p_lazy("archive config admin", "系统时间修改"), auto_now=True
+    )
 
     class Meta:
         managed = True
         db_table = "archive_config"
-        verbose_name = "归档配置表"
-        verbose_name_plural = "归档配置表"
+        verbose_name = _p_lazy("archive config admin", "归档配置表")
+        verbose_name_plural = _p_lazy("archive config admin", "归档配置表")
 
 
 class ArchiveLog(models.Model):
@@ -961,8 +1259,8 @@ class CloudAccessKey(models.Model):
     class Meta:
         managed = True
         db_table = "cloud_access_key"
-        verbose_name = "云服务认证信息配置"
-        verbose_name_plural = "云服务认证信息配置"
+        verbose_name = _lazy("云服务认证信息配置")
+        verbose_name_plural = _lazy("云服务认证信息配置")
 
 
 class AliyunRdsConfig(models.Model):
@@ -971,11 +1269,13 @@ class AliyunRdsConfig(models.Model):
     """
 
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
-    rds_dbinstanceid = models.CharField("对应阿里云RDS实例ID", max_length=100)
+    rds_dbinstanceid = models.CharField(_lazy("对应阿里云RDS实例ID"), max_length=100)
     ak = models.ForeignKey(
-        CloudAccessKey, verbose_name="RDS实例对应的AK配置", on_delete=models.CASCADE
+        CloudAccessKey,
+        verbose_name=_lazy("RDS实例对应的AK配置"),
+        on_delete=models.CASCADE,
     )
-    is_enable = models.BooleanField("是否启用", default=False)
+    is_enable = models.BooleanField(_lazy("是否启用"), default=False)
 
     def __int__(self):
         return self.rds_dbinstanceid
@@ -983,8 +1283,8 @@ class AliyunRdsConfig(models.Model):
     class Meta:
         managed = True
         db_table = "aliyun_rds_config"
-        verbose_name = "阿里云rds配置"
-        verbose_name_plural = "阿里云rds配置"
+        verbose_name = _lazy("阿里云rds配置")
+        verbose_name_plural = _lazy("阿里云rds配置")
 
 
 class Permission(models.Model):
@@ -1389,18 +1689,24 @@ class AuditEntry(models.Model):
     登录审计日志
     """
 
-    user_id = models.IntegerField("用户ID")
-    user_name = models.CharField("用户名称", max_length=30, null=True)
-    user_display = models.CharField("用户中文名", max_length=50, null=True)
-    action = models.CharField("动作", max_length=255)
-    extra_info = models.TextField("额外的信息", null=True)
-    action_time = models.DateTimeField("操作时间", auto_now_add=True)
+    user_id = models.IntegerField(_p_lazy("audit log admin", "用户ID"))
+    user_name = models.CharField(
+        _p_lazy("audit log admin", "用户名称"), max_length=30, null=True
+    )
+    user_display = models.CharField(
+        _p_lazy("audit log admin", "用户中文名"), max_length=50, null=True
+    )
+    action = models.CharField(_p_lazy("audit log admin", "动作"), max_length=255)
+    extra_info = models.TextField(_p_lazy("audit log admin", "额外的信息"), null=True)
+    action_time = models.DateTimeField(
+        _p_lazy("audit log admin", "操作时间"), auto_now_add=True
+    )
 
     class Meta:
         managed = True
         db_table = "audit_log"
-        verbose_name = "审计日志"
-        verbose_name_plural = "审计日志"
+        verbose_name = _p_lazy("audit log admin", "审计日志")
+        verbose_name_plural = _p_lazy("audit log admin", "审计日志")
 
     def __unicode__(self):
         return "{0} - {1} - {2} - {3} - {4}".format(

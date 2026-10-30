@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from django.utils.translation import gettext as _
 
 import logging
 
@@ -46,7 +47,7 @@ def list_instance_resources(
         )
     except Instance.DoesNotExist:
         result["status"] = 1
-        result["msg"] = "实例不存在或无权限"
+        result["msg"] = _("实例不存在或无权限")
         return result
 
     try:
@@ -87,7 +88,7 @@ def list_instance_resources(
             result["data"] = fork_type
             return result
         else:
-            raise TypeError("不支持的资源类型或者参数不完整！")
+            raise TypeError(_("不支持的资源类型或者参数不完整！"))
     except Exception as msg:
         result["status"] = 1
         result["msg"] = str(msg)
@@ -114,7 +115,7 @@ def describe_table_structure(
         instance = _resolve_instance_for_user(user=user, instance_name=instance_name)
     except Instance.DoesNotExist:
         result["status"] = 1
-        result["msg"] = "实例不存在或无权限"
+        result["msg"] = _("实例不存在或无权限")
         return result
 
     try:

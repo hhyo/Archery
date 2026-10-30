@@ -52,3 +52,7202 @@ msgstr "Rejected"
 #: .\sql\models.py:118
 msgid "workflow_exception"
 msgstr "Exceptions during execution"
+
+#: sql/templates/sqlworkflow.html
+msgid "状态"
+msgstr "Status"
+
+#: sql/templates/sqlworkflow.html
+msgid "实例"
+msgstr "Instance"
+
+#: sql/templates/sqlworkflow.html
+msgid "组"
+msgstr "Group"
+
+#: sql/templates/sqlworkflow.html
+msgid "提交SQL"
+msgstr "Submit SQL"
+
+#: sql/templates/sqlworkflow.html
+msgid "工单日志"
+msgstr "Workflow logs"
+
+#: sql/templates/sqlworkflow.html
+msgid "全部数据"
+msgstr "All records"
+
+#: sql/templates/sqlworkflow.html
+msgid "确定"
+msgstr "Apply"
+
+#: sql/templates/sqlworkflow.html
+msgid "取消"
+msgstr "Cancel"
+
+#: sql/templates/sqlworkflow.html
+msgid "开始"
+msgstr "From"
+
+#: sql/templates/sqlworkflow.html
+msgid "结束"
+msgstr "To"
+
+#: sql/templates/sqlworkflow.html
+msgid "自定义"
+msgstr "Custom range"
+
+#: sql/templates/sqlworkflow.html
+msgid "日"
+msgstr "Sun"
+
+#: sql/templates/sqlworkflow.html
+msgid "一"
+msgstr "Mon"
+
+#: sql/templates/sqlworkflow.html
+msgid "二"
+msgstr "Tue"
+
+#: sql/templates/sqlworkflow.html
+msgid "三"
+msgstr "Wed"
+
+#: sql/templates/sqlworkflow.html
+msgid "四"
+msgstr "Thu"
+
+#: sql/templates/sqlworkflow.html
+msgid "五"
+msgstr "Fri"
+
+#: sql/templates/sqlworkflow.html
+msgid "六"
+msgstr "Sat"
+
+#: sql/templates/sqlworkflow.html
+msgid "一月"
+msgstr "January"
+
+#: sql/templates/sqlworkflow.html
+msgid "二月"
+msgstr "February"
+
+#: sql/templates/sqlworkflow.html
+msgid "三月"
+msgstr "March"
+
+#: sql/templates/sqlworkflow.html
+msgid "四月"
+msgstr "April"
+
+#: sql/templates/sqlworkflow.html
+msgid "五月"
+msgstr "May"
+
+#: sql/templates/sqlworkflow.html
+msgid "六月"
+msgstr "June"
+
+#: sql/templates/sqlworkflow.html
+msgid "七月"
+msgstr "July"
+
+#: sql/templates/sqlworkflow.html
+msgid "八月"
+msgstr "August"
+
+#: sql/templates/sqlworkflow.html
+msgid "九月"
+msgstr "September"
+
+#: sql/templates/sqlworkflow.html
+msgid "十月"
+msgstr "October"
+
+#: sql/templates/sqlworkflow.html
+msgid "十一月"
+msgstr "November"
+
+#: sql/templates/sqlworkflow.html
+msgid "十二月"
+msgstr "December"
+
+#: sql/templates/sqlworkflow.html
+msgid "全部"
+msgstr "All time"
+
+#: sql/templates/sqlworkflow.html
+msgid "今日"
+msgstr "Today"
+
+#: sql/templates/sqlworkflow.html
+msgid "昨日"
+msgstr "Yesterday"
+
+#: sql/templates/sqlworkflow.html
+msgid "最近7日"
+msgstr "Last 7 days"
+
+#: sql/templates/sqlworkflow.html
+msgid "最近30日"
+msgstr "Last 30 days"
+
+#: sql/templates/sqlworkflow.html
+msgid "本月"
+msgstr "This month"
+
+#: sql/templates/sqlworkflow.html
+msgid "上个月"
+msgstr "Last month"
+
+#: sql/templates/sqlworkflow.html
+msgid "工单名称"
+msgstr "Workflow name"
+
+#: sql/templates/sqlworkflow.html
+msgid "工单完整名称"
+msgstr "Full workflow name"
+
+#: sql/templates/sqlworkflow.html
+msgid "类型"
+msgstr "Type"
+
+#: sql/templates/sqlworkflow.html
+msgid "其他"
+msgstr "Other"
+
+#: sql/templates/sqlworkflow.html
+msgid "数据导出: "
+msgstr "Data export: "
+
+#: sql/templates/sqlworkflow.html
+msgid "发起人"
+msgstr "Submitted by"
+
+#: sql/templates/sqlworkflow.html
+msgid "工单状态"
+msgstr "Workflow status"
+
+#: sql/templates/sqlworkflow.html
+msgid "备份"
+msgstr "Backup"
+
+#: sql/templates/sqlworkflow.html
+msgid "是"
+msgstr "Yes"
+
+#: sql/templates/sqlworkflow.html
+msgid "否"
+msgstr "No"
+
+#: sql/templates/sqlworkflow.html
+msgid "发起时间"
+msgstr "Submitted at"
+
+#: sql/templates/sqlworkflow.html
+msgid "目标实例"
+msgstr "Target instance"
+
+#: sql/templates/sqlworkflow.html
+msgid "数据库"
+msgstr "Database"
+
+#: sql/templates/sqlworkflow.html
+msgid "操作"
+msgstr "Actions"
+
+#: sql/templates/sqlworkflow.html
+msgid "操作日志"
+msgstr "Activity log"
+
+#: sql/templates/sqlworkflow.html
+msgid "操作人"
+msgstr "Operator"
+
+#: sql/templates/sqlworkflow.html
+msgid "操作时间"
+msgstr "Time"
+
+#: sql/templates/sqlworkflow.html
+msgid "操作信息"
+msgstr "Details"
+
+#: sql/templates/sqlworkflow.html
+msgid "没有找到匹配项"
+msgstr "No matching results"
+
+#: sql/templates/sqlworkflow.html
+msgid "权限错误，您没有权限查看该数据！"
+msgstr "You do not have permission to view this data."
+
+#: sql/templates/sqlworkflow.html
+msgid "未知错误，请联系管理员处理！"
+msgstr "Unable to load data. Please contact an administrator."
+
+#: sql/templates/sqlworkflow.html
+msgid "时间范围"
+msgstr "Date range"
+
+#: sql/templates/sqlworkflow.html
+msgid "关闭"
+msgstr "Close"
+
+#: sql_api/api_workflow_operations.py
+msgid "提交"
+msgstr "Submitted"
+
+#: sql_api/api_workflow_operations.py
+msgid "审核通过"
+msgstr "Approved"
+
+#: sql_api/api_workflow_operations.py
+msgid "审核不通过"
+msgstr "Rejected"
+
+#: sql_api/api_workflow_operations.py
+msgid "审核取消"
+msgstr "Canceled"
+
+#: sql_api/api_workflow_operations.py
+msgid "设置定时执行"
+msgstr "Execution scheduled"
+
+#: sql_api/api_workflow_operations.py
+msgid "开始执行"
+msgstr "Execution started"
+
+#: sql_api/api_workflow_operations.py
+msgid "执行结束"
+msgstr "Execution finished"
+
+#: sql_api/api_workflow_operations.py
+msgid "审批不通过"
+msgstr "Rejected"
+
+#: sql_api/api_workflow_operations.py
+msgid "审批取消"
+msgstr "Canceled"
+
+#: sql_api/api_workflow_operations.py
+msgid "执行工单"
+msgstr "Execute workflow"
+
+#: sql_api/api_workflow_operations.py
+msgid "手工工单"
+msgstr "Manual workflow"
+
+#: sql/templates/detail.html
+msgid "上线其他实例"
+msgstr "Deploy to another instance"
+
+#: sql/templates/detail.html
+msgid "查看提交信息"
+msgstr "View submission"
+
+#: sql/templates/detail.html
+msgid "审批流"
+msgstr "Approval workflow"
+
+#: sql/templates/detail.html
+msgid "其他信息"
+msgstr "Workflow information"
+
+#: sql/templates/detail.html
+msgid "可执行时间范围"
+msgstr "Execution window"
+
+#: sql/templates/detail.html
+msgid "结束时间"
+msgstr "Finished at"
+
+#: sql/templates/detail.html
+msgid "当前状态"
+msgstr "Current status"
+
+#: sql/templates/detail.html
+msgid "无限制"
+msgstr "Unrestricted"
+
+#: sql/templates/detail.html
+msgid "工单详情"
+msgstr "Workflow details"
+
+#: sql/templates/detail.html
+msgid "展开全部"
+msgstr "Expand all"
+
+#: sql/templates/detail.html
+msgid "折叠全部"
+msgstr "Collapse all"
+
+#: sql/templates/detail.html
+msgid "审核备注"
+msgstr "Review comment"
+
+#: sql/templates/detail.html
+msgid "请填写审核备注/终止原因"
+msgstr "Enter a review comment or cancellation reason"
+
+#: sql/templates/detail.html
+msgid "可执行时间变更"
+msgstr "Change execution window"
+
+#: sql/templates/detail.html
+msgid "立即执行"
+msgstr "Execute now"
+
+#: sql/templates/detail.html
+msgid "已手动完成"
+msgstr "Mark as manually completed"
+
+#: sql/templates/detail.html
+msgid "定时执行"
+msgstr "Schedule execution"
+
+#: sql/templates/detail.html
+msgid "执行时间变更"
+msgstr "Change scheduled time"
+
+#: sql/templates/detail.html
+msgid "审核拒绝"
+msgstr "Reject"
+
+#: sql/templates/detail.html
+msgid "终止流程"
+msgstr "Cancel workflow"
+
+#: sql/templates/detail.html
+msgid "下载中..."
+msgstr "Downloading..."
+
+#: sql/templates/detail.html
+msgid "下载文件"
+msgstr "Download file"
+
+#: sql/templates/detail.html
+msgid "查看回滚SQL"
+msgstr "View rollback SQL"
+
+#: sql/templates/detail.html
+msgid "下载回滚SQL"
+msgstr "Download rollback SQL"
+
+#: sql/templates/detail.html
+msgid "重新修改"
+msgstr "Edit and resubmit"
+
+#: sql/templates/detail.html
+msgid "定时执行SQL"
+msgstr "Schedule SQL execution"
+
+#: sql/templates/detail.html
+msgid "请选择执行时间"
+msgstr "Select execution time"
+
+#: sql/templates/detail.html
+msgid "确认提交"
+msgstr "Confirm"
+
+#: sql/templates/detail.html
+msgid "暂停"
+msgstr "Pause"
+
+#: sql/templates/detail.html
+msgid "恢复"
+msgstr "Resume"
+
+#: sql/templates/detail.html
+msgid "终止"
+msgstr "Terminate"
+
+#: sql/templates/detail.html
+msgid "执行进度"
+msgstr "Execution progress"
+
+#: sql/templates/detail.html
+msgid "修改可执行时间"
+msgstr "Change execution window"
+
+#: sql/templates/detail.html
+msgid "请选择可执行时间范围"
+msgstr "Select an execution window"
+
+#: sql/templates/detail.html
+msgid "清空"
+msgstr "Clear"
+
+#: sql/templates/detail.html
+msgid "该工单未选择备份，将不会自动备份数据，请确认是否立即执行？"
+msgstr "Backup is disabled for this workflow. Data will not be backed up automatically. Execute now?"
+
+#: sql/templates/detail.html
+msgid "请确认是否立即执行？"
+msgstr "Execute this workflow now?"
+
+#: sql/templates/detail.html
+msgid "请确认是否已经手工执行结束？"
+msgstr "Has manual execution been completed?"
+
+#: sql/templates/detail.html
+msgid "请填写拒绝原因"
+msgstr "Enter a rejection reason."
+
+#: sql/templates/detail.html
+msgid "请填写终止原因"
+msgstr "Enter a cancellation reason."
+
+#: sql/templates/detail.html
+msgid "请填写定时执行时间"
+msgstr "Select a scheduled execution time."
+
+#: sql/templates/detail.html
+msgid "操作失败"
+msgstr "Operation failed"
+
+#: sql/templates/detail.html
+msgid "完整SQL内容"
+msgstr "Full SQL"
+
+#: sql/templates/detail.html
+msgid "SQL内容"
+msgstr "SQL"
+
+#: sql/templates/detail.html
+msgid "审核/执行状态"
+msgstr "Review / execution status"
+
+#: sql/templates/detail.html
+msgid "审核/执行信息"
+msgstr "Review / execution details"
+
+#: sql/templates/detail.html
+msgid "扫描/影响行数"
+msgstr "Rows scanned / affected"
+
+#: sql/templates/detail.html
+msgid "执行耗时"
+msgstr "Execution time"
+
+#: sql/templates/detail.html
+msgid "备份耗时"
+msgstr "Backup time"
+
+#: sql/templates/detail.html
+msgid "当前阶段"
+msgstr "Current stage"
+
+#: sql/templates/detail.html
+msgid "查看进度"
+msgstr "View progress"
+
+#: sql/templates/detail.html
+msgid "请确认是否立即终止？终止后需要手动清理触发器以及相关中间表！"
+msgstr "Terminate now? You must manually clean up triggers and temporary tables afterwards."
+
+#: sql/templates/detail.html
+msgid "命令错误！"
+msgstr "Invalid command."
+
+#: sql/templates/detail.html
+msgid "操作成功！请稍后刷新获取最新状态"
+msgstr "Operation successful. Refresh shortly to see the latest status."
+
+#: sql/templates/detail.html
+msgid "请先选择要终止进程"
+msgstr "Select a process to terminate."
+
+#: sql/templates/detail.html
+msgid "确认中..."
+msgstr "Checking..."
+
+#: sql/templates/detail.html
+msgid "该工单2分钟仍然未执行完毕，请稍后尝试手动刷新本页面"
+msgstr "This workflow is still running. Try refreshing this page later."
+
+#: sql/templates/detail.html
+msgid "参数不正确"
+msgstr "Invalid parameters"
+
+#: sql/templates/detail.html
+msgid "准备下载..."
+msgstr "Preparing download..."
+
+#: sql/templates/detail.html
+msgid "未知的响应格式"
+msgstr "Unexpected response format"
+
+#: sql/templates/detail.html
+msgid "下载失败:"
+msgstr "Download failed:"
+
+#: sql/templates/detail.html
+msgid "下载错误: "
+msgstr "Download error: "
+
+#: sql/templates/detail.html
+msgid "服务器连接失败"
+msgstr "Unable to connect to the server"
+
+#: sql/templates/detail.html
+msgid "无需审批"
+msgstr "No approval required"
+
+#: sql/templates/detail.html
+msgid "离线导出工单"
+msgstr "Offline export"
+
+#: sql/templates/detail.html
+msgctxt "workflow action"
+msgid "审核通过"
+msgstr "Approve"
+
+msgid "workflow_finish_manual"
+msgstr "Manually completed"
+
+#: sql/templates/sqlsubmit.html
+msgid "SQL上线"
+msgstr "SQL Deployment"
+
+#: sql/templates/sqlsubmit.html
+msgid "SQL内容不能为空！"
+msgstr "SQL content is required."
+
+#: sql/templates/sqlsubmit.html
+msgid "请在此提交SQL，请以分号结尾。"
+msgstr "Enter SQL statements here, ending each statement with a semicolon."
+
+#: sql/templates/sqlsubmit.html
+msgid "上线单名称"
+msgstr "Workflow name"
+
+#: sql/templates/sqlsubmit.html
+msgid "请输入上线单名称!"
+msgstr "Enter a workflow name."
+
+#: sql/templates/sqlsubmit.html
+msgid "请输入上线单名称，如:XX项目会员功能建表"
+msgstr "Enter a workflow name, e.g. create membership tables"
+
+#: sql/templates/sqlsubmit.html
+msgid "需求链接"
+msgstr "Requirements link"
+
+#: sql/templates/sqlsubmit.html
+msgid "请提供需求链接，记录工单需求信息！"
+msgstr "Provide a requirements link for this workflow."
+
+#: sql/templates/sqlsubmit.html
+msgid "请输入需求链接"
+msgstr "Enter a requirements link"
+
+#: sql/templates/sqlsubmit.html
+msgid "请选择组！"
+msgstr "Select a group."
+
+#: sql/templates/sqlsubmit.html
+msgid "请选择组"
+msgstr "Select a group"
+
+#: sql/templates/sqlsubmit.html
+msgid "搜索您所在的组"
+msgstr "Search your groups"
+
+#: sql/templates/sqlsubmit.html
+msgid "请选择实例！"
+msgstr "Select an instance."
+
+#: sql/templates/sqlsubmit.html
+msgid "请选择实例"
+msgstr "Select an instance"
+
+#: sql/templates/sqlsubmit.html
+msgid "搜索您所在组的实例"
+msgstr "Search instances in your group"
+
+#: sql/templates/sqlsubmit.html
+msgid "请选择数据库！"
+msgstr "Select a database."
+
+#: sql/templates/sqlsubmit.html
+msgid "搜索要提交的数据库"
+msgstr "Search databases"
+
+#: sql/templates/sqlsubmit.html
+msgid "请选择数据库"
+msgstr "Select a database"
+
+#: sql/templates/sqlsubmit.html
+msgid "请选择数据库:"
+msgstr "Select a database:"
+
+#: sql/templates/sqlsubmit.html
+msgid "是否选择备份"
+msgstr "Backup preference"
+
+#: sql/templates/sqlsubmit.html
+msgid "请选择是否需要备份"
+msgstr "Choose whether to back up data"
+
+#: sql/templates/sqlsubmit.html
+msgid "请选择是否要备份"
+msgstr "Select a backup preference."
+
+#: sql/templates/sqlsubmit.html
+msgid "备份SQL"
+msgstr "Back up SQL changes"
+
+#: sql/templates/sqlsubmit.html
+msgid "不备份SQL"
+msgstr "Do not back up SQL changes"
+
+#: sql/templates/sqlsubmit.html
+msgid "审批流程"
+msgstr "Approval workflow"
+
+#: sql/templates/sqlsubmit.html
+msgid "请配置审批流程！"
+msgstr "Configure an approval workflow."
+
+#: sql/templates/sqlsubmit.html
+msgid "审批流程："
+msgstr "Approval workflow:"
+
+#: sql/templates/sqlsubmit.html
+msgid "美化"
+msgstr "Format SQL"
+
+#: sql/templates/sqlsubmit.html
+msgid "检测中..."
+msgstr "Checking..."
+
+#: sql/templates/sqlsubmit.html
+msgid "SQL检测"
+msgstr "Check SQL"
+
+#: sql/templates/sqlsubmit.html
+msgid "提交中..."
+msgstr "Submitting..."
+
+#: sql/templates/sqlsubmit.html
+msgid "SQL提交"
+msgstr "Submit SQL"
+
+#: sql/templates/sqlsubmit.html
+msgid "支持mongo原生命令，例如："
+msgstr "Native MongoDB commands are supported, for example:"
+
+#: sql/templates/sqlsubmit.html
+msgid "检测结果"
+msgstr "Check results"
+
+#: sql/templates/sqlsubmit.html
+msgid "提交信息确认"
+msgstr "Confirm submission"
+
+#: sql/templates/sqlsubmit.html
+msgid "确定提交"
+msgstr "Confirm submission"
+
+#: sql/templates/sqlsubmit.html
+msgid "仅支持10M内的SQL文件"
+msgstr "SQL files up to 10 MB only"
+
+#: sql/templates/sqlsubmit.html
+msgid "文件大小超过10M，请重新选择"
+msgstr "The file exceeds 10 MB. Choose another file."
+
+#: sql/templates/sqlsubmit.html
+msgid "上线单名称/工单名称不能超过50个字符！"
+msgstr "Workflow names must be shorter than 50 characters."
+
+#: sql/templates/sqlsubmit.html
+msgid "可执行时间范围不应该短于"
+msgstr "The execution window must be at least "
+
+#: sql/templates/sqlsubmit.html
+msgid "分钟"
+msgstr " minutes."
+
+#: sql/templates/sqlsubmit.html
+msgid "SQL语句"
+msgstr "SQL statement"
+
+#: sql/templates/sqlsubmit.html
+msgid "审核状态"
+msgstr "Review status"
+
+#: sql/templates/sqlsubmit.html
+msgid "审核信息"
+msgstr "Review details"
+
+#: sql/templates/sqlsubmit.html
+msgid "请输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。"
+msgstr "Enter SQL statements ending with semicolons. Only DML and DDL are supported; use SQL Query for SELECT statements."
+
+#: sql/templates/sqlsubmit.html
+msgid "请在此输入命令，多个命令请换行填写，在提交时请删除此行说明"
+msgstr "Enter one command per line. Remove this instruction before submitting."
+
+#: sql/templates/sqlsubmit.html
+msgid "SQL 检测发现以下问题，请按平台规范仔细检查。"
+msgstr "SQL checks found the following issues. Review them against your platform guidelines before submitting."
+
+#: sql/templates/sqlsubmit.html
+msgid "警告数量"
+msgstr "Warnings"
+
+#: sql/templates/sqlsubmit.html
+msgid "错误数量"
+msgstr "Errors"
+
+#: sql/templates/sqlquery.html
+msgid "已收藏"
+msgstr "Favorites"
+
+#: sql/templates/sqlquery.html
+msgid "未收藏"
+msgstr "Not favorited"
+
+#: sql/templates/sqlquery.html
+msgid "收藏语句"
+msgstr "Save favorite query"
+
+#: sql/templates/sqlquery.html
+msgid "请输入语句别名"
+msgstr "Enter a query alias"
+
+#: sql/templates/sqlquery.html
+msgid "收藏"
+msgstr "Save favorite"
+
+#: sql/templates/sqlquery.html
+msgid "SQL查询"
+msgstr "SQL Query"
+
+#: sql/templates/sqlquery.html
+msgid "搜索"
+msgstr "Search"
+
+#: sql/templates/sqlquery.html
+msgid "常用查询"
+msgstr "Saved queries"
+
+#: sql/templates/sqlquery.html
+msgid "提交导出工单"
+msgstr "Submit export workflow"
+
+#: sql/templates/sqlquery.html
+msgid "AI 查询描述"
+msgstr "Describe the query for AI"
+
+#: sql/templates/sqlquery.html
+msgid "生成SQL"
+msgstr "Generate SQL"
+
+#: sql/templates/sqlquery.html
+msgid "仅此操作会与 AI 交互, 收集数据库类型、表结构以及输入框信息, 交给 AI 生成 SQL 并置于下面的语句框中"
+msgstr "Only this action contacts AI. It sends the database type, table structure and your description to AI, then inserts the generated SQL into the editor."
+
+#: sql/templates/sqlquery.html
+msgid "按表名定位实例（如 orders）"
+msgstr "Find an instance by table name (e.g. orders)"
+
+#: sql/templates/sqlquery.html
+msgid "查询中..."
+msgstr "Searching..."
+
+#: sql/templates/sqlquery.html
+msgid "请选择实例:"
+msgstr "Select an instance:"
+
+#: sql/templates/sqlquery.html
+msgid "搜索您要查询的数据库"
+msgstr "Search databases"
+
+#: sql/templates/sqlquery.html
+msgid "请选择模式:"
+msgstr "Select a schema:"
+
+#: sql/templates/sqlquery.html
+msgid "搜索您要查询的表"
+msgstr "Search tables"
+
+#: sql/templates/sqlquery.html
+msgid "查看表结构"
+msgstr "View table structure"
+
+#: sql/templates/sqlquery.html
+msgid "查看表结构:"
+msgstr "View table structure:"
+
+#: sql/templates/sqlquery.html
+msgid "返回行数:"
+msgstr "Row limit:"
+
+#: sql/templates/sqlquery.html
+msgid "max(最大限制行数)"
+msgstr "Maximum permitted rows"
+
+#: sql/templates/sqlquery.html
+msgid "执行计划"
+msgstr "Explain"
+
+#: sql/templates/sqlquery.html
+msgid "支持注释行，可选择指定语句执行，默认执行第一条;"
+msgstr "Comments are supported. Run selected SQL, or the first statement by default."
+
+#: sql/templates/sqlquery.html
+msgid "查询结果行数限制见权限管理，会选择查询涉及表的最小limit值"
+msgstr "Row limits follow query permissions; the smallest limit for the referenced tables applies."
+
+#: sql/templates/sqlquery.html
+msgid "支持mongo原生查询语句，例如："
+msgstr "Native MongoDB queries are supported, for example:"
+
+#: sql/templates/sqlquery.html
+msgid "查询结果"
+msgstr "Query results"
+
+#: sql/templates/sqlquery.html
+msgid "查询历史"
+msgstr "Query history"
+
+#: sql/templates/sqlquery.html
+msgid "取消收藏"
+msgstr "Remove favorite"
+
+#: sql/templates/sqlquery.html
+msgid "一键查询"
+msgstr "Run again"
+
+#: sql/templates/sqlquery.html
+msgid "用户"
+msgstr "User"
+
+#: sql/templates/sqlquery.html
+msgid "查询时间"
+msgstr "Query time"
+
+#: sql/templates/sqlquery.html
+msgid "语句"
+msgstr "Statement"
+
+#: sql/templates/sqlquery.html
+msgid "完整语句"
+msgstr "Full statement"
+
+#: sql/templates/sqlquery.html
+msgid "返回行数"
+msgstr "Rows returned"
+
+#: sql/templates/sqlquery.html
+msgid "耗时(秒)"
+msgstr "Duration (seconds)"
+
+#: sql/templates/sqlquery.html
+msgid "请输入语句别名！"
+msgstr "Enter a query alias."
+
+#: sql/templates/sqlquery.html
+msgid "信息不完整，无法一键查询！"
+msgstr "Query information is incomplete. Cannot run this query again."
+
+#: sql/templates/sqlquery.html
+msgid "Redis帮助文档"
+msgstr "Redis command reference"
+
+#: sql/templates/sqlquery.html
+msgid "复制失败"
+msgstr "Copy failed"
+
+#: sql/templates/sqlquery.html
+msgid "已复制"
+msgstr "Copied"
+
+#: sql/templates/sqlquery.html
+msgid "复制为Markdown"
+msgstr "Copy as Markdown"
+
+#: sql/templates/sqlquery.html
+msgid "复制查询结果为Markdown表格"
+msgstr "Copy query results as a Markdown table"
+
+#: sql/templates/sqlquery.html
+msgid "复制中…"
+msgstr "Copying…"
+
+#: sql/templates/sqlquery.html
+msgid "执行结果"
+msgstr "Results "
+
+#: sql/templates/sqlquery.html
+msgid "请输入表结构！"
+msgstr "Select a table structure."
+
+#: sql/templates/sqlquery.html
+msgid "请选择表结构！"
+msgstr "Select a table structure."
+
+#: sql/templates/sqlquery.html
+msgid "请输入查询描述！"
+msgstr "Enter a query description."
+
+#: sql/templates/sqlquery.html
+msgid "请输入文件名："
+msgstr "Enter a file name:"
+
+#: sql/templates/sqlquery.html
+msgid "非json格式，无法格式化！"
+msgstr "This value is not valid JSON and cannot be formatted."
+
+#: sql/templates/sqlquery.html
+msgid "（提交申请）"
+msgstr " (Request access)"
+
+#: sql/templates/sqlquery.html
+msgid "查看集合字段:"
+msgstr "View collection fields:"
+
+#: sql/templates/sqlquery.html
+msgid "无匹配结果"
+msgstr "No matching results"
+
+#: sql/templates/sqlquery.html
+msgid "查询失败"
+msgstr "Query failed"
+
+#: sql/templates/sqlquery.html
+msgid "请求失败："
+msgstr "Request failed: "
+
+#: sql/templates/sqlquery.html
+msgid "该实例不在当前资源组"
+msgstr "This instance is not in the current resource group"
+
+#: sql/templates/sqlquery.html
+msgid "新增结果标签页"
+msgstr "Add result tab"
+
+#: sql/templates/sqlquery.html
+msgid "关闭结果标签页"
+msgstr "Close result tab"
+
+#: sql/templates/sqlquery.html
+msgid "收藏筛选"
+msgstr "Favorite filter"
+
+#: sql/templates/sqlquery.html
+msgid "语句别名筛选"
+msgstr "Query alias filter"
+
+#: sql/templates/sqlquery.html
+msgid "查询时间 :"
+msgstr "Query time:"
+
+#: sql/templates/sqlquery.html
+msgid "脱敏时间 :"
+msgstr "Masking time:"
+
+#: sql/templates/sqlquery.html
+msgid "Key操作"
+msgstr "Key operations"
+
+#: sql/templates/sqlquery.html
+msgid "帮助文档："
+msgstr "Command reference:"
+
+#: sql/templates/sqlquery.html
+msgid "1、exists key 检查key是否存在，若key存在返回1，否则返回0"
+msgstr "1. exists key: Returns 1 if the key exists, otherwise 0."
+
+#: sql/templates/sqlquery.html
+msgid "2、keys pattern 查找所有符合给定模式的key，通常用于查找key"
+msgstr "2. keys pattern: Finds keys matching the pattern."
+
+#: sql/templates/sqlquery.html
+msgid "3、expire key seconds 为key设置超时时间（单位：秒），当key过期时，会被系统自动删除"
+msgstr "3. expire key seconds: Sets an expiry in seconds; the key is removed after it expires."
+
+#: sql/templates/sqlquery.html
+msgid "4、ttl key 以秒为单位返回key的剩余生存时间（time to live），当key不存在时返回-2，当key存在未设置生存时间时返回-1"
+msgstr "4. ttl key: Returns seconds to expiry, -2 for a missing key, or -1 for a key without an expiry."
+
+#: sql/templates/sqlquery.html
+msgid "5、pttl key 这个命令和ttl类似，它以毫秒为单位返回key的剩余生存时间"
+msgstr "5. pttl key: Like TTL, but returns milliseconds."
+
+#: sql/templates/sqlquery.html
+msgid "6、move key db 将key移动到指定数据库中"
+msgstr "6. move key db: Moves a key to another database."
+
+#: sql/templates/sqlquery.html
+msgid "7、type key 返回key存储的值的类型，返回none（不存在）、string（字符串）、list（列表）、set（集合）、zset（有序集合）、hash（哈希表）"
+msgstr "7. type key: Returns none, string, list, set, zset or hash."
+
+#: sql/templates/sqlquery.html
+msgid "1、get key 返回key的值，若key不存在则返回nil，若key存储的值不是字符串则返回错误"
+msgstr "1. get key: Returns the string value, nil for a missing key, or an error for a different type."
+
+#: sql/templates/sqlquery.html
+msgid "2、mget key [key...] 依次返回一个或多个key的值，若key不存在返回nil，若key存在但不是字符串返回nil"
+msgstr "2. mget key [key...]: Returns values for multiple keys; missing or non-string values return nil."
+
+#: sql/templates/sqlquery.html
+msgid "3、strlen key 返回key所存储的字符串的长度，当key不存在时返回0，当key存在但不是字符串时返回错误"
+msgstr "3. strlen key: Returns string length, 0 for a missing key, or an error for a different type."
+
+#: sql/templates/sqlquery.html
+msgid "4、append key value 将指定的值追加到key末尾，若key不存在，则创建并赋值，返回追加后的字符串长度"
+msgstr "4. append key value: Appends a value, creating the key if needed, and returns the resulting length."
+
+#: sql/templates/sqlquery.html
+msgid "5、set key value [ex seconds] [px milliseconds] [nx|xx] 为key设置值,ex和px均为设置过期时间只不过单位不同，nx表示只有key不存在时才进行操作，xx表示只有key存在时才进行操作"
+msgstr "5. set key value [ex seconds] [px milliseconds] [nx|xx]: Sets a value; EX and PX specify expiry, NX requires a missing key, and XX requires an existing key."
+
+#: sql/templates/sqlquery.html
+msgid "6、setex key seconds value 设置带生存时间的key的值，以秒为单位"
+msgstr "6. setex key seconds value: Sets a value with an expiry in seconds."
+
+#: sql/templates/sqlquery.html
+msgid "7、setnx key value 为key设置值，若key已存在则不进行任何操作"
+msgstr "7. setnx key value: Sets a value only when the key does not exist."
+
+#: sql/templates/sqlquery.html
+msgid "8、mset key value [key value...] 为一组或多组key设置值，该操作为原子操作，要么一组都设置成功，要么一组都设置失败"
+msgstr "8. mset key value [key value...]: Sets multiple key/value pairs atomically."
+
+#: sql/templates/sqlquery.html
+msgid "9、msetnx key value [key value...] 与mset不同的是msetnx中的key必须是不存在的，若有一个已存在则会整体失败"
+msgstr "9. msetnx key value [key value...]: Sets all pairs only when none of the keys already exist."
+
+#: sql/templates/sqlquery.html
+msgid "1、hgetall key 获取hash表中所有field的值"
+msgstr "1. hgetall key: Returns all fields and values in the hash."
+
+#: sql/templates/sqlquery.html
+msgid "2、hexists key field 判断hash表中指定field是否存在，返回1；若key或field不存在则返回0"
+msgstr "2. hexists key field: Returns 1 when the field exists, otherwise 0."
+
+#: sql/templates/sqlquery.html
+msgid "3、hget key field 获取hash表中指定field的值，key或field不存在时返回nil"
+msgstr "3. hget key field: Returns the field value, or nil when the key or field is missing."
+
+#: sql/templates/sqlquery.html
+msgid "4、hmget key field[field...] 获取hash表中多个指定field的值，若key不存在返回空，若field不存在返回nil"
+msgstr "4. hmget key field[field...]: Returns the requested field values, with nil for missing fields."
+
+#: sql/templates/sqlquery.html
+msgid "5、hkeys key 返回hash表中的所有field，若key不存在返回空"
+msgstr "5. hkeys key: Returns all field names, or an empty result for a missing key."
+
+#: sql/templates/sqlquery.html
+msgid "6、hvals key 返回hash表中的所有val，若key不存在返回空"
+msgstr "6. hvals key: Returns all values, or an empty result for a missing key."
+
+#: sql/templates/sqlquery.html
+msgid "7、hdel key field[field...] 删除hash表中指定field，若key或field不存在则会忽略"
+msgstr "7. hdel key field[field...]: Deletes fields; missing keys or fields are ignored."
+
+#: sql/templates/sqlquery.html
+msgid "8、hset key field value 将field-value设置到hash表中，若key不存在会新建hash表再赋值，若field已存在则会覆盖现有值"
+msgstr "8. hset key field value: Sets a field value, creating the hash if necessary and replacing an existing value."
+
+#: sql/templates/sqlquery.html
+msgid "9、hsetnx key field value 和hset类似，但是hsetnx要求field不存在才能进行此操作，否则会返回0"
+msgstr "9. hsetnx key field value: Sets a field only if it does not already exist."
+
+#: sql/templates/sqlquery.html
+msgid "1、smembers key 列出集合key中的所有成员"
+msgstr "1. smembers key: Returns all members of the set."
+
+#: sql/templates/sqlquery.html
+msgid "2、scard key 返回集合key中元素的个数"
+msgstr "2. scard key: Returns the number of members."
+
+#: sql/templates/sqlquery.html
+msgid "3、sdiff key[key...] 获取集合的差集，若key为1个则返回集合的全部成员"
+msgstr "3. sdiff key[key...]: Returns the difference between sets; one key returns all its members."
+
+#: sql/templates/sqlquery.html
+msgid "4、sunion key[key...] 返回集合的并集，不存在的key会被当做空集处理"
+msgstr "4. sunion key[key...]: Returns the union of sets, treating missing keys as empty sets."
+
+#: sql/templates/sqlquery.html
+msgid "5、spop key 移除并返回集合中的一个随机元素，当key不存在时返回NULL"
+msgstr "5. spop key: Removes and returns a random member, or NULL for a missing key."
+
+#: sql/templates/sqlquery.html
+msgid "6、sismember key member 判断member在key中是否已存在返回0或1"
+msgstr "6. sismember key member: Returns 1 if the member exists, otherwise 0."
+
+#: sql/templates/sqlquery.html
+msgid "7、sadd key member[member...] 将一个或多个member元素加入到集合key中，若member已存在那么会忽略此元素"
+msgstr "7. sadd key member[member...]: Adds members, ignoring duplicates."
+
+#: sql/templates/sqlquery.html
+msgid "8、smove source destination member 将元素member从source移动到destination；若member在destination中已存在只会删除source中的数据，若source或member不存在会返回0，若destination不存在则会创建后再进行操作"
+msgstr "8. smove source destination member: Moves a member between sets, creating the destination if needed. Returns 0 if the source or member is missing."
+
+#: sql/templates/sqlquery.html
+msgid "9、srem key member[member] 移除key中的一个或多个member元素，不存在的member会被忽略"
+msgstr "9. srem key member[member]: Removes members, ignoring missing members."
+
+#: sql/templates/sqlquery.html
+msgid "1、zrange key start stop [WITHSCORES] 通过索引区间返回有序集合指定区间内的成员"
+msgstr "1. zrange key start stop [WITHSCORES]: Returns members within an index range."
+
+#: sql/templates/sqlquery.html
+msgid "2、zrangebyscore key min max [WITHSCORES] [LIMIT] 通过分数返回有序集合指定区间内的成员"
+msgstr "2. zrangebyscore key min max [WITHSCORES] [LIMIT]: Returns members within a score range."
+
+#: sql/templates/sqlquery.html
+msgid "3、zscore key member 返回有序集中，成员的分数值"
+msgstr "3. zscore key member: Returns the score of a member."
+
+#: sql/templates/sqlquery.html
+msgid "4、zcard key 获取有序集合的成员数"
+msgstr "4. zcard key: Returns the number of members."
+
+#: sql/templates/sqlquery.html
+msgid "5、zcount key min max 计算在有序集合中指定区间分数的成员数"
+msgstr "5. zcount key min max: Counts members within a score range."
+
+#: sql/templates/sqlquery.html
+msgid "6、zrank key member 返回有序集合中指定成员的索引"
+msgstr "6. zrank key member: Returns the rank of a member."
+
+msgctxt "query filter"
+msgid "全部"
+msgstr "All"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "SQL优化工具"
+msgstr "SQL Optimization Tools"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "查看介绍"
+msgstr "Learn more"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "请选择优化方式:"
+msgstr "Select an optimization tool:"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "是否查看优化过程"
+msgstr "Show optimization details"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "是否查看优化过程:"
+msgstr "Show optimization details:"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "显示系统参数"
+msgstr "Show system parameters"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "显示执行计划"
+msgstr "Show execution plan"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "显示相关对象(表、索引)统计信息"
+msgstr "Show table and index statistics"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "显示PROFILE跟踪信息(真实执行SQL，谨慎选择)"
+msgstr "Show profiling details (executes the SQL; choose carefully)"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "获取优化建议"
+msgstr "Get optimization advice"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "优化建议"
+msgstr "Optimization advice"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "查看文章"
+msgstr "Read article"
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "解析表结构出错或者无权限查看表结构"
+msgstr "Unable to parse the table definition, or permission was denied."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "未获取到表统计信息"
+msgstr "Table statistics are unavailable."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "未获取到索引统计信息"
+msgstr "Index statistics are unavailable."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "解析表出错或者表不存在，无法展示表信息"
+msgstr "Cannot display table information: the table could not be parsed or does not exist."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "页面提交参数可能为空"
+msgstr "Required request parameters are missing."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "你所在组未关联该实例！"
+msgstr "This instance is not associated with your resource group."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "你所在组未关联该实例"
+msgstr "This instance is not associated with your resource group."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "请配置SQLAdvisor路径！"
+msgstr "Configure the SQLAdvisor executable path."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "请配置soar_path和test_dsn！"
+msgstr "Configure the SOAR executable path and test DSN."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "只支持查询SQL！"
+msgstr "Only read-only query statements are supported."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "实例不存在"
+msgstr "Instance not found."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "没有有效的SQL语句"
+msgstr "No valid SQL statement was provided."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "仅支持explain开头的语句，请检查"
+msgstr "Only statements beginning with EXPLAIN are supported."
+
+#: sql/templates/sqladvisor.html sql/sql_optimize.py
+msgid "SQLTuningAdvisor仅支持oracle数据库的检查"
+msgstr "SQL Tuning Advisor supports Oracle databases only."
+
+msgid "查看原始报告"
+msgstr "Show original report"
+
+msgid "隐藏原始报告"
+msgstr "Hide original report"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "慢日志统计"
+msgstr "Slow query statistics"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "慢日志明细"
+msgstr "Slow query details"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "全部数据库"
+msgstr "All databases"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "请先选择需要优化的sql"
+msgstr "Select a SQL statement to optimize first."
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "日志统计时间"
+msgstr "Log time"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "命令模板"
+msgstr "Command template"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "完整命令"
+msgstr "Full command"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "执行总次数"
+msgstr "Total executions"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "执行总时长(秒)"
+msgstr "Total execution time (s)"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "平均执行时长(微秒)"
+msgstr "Average execution time (µs)"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "95%%耗时(微秒)"
+msgstr "95th percentile time (µs)"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "数据库名"
+msgstr "Database"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "完整SQL语句"
+msgstr "Full SQL statement"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "平均执行时长(秒)"
+msgstr "Average execution time (s)"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "扫描总行数"
+msgstr "Total rows examined"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "返回总行数"
+msgstr "Total rows returned"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "平均扫描行数"
+msgstr "Average rows examined"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "平均返回行数"
+msgstr "Average rows returned"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "执行开始时间"
+msgstr "Execution start time"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "Redis节点"
+msgstr "Redis node"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "命令"
+msgstr "Command"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "执行次数"
+msgstr "Executions"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "总耗时(秒)"
+msgstr "Total time (s)"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "用户名"
+msgstr "Username"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "执行时长(95%%)"
+msgstr "Execution time (95th percentile)"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "锁定总时长(秒)"
+msgstr "Total lock time (s)"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "解析总行数"
+msgstr "Total rows examined"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "慢查次数"
+msgstr "Slow query count"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "最大值"
+msgstr "Maximum"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "平均值"
+msgstr "Average"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "慢查时长(95%)"
+msgstr "Slow query time (95th percentile)"
+
+#: sql/templates/slowquery.html sql/slowlog.py
+msgid "SQL历史趋势"
+msgstr "SQL history trend"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "实例类型"
+msgstr "Instance type"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "数据库类型"
+msgstr "Database type"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "标签筛选"
+msgstr "Filter by tags"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "添加实例"
+msgstr "Add instance"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "清理Binlog日志"
+msgstr "Clean up binlogs"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "提示：该binlog前的所有binlog都会被删除！"
+msgstr "All binlogs before the selected file will be deleted!"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "清理"
+msgstr "Clean up"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "实例名称"
+msgstr "Instance name"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "Binlog清理"
+msgstr "Clean up binlogs"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "测试"
+msgstr "Test connection"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "连接成功"
+msgstr "Connection successful"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "请选择Binlog:"
+msgstr "Select a binlog:"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "实例连接"
+msgstr "Host"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "端口"
+msgstr "Port"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "密码"
+msgstr "Password"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "是否启用SSL"
+msgstr "Enable SSL"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "是否验证服务端SSL证书"
+msgstr "Verify server SSL certificate"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "显示的数据库列表正则"
+msgstr "Visible database regex"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "隐藏的数据库列表正则"
+msgstr "Hidden database regex"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "字符集"
+msgstr "Character set"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "资源组"
+msgstr "Resource groups"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "实例标签"
+msgstr "Instance tags"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "连接隧道"
+msgstr "SSH tunnel"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "创建时间"
+msgstr "Created at"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "更新时间"
+msgstr "Updated at"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "实例配置"
+msgstr "Instance configuration"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "运行模式"
+msgstr "Deployment mode"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "主库"
+msgstr "Primary"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "从库"
+msgstr "Replica"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "单机"
+msgstr "Standalone"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "集群"
+msgstr "Cluster"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "对应阿里云RDS实例ID"
+msgstr "Alibaba Cloud RDS instance ID"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "RDS实例对应的AK配置"
+msgstr "RDS access key configuration"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "是否启用"
+msgstr "Enabled"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "阿里云rds配置"
+msgstr "Alibaba Cloud RDS configuration"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "资源组管理"
+msgstr "Resource group configuration"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "隧道配置"
+msgstr "SSH tunnel configuration"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "云服务认证信息配置"
+msgstr "Cloud credentials configuration"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "正则表达式。示例：^(test_db|dmp_db|za.*)$。Redis示例: ^(0|4|6|11|12|13)$"
+msgstr "Regular expression. Example: ^(test_db|dmp_db|za.*)$. Redis example: ^(0|4|6|11|12|13)$"
+
+#: sql/templates/instance.html sql/models.py common/check.py
+msgid "正则表达式。隐藏大于显示，此规则优先。"
+msgstr "Regular expression. Hidden databases take precedence over visible databases."
+
+#: sql/templates/instance.html sql/models.py common/check.py
+#, python-format
+msgid "无法连接实例，\n%(error)s"
+msgstr "Unable to connect to the instance.\n%(error)s"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "终止会话"
+msgstr "Terminate sessions"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "进程状态"
+msgstr "Process status"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "Top表空间"
+msgstr "Top table sizes"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "事务信息"
+msgstr "Transactions"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "锁信息"
+msgstr "Locks"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "command类型"
+msgstr "Command type"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "确定要终止所选会话吗？"
+msgstr "Terminate the selected sessions?"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "确定终止"
+msgstr "Confirm termination"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "数据加载失败！"
+msgstr "Failed to load data: "
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "请先选择要终止的会话"
+msgstr "Select a session to terminate first."
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "所选会话已终止！"
+msgstr "The selected sessions have already ended."
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "表名"
+msgstr "Table name"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "存储引擎"
+msgstr "Storage engine"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "总空间(MB)"
+msgstr "Total size (MB)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "行数"
+msgstr "Rows"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "数据空间(MB)"
+msgstr "Data size (MB)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "索引空间(MB)"
+msgstr "Index size (MB)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "碎片空间(MB)"
+msgstr "Free space (MB)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "碎片率(%%)"
+msgstr "Free space (%%)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "表空间名"
+msgstr "Tablespace name"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "表空间类型"
+msgstr "Tablespace type"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "已使用空间(MB)"
+msgstr "Used space (MB)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "使用率(%%)"
+msgstr "Used space (%%)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "总空间"
+msgstr "Total size"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "索引空间"
+msgstr "Index size"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "数据空间(未压缩)"
+msgstr "Uncompressed data size"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "数据空间(压缩后)"
+msgstr "Compressed data size"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "压缩率"
+msgstr "Compression ratio"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "集合名"
+msgstr "Collection name"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "未压缩的数据空间(MB)"
+msgstr "Uncompressed data size (MB)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "每行平均(B)"
+msgstr "Average row size (B)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "压缩后的数据空间(MB)"
+msgstr "Compressed data size (MB)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "固定集合"
+msgstr "Capped collection"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "索引数"
+msgstr "Indexes"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待的状态"
+msgstr "Waiting transaction state"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待事务开始时间"
+msgstr "Waiting transaction start"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待事务等待开始时间"
+msgstr "Lock wait start"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待事务ID"
+msgstr "Waiting transaction ID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待事务线程ID"
+msgstr "Waiting thread ID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待事务的sql"
+msgstr "Waiting SQL"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待的表信息"
+msgstr "Waiting table"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待的锁id"
+msgstr "Waiting lock ID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "运行的事务id"
+msgstr "Blocking transaction ID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "运行的事务线程id"
+msgstr "Blocking thread ID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "运行的表信息"
+msgstr "Blocking table"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "运行的锁id"
+msgstr "Blocking lock ID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "运行事务的状态"
+msgstr "Blocking transaction state"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "运行事务的时间"
+msgstr "Blocking transaction start"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "运行事务的等待开始时间"
+msgstr "Blocking lock wait start"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "运行事务的sql"
+msgstr "Blocking SQL"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待PID"
+msgstr "Waiting PID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待用户"
+msgstr "Waiting user"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待数据库"
+msgstr "Waiting database"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待SQL"
+msgstr "Waiting SQL"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待SQL完整内容"
+msgstr "Full waiting SQL"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待开始时间"
+msgstr "Wait start time"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "阻塞PID"
+msgstr "Blocking PID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "阻塞用户"
+msgstr "Blocking user"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "阻塞SQL"
+msgstr "Blocking SQL"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "锁类型"
+msgstr "Lock type"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待锁模式"
+msgstr "Requested lock mode"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "持有锁模式"
+msgstr "Held lock mode"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "对象"
+msgstr "Object"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "完整INFO"
+msgstr "Full SQL text"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+#, python-format
+msgid "暂时不支持%(db_type)s类型数据库通过进程id构建请求"
+msgstr "Building a termination command from process IDs is not supported for %(db_type)s."
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+#, python-format
+msgid "暂时不支持%(db_type)s类型数据库终止会话"
+msgstr "Terminating sessions is not supported for %(db_type)s."
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+#, python-format
+msgid "暂时不支持%(db_type)s类型数据库的表空间信息查询"
+msgstr "Tablespace information is not supported for %(db_type)s."
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+#, python-format
+msgid "暂时不支持%(db_type)s类型数据库的锁等待查询"
+msgstr "Lock wait information is not supported for %(db_type)s."
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+#, python-format
+msgid "暂时不支持%(db_type)s类型数据库的长事务查询"
+msgstr "Long transaction information is not supported for %(db_type)s."
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "已录入"
+msgstr "Recorded"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "创建数据库"
+msgstr "Create database"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "数据库名称"
+msgstr "Database name"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "请输入数据库名称"
+msgstr "Enter a database name"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "负责人"
+msgstr "Owner"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "请选择数据库负责人"
+msgstr "Select a database owner"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "备注"
+msgstr "Notes"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "请输入备注"
+msgstr "Enter notes"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "创建"
+msgstr "Create"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "编辑/录入数据库信息"
+msgstr "Edit database details"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "排序规则"
+msgstr "Collation"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "授权账号"
+msgstr "Granted accounts"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "编辑"
+msgstr "Edit"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "参数不完整，请确认后提交"
+msgstr "Complete the required fields before submitting."
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "负责人不存在"
+msgstr "The selected owner does not exist."
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "保存"
+msgstr "Save"
+
+#: sql/templates/database.html sql/instance_database.py
+msgid "由字母、数字、下划线、中划线组成，字母开头，字母或数字结尾，最长64个字符"
+msgstr "Use letters, digits, underscores or hyphens. Start with a letter, end with a letter or digit, and use at most 64 characters."
+
+#: sql/templates/database.html sql/instance_database.py
+#, python-format
+msgid "创建数据库失败, 错误信息：%(error)s"
+msgstr "Failed to create the database: %(error)s"
+
+#: sql/templates/database.html sql/instance_database.py
+#, python-format
+msgid "暂不支持 %(db_type)s 类型的数据库创建"
+msgstr "Creating databases is not supported for %(db_type)s."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "创建账号"
+msgstr "Create account"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "数据库账号"
+msgstr "Database account"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请输入账号名称"
+msgstr "Enter an account name"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "主机"
+msgstr "Host"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请输入主机"
+msgstr "Enter a host"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请输入密码"
+msgstr "Enter a password"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "确认密码"
+msgstr "Confirm password"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请再次输入密码"
+msgstr "Enter the password again"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "修改/录入账号"
+msgstr "Edit account details"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "修改/录入"
+msgstr "Save details"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请输入密码，留空则不修改录入信息"
+msgstr "Enter a password, or leave blank to keep the stored value"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "帐号名需要1-16个字符，由字母、数字和特殊字符组成；"
+msgstr "Use 1–16 letters, digits or special characters."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "1. IP形式，支持填入%%"
+msgstr "1. Enter an IP address; %% is supported."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "2. 多个主机以|分隔符分隔"
+msgstr "2. Separate multiple hosts with the | character."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "注：新创建的账号无权限，需要使用授权功能授予相关权限"
+msgstr "New accounts have no privileges. Use Grant privileges to assign access."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "注：此操作不会修改账号密码，仅将相关信息录入平台进行管理，如需修改密码请使用改密功能"
+msgstr "This only records account details in Archery. To change the database password, use Change password."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "注：此操作会修改账号密码，同时变更平台录入信息，请谨慎操作"
+msgstr "This changes the database password and the stored account details. Proceed carefully."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "密码需要8-32个字符，至少包含英文、数字和特殊符号"
+msgstr "Use 8–32 characters, including letters, digits and special characters."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "授权变更"
+msgstr "Change privileges"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "实例:"
+msgstr "Instance:"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "账号:"
+msgstr "Account:"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "对象选择"
+msgstr "Select objects"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "选择操作类型："
+msgstr "Select an operation:"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "操作类型"
+msgstr "Operation"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请选择操作类型"
+msgstr "Select an operation"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "赋权"
+msgstr "Grant"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "回收"
+msgstr "Revoke"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "选择权限类型："
+msgstr "Select a privilege scope:"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "配置项"
+msgstr "Configuration"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请选择配置项"
+msgstr "Select a configuration"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "全局权限"
+msgstr "Global privileges"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "库权限"
+msgstr "Database privileges"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "表权限"
+msgstr "Table privileges"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "列权限"
+msgstr "Column privileges"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请选择数据库："
+msgstr "Select a database:"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请选择表："
+msgstr "Select a table:"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请选择列："
+msgstr "Select a column:"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请选择表"
+msgstr "Select a table"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请选择列"
+msgstr "Select a column"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "表"
+msgstr "Table"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "权限选择"
+msgstr "Select privileges"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "数据"
+msgstr "Data"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "结构"
+msgstr "Schema"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "管理"
+msgstr "Administration"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "数据库角色"
+msgstr "Database roles"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "请选择数据库角色"
+msgstr "Select database roles"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "执行"
+msgstr "Execute"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "修改密码"
+msgstr "Change password"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "修改"
+msgstr "Change"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "锁定账号"
+msgstr "Lock account"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "确认锁定该账号？"
+msgstr "Lock this account?"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "删除账号"
+msgstr "Delete account"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "确认删除该账号？请预先统计该账号近期的连接和访问情况，做好风险防范措施！"
+msgstr "Delete this account? Review its recent connections and access before proceeding."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "账号"
+msgstr "Account"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "帐号名"
+msgstr "Account name"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "权限"
+msgstr "Privileges"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "授权"
+msgstr "Grant privileges"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "改密"
+msgstr "Change password"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "删除"
+msgstr "Delete"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "锁定"
+msgstr "Lock"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "解锁"
+msgstr "Unlock"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "角色"
+msgstr "Roles"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "超级用户"
+msgstr "Superuser"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "可建库"
+msgstr "Can create databases"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "已选中{0}项"
+msgstr "{0} selected"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "解锁账号"
+msgstr "Unlock account"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "确认解锁该账号？"
+msgstr "Unlock this account?"
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "两次输入密码不一致"
+msgstr "The passwords do not match."
+
+#: sql/templates/instanceaccount.html sql/instance_account.py
+msgid "权限参数不合法"
+msgstr "Invalid privilege parameters."
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "可修改参数"
+msgstr "Editable parameters"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "修改历史"
+msgstr "Change history"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "添加参数"
+msgstr "Add parameter"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "允许修改"
+msgstr "Allow changes"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "请先在参数模板中配置该参数！"
+msgstr "Configure this parameter in the parameter template first."
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "参数名"
+msgstr "Parameter name"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "运行参数值"
+msgstr "Current value"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "修改参数值"
+msgstr "Change parameter value"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "参数值不能为空"
+msgstr "A parameter value is required."
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "默认参数值"
+msgstr "Default value"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "可修改参数值"
+msgstr "Allowed values"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "参数描述"
+msgstr "Description"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "变更前的参数值"
+msgstr "Previous value"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "变更后的参数值"
+msgstr "New value"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "修改人"
+msgstr "Changed by"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "修改时间"
+msgstr "Changed at"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "是否支持修改"
+msgstr "Allow changes"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "有效参数值，范围参数[1-65535]，值参数[ON"
+msgstr "Allowed values: ranges such as [1-65535], or choices such as [ON"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "OFF]"
+msgstr "OFF]"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "系统时间修改"
+msgstr "Updated at"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "实例参数模板配置"
+msgstr "Parameter template configuration"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "实例ID不合法"
+msgstr "Invalid instance ID"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "参数值与实际运行值一致，未调整！"
+msgstr "The value matches the current value. No changes were made."
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "修改成功，请手动持久化到配置文件！"
+msgstr "Parameter changed. Save it to the configuration file to persist it."
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+msgid "有效参数值，范围参数[1-65535]，值参数[ON|OFF]"
+msgstr "Allowed values: ranges such as [1-65535], or choices such as [ON|OFF]"
+
+#: sql/templates/param.html sql/models.py sql/instance.py
+#, python-format
+msgid "设置错误，错误信息：%(error)s"
+msgstr "Failed to set the parameter: %(error)s"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "操作选项"
+msgstr "Comparison options"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "请选择数据库类型:"
+msgstr "Select a database type:"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "请选择源实例:"
+msgstr "Select a source instance:"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "请选择目标实例:"
+msgstr "Select a target instance:"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "仅显示差异项"
+msgstr "Show differences only"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "开始对比"
+msgstr "Compare"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "对比结果"
+msgstr "Comparison results"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "一致参数"
+msgstr "Matching parameters"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "差异参数"
+msgstr "Different parameters"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "总参数数"
+msgstr "Total parameters"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "请选择源实例和目标实例！"
+msgstr "Select a source and target instance."
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "源实例和目标实例不能相同！"
+msgstr "The source and target instances must be different."
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "暂无描述"
+msgstr "No description available"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "源实例参数值"
+msgstr "Source value"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "目标实例参数值"
+msgstr "Target value"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "差异类型"
+msgstr "Difference type"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "值不同"
+msgstr "Different values"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "仅源实例存在"
+msgstr "Source only"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "仅目标实例存在"
+msgstr "Target only"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "一致"
+msgstr "Match"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "源实例ID不合法"
+msgstr "Invalid source instance ID"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "目标实例ID不合法"
+msgstr "Invalid target instance ID"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "源实例不存在"
+msgstr "Source instance does not exist"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "目标实例不存在"
+msgstr "Target instance does not exist"
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "两个实例的数据库类型不一致，无法对比"
+msgstr "The database types differ. Select instances of the same type."
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "获取源实例参数失败，请联系管理员"
+msgstr "Unable to read source instance parameters. Contact an administrator."
+
+#: sql/templates/param_compare.html sql/instance.py
+msgid "获取目标实例参数失败，请联系管理员"
+msgstr "Unable to read target instance parameters. Contact an administrator."
+
+#: sql/templates/param_compare.html sql/instance.py
+#, python-format
+msgid "%(db_type)s 引擎不支持参数对比功能"
+msgstr "Parameter comparison is not supported for %(db_type)s."
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "对象类型"
+msgstr "Object type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "视图"
+msgstr "Views"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "触发器"
+msgstr "Triggers"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "存储过程"
+msgstr "Stored procedures"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "函数"
+msgstr "Functions"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "定时任务"
+msgstr "Scheduled events"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "导出"
+msgstr "Export"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表元数据展示"
+msgstr "Object metadata"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表信息"
+msgstr "Table information"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "引擎"
+msgstr "Engine"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "行格式"
+msgstr "Row format"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表行数"
+msgstr "Rows"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "平均行长度"
+msgstr "Average row length"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "最大行长度"
+msgstr "Maximum row length"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "数据长度（K）"
+msgstr "Data size (KB)"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "索引长度（K）"
+msgstr "Index size (KB)"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "数据总大小（K）"
+msgstr "Total size (KB)"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "碎片大小"
+msgstr "Free space"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "当前自增值"
+msgstr "Next auto-increment value"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表的校验码"
+msgstr "Checksum"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "检查时间"
+msgstr "Checked at"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表说明"
+msgstr "Table comment"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "列信息"
+msgstr "Columns"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "索引信息"
+msgstr "Indexes"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "建表语句"
+msgstr "Create table SQL"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "数据大小"
+msgstr "Data size"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "分区键"
+msgstr "Partition key"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "排序键"
+msgstr "Sorting key"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "主键"
+msgstr "Primary key"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "采样键"
+msgstr "Sampling key"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表类型"
+msgstr "Table type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "段类型"
+msgstr "Segment type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "压缩"
+msgstr "Compression"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表空间"
+msgstr "Tablespace"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表中的记录数"
+msgstr "Rows"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表中数据所占的数据块数"
+msgstr "Data blocks"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表中的空块数"
+msgstr "Empty blocks"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "数据块中平均的使用空间"
+msgstr "Average used space per block"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表中行连接和行迁移的数量"
+msgstr "Chained or migrated rows"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "每条记录的平均长度"
+msgstr "Average row length"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "上次统计信息搜集的时间"
+msgstr "Last statistics collection"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表注释"
+msgstr "Table comment"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "视图信息"
+msgstr "View information"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "视图名"
+msgstr "View name"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "定义者"
+msgstr "Definer"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "安全类型"
+msgstr "Security type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "检查选项"
+msgstr "Check option"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "是否可更新"
+msgstr "Updatable"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "视图定义 SQL"
+msgstr "View definition SQL"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "触发器信息"
+msgstr "Trigger information"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "触发器名"
+msgstr "Trigger name"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "触发时机"
+msgstr "Timing"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "事件"
+msgstr "Event"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "关联表"
+msgstr "Table"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "作用粒度"
+msgstr "Granularity"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "触发器体 SQL"
+msgstr "Trigger body SQL"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "存储过程信息"
+msgstr "Stored procedure information"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "名称"
+msgstr "Name"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "所属数据库"
+msgstr "Database"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "创建语句"
+msgstr "Create SQL"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "函数信息"
+msgstr "Function information"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "返回类型"
+msgstr "Return type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "事件信息"
+msgstr "Event information"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "调度类型"
+msgstr "Schedule type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "间隔"
+msgstr "Interval"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "开始时间"
+msgstr "Start time"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "上次执行时间"
+msgstr "Last executed at"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "完成后行为"
+msgstr "On completion"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "事件定义 SQL"
+msgstr "Event definition SQL"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "请先选择实例和数据库！"
+msgstr "Select an instance and database first."
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "列名"
+msgstr "Column name"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "列类型"
+msgstr "Column type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "列字符集"
+msgstr "Character set"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "是否为空"
+msgstr "Nullable"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "索引列"
+msgstr "Column key"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "默认值"
+msgstr "Default value"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "拓展信息"
+msgstr "Extra"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "列说明"
+msgstr "Column comment"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "索引名"
+msgstr "Index name"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "唯一性"
+msgstr "Uniqueness"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "列序列"
+msgstr "Column sequence"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "基数"
+msgstr "Cardinality"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "索引类型"
+msgstr "Index type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "列注释"
+msgstr "Column comment"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "字段类型"
+msgstr "Data type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "字段默认值"
+msgstr "Default value"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "所属索引"
+msgstr "Index"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "约束类型"
+msgstr "Constraint type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "索引名称"
+msgstr "Index name"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "索引列名"
+msgstr "Index columns"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "压缩属性"
+msgstr "Compression"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "分区"
+msgstr "Partitioned"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "分区状态"
+msgstr "Partitioning type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "是否为LOCAL索引"
+msgstr "Local index"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "前导列索引"
+msgstr "Leading column index"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "字段名"
+msgstr "Column name"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "数据类型"
+msgstr "Data type"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "允许非空"
+msgstr "Nullable"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "自动递增"
+msgstr "Auto-increment"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "是否主键"
+msgstr "Column key"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "非法调用！"
+msgstr "Invalid request."
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "该数据库类型不支持此功能"
+msgstr "This feature is not supported for this database type."
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "仅管理员可以导出整个实例的字典信息！"
+msgstr "Only administrators can export the data dictionary for an entire instance."
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "实例名或db名不合法"
+msgstr "Invalid instance or database name."
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+#, python-format
+msgid "实例%(instance_name)s数据字典导出成功，请到downloads目录下载！"
+msgstr "Data dictionary for %(instance_name)s exported. Download it from the downloads directory."
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "数据库表结构说明文档"
+msgstr "Database schema documentation"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "生成时间："
+msgstr "Generated at:"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "表名："
+msgstr "Table name:"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+msgid "注释："
+msgstr "Comment:"
+
+#: sql/templates/data_dictionary.html common/templates/dictionaryexport.html sql/data_dictionary.py
+#, python-format
+msgid "%(db_name)s 数据字典 (共 %(table_count)s 个表)"
+msgstr "%(db_name)s data dictionary (Tables: %(table_count)s)"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "权限管理"
+msgstr "Access management"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "权限申请"
+msgstr "Request access"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "申请数据库查询权限"
+msgstr "Request database query access"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "简单说明权限用途"
+msgstr "Briefly describe why access is needed"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "请选择组:"
+msgstr "Select a group:"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "权限级别:"
+msgstr "Access level:"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "请选择表:"
+msgstr "Select a table:"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "请选择授权时间:"
+msgstr "Select an access duration:"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "一天"
+msgstr "One day"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "一周"
+msgstr "One week"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "长期(一年)"
+msgstr "One year"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "请选择查询限制行数:"
+msgstr "Enter the query row limit:"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "提示：权限审核通过后即可进行在线查询，请耐心等待。"
+msgstr "Online queries will be available after your request is approved. Please wait for review."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "提交申请"
+msgstr "Submit request"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "表清单："
+msgstr "Tables:"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "数据库清单："
+msgstr "Databases:"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "权限级别"
+msgstr "Access level"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "结果集"
+msgstr "Row limit"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "有效时间"
+msgstr "Expires on"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "申请人"
+msgstr "Requested by"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "申请时间"
+msgstr "Requested at"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "信息填写不完整，或者未配置审批流程"
+msgstr "Complete the required fields and configure an approval workflow."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "请选择权限类别"
+msgstr "Select an access level."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "申请列表"
+msgstr "Access requests"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "批量变更"
+msgstr "Bulk edit"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "批量删除权限"
+msgstr "Bulk revoke"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "权限变更"
+msgstr "Edit access"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "请输入结果限制"
+msgstr "Enter a row limit"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "用于限制在线查询结果的显示行数"
+msgstr "Maximum rows displayed in query results"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "请选择有效期"
+msgstr "Select an expiry date"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "过期后权限自动回收"
+msgstr "Access expires automatically after this date"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "确定修改"
+msgstr "Save changes"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "批量变更权限"
+msgstr "Bulk edit access"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "提示信息"
+msgstr "Confirmation"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "删除后用户将无法查询数据，确定批量删除吗？"
+msgstr "Users will lose this query access. Revoke the selected permissions?"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "确定删除"
+msgstr "Revoke access"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "删除后用户将无法查询数据，确定删除吗？"
+msgstr "The user will lose this query access. Revoke this permission?"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "变更"
+msgstr "Edit"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "删除权限"
+msgstr "Revoke access"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "结果限制必须为正整数"
+msgstr "The row limit must be a positive integer."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "请填写完整"
+msgstr "Complete all required fields."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "已选择 {count} 条权限记录"
+msgstr "Selected permissions: {count}"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "结果限制不能超过 {max}"
+msgstr "The row limit cannot exceed {max}."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "待审核"
+msgstr "Pending review"
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "仅 MySQL 支持表级查询权限申请"
+msgstr "Table-level query access requests are only supported for MySQL."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "新建审批流失败, 请联系管理员"
+msgstr "Unable to create the approval workflow. Contact an administrator."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "privilege_ids 参数格式错误"
+msgstr "Invalid privilege_ids format."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "privilege_id 参数格式错误"
+msgstr "Invalid privilege_id format."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "请传入 privilege_id 或 privilege_ids"
+msgstr "Provide privilege_id or privilege_ids."
+
+#: sql/templates/queryapplylist.html sql/templates/queryuserprivileges.html sql/query_privileges.py
+msgid "待操作权限不存在"
+msgstr "The selected permissions do not exist."
+
+msgctxt "access duration"
+msgid "一月"
+msgstr "One month"
+
+msgctxt "query access"
+msgid "工单名称"
+msgstr "Request title"
+
+msgctxt "query access"
+msgid "工单状态"
+msgstr "Request status"
+
+#: sql/templates/queryapplydetail.html sql/query_privileges.py
+msgid "工单名称："
+msgstr "Request title:"
+
+#: sql/templates/queryapplydetail.html sql/query_privileges.py
+msgid "数据库清单"
+msgstr "Databases"
+
+#: sql/templates/queryapplydetail.html sql/query_privileges.py
+msgid "表清单"
+msgstr "Tables"
+
+#: sql/templates/queryapplydetail.html sql/query_privileges.py
+msgid "请填写审核备注"
+msgstr "Enter a review comment."
+
+#: sql/templates/queryapplydetail.html sql/query_privileges.py
+msgid "处理中..."
+msgstr "Processing..."
+
+#: sql/templates/queryapplydetail.html sql/query_privileges.py
+#, python-format
+msgid "audit_status 参数错误, %(error)s"
+msgstr "Invalid audit_status: %(error)s"
+
+#: sql/templates/queryapplydetail.html sql/query_privileges.py
+msgid "工单不存在"
+msgstr "Request does not exist."
+
+#: sql/templates/queryapplydetail.html sql/query_privileges.py
+#, python-format
+msgid "审核失败: %(error)s"
+msgstr "Review failed: %(error)s"
+
+msgctxt "query access action"
+msgid "终止流程"
+msgstr "Reject request"
+
+msgctxt "query access"
+msgid "其他信息"
+msgstr "Request information"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "数据导出"
+msgstr "Data Export"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "行数统计中..."
+msgstr "Counting rows..."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "正在校验SQL语法并统计结果行数，请稍候..."
+msgstr "Validating SQL syntax and counting result rows. Please wait..."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "导出工单名称"
+msgstr "Export workflow name"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "请输入导出工单名称!"
+msgstr "Enter an export workflow name."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "请输入导出工单名称，如:XX项目会员数据导出"
+msgstr "Enter an export workflow name, e.g. project member data export"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "离线导出数据格式"
+msgstr "Offline export format"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "请选择导出数据格式！"
+msgstr "Select an export format."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "请选择导出数据格式"
+msgstr "Select an export format"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "搜索导出格式"
+msgstr "Search export formats"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "导出校验"
+msgstr "Validate export"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "导出提交"
+msgstr "Submit export"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "校验失败"
+msgstr "Validation failed"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "导出工单名称不能超过50个字符！"
+msgstr "The export workflow name must be shorter than 50 characters."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "检测到多个查询语句，只能提交一个导出查询，请选中要提交导出工单的语句重试。"
+msgstr "Only one export query can be submitted. Select one statement and try again."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "工单提交中..."
+msgstr "Submitting workflow..."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "后台二次校验，请稍候..."
+msgstr "Running server validation. Please wait..."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "统计查询结果：{ActualRows} 行数据，超过了阈值：{maxExportRows}"
+msgstr "The query returns {ActualRows} rows, exceeding the limit of {maxExportRows}."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "校验成功"
+msgstr "Validation succeeded"
+
+#: sql/templates/sqlexportsubmit.html
+msgid "统计查询结果：{ActualRows} 行数据，点击提交导出按钮申请导出。"
+msgstr "The query returns {ActualRows} rows. Click Submit export to request an export."
+
+#: sql/templates/sqlexportsubmit.html
+msgid "错误：{msg}"
+msgstr "Error: {msg}"
+
+msgid "可执行时间范围不应该短于{minutes}分钟"
+msgstr "The execution time range must be at least {minutes} minutes."
+
+msgid "没有有效的查询语句"
+msgstr "No valid query statement was found."
+
+msgid "检测到多个查询语句，只能提交一个导出查询。"
+msgstr "Only one export query can be submitted."
+
+msgid "不支持的查询语法类型!"
+msgstr "This query syntax is not supported."
+
+#, python-format
+msgid "导出数据行数(%(rows)s)超过阈值(%(limit)s)。"
+msgstr "The export row count (%(rows)s) exceeds the limit (%(limit)s)."
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "申请信息"
+msgstr "Request information"
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "导出格式"
+msgstr "Export format"
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "导出文件"
+msgstr "Export file"
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "尚未生成文件"
+msgstr "No file generated"
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "参数错误，workflow_id必须为数字"
+msgstr "Invalid parameter: workflow_id must be a number."
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "该工单未生成下载文件"
+msgstr "No download file has been generated for this workflow."
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "非法的文件名"
+msgstr "Invalid file name."
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "文件不存在"
+msgstr "File does not exist."
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "文件下载失败：请联系管理员。"
+msgstr "File download failed. Contact an administrator."
+
+#: sql/templates/detail.html sql/offlinedownload.py
+msgid "内部错误，请联系管理员。"
+msgstr "Internal error. Contact an administrator."
+
+#: sql/templates/archive.html
+msgid "全部实例"
+msgstr "All instances"
+
+#: sql/templates/archive.html
+msgid "启用状态"
+msgstr "Enabled status"
+
+#: sql/templates/archive.html
+msgctxt "archive state"
+msgid "启用"
+msgstr "Enabled"
+
+#: sql/templates/archive.html
+msgid "未启用"
+msgstr "Disabled"
+
+#: sql/templates/archive.html
+msgctxt "archive state"
+msgid "关闭"
+msgstr "Disabled"
+
+#: sql/templates/archive.html
+msgid "申请归档"
+msgstr "Request archival"
+
+#: sql/templates/archive.html
+msgid "添加配置"
+msgstr "Add configuration"
+
+#: sql/templates/archive.html
+msgid "申请数据归档"
+msgstr "Request data archival"
+
+#: sql/templates/archive.html
+msgid "对归档进行简单描述"
+msgstr "Briefly describe the archive request"
+
+#: sql/templates/archive.html
+msgid "请选择源数据库:"
+msgstr "Select a source database:"
+
+#: sql/templates/archive.html
+msgid "请选择需要归档的表:"
+msgstr "Select a table to archive:"
+
+#: sql/templates/archive.html
+msgid "请选择归档模式:"
+msgstr "Select an archive mode:"
+
+#: sql/templates/archive.html
+msgid "归档到文件"
+msgstr "Archive to file"
+
+#: sql/templates/archive.html
+msgid "归档到其他实例"
+msgstr "Archive to another instance"
+
+#: sql/templates/archive.html
+msgid "直接删除"
+msgstr "Delete directly"
+
+#: sql/templates/archive.html
+msgid "归档后是否保留源数据:"
+msgstr "Keep source data after archival:"
+
+#: sql/templates/archive.html
+msgid "归档后是否保留源数据"
+msgstr "Keep source data after archival"
+
+#: sql/templates/archive.html
+msgid "保留"
+msgstr "Keep"
+
+#: sql/templates/archive.html
+msgid "请选择目标数据库:"
+msgstr "Select a target database:"
+
+#: sql/templates/archive.html
+msgid "请选择对应数据库:"
+msgstr "Select the corresponding database:"
+
+#: sql/templates/archive.html
+msgid "请选择目标表:"
+msgstr "Select a target table:"
+
+#: sql/templates/archive.html
+msgid "请选择需目标表:"
+msgstr "Select a target table:"
+
+#: sql/templates/archive.html
+msgid "请输入归档条件，就是SQL语句的WHERE条件"
+msgstr "Enter the archive condition (the SQL WHERE clause)"
+
+#: sql/templates/archive.html
+msgid "归档10000行记录后的休眠秒数"
+msgstr "Sleep time in seconds after archiving 10,000 rows"
+
+#: sql/templates/archive.html
+msgid "提示：源表和目标表结构必须保持一致，否则将会归档失败"
+msgstr "The source and target tables must have the same structure, or archival will fail."
+
+#: sql/templates/archive.html
+msgid "归档模式"
+msgstr "Archive mode"
+
+#: sql/templates/archive.html
+msgid "源数据"
+msgstr "Source data"
+
+#: sql/templates/archive.html
+msgid "休眠(秒)"
+msgstr "Sleep (seconds)"
+
+#: sql/templates/archive.html
+msgid "Close"
+msgstr "Close"
+
+#: sql/templates/archivedetail.html
+msgid "修改归档配置"
+msgstr "Edit archive configuration"
+
+#: sql/templates/archivedetail.html
+msgid "立即归档"
+msgstr "Archive now"
+
+#: sql/templates/archivedetail.html
+msgctxt "archive request"
+msgid "其他信息"
+msgstr "Request information"
+
+#: sql/templates/archivedetail.html
+msgid "最近归档时间"
+msgstr "Last archived at"
+
+#: sql/templates/archivedetail.html
+msgid "归档配置信息"
+msgstr "Archive configuration"
+
+#: sql/templates/archivedetail.html
+msgid "归档日志"
+msgstr "Execution logs"
+
+#: sql/templates/archivedetail.html
+msgctxt "archive state"
+msgid "是否启用"
+msgstr "Enabled"
+
+#: sql/templates/archivedetail.html
+msgid "是否启用归档"
+msgstr "Enable archival"
+
+#: sql/templates/archivedetail.html
+msgid "归档信息"
+msgstr "Archive information"
+
+#: sql/templates/archivedetail.html
+msgid "归档到文件(file)"
+msgstr "Archive to file (file)"
+
+#: sql/templates/archivedetail.html
+msgid "归档到其他实例(dest)"
+msgstr "Archive to another instance (dest)"
+
+#: sql/templates/archivedetail.html
+msgid "直接删除(purge)"
+msgstr "Delete directly (purge)"
+
+#: sql/templates/archivedetail.html
+msgid "实例信息"
+msgstr "Instance information"
+
+#: sql/templates/archivedetail.html
+msgid "源信息"
+msgstr "Source information"
+
+#: sql/templates/archivedetail.html
+msgid "源实例"
+msgstr "Source instance"
+
+#: sql/templates/archivedetail.html
+msgid "源数据库"
+msgstr "Source database"
+
+#: sql/templates/archivedetail.html
+msgid "源表"
+msgstr "Source table"
+
+#: sql/templates/archivedetail.html
+msgid "目标信息"
+msgstr "Target information"
+
+#: sql/templates/archivedetail.html
+msgid "目标数据库"
+msgstr "Target database"
+
+#: sql/templates/archivedetail.html
+msgid "目标表"
+msgstr "Target table"
+
+#: sql/templates/archivedetail.html
+msgid "归档条件"
+msgstr "Archive condition"
+
+#: sql/templates/archivedetail.html
+msgctxt "archive action"
+msgid "终止流程"
+msgstr "Reject request"
+
+#: sql/templates/archivedetail.html
+msgid "已开启归档任务"
+msgstr "Archival has been enabled."
+
+#: sql/templates/archivedetail.html
+msgid "已关闭归档任务"
+msgstr "Archival has been disabled."
+
+#: sql/templates/archivedetail.html
+msgid "请确认是否立即进行归档？"
+msgstr "Archive data now?"
+
+#: sql/templates/archivedetail.html
+msgid "归档任务提交成功！请稍后查看归档日志获取结果"
+msgstr "The archive task was submitted. Check the execution logs for results."
+
+#: sql/templates/archivedetail.html
+msgid "归档命令"
+msgstr "Archive command"
+
+#: sql/templates/archivedetail.html
+msgid "成功"
+msgstr "Succeeded"
+
+#: sql/templates/archivedetail.html
+msgid "失败"
+msgstr "Failed"
+
+#: sql/templates/archivedetail.html
+msgid "查询"
+msgstr "Selected rows"
+
+#: sql/templates/archivedetail.html
+msgid "插入"
+msgstr "Inserted rows"
+
+#: sql/templates/archivedetail.html
+msgid "统计日志"
+msgstr "Statistics log"
+
+#: sql/templates/archivedetail.html
+msgid "错误信息"
+msgstr "Error details"
+
+msgctxt "archive execution log"
+msgid "删除"
+msgstr "Deleted rows"
+
+#: sql/templates/my2sql.html
+msgid "选择实例："
+msgstr "Instance:"
+
+#: sql/templates/my2sql.html
+msgid "是否保存到文件(异步操作)"
+msgstr "Save to file (background task)"
+
+#: sql/templates/my2sql.html
+msgid "解析模式："
+msgstr "Parsing options:"
+
+#: sql/templates/my2sql.html
+msgid "解析线程数："
+msgstr "Parser threads:"
+
+#: sql/templates/my2sql.html
+msgid "默认4"
+msgstr "Default: 4"
+
+#: sql/templates/my2sql.html
+msgid "解析范围控制："
+msgstr "Parsing range:"
+
+#: sql/templates/my2sql.html
+msgid "页面解析行数，默认30"
+msgstr "Rows (default: 30)"
+
+#: sql/templates/my2sql.html
+msgid "起始解析文件:"
+msgstr "Start binlog file:"
+
+#: sql/templates/my2sql.html
+msgid "起始解析位置(可选)"
+msgstr "Start position (optional)"
+
+#: sql/templates/my2sql.html
+msgid "终止解析文件(可选):"
+msgstr "End binlog file (optional):"
+
+#: sql/templates/my2sql.html
+msgid "终止解析位置(可选)"
+msgstr "End position (optional)"
+
+#: sql/templates/my2sql.html
+msgid "起始解析时间(不建议)"
+msgstr "Start time (not advised)"
+
+#: sql/templates/my2sql.html
+msgid "终止解析时间(可选)"
+msgstr "End time (optional)"
+
+#: sql/templates/my2sql.html
+msgid "对象过滤："
+msgstr "Object filters:"
+
+#: sql/templates/my2sql.html
+msgid "数据库过滤(可选):"
+msgstr "Database filter (optional):"
+
+#: sql/templates/my2sql.html
+msgid "表过滤(可选):"
+msgstr "Table filter (optional):"
+
+#: sql/templates/my2sql.html
+msgid "类型过滤(可选):"
+msgstr "SQL type filter (optional):"
+
+#: sql/templates/my2sql.html
+msgid "获取SQL"
+msgstr "Get SQL"
+
+#: sql/templates/my2sql.html
+msgid "提交工单"
+msgstr "Submit workflow"
+
+#: sql/templates/my2sql.html
+msgid "前端展示数量由解析范围参数控制，如果勾选了保存到文件，则会异步获取完整的SQL文件，保存到项目downloads目录，在开启消息通知后，执行结束会发送通知给操作人"
+msgstr "The parsing range controls the number of rows displayed. With Save to file selected, Get SQL also saves the complete SQL files in a background task under the project downloads directory. If notifications are enabled, the operator is notified when the task finishes."
+
+#: sql/templates/my2sql.html
+msgid "SQL语句超过2000行，不支持提交工单，请使用异步导出文件的方式！"
+msgstr "More than 2,000 SQL statements cannot be submitted as a workflow. Use background file export instead."
+
+#: sql/templates/my2sql.html
+msgid "请选择实例和起始解析文件！"
+msgstr "Select an instance and a start binlog file."
+
+#: sql/templates/my2sql.html
+msgid "完整SQL"
+msgstr "Full SQL"
+
+#: sql/templates/my2sql.html
+msgid "ExtraInfo"
+msgstr "Extra information"
+
+#: sql/templates/my2sql.html
+msgid "完整ExtraInfo"
+msgstr "Full extra information"
+
+#: sql/templates/my2sql.html
+msgid "My2SQL回滚-"
+msgstr "My2SQL rollback-"
+
+msgctxt "my2sql"
+msgid "操作选项"
+msgstr "Options"
+
+#: sql/templates/schemasync.html
+msgctxt "schemasync"
+msgid "操作选项"
+msgstr "Options"
+
+#: sql/templates/schemasync.html
+msgctxt "schemasync"
+msgid "全部"
+msgstr "All databases"
+
+#: sql/templates/schemasync.html
+msgctxt "schemasync"
+msgid "DIFF选项："
+msgstr "Comparison options:"
+
+#: sql/templates/schemasync.html
+msgid "Schema对比"
+msgstr "Compare schemas"
+
+#: sql/templates/schemasync.html
+msgctxt "schemasync"
+msgid "SQL语句"
+msgstr "SQL statements"
+
+#: sql/templates/schemasync.html
+msgid "页面仅展示单库对比结果，生成的SQL文件会保存到项目downloads目录"
+msgstr "Only single-database comparison results are displayed here. Generated SQL files are saved in the project downloads directory."
+
+#: sql/templates/schemasync.html
+msgid "请耐心等待对比结果，可在对应目录获取生成的SQL文件"
+msgstr "Please wait for the comparison results. Generated SQL files will be available in the output directory."
+
+#: sql/templates/schemasync.html
+msgid "请选择完整！"
+msgstr "Select both instances and databases."
+
+#: sql/templates/schemasync.html
+msgctxt "schemasync"
+msgid "差异日志"
+msgstr "Difference log"
+
+#: sql/templates/schemasync.html
+msgctxt "schemasync"
+msgid "变更SQL"
+msgstr "Patch SQL"
+
+#: sql/templates/schemasync.html
+msgctxt "schemasync"
+msgid "回滚SQL"
+msgstr "Revert SQL"
+
+#: sql/templates/schemasync.html
+msgid "尚无对比结果"
+msgstr "No comparison results yet."
+
+#: sql/templates/schemasync.html
+msgid "无输出"
+msgstr "No output."
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "添加组"
+msgstr "Add group"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "组名称"
+msgstr "Group name"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "关联对象"
+msgstr "Linked objects"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgctxt "resource group"
+msgid "全部"
+msgstr "All types"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "新增关联对象"
+msgstr "Add linked objects"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "关联对象类型"
+msgstr "Linked object type"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "请选择关联对象类型:"
+msgstr "Select a linked object type:"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "请选择关联对象:"
+msgstr "Select linked objects:"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "关联对象描述"
+msgstr "Linked object"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "未知"
+msgstr "Unknown"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "请填写完整！"
+msgstr "Complete all required fields."
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "组ID"
+msgstr "Group ID"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "父级id"
+msgstr "Parent ID"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "排序"
+msgstr "Order"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "层级"
+msgstr "Level"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "钉钉webhook地址"
+msgstr "DingTalk webhook URL"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "飞书webhook地址"
+msgstr "Feishu webhook URL"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "企业微信webhook地址"
+msgstr "WeCom webhook URL"
+
+#: sql/templates/group.html sql/templates/groupmgmt.html sql/models.py
+msgid "是否删除"
+msgstr "Deleted"
+
+msgctxt "resource group action"
+msgid "管理"
+msgstr "Manage"
+
+msgctxt "resource group action"
+msgid "提交"
+msgstr "Submit"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "选择操作"
+msgstr "Choose an operation"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "配置项："
+msgstr "Configuration category:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "配置项"
+msgstr "Configuration category"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "请选择配置项:"
+msgstr "Select a configuration category:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "系统设置"
+msgstr "System settings"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "工单审核流配置"
+msgstr "Workflow approval settings"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "工单类型："
+msgstr "Workflow type:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "工单类型"
+msgstr "Workflow type"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "请选择工单类型:"
+msgstr "Select a workflow type:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "组："
+msgstr "Group:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "组"
+msgstr "Group"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "请选择组:"
+msgstr "Select a group:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "操作"
+msgstr "Settings"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "goInception配置"
+msgstr "goInception configuration"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "注1：备份库的信息仅用于平台获取回滚语句，需要和审核工具自身的配置保持一致，此处配置变更不会修改审核工具自身的配置"
+msgstr "Note: Backup database settings are used only to retrieve rollback SQL. Keep them consistent with the review tool settings. Changes here do not update the review tool configuration."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "goInception地址"
+msgstr "goInception host"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "测试连接"
+msgstr "Test connection"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "goInception端口"
+msgstr "goInception port"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "goInception用户（未启用认证可不填）"
+msgstr "goInception user (optional when authentication is disabled)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "goInception密码（未启用认证可不填）"
+msgstr "goInception password (optional when authentication is disabled)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "备份库地址"
+msgstr "Backup database host"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "备份库端口"
+msgstr "Backup database port"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "备份库用户"
+msgstr "Backup database user"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "备份库用户密码"
+msgstr "Backup database password"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "功能模块配置"
+msgstr "Feature configuration"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SQL上线"
+msgstr "SQL deployment"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "正则条件，匹配的语句会禁止提交"
+msgstr "Regular expression: matching statements cannot be submitted"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回"
+msgstr "Automatic rejection level: 1 rejects warnings; 2 or blank rejects errors only; other values disable automatic rejection"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启备份选项(默认关闭, 强制要求备份)"
+msgstr "Allow backup selection (disabled by default; backup is mandatory)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启SQL上线自动审批"
+msgstr "Enable automatic approval for SQL deployment"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "正则条件，匹配的语句需要人工审批"
+msgstr "Regular expression: matching statements require manual approval"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "自动审批允许工单最大更新行数"
+msgstr "Maximum rows updated by an automatically approved workflow"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启SQL上线手工执行确认"
+msgstr "Allow manual completion confirmation for SQL deployment"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否禁止DDL和DML在SQL上线同时提交(MySQL)"
+msgstr "Prevent DDL and DML from being submitted together (MySQL)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "ON：禁止自审。OFF：允许自己审批自己的工单"
+msgstr "Enabled: prevent self-review. Disabled: allow users to review their own workflows."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "禁止自审工单(管理员除外)"
+msgstr "Prevent self-review (except administrators)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否获取DML真实影响行数(MySQL、MongoDB)"
+msgstr "Count actual rows affected by DML (MySQL and MongoDB)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "DML免审批级数，无需最后多少层审批，默认0"
+msgstr "Number of final approval levels to skip for DML (default: 0)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "DML免审批允许工单最大影响行数，默认10000"
+msgstr "Maximum rows affected by DML to skip approval (default: 10000)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SQL查询"
+msgstr "SQL query"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析"
+msgstr "Note: Data masking requires goInception settings for SQL syntax parsing."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启动态脱敏"
+msgstr "Enable dynamic data masking"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启脱敏校验(无法脱敏的语句会抛错)"
+msgstr "Validate data masking (reject statements that cannot be masked)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "禁止在查询时使用 *"
+msgstr "Disallow * in queries"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "在线查询超时时间阈值，单位秒，默认60"
+msgstr "Online query timeout in seconds (default: 60)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "管理员/DBA查询结果集限制"
+msgstr "Query result row limit for administrators and DBAs"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "数据导出配置"
+msgstr "Data export configuration"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "导出数据量阈值限制，单位: 行，默认值: 10000"
+msgstr "Maximum export rows (default: 10000)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "存储类型选择"
+msgstr "Storage type selection"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "存储类型"
+msgstr "Storage type"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "本地存储"
+msgstr "Local storage"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "S3兼容存储"
+msgstr "S3-compatible storage"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "本地存储路径"
+msgstr "Local storage path"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "项目根目录/downloads/DataExportFile/"
+msgstr "Project root/downloads/DataExportFile/"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SFTP主机"
+msgstr "SFTP host"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SFTP服务访问IP"
+msgstr "SFTP server IP address"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SFTP端口"
+msgstr "SFTP port"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SFTP服务端口"
+msgstr "SFTP server port"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SFTP用户名"
+msgstr "SFTP user"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SFTP密码"
+msgstr "SFTP password"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SFTP路径"
+msgstr "SFTP path"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SFTP服务存储路径"
+msgstr "SFTP storage path"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "自定义参数"
+msgstr "Custom parameters"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "输入JSON格式的自定义参数，例如：{\"key\": \"value\"}"
+msgstr "Custom parameters in JSON, for example: {\"key\": \"value\"}"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "Region 非必填"
+msgstr "Region (optional)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "存储路径，开头没有/"
+msgstr "Storage path without a leading /"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "Azure容器"
+msgstr "Azure container"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "Azure账号名"
+msgstr "Azure account name"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "Azure账号密钥"
+msgstr "Azure account key"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "Azure 存储路径，开头没有 / ，如存储到tmp目录: tmp/"
+msgstr "Azure storage path without a leading /, for example: tmp/"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SQL优化"
+msgstr "SQL optimization"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SQLADVISOR路径"
+msgstr "SQLAdvisor path"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SOAR路径"
+msgstr "SOAR path"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "SOAR测试实例：user:pwd@host:port/db"
+msgstr "SOAR test instance: user:pwd@host:port/db"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "通知配置"
+msgstr "Notification configuration"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户"
+msgstr "Note: DingTalk webhook notifications require a resource group webhook URL and cannot target individual users."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "注2：企业微信自建应用开启后，若未配置企业微信UserID，则默认取用户的username作为UserId"
+msgstr "Note: For WeCom app notifications, username is used as UserId when a WeCom UserID is not configured."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "注3：企业微信群机器人需要配置资源组webhook地址（企业微信群机器人是通知到群；企业微信自建应用是通过应用通知到指定人）"
+msgstr "Note: WeCom group bots use the resource group webhook URL and notify a group. WeCom apps notify individual users."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "工单通知"
+msgstr "Workflow notifications"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "系统HOST地址, 用于通知链接，如https://archery.com"
+msgstr "System host URL for notification links, for example: https://archery.com"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启邮件通知"
+msgstr "Enable email notifications"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否使用SSL"
+msgstr "Use SSL"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "邮件smtp地址"
+msgstr "SMTP server"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "邮件smtp端口"
+msgstr "SMTP port"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "邮箱账号"
+msgstr "Email account"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "邮箱账号密码"
+msgstr "Email account password"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启钉钉Webhook通知"
+msgstr "Enable DingTalk webhook notifications"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启钉钉个人消息通知"
+msgstr "Enable DingTalk direct-message notifications"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "创建钉钉Archery微应用参考："
+msgstr "Create a DingTalk Archery app:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "钉钉企业接入开发文档"
+msgstr "DingTalk developer documentation"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "同步用户"
+msgstr "Sync users"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "微应用Archery的AgentId"
+msgstr "AgentId of the Archery app"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "微应用Archery的AppKey"
+msgstr "AppKey of the Archery app"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "微应用Archery的AppSecret"
+msgstr "AppSecret of the Archery app"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "Archery.username对应钉钉里的字段"
+msgstr "DingTalk field corresponding to Archery.username"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "钉钉部门id，使用逗号分隔"
+msgstr "DingTalk department IDs, separated by commas"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "企业微信自建应用"
+msgstr "WeCom app"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启企业微信自建应用通知"
+msgstr "Enable WeCom app notifications"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "创建企业微信应用参考："
+msgstr "Create a WeCom app:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "企业微信接入开发文档"
+msgstr "WeCom developer documentation"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "企业微信的企业ID"
+msgstr "WeCom corporate ID"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "应用的AgentId"
+msgstr "App AgentId"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "应用的Secret"
+msgstr "App Secret"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "企业微信群机器人"
+msgstr "WeCom group bot"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启企业微信群机器人通知"
+msgstr "Enable WeCom group bot notifications"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "飞书Webhook"
+msgstr "Feishu webhook"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启飞书Webhook通知"
+msgstr "Enable Feishu webhook notifications"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "飞书"
+msgstr "Feishu"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启飞书通知"
+msgstr "Enable Feishu notifications"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "创建飞书应用参考："
+msgstr "Create a Feishu app:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "飞书接入开发文档"
+msgstr "Feishu developer documentation"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "飞书应用AppID"
+msgstr "Feishu app AppID"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "飞书AppSecret"
+msgstr "Feishu AppSecret"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "通用Webhook地址"
+msgstr "Generic webhook URL"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "通用 webhook 地址, 每个工单的每个状态转变均会调用"
+msgstr "Generic webhook URL called for every workflow state transition"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "短信服务"
+msgstr "SMS service"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "短信服务提供商"
+msgstr "SMS provider"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "阿里云访问密钥ID，用于标识用户"
+msgstr "Alibaba Cloud access key ID identifying the user"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "阿里云访问密钥（AccessKey），用于验证用户的密钥"
+msgstr "Alibaba Cloud access key secret used for authentication"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "短信签名，需为审核通过状态"
+msgstr "SMS signature (must be approved)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "短信模板Code，需为审核通过状态"
+msgstr "SMS template code (must be approved)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "短信模板中的变量名，如：code"
+msgstr "Variable name in the SMS template, for example: code"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "用于标识API调用者的身份"
+msgstr "API caller identifier"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "用于加密签名字符串和服务器端验证签名字符串的密钥"
+msgstr "Secret used to sign requests and verify signatures on the server"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "短信模板ID，需为审核通过状态"
+msgstr "SMS template ID (must be approved)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "短信应用ID"
+msgstr "SMS application ID"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "OIDC 配置"
+msgstr "OIDC configuration"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "登录按钮显示名称，比如Login With KeyCloak"
+msgstr "Login button label, for example: Login With KeyCloak"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "OPENAI 配置"
+msgstr "OpenAI configuration"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "注1：若无OPENAI_API_KEY配置，则不开启相关功能"
+msgstr "Note: OpenAI features are disabled unless OPENAI_API_KEY is configured."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "注2：DEFAULT_CHAT_MODEL 默认配置为gpt-3.5-turbo，DEFAULT_QUERY_TEMPLATE 默认配置为系统定义的模板"
+msgstr "Note: DEFAULT_CHAT_MODEL defaults to gpt-3.5-turbo. DEFAULT_QUERY_TEMPLATE defaults to the built-in template."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "默认生成SQL语句的Django模板, 无模板会导致生成结果失败, 需提供db_type/table_schema/user_input"
+msgstr "Django template for SQL generation. Required variables: db_type, table_schema, user_input. Missing templates cause generation to fail."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "其他配置"
+msgstr "Other settings"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "系统首页路径，默认SQL工单页面：sqlworkflow"
+msgstr "Home page path (default: sqlworkflow)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "my2sql调用路径，类似/opt/archery/src/plugins/my2sql"
+msgstr "my2sql executable path, for example: /opt/archery/src/plugins/my2sql"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "账户登录失败锁定时间(秒)"
+msgstr "Account lock duration after failed logins (seconds)"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "账户登录失败几次锁账户"
+msgstr "Failed login attempts before locking the account"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启注册功能"
+msgstr "Enable registration"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启水印功能"
+msgstr "Enable watermarks"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "登录是否强制使用2FA"
+msgstr "Require 2FA at login"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "是否开启公告"
+msgstr "Enable announcements"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "公告内容"
+msgstr "Announcement content"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "在网站标题及登录页面追加此内容, 可用于多archery实例的区分"
+msgstr "Suffix added to the site title and login page to distinguish Archery instances"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "保存配置"
+msgstr "Save configuration"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "规则："
+msgstr "Rule:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "选择多个权限组即审批流程为多级审核，按照选择顺序进行流转，权限组内用户都可审核"
+msgstr "Selecting multiple permission groups creates approval stages in the selected order. Any user in each group can review that stage."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "当前审批流程："
+msgstr "Current approval workflow:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "变更审批流程："
+msgstr "Update approval workflow:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "请选择审批权限组"
+msgstr "Select a reviewer group"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "审批人"
+msgstr "Reviewer group"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "审批人:"
+msgstr "Reviewer group:"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "变更"
+msgstr "Update workflow"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "刷新"
+msgstr "Reset"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "关闭"
+msgstr "Disabled"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "阿里云"
+msgstr "Alibaba Cloud"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "腾讯云"
+msgstr "Tencent Cloud"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "当开启钉钉通知到个人时，企业id和secret等必须填写!"
+msgstr "Corporate ID and app credentials are required for DingTalk direct-message notifications."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "请选择组、工单类型和审批流程！"
+msgstr "Select a group, workflow type and approval workflow."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "Inception测试连接成功，请点击页面下方的保存按钮生效！"
+msgstr "Inception connection test succeeded. Click Save configuration to apply the settings."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "goInception和备份库测试连接成功，请点击页面下方的保存按钮生效！"
+msgstr "goInception and backup database connection tests succeeded. Click Save configuration to apply the settings."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "测试邮件已成功发送给当前用户，注意查收，请点击页面下方的保存按钮生效！"
+msgstr "A test email was sent to the current user. Check your inbox, then click Save configuration to apply the settings."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "连接测试成功，请点击页面下方的保存按钮生效！"
+msgstr "Connection test succeeded. Click Save configuration to apply the settings."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "请先保存相关配置信息！"
+msgstr "Save the required configuration first."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "已添加定时同步任务并且触发同步，点击确认查看任务状态"
+msgstr "A scheduled sync task was added and a sync was started. Confirm to view task status."
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "已启用"
+msgstr "Enabled"
+
+#: common/templates/config.html
+msgctxt "configuration"
+msgid "启用"
+msgstr "Enabled"
+
+msgctxt "notification phase"
+msgid "申请"
+msgstr "Submission"
+
+msgctxt "notification phase"
+msgid "审核通过"
+msgstr "Approval"
+
+msgctxt "notification phase"
+msgid "执行"
+msgstr "Execution"
+
+msgctxt "notification phase"
+msgid "取消"
+msgstr "Cancellation"
+
+msgid "查询权限申请"
+msgstr "Query access request"
+
+msgid "SQL上线申请"
+msgstr "SQL deployment request"
+
+msgid "数据归档申请"
+msgstr "Data archival request"
+
+msgctxt "configuration"
+msgid "自动审批的实例标签"
+msgstr "Instance tags eligible for automatic approval"
+
+msgctxt "configuration"
+msgid "自动审批的数据库类型"
+msgstr "Database types eligible for automatic approval"
+
+msgctxt "configuration"
+msgid "DDL工单通知权限组"
+msgstr "Permission groups notified for DDL workflows"
+
+msgctxt "configuration"
+msgid "工单通知分阶段控制"
+msgstr "Workflow notification phases"
+
+msgctxt "configuration"
+msgid "短信服务商"
+msgstr "SMS provider"
+
+msgctxt "configuration"
+msgid "新用户首次登录自动关联权限组"
+msgstr "Permission groups assigned at first login"
+
+msgctxt "configuration"
+msgid "新用户首次登录自动关联资源组"
+msgstr "Resource groups assigned at first login"
+
+msgctxt "configuration"
+msgid "API用户白名单"
+msgstr "API user allowlist"
+
+#: sql/admin.py sql/models.py
+msgctxt "user field"
+msgid "显示的中文名"
+msgstr "Display name"
+
+#: sql/admin.py sql/models.py
+msgctxt "user field"
+msgid "钉钉UserID"
+msgstr "DingTalk user ID"
+
+#: sql/admin.py sql/models.py
+msgctxt "user field"
+msgid "企业微信UserID"
+msgstr "WeCom user ID"
+
+#: sql/admin.py sql/models.py
+msgctxt "user field"
+msgid "飞书OpenID"
+msgstr "Feishu OpenID"
+
+#: sql/admin.py sql/models.py
+msgctxt "user field"
+msgid "失败计数"
+msgstr "Failed login count"
+
+#: sql/admin.py sql/models.py
+msgctxt "user field"
+msgid "上次失败登录时间"
+msgstr "Last failed login"
+
+#: sql/admin.py sql/models.py
+msgctxt "user field"
+msgid "资源组"
+msgstr "Resource groups"
+
+#: sql/admin.py sql/models.py
+msgctxt "user admin section"
+msgid "认证信息"
+msgstr "Authentication"
+
+#: sql/admin.py sql/models.py
+msgctxt "user admin section"
+msgid "个人信息"
+msgstr "Personal information"
+
+#: sql/admin.py sql/models.py
+msgctxt "user admin section"
+msgid "权限信息"
+msgstr "Permissions"
+
+#: sql/admin.py sql/models.py
+msgctxt "user admin section"
+msgid "资源组"
+msgstr "Resource groups"
+
+#: sql/admin.py sql/models.py
+msgctxt "user admin section"
+msgid "其他信息"
+msgstr "Additional information"
+
+#: sql/admin.py sql/models.py
+msgctxt "user model"
+msgid "用户管理"
+msgstr "User"
+
+#: sql/admin.py sql/models.py
+msgctxt "user model plural"
+msgid "用户管理"
+msgstr "Users"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "资源组管理"
+msgstr "Resource group"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "用户管理"
+msgstr "User"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "2FA配置"
+msgstr "Two-factor authentication configuration"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "实例标签"
+msgstr "Instance tag"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "隧道配置"
+msgstr "SSH tunnel"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "实例配置"
+msgstr "Instance"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "SQL工单"
+msgstr "SQL workflow"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "SQL工单内容"
+msgstr "SQL workflow content"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "工作流审批列表"
+msgstr "Workflow approval"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "工作流审批明细"
+msgstr "Workflow approval detail"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "审批流程配置"
+msgstr "Approval workflow configuration"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "工作流日志"
+msgstr "Workflow log"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "查询权限申请记录表"
+msgstr "Query access request"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "查询权限记录"
+msgstr "Query privilege"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "查询日志"
+msgstr "Query log"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "脱敏字段配置"
+msgstr "Data masking column"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "脱敏规则配置"
+msgstr "Data masking rule"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "实例账号列表"
+msgstr "Instance account"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "实例数据库"
+msgstr "Instance database"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "实例参数模板配置"
+msgstr "Parameter template"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "实例参数修改历史"
+msgstr "Parameter change history"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "归档配置表"
+msgstr "Archive configuration"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "归档日志表"
+msgstr "Archive execution log"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "系统配置"
+msgstr "System configuration"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "云服务认证信息配置"
+msgstr "Cloud credentials configuration"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "阿里云rds配置"
+msgstr "Alibaba Cloud RDS configuration"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "慢日志统计"
+msgstr "Slow query statistics"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "慢日志明细"
+msgstr "Slow query detail"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "Redis慢日志统计"
+msgstr "Redis slow query statistics"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "Redis慢日志明细"
+msgstr "Redis slow query detail"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission model"
+msgid "审计日志"
+msgstr "Audit log"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 Dashboard"
+msgstr "Menu: Dashboard"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 SQL审核"
+msgstr "Menu: SQL review"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 SQL上线"
+msgstr "Menu: SQL workflows"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 SQL分析"
+msgstr "Menu: SQL analysis"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 SQL查询"
+msgstr "Menu: SQL query"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 在线查询"
+msgstr "Menu: Query editor"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 权限管理"
+msgstr "Menu: Query access management"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 SQL优化"
+msgstr "Menu: SQL optimization"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 优化工具"
+msgstr "Menu: Optimization tools"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 慢查日志"
+msgstr "Menu: Slow query logs"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 实例管理"
+msgstr "Menu: Instance management"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 实例列表"
+msgstr "Menu: Instance list"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 会话管理"
+msgstr "Menu: Session management"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 数据库管理"
+msgstr "Menu: Database management"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 实例账号管理"
+msgstr "Menu: Instance account management"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 参数配置"
+msgstr "Menu: Parameter configuration"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 参数对比"
+msgstr "Menu: Parameter comparison"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 数据字典"
+msgstr "Menu: Data dictionary"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 工具插件"
+msgstr "Menu: Tools"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 数据归档"
+msgstr "Menu: Data archival"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 My2SQL"
+msgstr "Menu: My2SQL"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 SchemaSync"
+msgstr "Menu: SchemaSync"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 系统管理"
+msgstr "Menu: System management"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 相关文档"
+msgstr "Menu: Documentation"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 OpenAPI"
+msgstr "Menu: OpenAPI"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "提交SQL上线工单"
+msgstr "Submit SQL deployment workflows"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "审核SQL上线工单"
+msgstr "Review SQL deployment workflows"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "执行SQL上线工单(资源组粒度)"
+msgstr "Execute SQL workflows in the resource group"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "执行SQL上线工单(仅自己提交的)"
+msgstr "Execute own SQL workflows"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "执行SQL分析"
+msgstr "Run SQL analysis"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "执行SQLAdvisor"
+msgstr "Run SQLAdvisor"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "执行SQLTuning"
+msgstr "Run SQLTuning"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "执行SOAR"
+msgstr "Run SOAR"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "申请查询权限"
+msgstr "Request query access"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "管理查询权限"
+msgstr "Manage query access"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "审核查询权限"
+msgstr "Review query access requests"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "提交SQL查询"
+msgstr "Submit SQL queries"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "可查询所有实例"
+msgstr "Query all instances"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "可查询所在资源组内的所有实例"
+msgstr "Query instances in the resource group"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "查看会话"
+msgstr "View sessions"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "终止会话"
+msgstr "Terminate sessions"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "查看表空间"
+msgstr "View tablespaces"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "查看事务信息"
+msgstr "View transactions"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "查看锁信息"
+msgstr "View locks"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "管理实例账号"
+msgstr "Manage instance accounts"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "查看实例参数列表"
+msgstr "View instance parameters"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "修改实例参数"
+msgstr "Modify instance parameters"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "导出数据字典"
+msgstr "Export data dictionary"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "提交归档申请"
+msgstr "Submit archive requests"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "审核归档申请"
+msgstr "Review archive requests"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "管理归档申请"
+msgstr "Manage archive requests"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "审计权限"
+msgstr "View audit data"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "在线查询下载权限"
+msgstr "Download online query results"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "离线下载权限"
+msgstr "Download offline export files"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "菜单 数据导出"
+msgstr "Menu: Data export"
+
+#: sql/admin.py sql/models.py
+msgctxt "user permission"
+msgid "提交数据导出"
+msgstr "Submit data export requests"
+
+#: common/templates/base.html
+msgid "用户管理"
+msgstr "User management"
+
+msgctxt "2fa"
+msgid "Google身份验证器"
+msgstr "Google Authenticator"
+
+msgctxt "2fa"
+msgid "短信验证码"
+msgstr "SMS verification code"
+
+msgctxt "2fa"
+msgid "用户名"
+msgstr "Username"
+
+msgctxt "2fa"
+msgid "认证类型"
+msgstr "Authentication type"
+
+msgctxt "2fa"
+msgid "手机号码"
+msgstr "Phone number"
+
+msgctxt "2fa"
+msgid "用户密钥"
+msgstr "User secret key"
+
+msgctxt "2fa"
+msgid "2FA配置"
+msgstr "2FA configuration"
+
+msgctxt "cloud credential"
+msgid "云服务商"
+msgstr "Cloud provider"
+
+msgctxt "cloud credential"
+msgid "访问密钥ID"
+msgstr "Access key ID"
+
+msgctxt "cloud credential"
+msgid "访问密钥"
+msgstr "Access key secret"
+
+msgctxt "cloud credential"
+msgid "备注"
+msgstr "Description"
+
+msgctxt "cloud credential"
+msgid "阿里云"
+msgstr "Alibaba Cloud"
+
+msgctxt "instance tag"
+msgid "标签代码"
+msgstr "Tag code"
+
+msgctxt "instance tag"
+msgid "标签名称"
+msgstr "Tag name"
+
+msgctxt "instance tag"
+msgid "激活状态"
+msgstr "Active"
+
+msgctxt "instance tag"
+msgid "创建时间"
+msgstr "Created at"
+
+msgctxt "ssh tunnel"
+msgid "隧道名称"
+msgstr "Tunnel name"
+
+msgctxt "ssh tunnel"
+msgid "隧道连接"
+msgstr "SSH host"
+
+msgctxt "ssh tunnel"
+msgid "端口"
+msgstr "Port"
+
+msgctxt "ssh tunnel"
+msgid "用户名"
+msgstr "Username"
+
+msgctxt "ssh tunnel"
+msgid "密码"
+msgstr "Password"
+
+msgctxt "ssh tunnel"
+msgid "密钥"
+msgstr "Private key"
+
+msgctxt "ssh tunnel"
+msgid "密钥地址"
+msgstr "Private key file"
+
+msgctxt "ssh tunnel"
+msgid "密钥密码"
+msgstr "Private key passphrase"
+
+msgctxt "ssh tunnel"
+msgid "创建时间"
+msgstr "Created at"
+
+msgctxt "ssh tunnel"
+msgid "更新时间"
+msgstr "Updated at"
+
+msgctxt "ssh tunnel"
+msgid "隧道信息"
+msgstr "Tunnel information"
+
+msgctxt "ssh tunnel"
+msgid "连接信息"
+msgstr "Connection information"
+
+msgctxt "ssh tunnel"
+msgid "秘钥文件不存在， 请勾选秘钥路径的清除选项再进行保存"
+msgstr "The private key file could not be read. Select Clear next to the private key file before saving again."
+
+msgctxt "parameter history"
+msgid "参数名"
+msgstr "Parameter name"
+
+msgctxt "parameter history"
+msgid "修改前参数值"
+msgstr "Previous value"
+
+msgctxt "parameter history"
+msgid "修改后参数值"
+msgstr "New value"
+
+msgctxt "parameter history"
+msgid "在线变更配置执行的SQL语句"
+msgstr "Parameter change SQL"
+
+msgctxt "parameter history"
+msgid "修改人"
+msgstr "Changed by"
+
+msgctxt "parameter history"
+msgid "修改人中文名"
+msgstr "Changed by (display name)"
+
+msgctxt "parameter history"
+msgid "参数被修改时间点"
+msgstr "Changed at"
+
+msgctxt "parameter history"
+msgid "实例参数修改历史"
+msgstr "Parameter change history"
+
+msgctxt "instance database admin"
+msgid "数据库名"
+msgstr "Database name"
+
+msgctxt "instance database admin"
+msgid "负责人"
+msgstr "Owner"
+
+msgctxt "instance database admin"
+msgid "负责人中文名"
+msgstr "Owner display name"
+
+msgctxt "instance database admin"
+msgid "备注"
+msgstr "Description"
+
+msgctxt "instance database admin"
+msgid "系统修改时间"
+msgstr "Updated at"
+
+msgctxt "instance database admin"
+msgid "实例数据库"
+msgstr "Instance database"
+
+msgctxt "instance database admin"
+msgid "实例数据库列表"
+msgstr "Instance databases"
+
+msgctxt "instance account admin"
+msgid "账号"
+msgstr "Account"
+
+msgctxt "instance account admin"
+msgid "主机"
+msgstr "Host"
+
+msgctxt "instance account admin"
+msgid "数据库名称"
+msgstr "Database name"
+
+msgctxt "instance account admin"
+msgid "密码"
+msgstr "Password"
+
+msgctxt "instance account admin"
+msgid "备注"
+msgstr "Description"
+
+msgctxt "instance account admin"
+msgid "系统修改时间"
+msgstr "Updated at"
+
+msgctxt "instance account admin"
+msgid "实例账号列表"
+msgstr "Instance accounts"
+
+msgctxt "audit log admin"
+msgid "用户ID"
+msgstr "User ID"
+
+msgctxt "audit log admin"
+msgid "用户名称"
+msgstr "Username"
+
+msgctxt "audit log admin"
+msgid "用户中文名"
+msgstr "Display name"
+
+msgctxt "audit log admin"
+msgid "动作"
+msgstr "Action"
+
+msgctxt "audit log admin"
+msgid "额外的信息"
+msgstr "Additional information"
+
+msgctxt "audit log admin"
+msgid "操作时间"
+msgstr "Action time"
+
+msgctxt "audit log admin"
+msgid "审计日志"
+msgstr "Audit log"
+
+msgctxt "workflow approval admin"
+msgid "组ID"
+msgstr "Group ID"
+
+msgctxt "workflow approval admin"
+msgid "组名称"
+msgstr "Group name"
+
+msgctxt "workflow approval admin"
+msgid "关联业务id"
+msgstr "Related workflow ID"
+
+msgctxt "workflow approval admin"
+msgid "申请类型"
+msgstr "Workflow type"
+
+msgctxt "workflow approval admin"
+msgid "申请标题"
+msgstr "Workflow title"
+
+msgctxt "workflow approval admin"
+msgid "申请备注"
+msgstr "Request description"
+
+msgctxt "workflow approval admin"
+msgid "审批权限组列表"
+msgstr "Approval permission groups"
+
+msgctxt "workflow approval admin"
+msgid "当前审批权限组"
+msgstr "Current approval group"
+
+msgctxt "workflow approval admin"
+msgid "下级审批权限组"
+msgstr "Next approval group"
+
+msgctxt "workflow approval admin"
+msgid "审核状态"
+msgstr "Approval status"
+
+msgctxt "workflow approval admin"
+msgid "申请人"
+msgstr "Requested by"
+
+msgctxt "workflow approval admin"
+msgid "申请人中文名"
+msgstr "Requester display name"
+
+msgctxt "workflow approval admin"
+msgid "申请时间"
+msgstr "Requested at"
+
+msgctxt "workflow approval admin"
+msgid "系统时间"
+msgstr "Updated at"
+
+msgctxt "workflow approval admin"
+msgid "工作流审批列表"
+msgstr "Workflow approvals"
+
+msgctxt "workflow log admin"
+msgid "工单审批id"
+msgstr "Workflow approval ID"
+
+msgctxt "workflow log admin"
+msgid "操作类型"
+msgstr "Operation type"
+
+msgctxt "workflow log admin"
+msgid "操作类型描述"
+msgstr "Operation description"
+
+msgctxt "workflow log admin"
+msgid "操作信息"
+msgstr "Operation details"
+
+msgctxt "workflow log admin"
+msgid "操作人"
+msgstr "Operator"
+
+msgctxt "workflow log admin"
+msgid "操作人中文名"
+msgstr "Operator display name"
+
+msgctxt "workflow log admin"
+msgid "工作流日志"
+msgstr "Workflow logs"
+
+msgctxt "workflow log action"
+msgid "提交"
+msgstr "Submit"
+
+msgctxt "workflow log action"
+msgid "审核通过"
+msgstr "Approve"
+
+msgctxt "workflow log action"
+msgid "审核不通过"
+msgstr "Reject"
+
+msgctxt "workflow log action"
+msgid "审核取消"
+msgstr "Cancel"
+
+msgctxt "workflow log action"
+msgid "设置定时执行"
+msgstr "Schedule execution"
+
+msgctxt "workflow log action"
+msgid "开始执行"
+msgstr "Start execution"
+
+msgctxt "workflow log action"
+msgid "执行结束"
+msgstr "Finish execution"
+
+msgctxt "archive config admin"
+msgid "归档配置说明"
+msgstr "Archive description"
+
+msgctxt "archive config admin"
+msgid "审批权限组列表"
+msgstr "Approval permission groups"
+
+msgctxt "archive config admin"
+msgid "源数据库"
+msgstr "Source database"
+
+msgctxt "archive config admin"
+msgid "源表"
+msgstr "Source table"
+
+msgctxt "archive config admin"
+msgid "目标数据库"
+msgstr "Destination database"
+
+msgctxt "archive config admin"
+msgid "目标表"
+msgstr "Destination table"
+
+msgctxt "archive config admin"
+msgid "归档条件，where条件"
+msgstr "Archive condition (WHERE clause)"
+
+msgctxt "archive config admin"
+msgid "归档模式"
+msgstr "Archive mode"
+
+msgctxt "archive config admin"
+msgid "是否保留源数据"
+msgstr "Keep source data"
+
+msgctxt "archive config admin"
+msgid "归档limit行后的休眠秒数"
+msgstr "Sleep seconds after each archive batch"
+
+msgctxt "archive config admin"
+msgid "审核状态"
+msgstr "Approval status"
+
+msgctxt "archive config admin"
+msgid "是否启用归档"
+msgstr "Archiving enabled"
+
+msgctxt "archive config admin"
+msgid "申请人"
+msgstr "Requested by"
+
+msgctxt "archive config admin"
+msgid "申请人中文名"
+msgstr "Requester display name"
+
+msgctxt "archive config admin"
+msgid "创建时间"
+msgstr "Created at"
+
+msgctxt "archive config admin"
+msgid "最近归档时间"
+msgstr "Last archived at"
+
+msgctxt "archive config admin"
+msgid "系统时间修改"
+msgstr "Updated at"
+
+msgctxt "archive config admin"
+msgid "归档配置表"
+msgstr "Archive configurations"
+
+msgctxt "archive config admin"
+msgid "文件"
+msgstr "File"
+
+msgctxt "archive config admin"
+msgid "其他实例"
+msgstr "Another instance"
+
+msgctxt "archive config admin"
+msgid "直接删除"
+msgstr "Delete directly"
+
+msgctxt "query log admin"
+msgid "实例名称"
+msgstr "Instance name"
+
+msgctxt "query log admin"
+msgid "数据库名称"
+msgstr "Database name"
+
+msgctxt "query log admin"
+msgid "执行的查询语句"
+msgstr "SQL statement"
+
+msgctxt "query log admin"
+msgid "返回行数"
+msgstr "Returned rows"
+
+msgctxt "query log admin"
+msgid "执行耗时"
+msgstr "Execution time"
+
+msgctxt "query log admin"
+msgid "操作人"
+msgstr "Operator"
+
+msgctxt "query log admin"
+msgid "操作人中文名"
+msgstr "Operator display name"
+
+msgctxt "query log admin"
+msgid "查询权限是否正常校验"
+msgstr "Query permission check"
+
+msgctxt "query log admin"
+msgid "跳过"
+msgstr "Skipped"
+
+msgctxt "query log admin"
+msgid "正常"
+msgstr "Checked"
+
+msgctxt "query log admin"
+msgid "查询是否命中脱敏规则"
+msgstr "Masking rule matched"
+
+msgctxt "query log admin"
+msgid "未命中/未知"
+msgstr "Not matched / Unknown"
+
+msgctxt "query log admin"
+msgid "命中"
+msgstr "Matched"
+
+msgctxt "query log admin"
+msgid "查询结果是否正常脱敏"
+msgstr "Results masked"
+
+msgctxt "query log admin"
+msgid "是否收藏"
+msgstr "Favorite"
+
+msgctxt "query log admin"
+msgid "否"
+msgstr "No"
+
+msgctxt "query log admin"
+msgid "是"
+msgstr "Yes"
+
+msgctxt "query log admin"
+msgid "语句标识"
+msgstr "Statement alias"
+
+msgctxt "query log admin"
+msgid "操作时间"
+msgstr "Action time"
+
+msgctxt "query log admin"
+msgid "查询日志"
+msgstr "Query logs"
+
+msgctxt "query access application admin"
+msgid "组ID"
+msgstr "Group ID"
+
+msgctxt "query access application admin"
+msgid "组名称"
+msgstr "Group name"
+
+msgctxt "query access application admin"
+msgid "申请标题"
+msgstr "Request title"
+
+msgctxt "query access application admin"
+msgid "申请人"
+msgstr "Requested by"
+
+msgctxt "query access application admin"
+msgid "申请人中文名"
+msgstr "Requester display name"
+
+msgctxt "query access application admin"
+msgid "数据库"
+msgstr "Databases"
+
+msgctxt "query access application admin"
+msgid "表"
+msgstr "Tables"
+
+msgctxt "query access application admin"
+msgid "有效时间"
+msgstr "Valid until"
+
+msgctxt "query access application admin"
+msgid "行数限制"
+msgstr "Row limit"
+
+msgctxt "query access application admin"
+msgid "权限类型"
+msgstr "Privilege type"
+
+msgctxt "query access application admin"
+msgid "审核状态"
+msgstr "Approval status"
+
+msgctxt "query access application admin"
+msgid "审批权限组列表"
+msgstr "Approval permission groups"
+
+msgctxt "query access application admin"
+msgid "查询权限申请记录表"
+msgstr "Query access applications"
+
+msgctxt "query privilege admin"
+msgid "用户名"
+msgstr "Username"
+
+msgctxt "query privilege admin"
+msgid "申请人中文名"
+msgstr "Requester display name"
+
+msgctxt "query privilege admin"
+msgid "数据库"
+msgstr "Database"
+
+msgctxt "query privilege admin"
+msgid "表"
+msgstr "Table"
+
+msgctxt "query privilege admin"
+msgid "有效时间"
+msgstr "Valid until"
+
+msgctxt "query privilege admin"
+msgid "行数限制"
+msgstr "Row limit"
+
+msgctxt "query privilege admin"
+msgid "权限类型"
+msgstr "Privilege type"
+
+msgctxt "query privilege admin"
+msgid "是否删除"
+msgstr "Deleted"
+
+msgctxt "query privilege admin"
+msgid "查询权限记录"
+msgstr "Query privileges"
+
+msgctxt "masking column admin"
+msgid "字段id"
+msgstr "Column ID"
+
+msgctxt "masking column admin"
+msgid "规则类型"
+msgstr "Rule type"
+
+msgctxt "masking column admin"
+msgid "三段式通用脱敏规则：根据字段长度自动分成三份，中间段脱敏。"
+msgstr "Three-part masking splits the field into three sections based on its length and masks the middle section."
+
+msgctxt "masking column admin"
+msgid "激活状态"
+msgstr "Active"
+
+msgctxt "masking column admin"
+msgid "未激活"
+msgstr "Inactive"
+
+msgctxt "masking column admin"
+msgid "激活"
+msgstr "Active"
+
+msgctxt "masking column admin"
+msgid "字段所在库名"
+msgstr "Database name"
+
+msgctxt "masking column admin"
+msgid "字段所在表名"
+msgstr "Table name"
+
+msgctxt "masking column admin"
+msgid "字段名"
+msgstr "Column name"
+
+msgctxt "masking column admin"
+msgid "字段描述"
+msgstr "Column description"
+
+msgctxt "masking column admin"
+msgid "脱敏字段配置"
+msgstr "Masking column configuration"
+
+msgctxt "masking rule type"
+msgid "手机号"
+msgstr "Phone number"
+
+msgctxt "masking rule type"
+msgid "证件号码"
+msgstr "Identity document number"
+
+msgctxt "masking rule type"
+msgid "银行卡"
+msgstr "Bank card"
+
+msgctxt "masking rule type"
+msgid "邮箱"
+msgstr "Email address"
+
+msgctxt "masking rule type"
+msgid "金额"
+msgstr "Amount"
+
+msgctxt "masking rule type"
+msgid "其他"
+msgstr "Other"
+
+msgctxt "masking rule type"
+msgid "三段式通用脱敏规则"
+msgstr "Three-part masking"
+
+msgctxt "masking rule admin"
+msgid "规则类型"
+msgstr "Rule type"
+
+msgctxt "masking rule admin"
+msgid "规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替"
+msgstr "Masking regular expression: use capture groups; hidden groups are replaced with ****"
+
+msgctxt "masking rule admin"
+msgid "需要隐藏的组"
+msgstr "Capture group to hide"
+
+msgctxt "masking rule admin"
+msgid "规则描述"
+msgstr "Rule description"
+
+msgctxt "masking rule admin"
+msgid "脱敏规则配置"
+msgstr "Masking rule configuration"
+
+msgctxt "sql workflow admin"
+msgid "工单内容"
+msgstr "Workflow title"
+
+msgctxt "sql workflow admin"
+msgid "需求链接"
+msgstr "Requirement URL"
+
+msgctxt "sql workflow admin"
+msgid "组ID"
+msgstr "Group ID"
+
+msgctxt "sql workflow admin"
+msgid "组名称"
+msgstr "Group name"
+
+msgctxt "sql workflow admin"
+msgid "数据库"
+msgstr "Database"
+
+msgctxt "sql workflow admin"
+msgid "工单类型 0、未知，1、DDL，2、DML，3、离线导出工单"
+msgstr "Workflow type"
+
+msgctxt "sql workflow admin"
+msgid "其他"
+msgstr "Other"
+
+msgctxt "sql workflow admin"
+msgid "离线导出工单"
+msgstr "Offline export"
+
+msgctxt "sql workflow admin"
+msgid "是否备份"
+msgstr "Backup enabled"
+
+msgctxt "sql workflow admin"
+msgid "否"
+msgstr "No"
+
+msgctxt "sql workflow admin"
+msgid "是"
+msgstr "Yes"
+
+msgctxt "sql workflow admin"
+msgid "发起人"
+msgstr "Submitted by"
+
+msgctxt "sql workflow admin"
+msgid "发起人中文名"
+msgstr "Submitter display name"
+
+msgctxt "sql workflow admin"
+msgid "审批权限组列表"
+msgstr "Approval permission groups"
+
+msgctxt "sql workflow admin"
+msgid "可执行起始时间"
+msgstr "Execution window start"
+
+msgctxt "sql workflow admin"
+msgid "可执行结束时间"
+msgstr "Execution window end"
+
+msgctxt "sql workflow admin"
+msgid "创建时间"
+msgstr "Created at"
+
+msgctxt "sql workflow admin"
+msgid "结束时间"
+msgstr "Finished at"
+
+msgctxt "sql workflow admin"
+msgid "是否原生执行"
+msgstr "Native execution"
+
+msgctxt "sql workflow admin"
+msgid "是否为离线导出工单"
+msgstr "Offline export workflow"
+
+msgctxt "sql workflow admin"
+msgid "导出格式"
+msgstr "Export format"
+
+msgctxt "sql workflow admin"
+msgid "文件名"
+msgstr "File name"
+
+msgctxt "sql workflow admin"
+msgid "SQL工单"
+msgstr "SQL workflows"
+
+msgctxt "sql workflow admin"
+msgid "具体sql内容"
+msgstr "SQL content"
+
+msgctxt "sql workflow admin"
+msgid "自动审核内容的JSON格式"
+msgstr "Automatic review results (JSON)"
+
+msgctxt "sql workflow admin"
+msgid "执行结果的JSON格式"
+msgstr "Execution results (JSON)"
+
+msgctxt "sql workflow admin"
+msgid "SQL工单内容"
+msgstr "SQL workflow content"
+
+msgctxt "remaining pages"
+msgid "1. 使用Google身份验证器扫码："
+msgstr "1. Scan the QR code with Google Authenticator:"
+
+msgctxt "remaining pages"
+msgid "1. 输入要绑定的手机号码："
+msgstr "1. Enter the phone number to link:"
+
+msgctxt "remaining pages"
+msgid "2. 输入6位验证码完成验证："
+msgstr "2. Enter the six-digit verification code:"
+
+msgctxt "remaining pages"
+msgid "Archery - 两步验证"
+msgstr "Archery - Two-step verification"
+
+msgctxt "remaining pages"
+msgid "Google身份验证器"
+msgstr "Google Authenticator"
+
+msgctxt "remaining pages"
+msgid "OTP验证码"
+msgstr "OTP verification code"
+
+msgctxt "remaining pages"
+msgid "SQL上线工单"
+msgstr "SQL deployment workflows"
+
+msgctxt "remaining pages"
+msgid "SQL上线申请"
+msgstr "SQL deployment request"
+
+msgctxt "remaining pages"
+msgid "SQL内容"
+msgstr "SQL content"
+
+msgctxt "remaining pages"
+msgid "SQL列表"
+msgstr "SQL statements"
+
+msgctxt "remaining pages"
+msgid "SQL查询工单"
+msgstr "SQL query workflows"
+
+msgctxt "remaining pages"
+msgid "一"
+msgstr "Mon"
+
+msgctxt "remaining pages"
+msgid "一月"
+msgstr "January"
+
+msgctxt "remaining pages"
+msgid "七月"
+msgstr "July"
+
+msgctxt "remaining pages"
+msgid "三"
+msgstr "Wed"
+
+msgctxt "remaining pages"
+msgid "三月"
+msgstr "March"
+
+msgctxt "remaining pages"
+msgid "上一年"
+msgstr "Last year"
+
+msgctxt "remaining pages"
+msgid "上个月"
+msgstr "Last month"
+
+msgctxt "remaining pages"
+msgid "中文名"
+msgstr "Display name"
+
+msgctxt "remaining pages"
+msgid "九月"
+msgstr "September"
+
+msgctxt "remaining pages"
+msgid "二"
+msgstr "Tue"
+
+msgctxt "remaining pages"
+msgid "二月"
+msgstr "February"
+
+msgctxt "remaining pages"
+msgid "五"
+msgstr "Fri"
+
+msgctxt "remaining pages"
+msgid "五月"
+msgstr "May"
+
+msgctxt "remaining pages"
+msgid "今日"
+msgstr "Today"
+
+msgctxt "remaining pages"
+msgid "全部"
+msgstr "All"
+
+msgctxt "remaining pages"
+msgid "全部数据"
+msgstr "All data"
+
+msgctxt "remaining pages"
+msgid "八月"
+msgstr "August"
+
+msgctxt "remaining pages"
+msgid "六"
+msgstr "Sat"
+
+msgctxt "remaining pages"
+msgid "六月"
+msgstr "June"
+
+msgctxt "remaining pages"
+msgid "其他"
+msgstr "Other"
+
+msgctxt "remaining pages"
+msgid "分析报告"
+msgstr "Analysis report"
+
+msgctxt "remaining pages"
+msgid "分析选项"
+msgstr "Analysis options"
+
+msgctxt "remaining pages"
+msgid "动作"
+msgstr "Action"
+
+msgctxt "remaining pages"
+msgid "十一月"
+msgstr "November"
+
+msgctxt "remaining pages"
+msgid "十二月"
+msgstr "December"
+
+msgctxt "remaining pages"
+msgid "十月"
+msgstr "October"
+
+msgctxt "remaining pages"
+msgid "发起人"
+msgstr "Submitted by"
+
+msgctxt "remaining pages"
+msgid "发起时间"
+msgstr "Submitted at"
+
+msgctxt "remaining pages"
+msgid "取消"
+msgstr "Cancel"
+
+msgctxt "remaining pages"
+msgid "否"
+msgstr "No"
+
+msgctxt "remaining pages"
+msgid "启用两步验证"
+msgstr "Enable two-step verification"
+
+msgctxt "remaining pages"
+msgid "四"
+msgstr "Thu"
+
+msgctxt "remaining pages"
+msgid "四月"
+msgstr "April"
+
+msgctxt "remaining pages"
+msgid "回滚语句"
+msgstr "Rollback SQL"
+
+msgctxt "remaining pages"
+msgid "备份"
+msgstr "Backup"
+
+msgctxt "remaining pages"
+msgid "完整SQL内容"
+msgstr "Full SQL content"
+
+msgctxt "remaining pages"
+msgid "完整回滚语句"
+msgstr "Full rollback SQL"
+
+msgctxt "remaining pages"
+msgid "完整执行语句"
+msgstr "Full executed SQL"
+
+msgctxt "remaining pages"
+msgid "完整语句"
+msgstr "Full SQL statement"
+
+msgctxt "remaining pages"
+msgid "完整额外信息"
+msgstr "Full additional information"
+
+msgctxt "remaining pages"
+msgid "实例"
+msgstr "Instance"
+
+msgctxt "remaining pages"
+msgid "实例数量"
+msgstr "Instances"
+
+msgctxt "remaining pages"
+msgid "审核"
+msgstr "Review"
+
+msgctxt "remaining pages"
+msgid "审核状态"
+msgstr "Approval status"
+
+msgctxt "remaining pages"
+msgid "审核确认"
+msgstr "Review confirmation"
+
+msgctxt "remaining pages"
+msgid "审核通过"
+msgstr "Approve"
+
+msgctxt "remaining pages"
+msgid "工单名称"
+msgstr "Workflow title"
+
+msgctxt "remaining pages"
+msgid "工单完整名称"
+msgstr "Full workflow title"
+
+msgctxt "remaining pages"
+msgid "工单日志"
+msgstr "Workflow log"
+
+msgctxt "remaining pages"
+msgid "工单状态"
+msgstr "Workflow status"
+
+msgctxt "remaining pages"
+msgid "已开启两步验证！"
+msgstr "Two-step verification enabled."
+
+msgctxt "remaining pages"
+msgid "已提交SOAR分析，未选择实例和数据库将不会输出执行计划和索引建议，请耐心等待分析结果!"
+msgstr "SOAR analysis submitted. Without an instance and database, execution plans and index suggestions are unavailable. Please wait for the results."
+
+msgctxt "remaining pages"
+msgid "已提交SOAR分析，请耐心等待分析结果!"
+msgstr "SOAR analysis submitted. Please wait for the results."
+
+msgctxt "remaining pages"
+msgid "开始"
+msgstr "From"
+
+msgctxt "remaining pages"
+msgid "开始分析"
+msgstr "Start analysis"
+
+msgctxt "remaining pages"
+msgid "待办列表"
+msgstr "Pending approvals"
+
+msgctxt "remaining pages"
+msgid "执行语句"
+msgstr "Executed SQL"
+
+msgctxt "remaining pages"
+msgid "拒绝"
+msgstr "Reject"
+
+msgctxt "remaining pages"
+msgid "提交回滚请求"
+msgstr "Submit rollback request"
+
+msgctxt "remaining pages"
+msgid "操作"
+msgstr "Actions"
+
+msgctxt "remaining pages"
+msgid "操作人"
+msgstr "Operator"
+
+msgctxt "remaining pages"
+msgid "操作信息"
+msgstr "Operation details"
+
+msgctxt "remaining pages"
+msgid "操作日志"
+msgstr "Activity log"
+
+msgctxt "remaining pages"
+msgid "操作时间"
+msgstr "Action time"
+
+msgctxt "remaining pages"
+msgid "数据加载失败！"
+msgstr "Failed to load data: "
+
+msgctxt "remaining pages"
+msgid "数据库"
+msgstr "Database"
+
+msgctxt "remaining pages"
+msgid "数据归档申请"
+msgstr "Data archival request"
+
+msgctxt "remaining pages"
+msgid "文件大小超过5M，请重新选择"
+msgstr "The file exceeds 5 MB. Select another file."
+
+msgctxt "remaining pages"
+msgid "日"
+msgstr "Sun"
+
+msgctxt "remaining pages"
+msgid "昨日"
+msgstr "Yesterday"
+
+msgctxt "remaining pages"
+msgid "是"
+msgstr "Yes"
+
+msgctxt "remaining pages"
+msgid "更多"
+msgstr "More"
+
+msgctxt "remaining pages"
+msgid "最近30日"
+msgstr "Last 30 days"
+
+msgctxt "remaining pages"
+msgid "最近365日"
+msgstr "Last 365 days"
+
+msgctxt "remaining pages"
+msgid "最近7日"
+msgstr "Last 7 days"
+
+msgctxt "remaining pages"
+msgid "有效平台用户"
+msgstr "Active users"
+
+msgctxt "remaining pages"
+msgid "本年"
+msgstr "This year"
+
+msgctxt "remaining pages"
+msgid "本月"
+msgstr "This month"
+
+msgctxt "remaining pages"
+msgid "查看"
+msgstr "View"
+
+msgctxt "remaining pages"
+msgid "查询时间"
+msgstr "Queried at"
+
+msgctxt "remaining pages"
+msgid "查询权限申请"
+msgstr "Query access request"
+
+msgctxt "remaining pages"
+msgid "状态"
+msgstr "Status"
+
+msgctxt "remaining pages"
+msgid "用户"
+msgstr "User"
+
+msgctxt "remaining pages"
+msgid "申请人"
+msgstr "Requested by"
+
+msgctxt "remaining pages"
+msgid "申请时间"
+msgstr "Requested at"
+
+msgctxt "remaining pages"
+msgid "申请标题"
+msgstr "Request title"
+
+msgctxt "remaining pages"
+msgid "申请类型"
+msgstr "Request type"
+
+msgctxt "remaining pages"
+msgid "目标实例"
+msgstr "Target instance"
+
+msgctxt "remaining pages"
+msgid "短信验证码"
+msgstr "SMS verification code"
+
+msgctxt "remaining pages"
+msgid "确定"
+msgstr "Apply"
+
+msgctxt "remaining pages"
+msgid "类型"
+msgstr "Type"
+
+msgctxt "remaining pages"
+msgid "组"
+msgstr "Group"
+
+msgctxt "remaining pages"
+msgid "结束"
+msgstr "To"
+
+msgctxt "remaining pages"
+msgid "耗时(秒)"
+msgstr "Time (seconds)"
+
+msgctxt "remaining pages"
+msgid "自定义"
+msgstr "Custom range"
+
+msgctxt "remaining pages"
+msgid "获取验证码"
+msgstr "Get verification code"
+
+msgctxt "remaining pages"
+msgid "语句"
+msgstr "SQL statement"
+
+msgctxt "remaining pages"
+msgid "请先解析SQL/MyBatis3 Mapper XML文件"
+msgstr "Parse a SQL or MyBatis3 Mapper XML file first."
+
+msgctxt "remaining pages"
+msgid "请填写审核备注"
+msgstr "Enter a review comment"
+
+msgctxt "remaining pages"
+msgid "请输入审核备注"
+msgstr "Enter a review comment"
+
+msgctxt "remaining pages"
+msgid "请输入手机号！"
+msgstr "Enter a phone number."
+
+msgctxt "remaining pages"
+msgid "请输入验证码！"
+msgstr "Enter a verification code."
+
+msgctxt "remaining pages"
+msgid "请选择实例:"
+msgstr "Select an instance:"
+
+msgctxt "remaining pages"
+msgid "请选择数据库:"
+msgstr "Select a database:"
+
+msgctxt "remaining pages"
+msgid "返回行数"
+msgstr "Returned rows"
+
+msgctxt "remaining pages"
+msgid "选择额外验证方式:"
+msgstr "Select an additional verification method:"
+
+msgctxt "remaining pages"
+msgid "选择验证方式:"
+msgstr "Select a verification method:"
+
+msgctxt "remaining pages"
+msgid "额外信息"
+msgstr "Additional information"
+
+msgctxt "remaining pages"
+msgid "验证"
+msgstr "Verify"
+
+msgctxt "remaining pages"
+msgid "验证方式:"
+msgstr "Verification method:"
+
+msgctxt "remaining pages"
+msgid "验证码已发送，5分钟内有效"
+msgstr "Verification code sent. It is valid for five minutes."
+
+msgctxt "remaining pages"
+msgid "24h慢查询db/user维度统计"
+msgstr "Slow queries by database and user (24h)"
+
+msgctxt "remaining pages"
+msgid "24h慢查询db维度统计"
+msgstr "Slow queries by database (24h)"
+
+msgctxt "remaining pages"
+msgid "DB检索行数"
+msgstr "Rows retrieved by database"
+
+msgctxt "remaining pages"
+msgid "SQL上线工单类型"
+msgstr "SQL deployment types"
+
+msgctxt "remaining pages"
+msgid "SQL上线数量"
+msgstr "SQL deployment count"
+
+msgctxt "remaining pages"
+msgid "SQL上线用户"
+msgstr "SQL deployment users"
+
+msgctxt "remaining pages"
+msgid "SQL上线统计"
+msgstr "SQL deployment statistics"
+
+msgctxt "remaining pages"
+msgid "SQL查询用户"
+msgstr "SQL query users"
+
+msgctxt "remaining pages"
+msgid "SQL查询统计"
+msgstr "SQL query statistics"
+
+msgctxt "remaining pages"
+msgid "数据库实例类型统计"
+msgstr "Database instance types"
+
+msgctxt "remaining pages"
+msgid "统计时间范围："
+msgstr "Statistics date range:"
+
+msgid "检索行数"
+msgstr "Rows retrieved"
+
+msgid "检索次数"
+msgstr "Query count"
+
+msgid "Google身份验证器"
+msgstr "Google Authenticator"
+
+msgid "短信验证码"
+msgstr "SMS verification code"
+
+msgctxt "remaining pages"
+msgid "才是标准SQL中的不等于运算符"
+msgstr " is the standard SQL not-equal operator"
+
+msgid "SQL 语句不合法"
+msgstr "Invalid SQL statement"
+
+msgid "query_desc or db_type不存在"
+msgstr "query_desc or db_type is missing"
+
+msgid "openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]"
+msgstr "OpenAI configuration is incomplete. Required settings: [openai_base_url, openai_api_key, default_chat_model]"
+
+msgid "清理成功"
+msgstr "Cleanup completed"
+
+msgid "Error:未选择binlog！"
+msgstr "Error: No binlog selected"
+
+msgid "归档到实例时目标实例信息必选！"
+msgstr "Select a target instance when archiving to an instance"
+
+msgid "参数错误"
+msgstr "Invalid parameters"
+
+msgid "审批流程权限组不存在，请重新配置！"
+msgstr "The approval permission group does not exist. Check the workflow configuration"
+
+msgid "清理失败,Error:%(error)s"
+msgstr "Cleanup failed. Error: %(error)s"
+
+msgid "数据错误, 不允许的操作, 请检查 audit_status, error: %(error)s"
+msgstr "Invalid data or operation. Check audit_status. Error: %(error)s"
+
+msgid "日期有误"
+msgstr "Invalid date"
+
+msgid "实例不存在或无权限"
+msgstr "Instance does not exist or access is denied"
+
+msgid "不支持的资源类型或者参数不完整！"
+msgstr "Unsupported resource type or incomplete parameters"
+
+msgid "limit_num 非法"
+msgstr "Invalid limit_num"
+
+msgid "查询记录不存在或无权限"
+msgstr "Query log does not exist or access is denied"
+
+msgid "workflow_id参数为空."
+msgstr "workflow_id is required"
+
+msgid "数据脱敏异常：%(error)s"
+msgstr "Data masking failed: %(error)s"
+
+msgid "数据脱敏异常，请联系管理员，错误信息：%(error)s"
+msgstr "Data masking failed. Contact an administrator. Error: %(error)s"
+
+msgid "查询异常报错，错误信息：%(error)s"
+msgstr "Query failed. Error: %(error)s"
+
+msgid "无法校验查询语句权限，请联系管理员，错误信息：%(error)s"
+msgstr "Unable to check query permissions. Contact an administrator. Error: %(error)s"
+
+msgid "你无%(database)s.%(table)s表的查询权限！请先到查询权限管理进行申请"
+msgstr "You do not have query access to table %(database)s.%(table)s. Apply through Query Access Management first"
+
+msgid "你无%(database)s数据库的查询权限！请先到查询权限管理进行申请"
+msgstr "You do not have query access to database %(database)s. Apply through Query Access Management first"
+
+msgid "instance_id 或 instance_name 必须提供一个"
+msgstr "Provide either instance_id or instance_name"
+
+msgid "db_name 不能为空"
+msgstr "db_name is required"
+
+msgid "column 查询需提供 db_name 和 tb_name"
+msgstr "Column requests require db_name and tb_name"
+
+msgid "无执行查询权限"
+msgstr "You do not have permission to execute queries"
+
+msgid "无收藏操作权限"
+msgstr "You do not have permission to update favorites"
+
+msgctxt "API form"
+msgid "SQL内容"
+msgstr "SQL content"
+
+msgctxt "API form"
+msgid "schema名"
+msgstr "Schema name"
+
+msgctxt "API form"
+msgid "一次性密码/验证码"
+msgstr "One-time password / verification code"
+
+msgctxt "API form"
+msgid "启用or禁用"
+msgstr "Enable or disable"
+
+msgctxt "API form"
+msgid "实例id"
+msgstr "Instance ID"
+
+msgctxt "API form"
+msgid "审批备注"
+msgstr "Review comment"
+
+msgctxt "API form"
+msgid "审核类型"
+msgstr "Review action"
+
+msgctxt "API form"
+msgid "密码"
+msgstr "Password"
+
+msgctxt "API form"
+msgid "密钥"
+msgstr "Secret key"
+
+msgctxt "API form"
+msgid "工单id"
+msgstr "Workflow ID"
+
+msgctxt "API form"
+msgid "工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
+msgstr "Workflow type: 1-Query access, 2-SQL deployment, 3-Data archival"
+
+msgctxt "API form"
+msgid "手机号码"
+msgstr "Phone number"
+
+msgctxt "API form"
+msgid "执行模式：auto-线上执行，manual-已手动执行"
+msgstr "Execution mode: auto-Execute online, manual-Already executed manually"
+
+msgctxt "API form"
+msgid "操作用户"
+msgstr "Operator"
+
+msgctxt "API form"
+msgid "数据库名"
+msgstr "Database name"
+
+msgctxt "API form"
+msgid "用户名"
+msgstr "Username"
+
+msgctxt "API form"
+msgid "表名"
+msgstr "Table name"
+
+msgctxt "API form"
+msgid "资源类型"
+msgstr "Resource type"
+
+msgctxt "API form"
+msgid "验证方式"
+msgstr "Verification method"
+
+msgctxt "API form"
+msgid "验证类型：disabled-关闭，totp-Google身份验证器，sms-短信验证码"
+msgstr "Verification type: disabled-Off, totp-Authenticator app, sms-SMS code"
+
+msgctxt "API form"
+msgid "验证类型：totp-Google身份验证器，sms-短信验证码"
+msgstr "Verification type: totp-Authenticator app, sms-SMS code"
+
+msgid "不存在该用户"
+msgstr "User does not exist"
+
+msgid "缺少 phone"
+msgstr "phone is required"
+
+msgid "缺少 key"
+msgstr "key is required"
+
+msgid "不存在该实例"
+msgstr "Instance does not exist"
+
+msgid "提交工单检测失败，请联系管理员"
+msgstr "Workflow validation failed. Contact an administrator"
+
+msgid "提交工单失败，请联系管理员"
+msgstr "Failed to submit the workflow. Contact an administrator"
+
+msgid "不存在该工单"
+msgstr "Workflow does not exist"
+
+msgid "缺少 mode"
+msgstr "mode is required"
+
+msgid "缺少 engineer"
+msgstr "engineer is required"
+
+msgid "认证成功"
+msgstr "Authentication successful"
+
+msgid "用户名或密码错误！"
+msgstr "Incorrect username or password"
+
+msgid "登录用户与校验用户不一致！"
+msgstr "The signed-in user does not match the verified user"
+
+msgid "需先校验用户密码！"
+msgstr "Verify the user password first"
+
+msgid "用户未配置2FA！"
+msgstr "Two-factor authentication is not configured"
+
+msgid "你无权查看该实例！"
+msgstr "You do not have permission to view this instance"
+
+msgid "不存在该实例：%(id)s"
+msgstr "Instance does not exist: %(id)s"
+
+msgid "不存在该资源组：%(id)s"
+msgstr "Resource group does not exist: %(id)s"
+
+msgid "不存在用户：%(username)s"
+msgstr "User does not exist: %(username)s"
+
+msgid "不存在该用户：%(username)s"
+msgstr "User does not exist: %(username)s"
+
+msgctxt "API documentation"
+msgid "SQLQuery 可访问实例列表"
+msgstr "SQL Query: accessible instances"
+
+msgctxt "API documentation"
+msgid "SQLQuery 实例资源列表"
+msgstr "SQL Query: instance resources"
+
+msgctxt "API documentation"
+msgid "SQLQuery 表结构"
+msgstr "SQL Query: table structure"
+
+msgctxt "API documentation"
+msgid "SQLQuery 执行查询"
+msgstr "SQL Query: execute query"
+
+msgctxt "API documentation"
+msgid "SQLQuery 历史查询记录"
+msgstr "SQL Query: query history"
+
+msgctxt "API documentation"
+msgid "SQLQuery 收藏/取消收藏"
+msgstr "SQL Query: add or remove favorite"
+
+msgctxt "API documentation"
+msgid "SQL检查"
+msgstr "Check SQL"
+
+msgctxt "API documentation"
+msgid "对提供的SQL进行语法检查"
+msgstr "Check the syntax of the supplied SQL"
+
+msgctxt "API documentation"
+msgid "SQL上线工单清单"
+msgstr "SQL deployment workflows"
+
+msgctxt "API documentation"
+msgid "列出所有SQL上线工单（过滤，分页）"
+msgstr "List SQL deployment workflows with filtering and pagination"
+
+msgctxt "API documentation"
+msgid "提交SQL上线工单"
+msgstr "Submit SQL deployment workflow"
+
+msgctxt "API documentation"
+msgid "提交一条SQL上线工单"
+msgstr "Submit a SQL deployment workflow"
+
+msgctxt "API documentation"
+msgid "待审核清单"
+msgstr "Pending approvals"
+
+msgctxt "API documentation"
+msgid "列出指定用户待审核清单（过滤，分页）"
+msgstr "List pending approvals for a user with filtering and pagination"
+
+msgctxt "API documentation"
+msgid "审核工单"
+msgstr "Review workflow"
+
+msgctxt "API documentation"
+msgid "审核一条工单（通过或终止）"
+msgstr "Approve or terminate a workflow"
+
+msgctxt "API documentation"
+msgid "执行工单"
+msgstr "Execute workflow"
+
+msgctxt "API documentation"
+msgid "执行一条工单"
+msgstr "Execute a workflow"
+
+msgctxt "API documentation"
+msgid "工单日志"
+msgstr "Workflow logs"
+
+msgctxt "API documentation"
+msgid "获取某个工单的日志（分页）"
+msgstr "Get paginated logs for a workflow"
+
+msgctxt "API documentation"
+msgid "用户认证校验"
+msgstr "Verify user credentials"
+
+msgctxt "API documentation"
+msgid "配置2fa"
+msgstr "Configure two-factor authentication"
+
+msgctxt "API documentation"
+msgid "查询2fa配置情况"
+msgstr "Get two-factor authentication status"
+
+msgctxt "API documentation"
+msgid "保存2fa配置"
+msgstr "Save two-factor authentication settings"
+
+msgctxt "API documentation"
+msgid "检验2fa密码"
+msgstr "Verify two-factor authentication code"
+
+msgctxt "API documentation"
+msgid "实例详情"
+msgstr "Instance details"
+
+msgctxt "API documentation"
+msgid "获取当前登录用户有提交或查询权限的实例公开详情"
+msgstr "Get public details of an instance the current user can submit to or query"
+
+msgctxt "API documentation"
+msgid "实例资源"
+msgstr "Instance resources"
+
+msgctxt "API documentation"
+msgid "获取实例内的资源信息"
+msgstr "Get resources within an instance"
+
+msgctxt "API documentation"
+msgid "按表名查询所属实例"
+msgstr "Find instances by table name"
+
+msgctxt "API documentation"
+msgid "输入table名，返回包含该表的实例列表（固定返回status/msg/count/data）。"
+msgstr "Provide a table name to list instances containing the table. Response fields: status/msg/count/data."
+
+msgctxt "API documentation"
+msgid "创建一个AliyunRDS配置（包含一个CloudAccessKey）"
+msgstr "Create an Aliyun RDS configuration including a CloudAccessKey"
+
+msgctxt "API documentation"
+msgid "用户清单"
+msgstr "User list"
+
+msgctxt "API documentation"
+msgid "列出所有用户（过滤，分页）"
+msgstr "List all users with filtering and pagination"
+
+msgctxt "API documentation"
+msgid "创建用户"
+msgstr "Create user"
+
+msgctxt "API documentation"
+msgid "创建一个用户"
+msgstr "Create a user"
+
+msgctxt "API documentation"
+msgid "更新用户"
+msgstr "Update user"
+
+msgctxt "API documentation"
+msgid "更新一个用户"
+msgstr "Update a user"
+
+msgctxt "API documentation"
+msgid "删除用户"
+msgstr "Delete user"
+
+msgctxt "API documentation"
+msgid "删除一个用户"
+msgstr "Delete a user"
+
+msgctxt "API documentation"
+msgid "用户组清单"
+msgstr "User group list"
+
+msgctxt "API documentation"
+msgid "列出所有用户组（过滤，分页）"
+msgstr "List all user groups with filtering and pagination"
+
+msgctxt "API documentation"
+msgid "创建用户组"
+msgstr "Create user group"
+
+msgctxt "API documentation"
+msgid "创建一个用户组"
+msgstr "Create a user group"
+
+msgctxt "API documentation"
+msgid "更新用户组"
+msgstr "Update user group"
+
+msgctxt "API documentation"
+msgid "更新一个用户组"
+msgstr "Update a user group"
+
+msgctxt "API documentation"
+msgid "删除用户组"
+msgstr "Delete user group"
+
+msgctxt "API documentation"
+msgid "删除一个用户组"
+msgstr "Delete a user group"
+
+msgctxt "API documentation"
+msgid "资源组清单"
+msgstr "Resource group list"
+
+msgctxt "API documentation"
+msgid "列出所有资源组（过滤，分页）"
+msgstr "List all resource groups with filtering and pagination"
+
+msgctxt "API documentation"
+msgid "创建资源组"
+msgstr "Create resource group"
+
+msgctxt "API documentation"
+msgid "创建一个资源组"
+msgstr "Create a resource group"
+
+msgctxt "API documentation"
+msgid "更新资源组"
+msgstr "Update resource group"
+
+msgctxt "API documentation"
+msgid "更新一个资源组"
+msgstr "Update a resource group"
+
+msgctxt "API documentation"
+msgid "删除资源组"
+msgstr "Delete resource group"
+
+msgctxt "API documentation"
+msgid "删除一个资源组"
+msgstr "Delete a resource group"
+
+msgctxt "API documentation"
+msgid "实例清单"
+msgstr "Instance list"
+
+msgctxt "API documentation"
+msgid "列出所有实例（过滤，分页）"
+msgstr "List all instances with filtering and pagination"
+
+msgctxt "API documentation"
+msgid "创建实例"
+msgstr "Create instance"
+
+msgctxt "API documentation"
+msgid "创建一个实例配置"
+msgstr "Create a instance configuration"
+
+msgctxt "API documentation"
+msgid "更新实例"
+msgstr "Update instance"
+
+msgctxt "API documentation"
+msgid "更新一个实例配置"
+msgstr "Update a instance configuration"
+
+msgctxt "API documentation"
+msgid "删除实例"
+msgstr "Delete instance"
+
+msgctxt "API documentation"
+msgid "删除一个实例配置"
+msgstr "Delete a instance configuration"
+
+msgctxt "API documentation"
+msgid "隧道清单"
+msgstr "Tunnel list"
+
+msgctxt "API documentation"
+msgid "列出所有隧道（过滤，分页）"
+msgstr "List all tunnels with filtering and pagination"
+
+msgctxt "API documentation"
+msgid "创建隧道"
+msgstr "Create tunnel"
+
+msgctxt "API documentation"
+msgid "创建一个隧道配置"
+msgstr "Create a tunnel configuration"
+
+msgctxt "API documentation"
+msgid "AliyunRDS清单"
+msgstr "Aliyun RDS list"
+
+msgctxt "API documentation"
+msgid "列出所有AliyunRDS（过滤，分页）"
+msgstr "List Aliyun RDS instances with filtering and pagination"
+
+msgctxt "API documentation"
+msgid "创建AliyunRDS"
+msgstr "Create Aliyun RDS"
+
+msgid "用户无权操作此工单"
+msgstr "You do not have permission to modify this workflow"
+
+msgid "audit_type 只能是 pass 或 cancel"
+msgstr "audit_type must be pass or cancel"
+
+msgid "你无权执行当前工单！"
+msgstr "You do not have permission to execute this workflow"
+
+msgid "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+msgstr "Outside the execution window. Submit the workflow again to change the execution window"
+
+msgid "开始执行，执行结果请到工单详情页查看"
+msgstr "Execution started. View the results on the workflow details page"
+
+msgid "操作失败, %(error)s"
+msgstr "Operation failed: %(error)s"
+
+msgid "你无权查看当前工单！"
+msgstr "You do not have permission to view this workflow"
+
+msgid "你无权查看审核工单列表！"
+msgstr "You do not have permission to view the approval list"
+
+msgid "你无权查看当前工单的回滚语句！"
+msgstr "You do not have permission to view rollback SQL for this workflow"
+
+msgid "获取回滚语句失败"
+msgstr "Failed to retrieve rollback SQL"
+
+msgid "你无权操作当前工单！"
+msgstr "You do not have permission to modify this workflow"
+
+msgid "时间不能小于当前时间"
+msgstr "The scheduled time cannot be in the past"
+
+msgid "OSC 操作失败"
+msgstr "OSC operation failed"
+
+msgid "Json decode failed.执行结果Json解析失败, 请联系管理员"
+msgstr "Failed to parse the execution result JSON. Contact an administrator"
+
+msgid "审核工单失败, 失败原因: %(error)s"
+msgstr "Workflow approval failed: %(error)s"
+
+msgid "拒绝工单失败, 失败原因: %(error)s"
+msgstr "Workflow rejection failed: %(error)s"
+
+msgid "终止工单失败, 失败原因: %(error)s"
+msgstr "Workflow termination failed: %(error)s"
+
+msgid "您无权操作，请联系管理员"
+msgstr "Permission denied. Contact an administrator"
+
+msgid "可执行时间已更新"
+msgstr "Execution window updated"
+
+msgid "工单已拒绝"
+msgstr "Workflow rejected"
+
+msgid "已确认手工执行结束"
+msgstr "Manual execution confirmed"
+
+msgid "定时执行已设置"
+msgstr "Scheduled execution configured"
+
+msgid "工单已终止"
+msgstr "Workflow terminated"
+
+msgid "工单执行排队中"
+msgstr "Workflow queued for execution"
+
+msgid "提交成功"
+msgstr "Submitted successfully"
+
+msgid "无法连接goInception\n%(error)s"
+msgstr "Unable to connect to goInception\n%(error)s"
+
+msgid "无法连接goInception备份库\n%(error)s"
+msgstr "Unable to connect to the goInception backup database\n%(error)s"
+
+msgid "请先开启邮件通知！"
+msgstr "Enable email notifications first"
+
+msgid "端口号只能为正整数"
+msgstr "The port must be a positive integer"
+
+msgid "请先完善当前用户邮箱信息！"
+msgstr "Set an email address for the current user first"
+
+msgid "max_export_rows 必须是整数"
+msgstr "max_export_rows must be an integer"
+
+msgid "参数类型错误: %(error)s"
+msgstr "Invalid parameter type: %(error)s"
+
+msgid "自定义参数格式错误，请输入有效的JSON格式"
+msgstr "Invalid custom parameters. Enter valid JSON"
+
+msgid "存储连接测试失败"
+msgstr "Storage connection test failed"
+
+msgid "存储连接测试异常"
+msgstr "Storage connection test encountered an error"
+
+msgid "系统未配置短信服务商！"
+msgstr "No SMS provider is configured"
+
+msgid "未获取验证码或验证码已过期！"
+msgstr "No verification code was requested, or the code has expired"
+
+msgid "验证码不正确！"
+msgstr "Incorrect verification code"
+
+msgid "获取验证码太频繁，请于%(seconds)s秒后再试"
+msgstr "Too many verification code requests. Retry in %(seconds)s seconds"
+
+msgid "参数校验失败"
+msgstr "Parameter validation failed"
+
+msgid "参数table_name错误: %(error)s"
+msgstr "Invalid table_name: %(error)s"
+
+msgid "查询失败: 未知错误, 请联系管理员"
+msgstr "Lookup failed. Unknown error; contact an administrator"
+
+msgid "查询成功"
+msgstr "Lookup successful"
+
+msgid "不支持的存储类型: %(storage_type)s"
+msgstr "Unsupported storage type: %(storage_type)s"
+
+msgid "本地存储连接成功"
+msgstr "Local storage connection successful"
+
+msgid "SFTP 连接成功"
+msgstr "SFTP connection successful"
+
+msgid "SFTP 连接失败: %(error)s"
+msgstr "SFTP connection failed: %(error)s"
+
+msgid "S3 存储连接成功"
+msgstr "S3 storage connection successful"
+
+msgid "S3 存储连接失败: %(error)s"
+msgstr "S3 storage connection failed: %(error)s"
+
+msgid "Azure Blob 存储连接成功"
+msgstr "Azure Blob storage connection successful"
+
+msgid "Azure Blob 存储连接失败: %(error)s"
+msgstr "Azure Blob storage connection failed: %(error)s"
+
+msgid "SQL语句中含有 * "
+msgstr "The SQL statement contains * "
+
+msgid "您无权查看该表"
+msgstr "You do not have permission to view this table"
+
+msgid "禁止执行该命令！"
+msgstr "This command is not allowed"
+
+msgid "不支持语法!"
+msgstr "Unsupported syntax"
+
+msgid "仅支持%(syntax)s语法!"
+msgstr "Only %(syntax)s syntax is supported"
+
+msgid "执行计划查询中未找到有效的SQL语句"
+msgstr "No valid SQL statement found in the execution plan request"
+
+msgid "禁止使用 * 关键词\n"
+msgstr "The * keyword is not allowed\n"
+
+msgid "禁止使用 %(keyword)s 关键词\n"
+msgstr "The %(keyword)s keyword is not allowed\n"
+
+msgid "当前ClickHouse实例版本低于20.6.3，不支持explain!"
+msgstr "This ClickHouse instance is older than 20.6.3 and does not support EXPLAIN"

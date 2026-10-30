@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <ul class="breadcrumb">
-        <li><a href="/queryapplylist/">申请列表</a></li>
-        <li class="active">权限管理</li>
+        <li><a href="/queryapplylist/">{% translate "申请列表" %}</a></li>
+        <li class="active">{% translate "权限管理" %}</li>
     </ul>
     <!-- 自定义操作按钮-->
     <div id="toolbar" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
@@ -11,7 +12,7 @@
                 name="user_display_list"
                 data-live-search="true"
                 style="width:auto;">
-            <option value="all" selected="selected">全部</option>
+            <option value="all" selected="selected">{% translate "全部" context "query filter" %}</option>
             {% if user.is_superuser %}
                 {% for user in user_list %}
                     <option value="{{ user.user_display }}">{{ user.user_display }}</option>
@@ -23,10 +24,10 @@
         {% if perms.sql.query_mgtpriv %}
         <button type="button" class="btn btn-warning disabled" id="btn_batch_modify"
                 disabled
-                onclick="prepareBatchModify()">批量变更</button>
+                onclick="prepareBatchModify()">{% translate "批量变更" %}</button>
         <button type="button" class="btn btn-danger disabled" id="btn_batch_delete"
                 disabled
-                onclick="prepareBatchDelete()">批量删除权限</button>
+                onclick="prepareBatchDelete()">{% translate "批量删除权限" %}</button>
         {% endif %}
     </div>
     <!-- 权限信息的表格-->
@@ -43,24 +44,24 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">权限变更</h4>
+                    <h4 class="modal-title" id="myModalLabel">{% translate "权限变更" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><span class="text-danger">*</span> 请输入结果限制</label>
+                        <label><span class="text-danger">*</span> {% translate "请输入结果限制" %}</label>
                         <input type="text" class="form-control" id="limit_num"
-                               placeholder="用于限制在线查询结果的显示行数"
+                               placeholder="{% translate '用于限制在线查询结果的显示行数' %}"
                                oninput="this.value=this.value.replace(/[^0-9]/g,'')" onblur="clampLimitNum(this)">
                     </div>
                     <div class="form-group">
                         <input hidden id="privilege_id">
-                        <label><span class="text-danger">*</span> 请选择有效期</label>
-                        <input type="date" class="form-control" id="valid_date" placeholder="过期后权限自动回收">
+                        <label><span class="text-danger">*</span> {% translate "请选择有效期" %}</label>
+                        <input type="date" class="form-control" id="valid_date" placeholder="{% translate '过期后权限自动回收' %}">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" onclick="modifyqueryprivileges(2)">确定修改</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-danger" onclick="modifyqueryprivileges(2)">{% translate "确定修改" %}</button>
                 </div>
             </div>
         </div>
@@ -72,24 +73,24 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">批量变更权限</h4>
+                    <h4 class="modal-title">{% translate "批量变更权限" %}</h4>
                 </div>
                 <div class="modal-body">
                     <p id="batch_modify_info" class="text-info"></p>
                     <div class="form-group">
-                        <label><span class="text-danger">*</span> 请输入结果限制</label>
+                        <label><span class="text-danger">*</span> {% translate "请输入结果限制" %}</label>
                         <input type="text" class="form-control" id="batch_limit_num"
-                               placeholder="用于限制在线查询结果的显示行数"
+                               placeholder="{% translate '用于限制在线查询结果的显示行数' %}"
                                oninput="this.value=this.value.replace(/[^0-9]/g,'')" onblur="clampLimitNum(this)">
                     </div>
                     <div class="form-group">
-                        <label><span class="text-danger">*</span> 请选择有效期</label>
-                        <input type="date" class="form-control" id="batch_valid_date" placeholder="过期后权限自动回收">
+                        <label><span class="text-danger">*</span> {% translate "请选择有效期" %}</label>
+                        <input type="date" class="form-control" id="batch_valid_date" placeholder="{% translate '过期后权限自动回收' %}">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" onclick="batchModifyPrivileges(2)">确定修改</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-danger" onclick="batchModifyPrivileges(2)">{% translate "确定修改" %}</button>
                 </div>
             </div>
         </div>
@@ -101,15 +102,15 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">提示信息</h4>
+                    <h4 class="modal-title text-danger">{% translate "提示信息" %}</h4>
                 </div>
                 <div class="modal-body">
                     <p id="batch_delete_info" class="text-info"></p>
-                    <p>删除后用户将无法查询数据，确定批量删除吗？</p>
+                    <p>{% translate "删除后用户将无法查询数据，确定批量删除吗？" %}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button type="button" onclick="batchModifyPrivileges(1)" class="btn btn-danger">确定删除</button>
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" onclick="batchModifyPrivileges(1)" class="btn btn-danger">{% translate "确定删除" %}</button>
                 </div>
             </div>
         </div>
@@ -121,15 +122,15 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">提示信息</h4>
+                    <h4 class="modal-title text-danger">{% translate "提示信息" %}</h4>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="privilege_id">
-                    <p>删除后用户将无法查询数据，确定删除吗？</p>
+                    <p>{% translate "删除后用户将无法查询数据，确定删除吗？" %}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button type="button" onclick="modifyqueryprivileges(1)" class="btn btn-danger">确定删除</button>
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" onclick="modifyqueryprivileges(1)" class="btn btn-danger">{% translate "确定删除" %}</button>
                 </div>
             </div>
         </div>
@@ -138,6 +139,15 @@
 {% endblock content %}
 
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <script>
+        function queryPermissionLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
+    </script>
     {% load static %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
@@ -196,7 +206,7 @@
                     ignoreColumn: [0, -1],  //忽略某些列的索引数组
                     fileName: 'userprivileges'  //文件名称设置
                 },
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -213,16 +223,16 @@
                     field: 'state',
                     checkbox: true
                 }, {
-                    title: '用户',
+                    title: '{% translate "用户"|escapejs %}',
                     field: 'user_display'
                 }, {
-                    title: '实例',
+                    title: '{% translate "实例"|escapejs %}',
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: '{% translate "数据库"|escapejs %}',
                     field: 'db_name'
                 }, {
-                    title: '权限级别',
+                    title: '{% translate "权限级别"|escapejs %}',
                     field: 'priv_type',
                     formatter: function (value, row, index) {
                         if (String(value) === '1') {
@@ -232,27 +242,27 @@
                         }
                     }
                 }, {
-                    title: '表',
+                    title: '{% translate "表"|escapejs %}',
                     field: 'table_name'
                 }, {
-                    title: '结果集',
+                    title: '{% translate "结果集"|escapejs %}',
                     field: 'limit_num'
                 }, {
-                    title: '有效时间',
+                    title: '{% translate "有效时间"|escapejs %}',
                     field: 'valid_date'
                 }, {
-                    title: '操作',
+                    title: '{% translate "操作"|escapejs %}',
                     field: 'privilege_id',
                     formatter: function (value, row, index) {
                         {% if perms.sql.query_mgtpriv %}
                             return "<button class=\"btn btn-warning btn-xs\" privilege_id=\"" + row.privilege_id + "\"\n" +
                                 "limit_num=\"" + row.limit_num + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
-                                "data-toggle=\"modal\" data-target=\"#modify_privileges\">变更\n" + "</button>\n" +
+                                "data-toggle=\"modal\" data-target=\"#modify_privileges\">{% translate "变更"|escapejs %}\n" + "</button>\n" +
                                 "<button class=\"btn btn-danger btn-xs\" privilege_id=\"" + row.privilege_id + "\"\n" +
                                 "limit_num=\"" + row.limit_num + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
-                                "data-toggle=\"modal\" data-target=\"#deleted_privileges\">删除权限\n" + "</button>"
+                                "data-toggle=\"modal\" data-target=\"#deleted_privileges\">{% translate "删除权限"|escapejs %}\n" + "</button>"
                         {% endif %}
                     }
                 }],
@@ -271,11 +281,7 @@
                 onUncheckAll: function () {
                     updateBatchBtns();
                 },
-                onLoadError: onLoadErrorCallback,
-                onSearch: function (e) {
-                    //传搜索参数给服务器
-                    queryParams(e)
-                },
+                onLoadError: queryPermissionLoadError,
                 responseHandler: function (res) {
                     //在ajax获取到数据，渲染表格之前，修改数据源
                     return res;
@@ -301,7 +307,7 @@
         function prepareBatchModify() {
             var ids = getSelectedIds();
             if (ids.length === 0) { return; }
-            $('#batch_modify_info').text('已选择 ' + ids.length + ' 条权限记录');
+            $('#batch_modify_info').text('{% translate "已选择 {count} 条权限记录"|escapejs %}'.replace('{count}', ids.length));
             $('#batch_limit_num').val('');
             $('#batch_valid_date').val('');
             $('#batch_modify_privileges').modal('show');
@@ -311,7 +317,7 @@
         function prepareBatchDelete() {
             var ids = getSelectedIds();
             if (ids.length === 0) { return; }
-            $('#batch_delete_info').text('已选择 ' + ids.length + ' 条权限记录');
+            $('#batch_delete_info').text('{% translate "已选择 {count} 条权限记录"|escapejs %}'.replace('{count}', ids.length));
             $('#batch_delete_privileges').modal('show');
         }
 
@@ -323,15 +329,15 @@
             var limit_num = $('#batch_limit_num').val();
             if (type === 2) {
                 if (!limit_num || !/^[0-9]+$/.test(limit_num)) {
-                    alert('结果限制必须为正整数');
+                    alert('{% translate "结果限制必须为正整数"|escapejs %}');
                     return;
                 }
                 if (parseInt(limit_num, 10) > MAX_LIMIT_NUM) {
-                    alert('结果限制不能超过 ' + MAX_LIMIT_NUM);
+                    alert('{% translate "结果限制不能超过 {max}"|escapejs %}'.replace('{max}', MAX_LIMIT_NUM));
                     return;
                 }
                 if (!valid_date) {
-                    alert('请填写完整');
+                    alert('{% translate "请填写完整"|escapejs %}');
                     return;
                 }
             }
@@ -377,11 +383,11 @@
             var valid_date = $("#valid_date").val();
             var limit_num = $("#limit_num").val();
             if (type === 2 && limit_num && !/^[0-9]+$/.test(limit_num)) {
-                alert('结果限制必须为正整数');
+                alert('{% translate "结果限制必须为正整数"|escapejs %}');
                 return;
             }
             if (type === 2 && limit_num && parseInt(limit_num, 10) > MAX_LIMIT_NUM) {
-                alert('结果限制不能超过 ' + MAX_LIMIT_NUM);
+                alert('{% translate "结果限制不能超过 {max}"|escapejs %}'.replace('{max}', MAX_LIMIT_NUM));
                 return;
             }
             if (type === 1 && privilege_id || type === 2 && privilege_id && valid_date && limit_num) {
@@ -415,7 +421,7 @@
                     }
                 })
             } else {
-                alert("请填写完整")
+                alert("{% translate "请填写完整"|escapejs %}")
             }
         }
 

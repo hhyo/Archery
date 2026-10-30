@@ -322,7 +322,7 @@ $("#instance_name").change(function () {
         // 提示信息
         let pathname = window.location.pathname;
         if (pathname === "/submitsql/" && !editor.getValue()) {
-            editor.setValue("-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n");
+            editor.setValue(($("#sql_content").attr("data-sql-input-hint") || "-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。") + "\n");
             editor.clearSelection();
             editor.focus();  //获取焦点
         }
@@ -338,7 +338,7 @@ $("#instance_name").change(function () {
         // 提示信息
         let pathname = window.location.pathname;
         if (pathname === "/submitsql/" && !editor.getValue()) {
-            editor.setValue("请在此输入命令，多个命令请换行填写，在提交时请删除此行说明");
+            editor.setValue($("#sql_content").attr("data-command-input-hint") || "请在此输入命令，多个命令请换行填写，在提交时请删除此行说明");
             editor.focus();  //获取焦点
         }
     } else if (dbType === "pgsql") {
