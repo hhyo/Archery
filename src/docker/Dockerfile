@@ -9,11 +9,17 @@ RUN useradd nginx
 # archery
 # cx-Orable 安装需要低一点的 setuptools 版本，同时需要 --no-build-isolation 参数，否则会安装失败
 # 后续可能需要重新设计 engine 和相关依赖, 防止依赖过于复杂
-# Discard package indexes inherited from the base image and bypass stale HTTP caches.
-RUN find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
-        -exec sed -i 's|http://deb.debian.org/|https://deb.debian.org/|g; s|http://security.debian.org/|https://security.debian.org/|g' {} + \
+# Debian 11's package repositories are archived after the end of LTS.
+# Keep signature verification enabled and leave newer base images unchanged.
+RUN if [ "$(. /etc/os-release && printf '%s' "$VERSION_CODENAME")" = "bullseye" ]; then \
+        find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
+            -exec sed -i \
+                -e 's|http[s]*://deb.debian.org/debian-security|https://archive.debian.org/debian-security|g' \
+                -e 's|http[s]*://security.debian.org/debian-security|https://archive.debian.org/debian-security|g' \
+                -e 's|http[s]*://deb.debian.org/debian|https://archive.debian.org/debian|g' {} +; \
+    fi \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get -o Acquire::http::No-Cache=true update \
+    && apt-get update \
     && apt-get install -yq --no-install-recommends nginx mariadb-client \
     && source venv4archery/bin/activate \
     && pip install --no-cache-dir "setuptools<82" wheel \
