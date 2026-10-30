@@ -45,10 +45,19 @@ jobs:
             ghcr.io/${{ github.repository }}
 
       - name: Build and push Docker images
+        id: build
         uses: docker/build-push-action@v2
         with:
           context: .
           file: src/docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Smoke-test the application image without network access
+        if: github.event_name == 'pull_request'
+        run: |
+          docker run --rm --network none --entrypoint bash \
+            "${{ steps.build.outputs.imageid }}" \
+            /opt/archery/src/docker/smoke-test.sh
