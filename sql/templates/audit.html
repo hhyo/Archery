@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="navStatus" class="form-control selectpicker">
-                <option value="" selected="selected">动作</option>
+                <option value="" selected="selected">{% translate "动作" context "remaining pages" %}</option>
                     {% for action_type in action_types %}
                     <option value={{ action_type }}>{{ action_type }}</option>
                     {% endfor %}
@@ -43,7 +44,7 @@
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html('{% translate "全部数据" context "remaining pages" %}');
                 }
             }
 
@@ -55,23 +56,23 @@
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
                     // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十月", "十一月", "十二月"],
+                    applyLabel: "{% translate "确定" context "remaining pages" %}",
+                    cancelLabel: "{% translate "取消" context "remaining pages" %}",
+                    fromLabel: "{% translate "开始" context "remaining pages" %}",
+                    toLabel: "{% translate "结束" context "remaining pages" %}",
+                    customRangeLabel: "{% translate "自定义" context "remaining pages" %}",
+                    daysOfWeek: ["{% translate "日" context "remaining pages" %}", "{% translate "一" context "remaining pages" %}", "{% translate "二" context "remaining pages" %}", "{% translate "三" context "remaining pages" %}", "{% translate "四" context "remaining pages" %}", "{% translate "五" context "remaining pages" %}", "{% translate "六" context "remaining pages" %}"],
+                    monthNames: ["{% translate "一月" context "remaining pages" %}", "{% translate "二月" context "remaining pages" %}", "{% translate "三月" context "remaining pages" %}", "{% translate "四月" context "remaining pages" %}", "{% translate "五月" context "remaining pages" %}", "{% translate "六" context "remaining pages" %}", "{% translate "七月" context "remaining pages" %}", "{% translate "八月" context "remaining pages" %}", "{% translate "九月" context "remaining pages" %}", "{% translate "十月" context "remaining pages" %}", "{% translate "十月" context "remaining pages" %}", "{% translate "十一月" context "remaining pages" %}", "{% translate "十二月" context "remaining pages" %}"],
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [null, null],
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    "{% translate "全部" context "remaining pages" %}": [null, null],
+                    "{% translate "今日" context "remaining pages" %}": [moment().startOf('day'), moment()],
+                    "{% translate "昨日" context "remaining pages" %}": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    "{% translate "最近7日" context "remaining pages" %}": [moment().subtract('days', 6), moment()],
+                    "{% translate "最近30日" context "remaining pages" %}": [moment().subtract('days', 29), moment()],
+                    "{% translate "本月" context "remaining pages" %}": [moment().startOf("month"), moment().endOf("month")],
+                    "{% translate "上个月" context "remaining pages" %}": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 grouplist()
@@ -113,7 +114,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: true,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -158,20 +159,20 @@
                     return html.join('');
                 },
                 columns: [{
-                    title: '用户',
+                    title: '{% translate "用户" context "remaining pages" %}',
                     field: 'user_name',
                     formatter: function (value, row, index) {
                         return "<a target=\"_blank\" href=\"/admin/sql/users/" + row.user_id + "/change/\">" + value + "</a>"
                     }
                 },{
-                    title: '中文名',
+                    title: '{% translate "中文名" context "remaining pages" %}',
                     field: 'user_display'
                 },{
-                    title: '动作',
+                    title: '{% translate "动作" context "remaining pages" %}',
                     field: 'action'
                 
                 },{
-                    title: '额外信息',
+                    title: '{% translate "额外信息" context "remaining pages" %}',
                     field: 'extra_info',
                     formatter: function (value, row, index) {
                         var _info=row.extra_info
@@ -185,11 +186,11 @@
                         }
                     }
                 },{
-                    title: '完整额外信息',
+                    title: '{% translate "完整额外信息" context "remaining pages" %}',
                     field: 'extra_info',
                     visible: false
                 },{
-                    title: '操作时间',
+                    title: '{% translate "操作时间" context "remaining pages" %}',
                     field: 'action_time'
                 }],
                 onLoadSuccess: function () {

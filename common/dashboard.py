@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import logging
+from django.utils.translation import gettext as _
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -66,7 +67,7 @@ def DashboardApi(request):
         start_date = validate_date(start_date_str)
         end_date = validate_date(end_date_str)
     except ValidationError as e:
-        return JsonResponse({"error: 日期有误"}, status=400)
+        return JsonResponse({"error": _("日期有误")}, status=400)
 
     dashboard_chart = get_chart_data(start_date, end_date)
 
@@ -105,7 +106,7 @@ def get_chart_data(start_date, end_date):
 
     # SQL语法类型
     data = chart_dao.syntax_type(start_date, end_date)
-    attr = [row[0] for row in data["rows"]]
+    attr = [_(row[0]) if row[0] == "其他" else row[0] for row in data["rows"]]
     value = [row[1] for row in data["rows"]]
     pie2 = create_pie_chart(attr, value)
 
@@ -133,13 +134,13 @@ def get_chart_data(start_date, end_date):
     )
     line1.add_xaxis(attr)
     line1.add_yaxis(
-        "检索行数",
+        _("检索行数"),
         effect_value,
         is_smooth=True,
         markpoint_opts=opts.MarkPointOpts(data=[opts.MarkPointItem(type_="average")]),
     )
     line1.add_yaxis(
-        "检索次数",
+        _("检索次数"),
         count_value,
         is_smooth=True,
         markline_opts=opts.MarkLineOpts(
@@ -173,7 +174,20 @@ def get_chart_data(start_date, end_date):
 
     # SQL上线工单
     data = chart_dao.query_sql_prod_bill(start_date, end_date)
-    attr = [row[0] for row in data["rows"]]
+    status_codes = {
+        "已正常结束": "workflow_finish",
+        "自动审核不通过": "workflow_autoreviewwrong",
+        "人工终止流程": "workflow_abort",
+        "执行有异常": "workflow_exception",
+        "审核通过": "workflow_review_pass",
+        "排队中": "workflow_queuing",
+        "确认中": "workflow_executing",
+        "等待审核人审核": "workflow_manreviewing",
+    }
+    attr = [
+        _(status_codes[row[0]]) if row[0] in status_codes else row[0]
+        for row in data["rows"]
+    ]
     value = [row[1] for row in data["rows"]]
     bar5 = create_bar_chart(attr, value)
 

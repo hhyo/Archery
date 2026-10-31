@@ -13,6 +13,7 @@ import simplejson as json
 import sqlparse
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
+from django.utils.translation import gettext as _
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
@@ -20,6 +21,7 @@ from sql.models import Instance
 from sql.plugins.soar import Soar
 from sql.plugins.sqladvisor import SQLAdvisor
 from sql.sql_tuning import SqlTuning
+from sql.utils.sqladvisor_report import localize_sqladvisor_report
 from sql.utils.resource_group import user_instances
 
 __author__ = "hhyo"
@@ -36,7 +38,7 @@ def optimize_sqladvisor(request):
     # 服务器端参数验证
     if sql_content is None or instance_name is None:
         result["status"] = 1
-        result["msg"] = "页面提交参数可能为空"
+        result["msg"] = _("页面提交参数可能为空")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     try:
@@ -45,14 +47,14 @@ def optimize_sqladvisor(request):
         )
     except Instance.DoesNotExist:
         result["status"] = 1
-        result["msg"] = "你所在组未关联该实例！"
+        result["msg"] = _("你所在组未关联该实例！")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 检查sqladvisor程序路径
     sqladvisor_path = SysConfig().get("sqladvisor")
     if sqladvisor_path is None:
         result["status"] = 1
-        result["msg"] = "请配置SQLAdvisor路径！"
+        result["msg"] = _("请配置SQLAdvisor路径！")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 提交给sqladvisor获取分析报告
@@ -79,7 +81,8 @@ def optimize_sqladvisor(request):
     # 执行命令
     try:
         stdout, stderr = sqladvisor.execute_cmd(cmd_args).communicate()
-        result["data"] = f"{stdout}{stderr}"
+        result["raw_report"] = f"{stdout}{stderr}"
+        result["data"] = localize_sqladvisor_report(result["raw_report"])
     except RuntimeError as e:
         result["status"] = 1
         result["msg"] = str(e)
@@ -96,7 +99,7 @@ def optimize_soar(request):
     # 服务器端参数验证
     if not (instance_name and db_name and sql):
         result["status"] = 1
-        result["msg"] = "页面提交参数可能为空"
+        result["msg"] = _("页面提交参数可能为空")
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         instance = user_instances(request.user, db_type=["mysql"]).get(
@@ -104,7 +107,7 @@ def optimize_soar(request):
         )
     except Exception:
         result["status"] = 1
-        result["msg"] = "你所在组未关联该实例"
+        result["msg"] = _("你所在组未关联该实例")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 检查测试实例的连接信息和soar程序路径
@@ -112,7 +115,7 @@ def optimize_soar(request):
     soar_path = SysConfig().get("soar")
     if not (soar_path and soar_test_dsn):
         result["status"] = 1
-        result["msg"] = "请配置soar_path和test_dsn！"
+        result["msg"] = _("请配置soar_path和test_dsn！")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 目标实例的连接信息
@@ -157,12 +160,12 @@ def optimize_sqltuning(request):
     sqltext = sqlparse.format(sqltext, strip_comments=True)
     sqltext = sqlparse.split(sqltext)[0]
     if re.match(r"^select|^show|^explain", sqltext, re.I) is None:
-        result = {"status": 1, "msg": "只支持查询SQL！", "data": []}
+        result = {"status": 1, "msg": _("只支持查询SQL！"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "你所在组未关联该实例！", "data": []}
+        result = {"status": 1, "msg": _("你所在组未关联该实例！"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     sql_tunning = SqlTuning(
@@ -208,13 +211,13 @@ def explain(request):
     # 服务器端参数验证
     if sql_content is None or instance_name is None:
         result["status"] = 1
-        result["msg"] = "页面提交参数可能为空"
+        result["msg"] = _("页面提交参数可能为空")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "实例不存在", "data": []}
+        result = {"status": 1, "msg": _("实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 删除注释语句，进行语法判断，执行第一条有效sql
@@ -223,13 +226,13 @@ def explain(request):
         sql_content = sqlparse.split(sql_content)[0]
     except IndexError:
         result["status"] = 1
-        result["msg"] = "没有有效的SQL语句"
+        result["msg"] = _("没有有效的SQL语句")
         return HttpResponse(json.dumps(result), content_type="application/json")
     else:
         # 过滤非explain的语句
         if not re.match(r"^explain", sql_content, re.I):
             result["status"] = 1
-            result["msg"] = "仅支持explain开头的语句，请检查"
+            result["msg"] = _("仅支持explain开头的语句，请检查")
             return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 执行获取执行计划语句
@@ -259,13 +262,13 @@ def optimize_sqltuningadvisor(request):
     # 服务器端参数验证
     if sql_content is None or instance_name is None:
         result["status"] = 1
-        result["msg"] = "页面提交参数可能为空"
+        result["msg"] = _("页面提交参数可能为空")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "实例不存在", "data": []}
+        result = {"status": 1, "msg": _("实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 不删除注释语句，已获取加hints的SQL优化建议，进行语法判断，执行第一条有效sql
@@ -276,13 +279,13 @@ def optimize_sqltuningadvisor(request):
         sql_content = sqlparse.split(sql_content)[0]
     except IndexError:
         result["status"] = 1
-        result["msg"] = "没有有效的SQL语句"
+        result["msg"] = _("没有有效的SQL语句")
         return HttpResponse(json.dumps(result), content_type="application/json")
     else:
         # 过滤非Oracle语句
         if not instance.db_type == "oracle":
             result["status"] = 1
-            result["msg"] = "SQLTuningAdvisor仅支持oracle数据库的检查"
+            result["msg"] = _("SQLTuningAdvisor仅支持oracle数据库的检查")
             return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 执行获取优化报告

@@ -1,3 +1,5 @@
+from django.utils.translation import pgettext_lazy
+from django.utils.translation import gettext as _
 from rest_framework import views, generics, status, permissions
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
@@ -40,10 +42,10 @@ class UserList(generics.ListAPIView):
     queryset = Users.objects.all().order_by("id")
 
     @extend_schema(
-        summary="用户清单",
+        summary=pgettext_lazy("API documentation", "用户清单"),
         request=UserSerializer,
         responses={200: UserSerializer},
-        description="列出所有用户（过滤，分页）",
+        description=pgettext_lazy("API documentation", "列出所有用户（过滤，分页）"),
     )
     def get(self, request):
         users = self.filter_queryset(self.queryset)
@@ -53,10 +55,10 @@ class UserList(generics.ListAPIView):
         return self.get_paginated_response(data)
 
     @extend_schema(
-        summary="创建用户",
+        summary=pgettext_lazy("API documentation", "创建用户"),
         request=UserSerializer,
         responses={201: UserSerializer},
-        description="创建一个用户",
+        description=pgettext_lazy("API documentation", "创建一个用户"),
     )
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -80,10 +82,10 @@ class UserDetail(views.APIView):
             raise Http404
 
     @extend_schema(
-        summary="更新用户",
+        summary=pgettext_lazy("API documentation", "更新用户"),
         request=UserDetailSerializer,
         responses={200: UserDetailSerializer},
-        description="更新一个用户",
+        description=pgettext_lazy("API documentation", "更新一个用户"),
     )
     def put(self, request, pk):
         user = self.get_object(pk)
@@ -93,7 +95,10 @@ class UserDetail(views.APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(summary="删除用户", description="删除一个用户")
+    @extend_schema(
+        summary=pgettext_lazy("API documentation", "删除用户"),
+        description=pgettext_lazy("API documentation", "删除一个用户"),
+    )
     def delete(self, request, pk):
         user = self.get_object(pk)
         user.delete()
@@ -110,10 +115,10 @@ class GroupList(generics.ListAPIView):
     queryset = Group.objects.all().order_by("id")
 
     @extend_schema(
-        summary="用户组清单",
+        summary=pgettext_lazy("API documentation", "用户组清单"),
         request=GroupSerializer,
         responses={200: GroupSerializer},
-        description="列出所有用户组（过滤，分页）",
+        description=pgettext_lazy("API documentation", "列出所有用户组（过滤，分页）"),
     )
     def get(self, request):
         groups = self.filter_queryset(self.queryset)
@@ -123,10 +128,10 @@ class GroupList(generics.ListAPIView):
         return self.get_paginated_response(data)
 
     @extend_schema(
-        summary="创建用户组",
+        summary=pgettext_lazy("API documentation", "创建用户组"),
         request=GroupSerializer,
         responses={201: GroupSerializer},
-        description="创建一个用户组",
+        description=pgettext_lazy("API documentation", "创建一个用户组"),
     )
     def post(self, request):
         serializer = GroupSerializer(data=request.data)
@@ -150,10 +155,10 @@ class GroupDetail(views.APIView):
             raise Http404
 
     @extend_schema(
-        summary="更新用户组",
+        summary=pgettext_lazy("API documentation", "更新用户组"),
         request=GroupSerializer,
         responses={200: GroupSerializer},
-        description="更新一个用户组",
+        description=pgettext_lazy("API documentation", "更新一个用户组"),
     )
     def put(self, request, pk):
         group = self.get_object(pk)
@@ -163,7 +168,10 @@ class GroupDetail(views.APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(summary="删除用户组", description="删除一个用户组")
+    @extend_schema(
+        summary=pgettext_lazy("API documentation", "删除用户组"),
+        description=pgettext_lazy("API documentation", "删除一个用户组"),
+    )
     def delete(self, request, pk):
         group = self.get_object(pk)
         group.delete()
@@ -180,10 +188,10 @@ class ResourceGroupList(generics.ListAPIView):
     queryset = ResourceGroup.objects.all().order_by("group_id")
 
     @extend_schema(
-        summary="资源组清单",
+        summary=pgettext_lazy("API documentation", "资源组清单"),
         request=ResourceGroupSerializer,
         responses={200: ResourceGroupSerializer},
-        description="列出所有资源组（过滤，分页）",
+        description=pgettext_lazy("API documentation", "列出所有资源组（过滤，分页）"),
     )
     def get(self, request):
         groups = self.filter_queryset(self.queryset)
@@ -193,10 +201,10 @@ class ResourceGroupList(generics.ListAPIView):
         return self.get_paginated_response(data)
 
     @extend_schema(
-        summary="创建资源组",
+        summary=pgettext_lazy("API documentation", "创建资源组"),
         request=ResourceGroupSerializer,
         responses={201: ResourceGroupSerializer},
-        description="创建一个资源组",
+        description=pgettext_lazy("API documentation", "创建一个资源组"),
     )
     def post(self, request):
         serializer = ResourceGroupSerializer(data=request.data)
@@ -220,10 +228,10 @@ class ResourceGroupDetail(views.APIView):
             raise Http404
 
     @extend_schema(
-        summary="更新资源组",
+        summary=pgettext_lazy("API documentation", "更新资源组"),
         request=ResourceGroupSerializer,
         responses={200: ResourceGroupSerializer},
-        description="更新一个资源组",
+        description=pgettext_lazy("API documentation", "更新一个资源组"),
     )
     def put(self, request, pk):
         group = self.get_object(pk)
@@ -233,7 +241,10 @@ class ResourceGroupDetail(views.APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(summary="删除资源组", description="删除一个资源组")
+    @extend_schema(
+        summary=pgettext_lazy("API documentation", "删除资源组"),
+        description=pgettext_lazy("API documentation", "删除一个资源组"),
+    )
     def delete(self, request, pk):
         group = self.get_object(pk)
         group.delete()
@@ -248,7 +259,9 @@ class UserAuth(views.APIView):
     permission_classes = [IsOwner]
 
     @extend_schema(
-        summary="用户认证校验", request=UserAuthSerializer, description="用户认证校验"
+        summary=pgettext_lazy("API documentation", "用户认证校验"),
+        request=UserAuthSerializer,
+        description=pgettext_lazy("API documentation", "用户认证校验"),
     )
     def post(self, request):
         # 参数验证
@@ -256,13 +269,13 @@ class UserAuth(views.APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        result = {"status": 0, "msg": "认证成功"}
+        result = {"status": 0, "msg": _("认证成功")}
         engineer = request.data["engineer"]
         password = request.data["password"]
 
         user = authenticate(username=engineer, password=password)
         if not user:
-            result = {"status": 1, "msg": "用户名或密码错误！"}
+            result = {"status": 1, "msg": _("用户名或密码错误！")}
 
         return Response(result)
 
@@ -274,7 +287,11 @@ class TwoFA(views.APIView):
 
     permission_classes = [permissions.AllowAny]
 
-    @extend_schema(summary="配置2fa", request=TwoFASerializer, description="配置2fa")
+    @extend_schema(
+        summary=pgettext_lazy("API documentation", "配置2fa"),
+        request=TwoFASerializer,
+        description=pgettext_lazy("API documentation", "配置2fa"),
+    )
     def post(self, request):
         # 参数验证
         serializer = TwoFASerializer(data=request.data)
@@ -290,9 +307,11 @@ class TwoFA(views.APIView):
         if not request.user.is_authenticated:
             if request_user:
                 if request_user != engineer:
-                    return Response({"status": 1, "msg": "登录用户与校验用户不一致！"})
+                    return Response(
+                        {"status": 1, "msg": _("登录用户与校验用户不一致！")}
+                    )
             else:
-                return Response({"status": 1, "msg": "需先校验用户密码！"})
+                return Response({"status": 1, "msg": _("需先校验用户密码！")})
 
         authenticator = get_authenticator(user=user, auth_type=auth_type)
         if enable == "true":
@@ -325,9 +344,9 @@ class TwoFAState(views.APIView):
     permission_classes = [IsOwner]
 
     @extend_schema(
-        summary="查询2fa配置情况",
+        summary=pgettext_lazy("API documentation", "查询2fa配置情况"),
         request=TwoFAStateSerializer,
-        description="查询2fa配置情况",
+        description=pgettext_lazy("API documentation", "查询2fa配置情况"),
     )
     def post(self, request):
         # 参数验证
@@ -357,7 +376,9 @@ class TwoFASave(views.APIView):
     permission_classes = [IsOwner]
 
     @extend_schema(
-        summary="保存2fa配置", request=TwoFASaveSerializer, description="保存2fa配置"
+        summary=pgettext_lazy("API documentation", "保存2fa配置"),
+        request=TwoFASaveSerializer,
+        description=pgettext_lazy("API documentation", "保存2fa配置"),
     )
     def post(self, request):
         # 参数验证
@@ -388,7 +409,9 @@ class TwoFAVerify(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
-        summary="检验2fa密码", request=TwoFAVerifySerializer, description="检验2fa密码"
+        summary=pgettext_lazy("API documentation", "检验2fa密码"),
+        request=TwoFAVerifySerializer,
+        description=pgettext_lazy("API documentation", "检验2fa密码"),
     )
     def post(self, request):
         # 参数验证
@@ -406,14 +429,16 @@ class TwoFAVerify(views.APIView):
         if not request.user.is_authenticated:
             if request_user:
                 if request_user != engineer:
-                    return Response({"status": 1, "msg": "登录用户与校验用户不一致！"})
+                    return Response(
+                        {"status": 1, "msg": _("登录用户与校验用户不一致！")}
+                    )
             else:
-                return Response({"status": 1, "msg": "需先校验用户密码！"})
+                return Response({"status": 1, "msg": _("需先校验用户密码！")})
 
             twofa_config = TwoFactorAuthConfig.objects.filter(user=user)
             if not twofa_config:
                 if not key:
-                    return Response({"status": 1, "msg": "用户未配置2FA！"})
+                    return Response({"status": 1, "msg": _("用户未配置2FA！")})
 
         auth_type = request.data["auth_type"]
         authenticator = get_authenticator(user=user, auth_type=auth_type)

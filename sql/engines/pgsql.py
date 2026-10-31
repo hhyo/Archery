@@ -9,6 +9,7 @@
 import json
 import re
 import psycopg2
+from django.utils.translation import gettext as _
 import logging
 import traceback
 import sqlparse
@@ -165,13 +166,13 @@ class PgSQLEngine(EngineBase):
             result["filtered_sql"] = sql.strip()
         except IndexError:
             result["bad_query"] = True
-            result["msg"] = "没有有效的SQL语句"
+            result["msg"] = _("没有有效的SQL语句")
         if re.match(r"^select|^explain", sql, re.I) is None:
             result["bad_query"] = True
-            result["msg"] = "不支持的查询语法类型!"
+            result["msg"] = _("不支持的查询语法类型!")
         if "*" in sql:
             result["has_star"] = True
-            result["msg"] += "SQL语句中含有 * "
+            result["msg"] += _("SQL语句中含有 * ")
         return result
 
     def query(

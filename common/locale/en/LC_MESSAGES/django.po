@@ -1,0 +1,367 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Archery\n"
+"Language: en\n"
+"PO-Revision-Date: 2026-10-26 00:00+0000\n"
+"Last-Translator: Archery contributors\n"
+"Language-Team: English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: common/templates/base.html:12
+msgid "Archery-SQL审核查询平台"
+msgstr "Archery - SQL Review and Query Platform"
+
+#: common/templates/base.html:75
+msgid "系统信息"
+msgstr "System information"
+
+#: common/templates/base.html:78
+msgid "管理后台"
+msgstr "Administration"
+
+#: common/templates/base.html:81 common/templates/base.html:293 common/templates/base.html:300 common/templates/base.html:487
+msgid "两步验证"
+msgstr "Two-factor authentication"
+
+#: common/templates/base.html:82
+msgid "修改密码"
+msgstr "Change password"
+
+#: common/templates/base.html:83 common/templates/login.html:161 common/auth.py:211 common/auth.py:215
+msgid "退出"
+msgstr "Log out"
+
+#: common/templates/base.html:12 common/templates/base.html:106
+msgid "SQL审核"
+msgstr "SQL Review"
+
+#: common/templates/base.html:110 sql/views.py:123 sql/views.py:721
+msgid "SQL上线"
+msgstr "SQL Deployment"
+
+#: common/templates/base.html:115 sql/views.py:371
+msgid "SQL分析"
+msgstr "SQL Analysis"
+
+#: common/templates/base.html:124
+msgid "SQL查询"
+msgstr "SQL Query"
+
+#: common/templates/base.html:128 sql/views.py:377 sql/views.py:712
+msgid "在线查询"
+msgstr "Query Editor"
+
+#: common/templates/base.html:133 sql/views.py:164 sql/views.py:791
+msgid "数据导出"
+msgstr "Data Export"
+
+#: common/templates/base.html:138 sql/views.py:517
+msgid "数据字典"
+msgstr "Data Dictionary"
+
+#: common/templates/base.html:143 sql/views.py:465
+msgid "权限管理"
+msgstr "Access Management"
+
+#: common/templates/base.html:153 sql/views.py:476
+msgid "SQL优化"
+msgstr "SQL Optimization"
+
+#: common/templates/base.html:157 sql/views.py:476
+msgid "优化工具"
+msgstr "Optimization Tools"
+
+#: common/templates/base.html:162
+msgid "慢查日志"
+msgstr "Slow Query Logs"
+
+#: common/templates/base.html:171 sql/views.py:488
+msgid "实例管理"
+msgstr "Instance Management"
+
+#: common/templates/base.html:175
+msgid "实例列表"
+msgstr "Instances"
+
+#: common/templates/base.html:180 sql/views.py:511
+msgid "会话管理"
+msgstr "Sessions"
+
+#: common/templates/base.html:185 sql/views.py:502
+msgid "数据库管理"
+msgstr "Databases"
+
+#: common/templates/base.html:191 sql/views.py:496
+msgid "账号管理"
+msgstr "Accounts"
+
+#: common/templates/base.html:196
+msgid "参数配置"
+msgstr "Parameters"
+
+#: common/templates/base.html:201 sql/views.py:529
+msgid "参数对比"
+msgstr "Compare Parameters"
+
+#: common/templates/base.html:210
+msgid "工具插件"
+msgstr "Tools"
+
+#: common/templates/base.html:233
+msgid "系统管理"
+msgstr "System Management"
+
+#: common/templates/base.html:236
+msgid "配置项管理"
+msgstr "Configuration"
+
+#: common/templates/base.html:239 sql/views.py:658
+msgid "资源组管理"
+msgstr "Resource Groups"
+
+#: common/templates/base.html:242
+msgid "其他配置管理"
+msgstr "Other Settings"
+
+#: common/templates/base.html:245
+msgid "用户管理"
+msgstr "Users"
+
+#: common/templates/base.html:248
+msgid "权限组管理"
+msgstr "Permission Groups"
+
+#: common/templates/base.html:251
+msgid "全部后台数据"
+msgstr "All Administration Data"
+
+#: common/templates/base.html:262
+msgid "系统审计"
+msgstr "System Audit"
+
+#: common/templates/base.html:265 sql/views.py:704
+msgid "通用审计"
+msgstr "General Audit"
+
+#: common/templates/base.html:268
+msgid "sql上线审计"
+msgstr "SQL Deployment Audit"
+
+#: common/templates/base.html:271
+msgid "查询审计"
+msgstr "Query Audit"
+
+#: common/templates/base.html:278
+msgid "相关文档"
+msgstr "Documentation"
+
+#: common/templates/base.html:315
+msgid "短信："
+msgstr "SMS:"
+
+#: common/templates/base.html:333
+msgid "关闭"
+msgstr "Close"
+
+#: common/templates/base.html:346
+msgid "验证当前用户密码"
+msgstr "Verify your password"
+
+#: common/templates/base.html:350
+msgid "输入密码验证:"
+msgstr "Enter your password:"
+
+#: common/templates/base.html:351
+msgid "确认密码"
+msgstr "Confirm password"
+
+#: common/templates/base.html:355 common/templates/login.html:97 sql/views.py:261
+msgid "取消"
+msgstr "Cancel"
+
+#: common/templates/base.html:351 common/templates/base.html:356 common/templates/login.html:90 common/auth.py:69 sql/views.py:294
+msgid "确认"
+msgstr "Confirm"
+
+#: common/templates/base.html:369 common/templates/base.html:561
+msgid "扫码绑定"
+msgstr "Scan to link authenticator"
+
+#: common/templates/base.html:374
+msgid "1. 使用Google身份验证器扫码："
+msgstr "1. Scan with Google Authenticator:"
+
+#: common/templates/base.html:378
+msgid "1. 输入要绑定的手机号码："
+msgstr "1. Enter the phone number to link:"
+
+#: common/templates/base.html:382
+msgid "2. 输入6位验证码完成绑定："
+msgstr "2. Enter the six-digit code to finish linking:"
+
+#: common/templates/base.html:388
+msgid "获取验证码"
+msgstr "Send verification code"
+
+#: common/templates/base.html:369 common/templates/base.html:378 common/templates/base.html:382 common/templates/base.html:389 common/templates/base.html:561 common/templates/base.html:566
+msgid "绑定"
+msgstr "Link"
+
+#: common/templates/base.html:487
+msgid "已开启两步验证！"
+msgstr "Two-factor authentication enabled!"
+
+#: common/templates/base.html:515
+msgid "验证成功！"
+msgstr "Verification successful!"
+
+#: common/templates/base.html:566
+msgid "绑定手机号"
+msgstr "Link phone number"
+
+#: common/templates/base.html:577
+msgid "请输入验证码！"
+msgstr "Please enter the verification code!"
+
+#: common/templates/base.html:598
+msgid "请输入密码！"
+msgstr "Please enter your password!"
+
+#: common/templates/base.html:608
+msgid "配置成功"
+msgstr "Settings saved"
+
+#: common/templates/base.html:636
+msgid "请输入手机号！"
+msgstr "Please enter your phone number!"
+
+#: common/templates/base.html:644
+msgid "验证码已发送，5分钟内有效"
+msgstr "Verification code sent. It expires in five minutes."
+
+#: common/templates/base.html:651 common/auth.py:172
+msgid "启用"
+msgstr "Enabled"
+
+#: common/templates/base.html:652
+msgid "禁用"
+msgstr "Disabled"
+
+#: common/templates/login.html:6 common/templates/login.html:24
+msgid "登录 Archery"
+msgstr "Log in to Archery"
+
+#: common/templates/login.html:29
+msgid "以钉钉登录"
+msgstr "Log in with DingTalk"
+
+#: sql/views.py:70
+msgid "以OIDC登录"
+msgstr "Log in with OIDC"
+
+#: common/templates/login.html:37
+msgid "CAS认证登录"
+msgstr "Log in with CAS"
+
+#: common/templates/login.html:42
+msgid "显示传统登录"
+msgstr "Use username and password"
+
+#: common/templates/login.html:54 common/auth.py:168
+msgid "注册用户"
+msgstr "Create an account"
+
+#: common/templates/login.html:68
+msgid "注册账号"
+msgstr "Create an account"
+
+#: common/templates/login.html:73 sql/templates/legacy_login_form.html:3 common/auth.py:81 common/auth.py:120 common/auth.py:123 common/auth.py:125 common/auth.py:183 common/auth.py:186
+msgid "用户名"
+msgstr "Username"
+
+#: common/templates/login.html:77 common/auth.py:192
+msgid "中文名"
+msgstr "Display name"
+
+#: common/templates/login.html:81
+msgid "邮箱"
+msgstr "Email"
+
+#: common/templates/base.html:82 common/templates/base.html:339 common/templates/base.html:346 common/templates/base.html:350 common/templates/base.html:351 common/templates/base.html:598 common/templates/login.html:85 common/templates/login.html:90 common/templates/login.html:210 sql/templates/legacy_login_form.html:8 common/auth.py:57 common/auth.py:81 common/auth.py:85 common/auth.py:120 common/auth.py:123 common/auth.py:125 common/auth.py:183 common/auth.py:189 common/auth.py:194
+msgid "密码"
+msgstr "Password"
+
+#: common/templates/login.html:90
+msgid "密码确认"
+msgstr "Confirm password"
+
+#: common/templates/login.html:54 common/templates/login.html:61 common/templates/login.html:68 common/templates/login.html:98 common/templates/login.html:210 common/auth.py:168 common/auth.py:172
+msgid "注册"
+msgstr "Sign up"
+
+#: common/templates/login.html:115
+msgid "提示"
+msgstr "Notice"
+
+#: common/templates/login.html:120
+msgid "确定"
+msgstr "OK"
+
+#: common/templates/login.html:210
+msgid "注册成功, 请输入密码登录!"
+msgstr "Account created. Enter your password to log in."
+
+#: common/templates/login.html:6 common/templates/login.html:24 common/templates/login.html:29 common/templates/login.html:37 common/templates/login.html:42 common/templates/login.html:161 common/templates/login.html:166 common/templates/login.html:210 sql/templates/legacy_login_form.html:14 common/auth.py:59 common/auth.py:61 common/auth.py:75 common/auth.py:103 common/auth.py:123 common/auth.py:138 common/auth.py:148 common/auth.py:156 common/auth.py:211 common/auth.py:215 sql/views.py:58 sql/views.py:70
+msgid "登录"
+msgstr "Log in"
+
+#: common/templates/language_selector.html:7
+msgid "语言"
+msgstr "Language"
+
+#: common/templates/base.html:40 common/templates/language_selector.html:13
+msgid "切换"
+msgstr "Apply"
+
+#: common/templates/base.html:40
+msgid "切换导航"
+msgstr "Toggle navigation"
+
+#: common/auth.py:81 common/auth.py:120
+msgid "用户名或密码错误，请重新输入！"
+msgstr "Incorrect username or password. Please try again."
+
+#: common/auth.py:87
+msgid "服务异常，请联系管理员处理"
+msgstr "Service unavailable. Please contact an administrator."
+
+#: common/auth.py:103
+msgid "登录失败超过限制，该账号已被锁定！请等候大约%(seconds)s秒再试"
+msgstr "Too many failed login attempts. This account is locked. Try again in about %(seconds)s seconds."
+
+#: common/auth.py:172
+msgid "注册未启用,请联系管理员开启"
+msgstr "Registration is disabled. Please contact an administrator."
+
+#: common/auth.py:183
+msgid "用户名和密码不能为空"
+msgstr "Username and password are required."
+
+#: common/auth.py:186
+msgid "用户名已存在"
+msgstr "This username is already taken."
+
+#: common/auth.py:189
+msgid "两次输入密码不一致"
+msgstr "The passwords do not match."
+
+#: common/auth.py:192
+msgid "请填写中文名"
+msgstr "Please enter a display name."
+
+#: common/templates/base.html:52
+msgid "你好，%(user)s"
+msgstr "Hello, %(user)s"

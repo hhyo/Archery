@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+
 # -*- coding: UTF-8 -*-
 """
 @author: hhyo
@@ -63,7 +65,7 @@ def analyze(request):
                 )
             except Instance.DoesNotExist:
                 return JsonResponse(
-                    {"status": 1, "msg": "你所在组未关联该实例！", "data": []}
+                    {"status": 1, "msg": _("你所在组未关联该实例！"), "data": []}
                 )
             soar_test_dsn = SysConfig().get("soar_test_dsn")
             # 获取实例连接信息
@@ -86,7 +88,7 @@ def analyze(request):
                 p = Path(row["sql"].strip())
                 if p.exists():
                     return JsonResponse(
-                        {"status": 1, "msg": "SQL 语句不合法", "data": []}
+                        {"status": 1, "msg": _("SQL 语句不合法"), "data": []}
                     )
             except OSError:
                 pass

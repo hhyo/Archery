@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="navStatus" class="form-control selectpicker">
-                <option value="" selected="selected">状态</option>
+                <option value="" selected="selected">{% translate "状态" context "remaining pages" %}</option>
                 {% for status, status_display in status_list %}
                     <option value="{{ status }}">{{ status_display }}</option>
                 {% endfor %}
@@ -14,7 +15,7 @@
         <div class="form-group">
             <select id="instance_id" class="form-control selectpicker"
                     data-live-search="true">
-                <option value="" selected="selected">实例</option>
+                <option value="" selected="selected">{% translate "实例" context "remaining pages" %}</option>
                 {% for ins in instance %}
                     <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
                 {% endfor %}
@@ -23,7 +24,7 @@
         <div class="form-group">
             <select id="group_id" class="form-control selectpicker"
                     data-live-search="true">
-                <option value="" selected="selected">组</option>
+                <option value="" selected="selected">{% translate "组" context "remaining pages" %}</option>
                 {% for rgp in resource_group %}
                     <option value="{{ rgp.group_id }}">{{ rgp.group_name }}</option>
                 {% endfor %}
@@ -49,7 +50,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">工单日志</h4>
+                    <h4 class="modal-title text-danger">{% translate "工单日志" context "remaining pages" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
@@ -81,7 +82,7 @@
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html('{% translate "全部数据" context "remaining pages" %}');
                 }
             }
 
@@ -93,23 +94,23 @@
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
                     // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    applyLabel: "{% translate "确定" context "remaining pages" %}",
+                    cancelLabel: "{% translate "取消" context "remaining pages" %}",
+                    fromLabel: "{% translate "开始" context "remaining pages" %}",
+                    toLabel: "{% translate "结束" context "remaining pages" %}",
+                    customRangeLabel: "{% translate "自定义" context "remaining pages" %}",
+                    daysOfWeek: ["{% translate "日" context "remaining pages" %}", "{% translate "一" context "remaining pages" %}", "{% translate "二" context "remaining pages" %}", "{% translate "三" context "remaining pages" %}", "{% translate "四" context "remaining pages" %}", "{% translate "五" context "remaining pages" %}", "{% translate "六" context "remaining pages" %}"],
+                    monthNames: ["{% translate "一月" context "remaining pages" %}", "{% translate "二月" context "remaining pages" %}", "{% translate "三月" context "remaining pages" %}", "{% translate "四月" context "remaining pages" %}", "{% translate "五月" context "remaining pages" %}", "{% translate "六" context "remaining pages" %}", "{% translate "七月" context "remaining pages" %}", "{% translate "八月" context "remaining pages" %}", "{% translate "九月" context "remaining pages" %}", "{% translate "十月" context "remaining pages" %}", "{% translate "十一月" context "remaining pages" %}", "{% translate "十二月" context "remaining pages" %}"],
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [null, null],
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    "{% translate "全部" context "remaining pages" %}": [null, null],
+                    "{% translate "今日" context "remaining pages" %}": [moment().startOf('day'), moment()],
+                    "{% translate "昨日" context "remaining pages" %}": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    "{% translate "最近7日" context "remaining pages" %}": [moment().subtract('days', 6), moment()],
+                    "{% translate "最近30日" context "remaining pages" %}": [moment().subtract('days', 29), moment()],
+                    "{% translate "本月" context "remaining pages" %}": [moment().startOf("month"), moment().endOf("month")],
+                    "{% translate "上个月" context "remaining pages" %}": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 get_workflow_list()
@@ -161,7 +162,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -190,7 +191,7 @@
                         return filterParams;
                     },
                 columns: [{
-                    title: '工单名称',
+                    title: '{% translate "工单名称" context "remaining pages" %}',
                     field: 'workflow_name',
                     formatter: function (value, row, index) {
                         var span = document.createElement('span');
@@ -204,15 +205,15 @@
                         return span.outerHTML;
                     }
                 }, {
-                    title: '工单完整名称',
+                    title: '{% translate "工单完整名称" context "remaining pages" %}',
                     field: 'workflow_name',
                     visible: false // 默认不显示
                 }, {
-                    title: '类型',
+                    title: '{% translate "类型" context "remaining pages" %}',
                     field: 'syntax_type',
                     formatter: function (value, row, index) {
                         if (String(value) === '0') {
-                            return '其他'
+                            return '{% translate "其他" context "remaining pages" %}'
                         } else if (String(value) === '1') {
                             return 'DDL'
                         } else if (String(value) === '2') {
@@ -220,42 +221,42 @@
                         }
                     }
                 }, {
-                    title: '发起人',
+                    title: '{% translate "发起人" context "remaining pages" %}',
                     field: 'engineer_display'
                 }, {
-                    title: '工单状态',
+                    title: '{% translate "工单状态" context "remaining pages" %}',
                     field: 'status',
                     formatter: function (value, row, index) {
                         return sqlworkflowStatus_formatter(value)
                     }
                 }, {
-                    title: '备份',
+                    title: '{% translate "备份" context "remaining pages" %}',
                     field: 'is_backup',
                     visible: true, // 默认显示
                     formatter: function (value, row, index) {
                         if (String(value) === 'true') {
-                            return '是'
+                            return '{% translate "是" context "remaining pages" %}'
                         } else {
-                            return '否'
+                            return '{% translate "否" context "remaining pages" %}'
                         }
                     }
                 }, {
-                    title: '发起时间',
+                    title: '{% translate "发起时间" context "remaining pages" %}',
                     field: 'create_time'
                 }, {
-                    title: '目标实例',
+                    title: '{% translate "目标实例" context "remaining pages" %}',
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: '{% translate "数据库" context "remaining pages" %}',
                     field: 'db_name'
                 }, {
-                    title: '组',
+                    title: '{% translate "组" context "remaining pages" %}',
                     field: 'group_name'
                 }, {
-                    title: '操作',
+                    title: '{% translate "操作" context "remaining pages" %}',
                     field: 'operation',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-info btn-xs\" audit_id=\"" + row.audit_id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                        return "<button class=\"btn btn-info btn-xs\" audit_id=\"" + row.audit_id + "\"\n" + "onclick=\"getLog(this)\" >{% translate "操作日志" context "remaining pages" %}\n" + "</button>"
                     }
                 }],
                 onLoadSuccess: function () {
@@ -306,19 +307,19 @@
                         showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
                         cardView: false,                    //是否显示详细视图
                         detailView: false,                  //是否显示父子表
-                        locale: 'zh-CN',                    //本地化
+                        locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                         data: data.rows,
                         columns: [{
-                            title: '操作',
+                            title: '{% translate "操作" context "remaining pages" %}',
                             field: 'operation_type_desc'
                         }, {
-                            title: '操作人',
+                            title: '{% translate "操作人" context "remaining pages" %}',
                             field: 'operator_display'
                         }, {
-                            title: '操作时间',
+                            title: '{% translate "操作时间" context "remaining pages" %}',
                             field: 'operation_time'
                         }, {
-                            title: '操作信息',
+                            title: '{% translate "操作信息" context "remaining pages" %}',
                             field: 'operation_info'
                         }],
                         onLoadSuccess: function () {

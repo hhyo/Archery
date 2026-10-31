@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL上线
+                    {% translate "SQL上线" %}
                 </div>
                 <div class="panel-body">
                     <form id="form-submitsql" class="form-horizontal">
@@ -15,9 +16,9 @@
                             <pre id="sql_content_editor" style="min-height:450px"></pre>
                         </div>
                         <div style="display: none" class="col-md-8 column">
-                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
-                                      data-placeholder="SQL内容不能为空！"
-                                      placeholder="请在此提交SQL，请以分号结尾。" rows=20
+                            <textarea id="sql_content" data-sql-input-hint="-- {% translate "请输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。" %}" data-command-input-hint="{% translate "请在此输入命令，多个命令请换行填写，在提交时请删除此行说明" %}" name="sql_content" class="form-control" data-name="{% translate "SQL内容" %}"
+                                      data-placeholder="{% translate "SQL内容不能为空！" %}"
+                                      placeholder="{% translate "请在此提交SQL，请以分号结尾。" %}" rows=20
                                       required></textarea>
                         </div>
                         <div class="col-md-3 column">
@@ -27,22 +28,22 @@
                             <div class="form-group">
                                 <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
                                        class="form-control"
-                                       data-name="上线单名称" data-placeholder="请输入上线单名称!"
-                                       placeholder="请输入上线单名称，如:XX项目会员功能建表"
+                                       data-name="{% translate "上线单名称" %}" data-placeholder="{% translate "请输入上线单名称!" %}"
+                                       placeholder="{% translate "请输入上线单名称，如:XX项目会员功能建表" %}"
                                        required>
                             </div>
                             <div class="form-group">
                                 <input id="demand_url" type="text" autocomplete="off" name="demand_url"
                                        class="form-control"
-                                       data-name="需求链接" data-placeholder="请提供需求链接，记录工单需求信息！"
-                                       placeholder="请输入需求链接">
+                                       data-name="{% translate "需求链接" %}" data-placeholder="{% translate "请提供需求链接，记录工单需求信息！" %}"
+                                       placeholder="{% translate "请输入需求链接" %}">
                             </div>
                             <div class="form-group">
                                 <select id="group_name" name="group_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="组" data-placeholder="请选择组！"
-                                        title="请选择组"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
+                                        data-name="{% translate "组" %}" data-placeholder="{% translate "请选择组！" %}"
+                                        title="{% translate "请选择组" %}"
+                                        data-live-search="true" data-none-results-text="{% translate "没有找到匹配项" %}" data-live-search-placeholder="{% translate "搜索您所在的组" %}" required>
                                     {% for group in group_list %}
                                         <option value="{{ group.group_name }}"
                                                 group-id="{{ group.group_id }}">{{ group.group_name }}</option>
@@ -52,9 +53,9 @@
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="实例" data-placeholder="请选择实例！"
-                                        title="请选择实例"
-                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
+                                        data-name="{% translate "实例" %}" data-placeholder="{% translate "请选择实例！" %}"
+                                        title="{% translate "请选择实例" %}"
+                                        data-live-search="true" data-none-results-text="{% translate "没有找到匹配项" %}" data-live-search-placeholder="{% translate "搜索您所在组的实例" %}" required>
                                 {% for name, engine in engines.items %}
                                     <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
                                 {%  endfor %}
@@ -63,22 +64,22 @@
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-name="数据库" data-placeholder="请选择数据库！"
-                                        data-live-search="true" data-live-search-placeholder="搜索要提交的数据库"
-                                        title="请选择数据库"
+                                        data-name="{% translate "数据库" %}" data-placeholder="{% translate "请选择数据库！" %}"
+                                        data-live-search="true" data-none-results-text="{% translate "没有找到匹配项" %}" data-live-search-placeholder="{% translate "搜索要提交的数据库" %}"
+                                        title="{% translate "请选择数据库" %}"
                                         required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                                    <option value="is-empty" disabled="" selected="selected">{% translate "请选择数据库:" %}</option>
                                 </select>
                             </div>
                             {% if enable_backup_switch %}
                                 <div id="div-backup" class="form-group">
                                     <select id="is_backup" name="is_backup"
                                             class="selectpicker show-tick form-control bs-select-hidden"
-                                            data-name="是否选择备份"
-                                            title="请选择是否需要备份"
-                                            data-placeholder="请选择是否要备份" required>
-                                        <option value=True selected="selected">备份SQL</option>
-                                        <option value=False>不备份SQL</option>
+                                            data-name="{% translate "是否选择备份" %}"
+                                            title="{% translate "请选择是否需要备份" %}"
+                                            data-placeholder="{% translate "请选择是否要备份" %}" required>
+                                        <option value=True selected="selected">{% translate "备份SQL" %}</option>
+                                        <option value=False>{% translate "不备份SQL" %}</option>
                                     </select>
                                 </div>
                             {% endif %}
@@ -88,7 +89,7 @@
                                 <input type="hidden" id="run_date_end" name="run_date_end">
                                 <div class='input-group date'>
                                     <input type="text" id="run_date_range" readonly
-                                           value="请选择可执行时间范围"
+                                           value="{% translate "请选择可执行时间范围" %}"
                                            style="background-color: #fff;color: #999 "
                                            class="form-control "/>
                                     <span class="input-group-addon"><span
@@ -96,25 +97,25 @@
                                 </div>
                             </div>
                             <!--审批流程-->
-                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
-                                   data-placeholder="请配置审批流程！" required>
+                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="{% translate "审批流程" %}"
+                                   data-placeholder="{% translate "请配置审批流程！" %}" required>
                             <div id="div-workflow_auditors" class="form-group" style="display: none">
-                                <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
+                                <p class="bg-primary">&nbsp;&nbsp;&nbsp;{% translate "审批流程：" %}<b id="workflow_auditors_display"></b></p>
                             </div>
                             <!--button-->
                             <div class="form-group">
-                                <button type="button" id="btn-format" class="btn btn-info">美化</button>
-                                <button type="button" id="btn-autoreview" data-loading-text="检测中..."
-                                        class="btn btn-danger">SQL检测
+                                <button type="button" id="btn-format" class="btn btn-info">{% translate "美化" %}</button>
+                                <button type="button" id="btn-autoreview" data-loading-text="{% translate "检测中..." %}"
+                                        class="btn btn-danger">{% translate "SQL检测" %}
                                 </button>
-                                <button type="button" id="btn-submitsql" data-loading-text="提交中..."
+                                <button type="button" id="btn-submitsql" data-loading-text="{% translate "提交中..." %}"
                                         class="btn btn-success disabled" disabled>
-                                    SQL提交
+                                    {% translate "SQL提交" %}
                                 </button>
                             </div>
                             <!--描述信息-->
                             <div class="text-info">
-                                <li id="mongo-hint-info" style="display:none">支持mongo原生命令，例如：<code>db.users.updateOne({ name: "Charlie" }, { $set: { phone: "123456789", status: "active" } });</code></li>
+                                <li id="mongo-hint-info" style="display:none">{% translate "支持mongo原生命令，例如：" %}<code>db.users.updateOne({ name: "Charlie" }, { $set: { phone: "123456789", status: "active" } });</code></li>
                             </div>
                         </div>
                     </form>
@@ -124,7 +125,7 @@
         <div class="col-md-12 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    检测结果
+                    {% translate "检测结果" %}
                 </div>
 
                 <div class="panel-body">
@@ -143,15 +144,16 @@
                 <div class="modal-header ">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">提交信息确认</h4>
+                    <h4 class="modal-title text-danger">{% translate "提交信息确认" %}</h4>
                 </div>
                 <div class="modal-body">
-                    <p>提交的SQL经检测仍存在<font color="red" size="5"><b id="CheckWarningCount"></b></font>个警告信息和<font
-                            color="red" size="5"><b id="CheckErrorCount"></b></font>个错误信息，请按照平台规范仔细检查！<br>
+                    <p>{% blocktranslate %}SQL 检测发现以下问题，请按平台规范仔细检查。{% endblocktranslate %}</p>
+                    <p>{% translate "警告数量" %}: <strong id="CheckWarningCount" class="text-danger"></strong></p>
+                    <p>{% translate "错误数量" %}: <strong id="CheckErrorCount" class="text-danger"></strong></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button id="submitsqlconfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
+                    <button type="button" class="btn btn-info" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button id="submitsqlconfirm" type="button" class="btn btn-danger" data-dismiss="modal">{% translate "确定提交" %}
                     </button>
                 </div>
             </div>
@@ -233,10 +235,10 @@
             startDate: moment().startOf('hour'),
             endDate: moment().startOf('hour'),
             locale: {
-                "applyLabel": "确定",
-                "cancelLabel": "清空",
-                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
-                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "applyLabel": "{% translate "确定"|escapejs %}",
+                "cancelLabel": "{% translate "清空"|escapejs %}",
+                "daysOfWeek": ["{% translate "日"|escapejs %}", "{% translate "一"|escapejs %}", "{% translate "二"|escapejs %}", "{% translate "三"|escapejs %}", "{% translate "四"|escapejs %}", "{% translate "五"|escapejs %}", "{% translate "六"|escapejs %}"],
+                "monthNames": ["{% translate "一月"|escapejs %}", "{% translate "二月"|escapejs %}", "{% translate "三月"|escapejs %}", "{% translate "四月"|escapejs %}", "{% translate "五月"|escapejs %}", "{% translate "六月"|escapejs %}", "{% translate "七月"|escapejs %}", "{% translate "八月"|escapejs %}", "{% translate "九月"|escapejs %}", "{% translate "十月"|escapejs %}", "{% translate "十一月"|escapejs %}", "{% translate "十二月"|escapejs %}"],
                 "firstDay": 1
             },
         }).on('apply.daterangepicker', function (ev, picker) {
@@ -246,7 +248,7 @@
             $(this).val(picker.startDate.format('MM-DD HH:mm') + ' / ' + picker.endDate.format('MM-DD HH:mm'));
         }).on('cancel.daterangepicker', function (ev, picker) {
             $(this).css("color", "#999");
-            $(this).val('请选择可执行时间范围');
+            $(this).val('{% translate "请选择可执行时间范围"|escapejs %}');
             $("#run_date_start").val('');
             $("#run_date_end").val('');
         });
@@ -256,11 +258,11 @@
         //初始化上传控件
         function init_upload() {
             $("#sql-upload").fileinput({
-                language: 'zh',
+                language: '{% if LANGUAGE_CODE == "en" %}en{% else %}zh{% endif %}' ,
                 allowedFileExtensions: ['sql'],//接收的文件后缀
                 showCaption: true,//是否显示标题
-                initialCaption: '仅支持10M内的SQL文件',
-                defaultPreviewContent: '仅支持10M内的SQL文件',
+                initialCaption: '{% translate "仅支持10M内的SQL文件"|escapejs %}',
+                defaultPreviewContent: '{% translate "仅支持10M内的SQL文件"|escapejs %}',
                 showUpload: false,     //不显示上传按钮
                 showPreview: false,    // 不显示预览,
                 //maxFileSize: 10240
@@ -269,7 +271,7 @@
                     loadsql();
                 } else {
                     $('#sql-upload').fileinput('reset');
-                    alert('文件大小超过10M，请重新选择');
+                    alert('{% translate "文件大小超过10M，请重新选择"|escapejs %}');
                 }
             }).on('fileclear', function (event) {
                 editor.setValue("");
@@ -411,7 +413,7 @@
                         return result;
                     }
                     if(fieldId == "workflow_name" && value.length>=50){
-                        alert("上线单名称/工单名称不能超过50个字符！");
+                        alert("{% translate "上线单名称/工单名称不能超过50个字符！"|escapejs %}");
                         result = false;
                         return result;
                     }
@@ -450,7 +452,7 @@
                 if (realGap >= gap) {
                     return true
                 } else {
-                    alert("可执行时间范围不应该短于" + gap + "分钟");
+                    alert("{% translate "可执行时间范围不应该短于"|escapejs %}" + gap + "{% translate "分钟"|escapejs %}");
                     return false
                 }
             }
@@ -468,7 +470,7 @@
         };
         $("#btn-autoreview").click(function () {
             //先做表单验证，成功了提交ajax给后端
-            const sqlTips = "-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n";
+            const sqlTips = $("#sql_content").attr("data-sql-input-hint") + "\n";
             var editorValue=editor.getValue();
             // 删除默认的提示字符串。
             editorValueRemove=removeStartsWith(editorValue,sqlTips);
@@ -539,7 +541,7 @@
                                 field: 'id',
                                 sortable: true
                             }, {
-                                title: 'SQL语句',
+                                title: '{% translate "SQL语句"|escapejs %}',
                                 field: 'sql',
                                 formatter: function (value, row, index) {
                                     var sql = value.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;');
@@ -550,11 +552,11 @@
                                     }
                                 }
                             }, {
-                                title: '扫描/影响行数',
+                                title: '{% translate "扫描/影响行数"|escapejs %}',
                                 field: 'affected_rows',
                                 sortable: true
                             }, {
-                                title: '审核状态',
+                                title: '{% translate "审核状态"|escapejs %}',
                                 field: 'errlevel',
                                 sortable: true,
                                 formatter: function (value, row, index) {
@@ -567,7 +569,7 @@
                                     }
                                 }
                             }, {
-                                title: '审核信息',
+                                title: '{% translate "审核信息"|escapejs %}',
                                 field: 'errormessage',
                                 formatter: function (value, row, index) {
                                     if (value === null) {
@@ -585,6 +587,7 @@
                                 }
                                 return {classes: style}
                             },
+                            locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',
                             escape: true,                       // 转义HTML字符串，替换 &, <, >, ", \`, 和 ' 字符。
                             striped: true,                      //是否显示行间隔色
                             cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）

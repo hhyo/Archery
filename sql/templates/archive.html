@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
@@ -7,24 +8,24 @@
             <div class="form-group">
                 <select id="filter_instance_id" class="form-control selectpicker"
                         data-live-search="true">
-                    <option value="" selected="selected">全部实例</option>
+                    <option value="" selected="selected">{% translate "全部实例" %}</option>
                     {% for ins in ins_list %}
                         <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group">
-                <select id="state" class="form-control selectpicker">
-                    <option value="" selected="selected">启用状态</option>
-                    <option value="true">启用</option>
-                    <option value="false">未启用</option>
+                <select id="archive_state" class="form-control selectpicker">
+                    <option value="" selected="selected">{% translate "启用状态" %}</option>
+                    <option value="true">{% translate "启用" context "archive state" %}</option>
+                    <option value="false">{% translate "未启用" %}</option>
                 </select>
             </div>
             <div class="form-group">
                 <button id="btn_add" type="button" class="btn btn-default"
                         data-toggle="modal" data-target="#apply">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>申请归档
+                    <span aria-hidden="true"></span>{% translate "申请归档" %}
                 </button>
             </div>
             {% if perms.sql.archive_mgt %}
@@ -32,7 +33,7 @@
                     <button id="btn_add_config" type="button" class="btn btn-info"
                             onclick="window.open('/admin/sql/archiveconfig/add/')">
                         <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        <span aria-hidden="true"></span>添加配置
+                        <span aria-hidden="true"></span>{% translate "添加配置" %}
                     </button>
                 </div>
             {% endif %}
@@ -49,19 +50,19 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{% translate "Close" %}"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">申请数据归档</h4>
+                    <h4 class="modal-title" id="myModalLabel">{% translate "申请数据归档" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <input type="text" autocomplete="off" class="form-control" id="title"
-                               placeholder="对归档进行简单描述">
+                               placeholder="{% translate "对归档进行简单描述" %}">
                     </div>
                     <div class="form-group">
                         <select id="group_name" name="group_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                title="请选择组:"
+                                title="{% translate "请选择组:" %}"
                                 data-live-search="true" required>
                             {% for group in group_list %}
                                 <option value="{{ group.group_name }}">{{ group.group_name }}</option>
@@ -71,46 +72,46 @@
                     <div class="form-group">
                         <select id="src_instance_name" name="src_instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择源实例:"
-                                data-placeholder="请选择实例:" required>
+                                title="{% translate "请选择源实例:" %}"
+                                data-placeholder="{% translate "请选择实例:" %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="src_db_name" name="src_db_name"
                                 class="form-control selectpicker show-tick bs-select-hidden"
-                                title="请选择源数据库:"
-                                data-live-search="true" data-placeholder="请选择数据库:" required>
+                                title="{% translate "请选择源数据库:" %}"
+                                data-live-search="true" data-placeholder="{% translate "请选择数据库:" %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="src_table_name" name="src_table_name"
                                 class="form-control selectpicker show-tick bs-select-hidden"
                                 data-live-search="true"
-                                data-name="请选择需要归档的表:"
-                                title="请选择需要归档的表:"
-                                data-placeholder="请选择需要归档的表:" required>
+                                data-name="{% translate "请选择需要归档的表:" %}"
+                                title="{% translate "请选择需要归档的表:" %}"
+                                data-placeholder="{% translate "请选择需要归档的表:" %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="mode" name="mode"
                                 class="form-control selectpicker show-tick bs-select-hidden"
-                                data-name="请选择归档模式:"
-                                title="请选择归档模式:"
-                                data-placeholder="请选择归档模式:" required>
-                            <option value='file'>归档到文件</option>
-                            <option value='dest'>归档到其他实例</option>
-                            <option value='purge'>直接删除</option>
+                                data-name="{% translate "请选择归档模式:" %}"
+                                title="{% translate "请选择归档模式:" %}"
+                                data-placeholder="{% translate "请选择归档模式:" %}" required>
+                            <option value='file'>{% translate "归档到文件" %}</option>
+                            <option value='dest'>{% translate "归档到其他实例" %}</option>
+                            <option value='purge'>{% translate "直接删除" %}</option>
                         </select>
                     </div>
                     <div class="form-group" id="no_delete-div" style="display: none">
                         <div class="form-group">
                             <select id="no_delete" name="no_delete"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    title="归档后是否保留源数据:"
-                                    data-placeholder="归档后是否保留源数据:" required>
-                                <option value='' disabled>归档后是否保留源数据</option>
-                                <option value='true' selected>保留</option>
-                                <option value='false'>删除</option>
+                                    title="{% translate "归档后是否保留源数据:" %}"
+                                    data-placeholder="{% translate "归档后是否保留源数据:" %}" required>
+                                <option value='' disabled>{% translate "归档后是否保留源数据" %}</option>
+                                <option value='true' selected>{% translate "保留" %}</option>
+                                <option value='false'>{% translate "删除" %}</option>
                             </select>
                         </div>
                     </div>
@@ -118,44 +119,44 @@
                         <div class="form-group">
                             <select id="dest_instance_name" name="dest_instance_name"
                                     class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                    title="请选择目标实例:"
-                                    data-placeholder="请选择目标实例:" required>
+                                    title="{% translate "请选择目标实例:" %}"
+                                    data-placeholder="{% translate "请选择目标实例:" %}" required>
                             </select>
                         </div>
                         <div class="form-group">
                             <select id="dest_db_name" name="dest_db_name"
                                     class="form-control selectpicker show-tick bs-select-hidden"
-                                    title="请选择目标数据库:"
-                                    data-live-search="true" data-placeholder="请选择对应数据库:" required>
+                                    title="{% translate "请选择目标数据库:" %}"
+                                    data-live-search="true" data-placeholder="{% translate "请选择对应数据库:" %}" required>
                             </select>
                         </div>
                         <div class="form-group">
                             <select id="dest_table_name" name="dest_table_name"
                                     class="form-control selectpicker show-tick bs-select-hidden"
                                     data-live-search="true"
-                                    data-name="请选择目标表:"
-                                    title="请选择目标表:"
-                                    data-placeholder="请选择需目标表:" required>
+                                    data-name="{% translate "请选择目标表:" %}"
+                                    title="{% translate "请选择目标表:" %}"
+                                    data-placeholder="{% translate "请选择需目标表:" %}" required>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
                         <textarea id="condition" name="condition" class="form-control"
-                                  placeholder="请输入归档条件，就是SQL语句的WHERE条件"></textarea>
+                                  placeholder="{% translate "请输入归档条件，就是SQL语句的WHERE条件" %}"></textarea>
                     </div>
                     <div class="form-group">
                         <input type="number" autocomplete="off" name="sleep" class="form-control" id="sleep"
-                               placeholder="归档10000行记录后的休眠秒数">
+                               placeholder="{% translate "归档10000行记录后的休眠秒数" %}">
                     </div>
                     <!--审批流程-->
                     <div id="div-workflow_auditors" class="form-group" style="display: none">
-                        <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors"></b></p>
+                        <p class="bg-primary">&nbsp&nbsp&nbsp{% translate "审批流程：" %}<b id="workflow_auditors"></b></p>
                     </div>
-                    <p class="text-info">提示：源表和目标表结构必须保持一致，否则将会归档失败</p>
+                    <p class="text-info">{% translate "提示：源表和目标表结构必须保持一致，否则将会归档失败" %}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-success" onclick="archive_apply()">提交申请</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-success" onclick="archive_apply()">{% translate "提交申请" %}</button>
                 </div>
             </div>
         </div>
@@ -165,9 +166,9 @@
         <div class="modal-dialog">
             <div class="modal-content message_align">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{% translate "Close" %}"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">工单日志</h4>
+                    <h4 class="modal-title text-danger">{% translate "工单日志" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
@@ -184,6 +185,15 @@
 {% endblock content %}
 
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
+    <script>
+        function archiveLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
+    </script>
     <!--group -->
     <script>
         // 获取实例信息和审批流程
@@ -217,7 +227,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    archiveLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
             $.ajax({
@@ -241,7 +251,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    archiveLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
@@ -253,7 +263,7 @@
             archive_apply_list();
         });
         //筛选变动自动刷新
-        $("#state").change(function () {
+        $("#archive_state").change(function () {
             archive_apply_list();
         });
 
@@ -290,14 +300,14 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
                 queryParams:
                     function (params) {
                         return {
                             filter_instance_id: $("#filter_instance_id").val(),
-                            state: $("#state").val(),
+                            state: $("#archive_state").val(),
                             limit: params.limit,
                             offset: params.offset,
                             search: params.search
@@ -307,7 +317,7 @@
                     title: 'ID',
                     field: 'id'
                 }, {
-                    title: '工单名称',
+                    title: '{% translate "工单名称"|escapejs %}',
                     field: 'title',
                     formatter: function (value, row, index) {
                         var span = document.createElement('span');
@@ -322,71 +332,75 @@
                         return span.outerHTML;
                     }
                 }, {
-                    title: '实例',
+                    title: '{% translate "实例"|escapejs %}',
                     field: 'src_instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: '{% translate "数据库"|escapejs %}',
                     field: 'src_db_name'
                 }, {
-                    title: '表',
+                    title: '{% translate "表"|escapejs %}',
                     field: 'src_table_name'
                 }, {
-                    title: '归档模式',
-                    field: 'mode'
+                    title: '{% translate "归档模式"|escapejs %}',
+                    field: 'mode',
+                    formatter: function (value) {
+                        const labels = {
+                            file: '{% translate "归档到文件"|escapejs %}',
+                            dest: '{% translate "归档到其他实例"|escapejs %}',
+                            purge: '{% translate "直接删除"|escapejs %}'
+                        };
+                        return labels[value] || value;
+                    }
                 }, {
-                    title: '源数据',
+                    title: '{% translate "源数据"|escapejs %}',
                     field: 'no_delete',
                     formatter: function (value, row, index) {
                         if (String(value) === 'true') {
-                            return '保留'
+                            return '{% translate "保留"|escapejs %}'
                         } else {
-                            return '删除'
+                            return '{% translate "删除"|escapejs %}'
                         }
                     }
                 }, {
-                    title: '休眠(秒)',
+                    title: '{% translate "休眠(秒)"|escapejs %}',
                     field: 'sleep'
                 }, {
-                    title: '启用状态',
+                    title: '{% translate "启用状态"|escapejs %}',
                     field: 'state',
                     formatter: function (value, row, index) {
                         if (String(value) === 'true') {
-                            return "<span class=\"label label-success\">" + '启用' + "</span>"
+                            return "<span class=\"label label-success\">" + '{% translate "启用"|escapejs context "archive state" %}' + "</span>"
                         } else {
-                            return "<span class=\"label label-danger\">" + '关闭' + "</span>"
+                            return "<span class=\"label label-danger\">" + '{% translate "关闭"|escapejs context "archive state" %}' + "</span>"
                         }
                     }
                 }, {
-                    title: '工单状态',
+                    title: '{% translate "工单状态"|escapejs %}',
                     field: 'status',
                     formatter: function (value, row, index) {
                         return workflow_status_formatter(value)
                     },
                     visible: false // 默认不显示
                 }, {
-                    title: '申请人',
+                    title: '{% translate "申请人"|escapejs %}',
                     field: 'user_display'
                 }, {
-                    title: '申请时间',
+                    title: '{% translate "申请时间"|escapejs %}',
                     field: 'create_time'
                 }, {
-                    title: '组',
+                    title: '{% translate "组"|escapejs %}',
                     field: 'resource_group__group_name',
                     visible: false // 默认不显示
                 }, {
-                    title: '操作',
+                    title: '{% translate "操作"|escapejs %}',
                     field: 'operation',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >{% translate "操作日志"|escapejs %}\n" + "</button>"
                     }
                 }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: onLoadErrorCallback,
-                onSearch: function (e) {
-                    //传搜索参数给服务器
-                    queryParams(e)
-                },
+                onLoadError: archiveLoadError,
                 responseHandler: function (res) {
                     //在ajax获取到数据，渲染表格之前，修改数据源
                     return res;
@@ -423,7 +437,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    archiveLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
@@ -454,7 +468,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    archiveLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
@@ -487,7 +501,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    archiveLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
@@ -518,7 +532,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    archiveLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
@@ -576,12 +590,23 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    archiveLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         }
 
         // 获取操作日志
+        function archiveLogAction(value) {
+            const labels = {
+                '提交': '{% translate "提交"|escapejs %}',
+                '审核通过': '{% translate "审核通过"|escapejs %}',
+                '审核不通过': '{% translate "审核不通过"|escapejs %}',
+                '审核取消': '{% translate "审核取消"|escapejs %}',
+                '审批不通过': '{% translate "审核不通过"|escapejs %}',
+                '审批取消': '{% translate "审核取消"|escapejs %}'
+            };
+            return Object.prototype.hasOwnProperty.call(labels, value) ? labels[value] : value;
+        }
         function getLog(obj) {
             var workflow_id = $(obj).attr("workflow_id");
             var workflow_type = 3;
@@ -619,28 +644,29 @@
                         showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
                         cardView: false,                    //是否显示详细视图
                         detailView: false,                  //是否显示父子表
-                        locale: 'zh-CN',                    //本地化
+                        locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                         data: data.rows,
                         columns: [{
-                            title: '操作',
-                            field: 'operation_type_desc'
+                            title: '{% translate "操作"|escapejs %}',
+                            field: 'operation_type_desc',
+                            formatter: archiveLogAction
                         }, {
-                            title: '操作人',
+                            title: '{% translate "操作人"|escapejs %}',
                             field: 'operator_display'
                         }, {
-                            title: '操作时间',
+                            title: '{% translate "操作时间"|escapejs %}',
                             field: 'operation_time'
                         }, {
-                            title: '操作信息',
+                            title: '{% translate "操作信息"|escapejs %}',
                             field: 'operation_info'
                         }],
                         onLoadSuccess: function () {
                         },
-                        onLoadError: onLoadErrorCallback,
+                        onLoadError: archiveLoadError,
                     });
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    archiveLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             })
         }

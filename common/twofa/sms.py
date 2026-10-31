@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from common.utils.aliyun_sms import AliyunSMS
 from django_redis import get_redis_connection
 from django.db import transaction
@@ -42,17 +43,17 @@ class SMS(TwoFactorAuthBase):
                 if self.client:
                     result = self.client.send_code(**kwargs)
                 else:
-                    result = {"status": 1, "msg": "系统未配置短信服务商！"}
+                    result = {"status": 1, "msg": _("系统未配置短信服务商！")}
             else:
                 result["status"] = 1
-                result["msg"] = (
-                    f"获取验证码太频繁，请于{captcha['update_time'] - int(time.time()) + 60}秒后再试"
-                )
+                result["msg"] = _("获取验证码太频繁，请于%(seconds)s秒后再试") % {
+                    "seconds": captcha["update_time"] - int(time.time()) + 60
+                }
         else:
             if self.client:
                 result = self.client.send_code(**kwargs)
             else:
-                result = {"status": 1, "msg": "系统未配置短信服务商！"}
+                result = {"status": 1, "msg": _("系统未配置短信服务商！")}
         return result
 
     def verify(self, otp, phone=None):
@@ -67,12 +68,12 @@ class SMS(TwoFactorAuthBase):
         data = r.get(f"captcha-{phone}")
         if not data:
             result["status"] = 1
-            result["msg"] = "未获取验证码或验证码已过期！"
+            result["msg"] = _("未获取验证码或验证码已过期！")
         else:
             captcha = json.loads(data.decode("utf8"))
             if otp != captcha["otp"]:
                 result["status"] = 1
-                result["msg"] = "验证码不正确！"
+                result["msg"] = _("验证码不正确！")
         return result
 
     def save(self, phone):

@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _, pgettext_lazy
 from rest_framework import serializers
 from sql.models import (
     Users,
@@ -97,16 +98,23 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
 
 
 class UserAuthSerializer(serializers.Serializer):
-    engineer = serializers.CharField(label="用户名")
-    password = serializers.CharField(label="密码")
+    engineer = serializers.CharField(label=pgettext_lazy("API form", "用户名"))
+    password = serializers.CharField(label=pgettext_lazy("API form", "密码"))
 
 
 class TwoFASerializer(serializers.Serializer):
-    engineer = serializers.CharField(label="用户名")
-    enable = serializers.ChoiceField(choices=["true", "false"], label="启用or禁用")
-    phone = serializers.CharField(required=False, label="手机号码")
+    engineer = serializers.CharField(label=pgettext_lazy("API form", "用户名"))
+    enable = serializers.ChoiceField(
+        choices=["true", "false"], label=pgettext_lazy("API form", "启用or禁用")
+    )
+    phone = serializers.CharField(
+        required=False, label=pgettext_lazy("API form", "手机号码")
+    )
     auth_type = serializers.ChoiceField(
-        choices=["totp", "sms"], label="验证类型：totp-Google身份验证器，sms-短信验证码"
+        choices=["totp", "sms"],
+        label=pgettext_lazy(
+            "API form", "验证类型：totp-Google身份验证器，sms-短信验证码"
+        ),
     )
 
     def validate(self, attrs):
@@ -117,17 +125,17 @@ class TwoFASerializer(serializers.Serializer):
         try:
             Users.objects.get(username=engineer)
         except Users.DoesNotExist:
-            raise serializers.ValidationError({"errors": "不存在该用户"})
+            raise serializers.ValidationError({"errors": _("不存在该用户")})
 
         if auth_type == "sms" and enable == "true":
             if not attrs.get("phone"):
-                raise serializers.ValidationError({"errors": "缺少 phone"})
+                raise serializers.ValidationError({"errors": _("缺少 phone")})
 
         return attrs
 
 
 class TwoFAStateSerializer(serializers.Serializer):
-    engineer = serializers.CharField(label="用户名")
+    engineer = serializers.CharField(label=pgettext_lazy("API form", "用户名"))
 
     def validate(self, attrs):
         engineer = attrs.get("engineer")
@@ -135,18 +143,22 @@ class TwoFAStateSerializer(serializers.Serializer):
         try:
             Users.objects.get(username=engineer)
         except Users.DoesNotExist:
-            raise serializers.ValidationError({"errors": "不存在该用户"})
+            raise serializers.ValidationError({"errors": _("不存在该用户")})
 
         return attrs
 
 
 class TwoFASaveSerializer(serializers.Serializer):
-    engineer = serializers.CharField(label="用户名")
-    key = serializers.CharField(required=False, label="密钥")
-    phone = serializers.CharField(required=False, label="手机号码")
+    engineer = serializers.CharField(label=pgettext_lazy("API form", "用户名"))
+    key = serializers.CharField(required=False, label=pgettext_lazy("API form", "密钥"))
+    phone = serializers.CharField(
+        required=False, label=pgettext_lazy("API form", "手机号码")
+    )
     auth_type = serializers.ChoiceField(
         choices=["disabled", "totp", "sms"],
-        label="验证类型：disabled-关闭，totp-Google身份验证器，sms-短信验证码",
+        label=pgettext_lazy(
+            "API form", "验证类型：disabled-关闭，totp-Google身份验证器，sms-短信验证码"
+        ),
     )
 
     def validate(self, attrs):
@@ -157,26 +169,28 @@ class TwoFASaveSerializer(serializers.Serializer):
 
         if auth_type == "sms":
             if not phone:
-                raise serializers.ValidationError({"errors": "缺少 phone"})
+                raise serializers.ValidationError({"errors": _("缺少 phone")})
 
         if auth_type == "totp":
             if not key:
-                raise serializers.ValidationError({"errors": "缺少 key"})
+                raise serializers.ValidationError({"errors": _("缺少 key")})
 
         try:
             Users.objects.get(username=engineer)
         except Users.DoesNotExist:
-            raise serializers.ValidationError({"errors": "不存在该用户"})
+            raise serializers.ValidationError({"errors": _("不存在该用户")})
 
         return attrs
 
 
 class TwoFAVerifySerializer(serializers.Serializer):
-    engineer = serializers.CharField(label="用户名")
-    otp = serializers.IntegerField(label="一次性密码/验证码")
-    key = serializers.CharField(required=False, label="密钥")
-    phone = serializers.CharField(required=False, label="手机号码")
-    auth_type = serializers.CharField(label="验证方式")
+    engineer = serializers.CharField(label=pgettext_lazy("API form", "用户名"))
+    otp = serializers.IntegerField(label=pgettext_lazy("API form", "一次性密码/验证码"))
+    key = serializers.CharField(required=False, label=pgettext_lazy("API form", "密钥"))
+    phone = serializers.CharField(
+        required=False, label=pgettext_lazy("API form", "手机号码")
+    )
+    auth_type = serializers.CharField(label=pgettext_lazy("API form", "验证方式"))
 
     def validate(self, attrs):
         engineer = attrs.get("engineer")
@@ -184,12 +198,12 @@ class TwoFAVerifySerializer(serializers.Serializer):
 
         if auth_type == "sms":
             if not attrs.get("phone"):
-                raise serializers.ValidationError({"errors": "缺少 phone"})
+                raise serializers.ValidationError({"errors": _("缺少 phone")})
 
         try:
             Users.objects.get(username=engineer)
         except Users.DoesNotExist:
-            raise serializers.ValidationError({"errors": "不存在该用户"})
+            raise serializers.ValidationError({"errors": _("不存在该用户")})
 
         return attrs
 
@@ -269,14 +283,20 @@ class ArchiveConfigSerializer(serializers.ModelSerializer):
 
 
 class InstanceResourceSerializer(serializers.Serializer):
-    instance_id = serializers.IntegerField(label="实例id")
+    instance_id = serializers.IntegerField(label=pgettext_lazy("API form", "实例id"))
     resource_type = serializers.ChoiceField(
         choices=["database", "schema", "table", "column", "server_info"],
-        label="资源类型",
+        label=pgettext_lazy("API form", "资源类型"),
     )
-    db_name = serializers.CharField(required=False, label="数据库名")
-    schema_name = serializers.CharField(required=False, label="schema名")
-    tb_name = serializers.CharField(required=False, label="表名")
+    db_name = serializers.CharField(
+        required=False, label=pgettext_lazy("API form", "数据库名")
+    )
+    schema_name = serializers.CharField(
+        required=False, label=pgettext_lazy("API form", "schema名")
+    )
+    tb_name = serializers.CharField(
+        required=False, label=pgettext_lazy("API form", "表名")
+    )
 
     def validate(self, attrs):
         instance_id = attrs.get("instance_id")
@@ -284,7 +304,7 @@ class InstanceResourceSerializer(serializers.Serializer):
         try:
             Instance.objects.get(id=instance_id)
         except Instance.DoesNotExist:
-            raise serializers.ValidationError({"errors": "不存在该实例"})
+            raise serializers.ValidationError({"errors": _("不存在该实例")})
 
         return attrs
 
@@ -295,7 +315,9 @@ class InstanceResourceListSerializer(serializers.Serializer):
 
 
 class TableInstanceLookupSerializer(serializers.Serializer):
-    table_name = serializers.CharField(label="表名", max_length=256)
+    table_name = serializers.CharField(
+        label=pgettext_lazy("API form", "表名"), max_length=256
+    )
 
 
 class TableInstanceSerializer(serializers.Serializer):
@@ -351,15 +373,15 @@ class SqlQueryResourceQuerySerializer(serializers.Serializer):
     def validate(self, attrs):
         if not attrs.get("instance_id") and not attrs.get("instance_name"):
             raise serializers.ValidationError(
-                "instance_id 或 instance_name 必须提供一个"
+                _("instance_id 或 instance_name 必须提供一个")
             )
         resource_type = attrs.get("resource_type")
         if resource_type in ("table", "schema") and not attrs.get("db_name"):
-            raise serializers.ValidationError("db_name 不能为空")
+            raise serializers.ValidationError(_("db_name 不能为空"))
         if resource_type == "column" and (
             not attrs.get("db_name") or not attrs.get("tb_name")
         ):
-            raise serializers.ValidationError("column 查询需提供 db_name 和 tb_name")
+            raise serializers.ValidationError(_("column 查询需提供 db_name 和 tb_name"))
         return attrs
 
 
@@ -402,16 +424,16 @@ class SqlQueryFavoriteSerializer(serializers.Serializer):
 
 
 class ExecuteCheckSerializer(serializers.Serializer):
-    instance_id = serializers.IntegerField(label="实例id")
-    db_name = serializers.CharField(label="数据库名")
-    full_sql = serializers.CharField(label="SQL内容")
+    instance_id = serializers.IntegerField(label=pgettext_lazy("API form", "实例id"))
+    db_name = serializers.CharField(label=pgettext_lazy("API form", "数据库名"))
+    full_sql = serializers.CharField(label=pgettext_lazy("API form", "SQL内容"))
 
     def validate_instance_id(self, instance_id):
         try:
             Instance.objects.get(pk=instance_id)
         except Instance.DoesNotExist:
             raise serializers.ValidationError(
-                {"errors": f"不存在该实例：{instance_id}"}
+                {"errors": _("不存在该实例：%(id)s") % {"id": instance_id}}
             )
         return instance_id
 
@@ -447,7 +469,9 @@ class WorkflowSerializer(serializers.ModelSerializer):
         try:
             ResourceGroup.objects.get(pk=group_id)
         except ResourceGroup.DoesNotExist:
-            raise serializers.ValidationError({"errors": f"不存在该资源组：{group_id}"})
+            raise serializers.ValidationError(
+                {"errors": _("不存在该资源组：%(id)s") % {"id": group_id}}
+            )
         return group_id
 
     class Meta:
@@ -525,7 +549,9 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             try:
                 user = Users.objects.get(username=engineer)
             except Users.DoesNotExist:
-                raise serializers.ValidationError({"errors": f"不存在用户：{engineer}"})
+                raise serializers.ValidationError(
+                    {"errors": _("不存在用户：%(username)s") % {"username": engineer}}
+                )
         # 提交人只能是自己
         else:
             user = self.context["request"].user
@@ -537,7 +563,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         try:
             user_instances(user, tag_codes=tag_codes).get(id=instance.id)
         except instance.DoesNotExist:
-            raise serializers.ValidationError({"errors": "你所在组未关联该实例！"})
+            raise serializers.ValidationError({"errors": _("你所在组未关联该实例！")})
 
         # 再次交给engine进行检测，防止绕过
         try:
@@ -554,7 +580,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         except Exception:
             logger.exception("提交工单检测失败")
             raise serializers.ValidationError(
-                {"errors": "提交工单检测失败，请联系管理员"}
+                {"errors": _("提交工单检测失败，请联系管理员")}
             )
 
         # 未开启备份选项，并且engine支持备份，强制设置备份
@@ -591,7 +617,9 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
                 auditor.create_audit()
         except Exception:
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
-            raise serializers.ValidationError({"errors": "提交工单失败，请联系管理员"})
+            raise serializers.ValidationError(
+                {"errors": _("提交工单失败，请联系管理员")}
+            )
         # 有时候提交后自动审批通过, 在这里改写一下 workflow 状态
         if auditor.audit.current_status == WorkflowStatus.REJECTED:
             auditor.workflow.status = "workflow_autoreviewwrong"
@@ -614,14 +642,18 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
 
 
 class AuditWorkflowSerializer(serializers.Serializer):
-    engineer = serializers.CharField(label="操作用户")
-    workflow_id = serializers.IntegerField(label="工单id")
-    audit_remark = serializers.CharField(label="审批备注")
+    engineer = serializers.CharField(label=pgettext_lazy("API form", "操作用户"))
+    workflow_id = serializers.IntegerField(label=pgettext_lazy("API form", "工单id"))
+    audit_remark = serializers.CharField(label=pgettext_lazy("API form", "审批备注"))
     workflow_type = serializers.ChoiceField(
         choices=WorkflowType.choices,
-        label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请",
+        label=pgettext_lazy(
+            "API form", "工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
+        ),
     )
-    audit_type = serializers.ChoiceField(choices=["pass", "cancel"], label="审核类型")
+    audit_type = serializers.ChoiceField(
+        choices=["pass", "cancel"], label=pgettext_lazy("API form", "审核类型")
+    )
 
     def validate(self, attrs):
         engineer = attrs.get("engineer")
@@ -631,26 +663,30 @@ class AuditWorkflowSerializer(serializers.Serializer):
         try:
             Users.objects.get(username=engineer)
         except Users.DoesNotExist:
-            raise serializers.ValidationError({"errors": f"不存在该用户：{engineer}"})
+            raise serializers.ValidationError(
+                {"errors": _("不存在该用户：%(username)s") % {"username": engineer}}
+            )
 
         try:
             WorkflowAudit.objects.get(
                 workflow_id=workflow_id, workflow_type=workflow_type
             )
         except WorkflowAudit.DoesNotExist:
-            raise serializers.ValidationError({"errors": "不存在该工单"})
+            raise serializers.ValidationError({"errors": _("不存在该工单")})
 
         return attrs
 
 
 class WorkflowAuditSerializer(serializers.Serializer):
-    engineer = serializers.CharField(label="操作用户")
+    engineer = serializers.CharField(label=pgettext_lazy("API form", "操作用户"))
 
     def validate_engineer(self, engineer):
         try:
             Users.objects.get(username=engineer)
         except Users.DoesNotExist:
-            raise serializers.ValidationError({"errors": f"不存在该用户：{engineer}"})
+            raise serializers.ValidationError(
+                {"errors": _("不存在该用户：%(username)s") % {"username": engineer}}
+            )
         return engineer
 
 
@@ -668,10 +704,12 @@ class WorkflowAuditListSerializer(serializers.ModelSerializer):
 
 
 class WorkflowLogSerializer(serializers.Serializer):
-    workflow_id = serializers.IntegerField(label="工单id")
+    workflow_id = serializers.IntegerField(label=pgettext_lazy("API form", "工单id"))
     workflow_type = serializers.ChoiceField(
         choices=[1, 2, 3],
-        label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请",
+        label=pgettext_lazy(
+            "API form", "工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
+        ),
     )
 
     def validate(self, attrs):
@@ -683,7 +721,7 @@ class WorkflowLogSerializer(serializers.Serializer):
                 workflow_id=workflow_id, workflow_type=workflow_type
             )
         except WorkflowAudit.DoesNotExist:
-            raise serializers.ValidationError({"errors": "不存在该工单"})
+            raise serializers.ValidationError({"errors": _("不存在该工单")})
 
         return attrs
 
@@ -734,14 +772,19 @@ class WorkflowLogListResponseSerializer(serializers.Serializer):
 
 
 class ExecuteWorkflowSerializer(serializers.Serializer):
-    engineer = serializers.CharField(required=False, label="操作用户")
-    workflow_id = serializers.IntegerField(label="工单id")
+    engineer = serializers.CharField(
+        required=False, label=pgettext_lazy("API form", "操作用户")
+    )
+    workflow_id = serializers.IntegerField(label=pgettext_lazy("API form", "工单id"))
     workflow_type = serializers.ChoiceField(
-        choices=[2, 3], label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
+        choices=[2, 3],
+        label=pgettext_lazy(
+            "API form", "工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
+        ),
     )
     mode = serializers.ChoiceField(
         choices=["auto", "manual"],
-        label="执行模式：auto-线上执行，manual-已手动执行",
+        label=pgettext_lazy("API form", "执行模式：auto-线上执行，manual-已手动执行"),
         required=False,
     )
 
@@ -754,15 +797,15 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
         # SQL上线工单的mode和engineer为必需字段
         if workflow_type == 2:
             if not mode:
-                raise serializers.ValidationError({"errors": "缺少 mode"})
+                raise serializers.ValidationError({"errors": _("缺少 mode")})
             if not engineer:
-                raise serializers.ValidationError({"errors": "缺少 engineer"})
+                raise serializers.ValidationError({"errors": _("缺少 engineer")})
 
             try:
                 Users.objects.get(username=engineer)
             except Users.DoesNotExist:
                 raise serializers.ValidationError(
-                    {"errors": f"不存在该用户：{engineer}"}
+                    {"errors": _("不存在该用户：%(username)s") % {"username": engineer}}
                 )
 
         try:
@@ -770,7 +813,7 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
                 workflow_id=workflow_id, workflow_type=workflow_type
             )
         except WorkflowAudit.DoesNotExist:
-            raise serializers.ValidationError({"errors": "不存在该工单"})
+            raise serializers.ValidationError({"errors": _("不存在该工单")})
 
         return attrs
 
