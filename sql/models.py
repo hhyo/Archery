@@ -7,7 +7,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from mirage import fields
 from django.utils.translation import (
-    gettext as _,
     gettext_lazy as _lazy,
     pgettext_lazy as _p_lazy,
 )
@@ -333,15 +332,15 @@ class Instance(models.Model, PasswordMixin):
 
 
 SQL_WORKFLOW_CHOICES = (
-    ("workflow_finish", _("workflow_finish")),
-    ("workflow_abort", _("workflow_abort")),
-    ("workflow_manreviewing", _("workflow_manreviewing")),
-    ("workflow_review_pass", _("workflow_review_pass")),
-    ("workflow_timingtask", _("workflow_timingtask")),
-    ("workflow_queuing", _("workflow_queuing")),
-    ("workflow_executing", _("workflow_executing")),
-    ("workflow_autoreviewwrong", _("workflow_autoreviewwrong")),
-    ("workflow_exception", _("workflow_exception")),
+    ("workflow_finish", _lazy("workflow_finish")),
+    ("workflow_abort", _lazy("workflow_abort")),
+    ("workflow_manreviewing", _lazy("workflow_manreviewing")),
+    ("workflow_review_pass", _lazy("workflow_review_pass")),
+    ("workflow_timingtask", _lazy("workflow_timingtask")),
+    ("workflow_queuing", _lazy("workflow_queuing")),
+    ("workflow_executing", _lazy("workflow_executing")),
+    ("workflow_autoreviewwrong", _lazy("workflow_autoreviewwrong")),
+    ("workflow_exception", _lazy("workflow_exception")),
 )
 
 
