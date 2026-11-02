@@ -1,28 +1,29 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="sqladvisor-toolbar" class="btn-group right" style="display:none;">
-        <button id=sqladvisor class="btn btn-default" style="" type="button">获取优化建议</button>
+        <button id=sqladvisor class="btn btn-default" style="" type="button">{% translate "获取优化建议" %}</button>
     </div>
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
         <li id="slowsql_tab" class="active">
-            <a href="#slowsql" role="tab" data-toggle="tab">慢日志统计</a>
+            <a href="#slowsql" role="tab" data-toggle="tab">{% translate "慢日志统计" %}</a>
         </li>
         <li id="slowsqlinfo_tab">
-            <a href="#slowsqlinfo" role="tab" data-toggle="tab">慢日志明细</a>
+            <a href="#slowsqlinfo" role="tab" data-toggle="tab">{% translate "慢日志明细" %}</a>
         </li>
         <div class="form-inline pull-right">
             <div class="form-group">
                 <select id=instance_name class="form-control selectpicker" name="instances"
-                        title="请选择实例:"
+                        title="{% translate '请选择实例:' %}"
                         data-live-search="true">
                 </select>
             </div>
             <div class="form-group">
                 <select id=db_name class="form-control selectpicker" name="db_name_list"
-                        title="请选择数据库:"
+                        title="{% translate '请选择数据库:' %}"
                         data-live-search="true">
                 </select>
             </div>
@@ -52,6 +53,7 @@
 {% endblock content %}
 
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
     {% load static %}
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
@@ -62,6 +64,12 @@
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <!-- 选择框和切换控件 -->
     <script>
+        function slowQueryLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         // 初始化时间控件
         $(function () {
             let start = moment().startOf('day');
@@ -78,22 +86,22 @@
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
                     // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    applyLabel: "{% translate "确定"|escapejs %}",
+                    cancelLabel: "{% translate "取消"|escapejs %}",
+                    fromLabel: "{% translate "开始"|escapejs %}",
+                    toLabel: "{% translate "结束"|escapejs %}",
+                    customRangeLabel: "{% translate "自定义"|escapejs %}",
+                    daysOfWeek: ["{% translate "日"|escapejs %}", "{% translate "一"|escapejs %}", "{% translate "二"|escapejs %}", "{% translate "三"|escapejs %}", "{% translate "四"|escapejs %}", "{% translate "五"|escapejs %}", "{% translate "六"|escapejs %}"],
+                    monthNames: ["{% translate "一月"|escapejs %}", "{% translate "二月"|escapejs %}", "{% translate "三月"|escapejs %}", "{% translate "四月"|escapejs %}", "{% translate "五月"|escapejs %}", "{% translate "六月"|escapejs %}", "{% translate "七月"|escapejs %}", "{% translate "八月"|escapejs %}", "{% translate "九月"|escapejs %}", "{% translate "十月"|escapejs %}", "{% translate "十一月"|escapejs %}", "{% translate "十二月"|escapejs %}"],
                     firstDay: 1
                 },
                 ranges: {
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    "{% translate "今日"|escapejs %}": [moment().startOf('day'), moment()],
+                    "{% translate "昨日"|escapejs %}": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    "{% translate "最近7日"|escapejs %}": [moment().subtract('days', 6), moment()],
+                    "{% translate "最近30日"|escapejs %}": [moment().subtract('days', 29), moment()],
+                    "{% translate "本月"|escapejs %}": [moment().startOf("month"), moment().endOf("month")],
+                    "{% translate "上个月"|escapejs %}": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 sessionStorage.removeItem('SQLId');
@@ -163,7 +171,7 @@
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#db_name").append(name);
                         }
-                        $("#db_name").prepend("<option value=\"\" selected=\"selected\">全部数据库</option>");
+                        $("#db_name").prepend("<option value=\"\" selected=\"selected\">{% translate "全部数据库" %}</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                     } else {
@@ -279,7 +287,7 @@
                     sessionStorage.setItem('advisor_instance_name', advisor_instance_name);
                     location.href = '/slowquery_advisor/';
                 } else {
-                    alert("请先选择需要优化的sql")
+                    alert("{% translate "请先选择需要优化的sql"|escapejs %}")
                 }
             });
         });
@@ -296,11 +304,11 @@
                 var is_gaussdb = db_type === 'gaussdb';
                 var sortName = is_redis ? "TotalExecutionCounts" : "MySQLTotalExecutionCounts";
                 var columns = is_redis ? [{
-                        title: '日志统计时间',
+                        title: '{% translate "日志统计时间"|escapejs %}',
                         field: 'CreateTime',
                         sortable:true
                     }, {
-                        title: '命令模板',
+                        title: '{% translate "命令模板"|escapejs %}',
                         field: 'SQLText',
                         cellStyle:
                             function formatTableUnit(value, row, index) {
@@ -321,35 +329,35 @@
                             }
                         }
                     }, {
-                        title: '完整命令',
+                        title: '{% translate "完整命令"|escapejs %}',
                         field: 'SQLText',
                         visible: false
                     }, {
-                        title: '执行总次数',
+                        title: '{% translate "执行总次数"|escapejs %}',
                         field: 'TotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '执行总时长(秒)',
+                        title: '{% translate "执行总时长(秒)"|escapejs %}',
                         field: 'TotalExecutionTimes',
                         sortable:true
                     }, {
-                        title: '平均执行时长(微秒)',
+                        title: '{% translate "平均执行时长(微秒)"|escapejs %}',
                         field: 'QueryTimeAvg',
                         sortable:true
                     }, {
-                        title: '95%耗时(微秒)',
+                        title: '{% translate "95%耗时(微秒)"|escapejs %}',
                         field: 'DurationPct95',
                         sortable:true
                     }] : [{
-                        title: '日志统计时间',
+                        title: '{% translate "日志统计时间"|escapejs %}',
                         field: 'CreateTime',
                         sortable:true
                     }, {
-                        title: '数据库名',
+                        title: '{% translate "数据库名"|escapejs %}',
                         field: 'DBName',
                         sortable:true
                     }, {
-                        title: 'SQL语句',
+                        title: '{% translate "SQL语句"|escapejs %}',
                         field: 'SQLText',
                         cellStyle:
                             function formatTableUnit(value, row, index) {
@@ -370,35 +378,35 @@
                             }
                         }
                     }, {
-                        title: '完整SQL语句',
+                        title: '{% translate "完整SQL语句"|escapejs %}',
                         field: 'SQLText',
                         visible: false
                     }, {
-                        title: '执行总次数',
+                        title: '{% translate "执行总次数"|escapejs %}',
                         field: 'MySQLTotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '执行总时长(秒)',
+                        title: '{% translate "执行总时长(秒)"|escapejs %}',
                         field: 'MySQLTotalExecutionTimes',
                         sortable:true
                     }, {
-                        title: '平均执行时长(秒)',
+                        title: '{% translate "平均执行时长(秒)"|escapejs %}',
                         field: 'QueryTimeAvg',
                         sortable:true
                     }, {
-                        title: '扫描总行数',
+                        title: '{% translate "扫描总行数"|escapejs %}',
                         field: 'ParseTotalRowCounts',
                         sortable:true
                     }, {
-                        title: '返回总行数',
+                        title: '{% translate "返回总行数"|escapejs %}',
                         field: 'ReturnTotalRowCounts',
                         sortable:true
                     }, {
-                        title: '平均扫描行数',
+                        title: '{% translate "平均扫描行数"|escapejs %}',
                         field: 'ParseRowAvg',
                         sortable:true
                     }, {
-                        title: '平均返回行数',
+                        title: '{% translate "平均返回行数"|escapejs %}',
                         field: 'ReturnRowAvg',
                         sortable:true
                     }];
@@ -494,8 +502,8 @@
                         return html.join('');
                     },
                     columns: columns,
-                    locale: 'zh-CN',
-                    onLoadError: onLoadErrorCallback,
+                    locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',
+                    onLoadError: slowQueryLoadError,
                     onSearch: function(e) {
                     },
                     responseHandler: function(res) {
@@ -504,7 +512,7 @@
                     }
                 });
             } else {
-                alert('请选择实例')
+                alert('{% translate "请选择实例"|escapejs %}')
             }
         }
 
@@ -522,15 +530,15 @@
             if (instance_name) {
                 var sortName = is_redis ? "TotalExecutionCounts" : "ParseRowCounts";
                 var columns = is_redis ? [{
-                        title: '执行开始时间',
+                        title: '{% translate "执行开始时间"|escapejs %}',
                         field: 'ExecutionStartTime',
                         sortable:true
                     }, {
-                        title: 'Redis节点',
+                        title: '{% translate "Redis节点"|escapejs %}',
                         field: 'HostName',
                         sortable:true
                     }, {
-                        title: '命令',
+                        title: '{% translate "命令"|escapejs %}',
                         field: 'SQLText',
                         formatter: function (value, row, index) {
                             if (value.length > 100) {
@@ -541,19 +549,19 @@
                             }
                         }
                     }, {
-                        title: '完整命令',
+                        title: '{% translate "完整命令"|escapejs %}',
                         field: 'SQLText',
                         visible: false
                     }, {
-                        title: '执行次数',
+                        title: '{% translate "执行次数"|escapejs %}',
                         field: 'TotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '95%耗时(微秒)',
+                        title: '{% translate "95%耗时(微秒)"|escapejs %}',
                         field: 'QueryTimePct95',
                         sortable:true
                     }, {
-                        title: '总耗时(秒)',
+                        title: '{% translate "总耗时(秒)"|escapejs %}',
                         field: 'QueryTimes',
                         sortable:true
                     }] : [{
@@ -561,19 +569,19 @@
                         field: 'checkbox',
                         checkbox: true
                     }, {
-                        title: '执行开始时间',
+                        title: '{% translate "执行开始时间"|escapejs %}',
                         field: 'ExecutionStartTime',
                         sortable:true
                     }, {
-                        title: '数据库名',
+                        title: '{% translate "数据库名"|escapejs %}',
                         field: 'DBName',
                         sortable:true
                     }, {
-                        title: '用户名',
+                        title: '{% translate "用户名"|escapejs %}',
                         field: 'HostAddress',
                         sortable:true
                     }, {
-                        title: 'SQL语句',
+                        title: '{% translate "SQL语句"|escapejs %}',
                         field: 'SQLText',
                         formatter: function (value, row, index) {
                             if (value.length > 100) {
@@ -584,31 +592,31 @@
                             }
                         }
                     }, {
-                        title: '完整SQL语句',
+                        title: '{% translate "完整SQL语句"|escapejs %}',
                         field: 'SQLText',
                         visible: false
                     }, {
-                        title: '执行总次数',
+                        title: '{% translate "执行总次数"|escapejs %}',
                         field: 'TotalExecutionCounts',
                         sortable:true
                     }, {
-                        title: '执行时长(95%)',
+                        title: '{% translate "执行时长(95%)"|escapejs %}',
                         field: 'QueryTimePct95',
                         sortable:true
                     }, {
-                        title: '执行总时长(秒)',
+                        title: '{% translate "执行总时长(秒)"|escapejs %}',
                         field: 'QueryTimes',
                         sortable:true
                     }, {
-                        title: '锁定总时长(秒)',
+                        title: '{% translate "锁定总时长(秒)"|escapejs %}',
                         field: 'LockTimes',
                         sortable:true
                     }, {
-                        title: '解析总行数',
+                        title: '{% translate "解析总行数"|escapejs %}',
                         field: 'ParseRowCounts',
                         sortable:true
                     }, {
-                        title: '返回总行数',
+                        title: '{% translate "返回总行数"|escapejs %}',
                         field: 'ReturnRowCounts',
                         sortable:true
                     }];
@@ -684,18 +692,16 @@
                     columns: columns,
                     singleSelect: !is_redis,
                     toolbar: is_redis ? undefined : "#sqladvisor-toolbar",
-                    locale: 'zh-CN',
-                    onLoadError: onLoadErrorCallback,
-                    onSearch: function (e) {
-                        queryParams(e)
-                    },onSort: function(sortName,order){
+                    locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',
+                    onLoadError: slowQueryLoadError,
+onSort: function(sortName,order){
                     },
                     responseHandler: function (res) {
                         return res;
                     }
                 });
             } else {
-                alert("请选择实例")
+                alert("{% translate "请选择实例"|escapejs %}")
             }
         }
     </script>

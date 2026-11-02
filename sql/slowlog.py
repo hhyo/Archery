@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import permission_required
 from django.db.models import F, Sum, Value as V, Max
 from django.db.models.functions import Concat
 from django.http import HttpResponse
+from django.utils.translation import gettext as _
 from django.views.decorators.cache import cache_page
 from pyecharts.charts import Line
 from pyecharts import options as opts
@@ -43,7 +44,7 @@ def slowquery_review(request):
     try:
         instance_info = Instance.objects.get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "实例不存在", "data": []}
+        result = {"status": 1, "msg": _("实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 服务端权限校验
     try:
@@ -51,7 +52,7 @@ def slowquery_review(request):
             instance_name=instance_name
         )
     except Exception:
-        result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
+        result = {"status": 1, "msg": _("你所在组未关联该实例"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     if instance_info.db_type == "redis":
@@ -201,7 +202,7 @@ def slowquery_review_history(request):
     try:
         instance_info = Instance.objects.get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {"status": 1, "msg": "实例不存在", "data": []}
+        result = {"status": 1, "msg": _("实例不存在"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 服务端权限校验
     try:
@@ -209,7 +210,7 @@ def slowquery_review_history(request):
             instance_name=instance_name
         )
     except Exception:
-        result = {"status": 1, "msg": "你所在组未关联该实例", "data": []}
+        result = {"status": 1, "msg": _("你所在组未关联该实例"), "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     if instance_info.db_type == "redis":
@@ -385,24 +386,24 @@ def report(request):
     line = Line(init_opts=opts.InitOpts(width="800", height="380px"))
     line.add_xaxis(cnt_x_data)
     line.add_yaxis(
-        "慢查次数",
+        _("慢查次数"),
         cnt_y_data,
         is_smooth=True,
         markline_opts=opts.MarkLineOpts(
             data=[
-                opts.MarkLineItem(type_="max", name="最大值"),
-                opts.MarkLineItem(type_="average", name="平均值"),
+                opts.MarkLineItem(type_="max", name=_("最大值")),
+                opts.MarkLineItem(type_="average", name=_("平均值")),
             ]
         ),
     )
-    line.add_yaxis("慢查时长(95%)", pct_y_data, is_smooth=True, is_symbol_show=False)
+    line.add_yaxis(_("慢查时长(95%)"), pct_y_data, is_smooth=True, is_symbol_show=False)
     line.set_series_opts(
         areastyle_opts=opts.AreaStyleOpts(
             opacity=0.5,
         )
     )
     line.set_global_opts(
-        title_opts=opts.TitleOpts(title="SQL历史趋势"),
+        title_opts=opts.TitleOpts(title=_("SQL历史趋势")),
         legend_opts=opts.LegendOpts(selected_mode="single"),
         xaxis_opts=opts.AxisOpts(
             axistick_opts=opts.AxisTickOpts(is_align_with_label=True),

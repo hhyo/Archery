@@ -6,6 +6,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from django.http import HttpResponse, JsonResponse
+from django.utils.translation import gettext as _
 from sql.utils.instance_management import (
     SUPPORTED_MANAGEMENT_DB_TYPE,
     get_instanceaccount_unique_value,
@@ -30,7 +31,7 @@ def users(request):
             request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
         ).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     # 获取已录入用户
     cnf_users = dict()
@@ -82,7 +83,7 @@ def create(request):
             request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
         ).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     if (
         instance.db_type == "mysql" and not all([user, host, password1, password2])
@@ -90,11 +91,11 @@ def create(request):
         instance.db_type == "mongo" and not all([db_name, user, password1, password2])
     ):
         return JsonResponse(
-            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+            {"status": 1, "msg": _("参数不完整，请确认后提交"), "data": []}
         )
 
     if password1 != password2:
-        return JsonResponse({"status": 1, "msg": "两次输入密码不一致", "data": []})
+        return JsonResponse({"status": 1, "msg": _("两次输入密码不一致"), "data": []})
 
     # TODO 目前使用系统自带验证，后续实现验证器校验
     try:
@@ -134,13 +135,13 @@ def edit(request):
             request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
         ).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     if (instance.db_type == "mysql" and not all([user, host])) or (
         instance.db_type == "mongo" and not all([db_name, user])
     ):
         return JsonResponse(
-            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+            {"status": 1, "msg": _("参数不完整，请确认后提交"), "data": []}
         )
 
     # 保存到数据库
@@ -174,7 +175,7 @@ def grant(request):
             request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
         ).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     engine = get_engine(instance=instance)
     if instance.db_type == "mysql":
@@ -184,7 +185,7 @@ def grant(request):
         try:
             privs = json.loads(request.POST.get("privs"))
         except Exception:
-            return JsonResponse({"status": 1, "msg": "权限参数不合法", "data": []})
+            return JsonResponse({"status": 1, "msg": _("权限参数不合法"), "data": []})
         db_name = request.POST.getlist("db_name[]") or request.POST.get("db_name")
         tb_name = request.POST.getlist("tb_name[]") or request.POST.get("tb_name")
         col_name = request.POST.getlist("col_name[]")
@@ -235,7 +236,7 @@ def reset_pwd(request):
             request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
         ).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     if (
         instance.db_type == "mysql" and not all([user, host, reset_pwd1, reset_pwd2])
@@ -243,11 +244,11 @@ def reset_pwd(request):
         instance.db_type == "mongo" and not all([db_name, user, reset_pwd1, reset_pwd2])
     ):
         return JsonResponse(
-            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+            {"status": 1, "msg": _("参数不完整，请确认后提交"), "data": []}
         )
 
     if reset_pwd1 != reset_pwd2:
-        return JsonResponse({"status": 1, "msg": "两次输入密码不一致", "data": []})
+        return JsonResponse({"status": 1, "msg": _("两次输入密码不一致"), "data": []})
 
     # TODO 目前使用系统自带验证，后续实现验证器校验
     try:
@@ -287,13 +288,13 @@ def lock(request):
 
     if not all([user_host]):
         return JsonResponse(
-            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+            {"status": 1, "msg": _("参数不完整，请确认后提交"), "data": []}
         )
 
     try:
         instance = user_instances(request.user, db_type=["mysql"]).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     engine = get_engine(instance=instance)
     exec_result = engine.set_instance_user_lock(
@@ -319,13 +320,13 @@ def delete(request):
             request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
         ).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
+        return JsonResponse({"status": 1, "msg": _("你所在组未关联该实例"), "data": []})
 
     if (instance.db_type == "mysql" and not all([user_host])) or (
         instance.db_type == "mongo" and not all([db_name_user])
     ):
         return JsonResponse(
-            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+            {"status": 1, "msg": _("参数不完整，请确认后提交"), "data": []}
         )
 
     engine = get_engine(instance=instance)

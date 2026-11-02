@@ -1,18 +1,19 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="type" class="form-control selectpicker">
-                <option value="" selected="selected">实例类型</option>
+                <option value="" selected="selected">{% translate "实例类型" %}</option>
                 <option value="master">MASTER</option>
                 <option value="slave">SLAVE</option>
             </select>
         </div>
         <div class="form-group">
             <select id="db_type" class="form-control selectpicker">
-                <option value="" selected="selected">数据库类型</option>
+                <option value="" selected="selected">{% translate "数据库类型" %}</option>
                 {% for name, engine in engines.items %}
                     <option value="{{ name }}">{{ engine.name }}</option>
                 {%  endfor %}
@@ -20,7 +21,7 @@
         </div>
         <div class="form-group">
             <select id="tags" class="form-control selectpicker" data-live-search="true"
-                    multiple data-selected-text-format="count > 2" data-none-selected-text="标签筛选">
+                    multiple data-selected-text-format="count > 2" data-none-selected-text="{% translate '标签筛选' %}">
                 {% for tag in tags %}
                     <option value="{{ tag.id }}">{{ tag.tag_name }}</option>
                 {% endfor %}
@@ -30,7 +31,7 @@
             <button id="btn_add_master" type="button" class="btn btn-default"
                     onclick="window.open('/admin/sql/instance/add/')">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加实例
+                {% translate "添加实例" %}
             </button>
         </div>
     </div>
@@ -47,7 +48,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">清理Binlog日志</h4>
+                    <h4 class="modal-title" id="myModalLabel">{% translate "清理Binlog日志" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -58,21 +59,28 @@
                                 class="form-control selectpicker show-tick bs-select-hidden ">
                         </select>
                     </div>
-                    <p class="text-danger">提示：该binlog前的所有binlog都会被删除！</p>
+                    <p class="text-danger">{% translate "提示：该binlog前的所有binlog都会被删除！" %}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" id="cleanLogBtn">清理</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-danger" id="cleanLogBtn">{% translate "清理" %}</button>
                 </div>
             </div>
         </div>
     </div>
 {% endblock content %}
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
     {% load static %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        function instanceLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         //获取列表
         function instancelist() {
             //采取异步请求
@@ -106,7 +114,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -129,17 +137,17 @@
                         field: 'id',
                         sortable: true
                     }, {
-                        title: '实例名称',
+                        title: '{% translate "实例名称"|escapejs %}',
                         field: 'instance_name',
                         sortable: true,
                         formatter: function (value, row, index) {
                             return "<a target=\"_blank\" href=\"/admin/sql/instance/" + row.id + "/change/\">" + value + "</a>"
                         }
                     }, {
-                        title: '实例类型',
+                        title: '{% translate "实例类型"|escapejs %}',
                         field: 'type'
                     }, {
-                        title: '数据库类型',
+                        title: '{% translate "数据库类型"|escapejs %}',
                         field: 'db_type',
                         sortable: true
                     }, {
@@ -153,25 +161,21 @@
                         title: 'USER',
                         field: 'user'
                     }, {
-                        title: '操作',
+                        title: '{% translate "操作"|escapejs %}',
                         field: '',
                         formatter: function (value, row, index) {
                             var btn_del_binLog = '';
                             var btn_user_manger = '';
                             if (row.db_type === 'mysql') {
-                                btn_del_binLog = "<button class=\"btn btn-danger btn-xs\" instance_id=\"" + row.id + "\" + instance_name=\"" + row.instance_name + "\"+ onclick=\"del_binLog(this)" + "\">Binlog清理</button>\n"
+                                btn_del_binLog = "<button class=\"btn btn-danger btn-xs\" instance_id=\"" + row.id + "\" + instance_name=\"" + row.instance_name + "\"+ onclick=\"del_binLog(this)" + "\">{% translate "Binlog清理"|escapejs %}</button>\n"
                             }
-                            var btn_test = "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">测试</button>\n";
+                            var btn_test = "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">{% translate "测试"|escapejs %}</button>\n";
                             return btn_user_manger + btn_del_binLog + btn_test
                         }
                     }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: onLoadErrorCallback,
-                onSearch: function (e) {
-                    //传搜索参数给服务器
-                    queryParams(e)
-                }
+                onLoadError: instanceLoadError
             });
 
         }
@@ -189,7 +193,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('连接成功')
+                        alert('{% translate "连接成功"|escapejs %}')
                     } else {
                         alert(data.msg);
                     }
@@ -220,7 +224,7 @@
                             var _html = "<option value='" + result[i]['Log_name'] + "'>" + result[i]['Log_name'] + " Size:" + result[i]['File_size'] + "</option>";
                             $("#binlog").append(_html);
                         }
-                        $("#binlog").prepend('<option value="is-empty" disabled="" selected="selected">请选择Binlog:</option>');
+                        $("#binlog").prepend('<option value="is-empty" disabled="" selected="selected">{% translate "请选择Binlog:"|escapejs %}</option>');
                         $('#binlog').selectpicker('render');
                         $('#binlog').selectpicker('refresh');
                     } else {

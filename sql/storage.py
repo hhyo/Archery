@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 import logging
 from django.core.files.storage import FileSystemStorage
 from storages.backends.s3boto3 import S3Boto3Storage
@@ -74,7 +75,10 @@ class DynamicStorage:
         init_func = storage_backends.get(self.storage_type)
         if init_func:
             return init_func()
-        raise ValueError(f"不支持的存储类型: {self.storage_type}")
+        raise ValueError(
+            _("不支持的存储类型: %(storage_type)s")
+            % {"storage_type": self.storage_type}
+        )
 
     def _init_local_storage(self):
         # 基础参数
@@ -174,7 +178,7 @@ class DynamicStorage:
         """测试存储连接是否有效，返回 (状态, 错误信息)"""
         # 本地存储默认连接有效，无需测试
         if self.storage_type == "local":
-            return True, "本地存储连接成功"
+            return True, _("本地存储连接成功")
 
         connection_checks = {
             "sftp": self._check_sftp_connection,
@@ -187,31 +191,33 @@ class DynamicStorage:
             return check_func()
 
         # 不支持的存储类型
-        return False, f"不支持的存储类型: {self.storage_type}"
+        return False, _("不支持的存储类型: %(storage_type)s") % {
+            "storage_type": self.storage_type
+        }
 
     def _check_sftp_connection(self):
         """检查 SFTP 连接"""
         try:
             with self.storage as s:
                 s.listdir(".")
-            return True, "SFTP 连接成功"
+            return True, _("SFTP 连接成功")
         except Exception as e:
-            return False, f"SFTP 连接失败: {str(e)}"
+            return False, _("SFTP 连接失败: %(error)s") % {"error": str(e)}
 
     def _check_s3c_connection(self):
         """检查 S3 兼容存储连接"""
         try:
             client = self.storage.connection.meta.client
             client.head_bucket(Bucket=self.storage.bucket_name)
-            return True, "S3 存储连接成功"
+            return True, _("S3 存储连接成功")
         except Exception as e:
-            return False, f"S3 存储连接失败: {str(e)}"
+            return False, _("S3 存储连接失败: %(error)s") % {"error": str(e)}
 
     def _check_azure_connection(self):
         """检查 Azure Blob 存储连接"""
         try:
             container_client = self.storage.client
             container_client.get_container_properties()
-            return True, "Azure Blob 存储连接成功"
+            return True, _("Azure Blob 存储连接成功")
         except Exception as e:
-            return False, f"Azure Blob 存储连接失败: {str(e)}"
+            return False, _("Azure Blob 存储连接失败: %(error)s") % {"error": str(e)}

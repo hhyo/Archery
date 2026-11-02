@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from django.db import transaction
 from django.http import HttpResponse
 from qrcode import QRCode, constants
@@ -30,7 +31,7 @@ class TOTP(TwoFactorAuthBase):
         t = pyotp.TOTP(secret_key)
         status = t.verify(otp)
         result["status"] = 0 if status else 1
-        result["msg"] = "ok" if status else "验证码不正确！"
+        result["msg"] = "ok" if status else _("验证码不正确！")
         return result
 
     def generate_key(self):

@@ -1,16 +1,17 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <h4 style="display: inline;">待办列表<span>{{ workflow_detail.workflow_name }}</span></h4>
+    <h4 style="display: inline;">{% translate "待办列表" context "remaining pages" %}<span>{{ workflow_detail.workflow_name }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <hr>
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="bootstrap-select">
         <select id="workflow_type" class="form-control dropdown-menu-right selectpicker ">
-            <option value="0" selected="selected">全部</option>
-            <option value="1">查询权限申请</option>
-            <option value="2">SQL上线申请</option>
-            <option value="3">数据归档申请</option>
+            <option value="0" selected="selected">{% translate "全部" context "remaining pages" %}</option>
+            <option value="1">{% translate "查询权限申请" context "remaining pages" %}</option>
+            <option value="2">{% translate "SQL上线申请" context "remaining pages" %}</option>
+            <option value="3">{% translate "数据归档申请" context "remaining pages" %}</option>
         </select>
     </div>
     <!-- 审核列表的表格-->
@@ -26,18 +27,18 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">审核确认</h4>
+                    <h4 class="modal-title text-danger">{% translate "审核确认" context "remaining pages" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <input type="hidden" id="audit_id">
-                        <textarea id="audit_remark" class="form-control" placeholder="请输入审核备注" rows=4
+                        <textarea id="audit_remark" class="form-control" placeholder="{% translate "请输入审核备注" context "remaining pages" %}" rows=4
                                   required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" id="reject" onclick="audit(0)" class="btn btn-danger">拒绝</button>
-                    <button type="button" id="pass" onclick="audit(1)" class="btn btn-success">审核通过</button>
+                    <button type="button" id="reject" onclick="audit(0)" class="btn btn-danger">{% translate "拒绝" context "remaining pages" %}</button>
+                    <button type="button" id="pass" onclick="audit(1)" class="btn btn-success">{% translate "审核通过" context "remaining pages" %}</button>
                 </div>
             </div>
         </div>
@@ -74,7 +75,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -88,40 +89,40 @@
                         }
                     },
                 columns: [{
-                    title: '申请标题',
+                    title: '{% translate "申请标题" context "remaining pages" %}',
                     field: 'workflow_title',
                     formatter: function (value, row, index) {
                         return "<a href='/workflow/" + row.audit_id + "/'>" + value + "</a>";
                     }
                 }, {
-                    title: '组',
+                    title: '{% translate "组" context "remaining pages" %}',
                     field: 'group_name'
                 }, {
-                    title: '申请类型',
+                    title: '{% translate "申请类型" context "remaining pages" %}',
                     field: 'workflow_type',
                     formatter: function (value, row, index) {
                         return workflow_type_formatter(value)
                     }
                 }, {
-                    title: '申请人',
+                    title: '{% translate "申请人" context "remaining pages" %}',
                     field: 'create_user_display'
                 }, {
-                    title: '申请时间',
+                    title: '{% translate "申请时间" context "remaining pages" %}',
                     field: 'create_time'
                 }, {
-                    title: '审核状态',
+                    title: '{% translate "审核状态" context "remaining pages" %}',
                     field: 'current_status',
                     formatter: function (value, row, index) {
                         return workflow_status_formatter(value)
                     }
                 }, {
-                    title: '操作',
+                    title: '{% translate "操作" context "remaining pages" %}',
                     field: 'id',
                     formatter: function (value, row, index) {
                         // 当前审核人
                         return "<button class=\"btn btn-default btn-xs\" " +
                             "onclick=\"javascrtpt:window.location.href='/workflow/" + row.audit_id + "/'\">" +
-                            "审核</button>\n"
+                            "{% translate "审核" context "remaining pages" %}</button>\n"
 
                     }
                 }],
@@ -152,7 +153,7 @@
             var audit_status = auditstatus;
 
             if (audit_status == 0 && audit_remark == '') {
-                alert('请填写审核备注')
+                alert('{% translate "请填写审核备注" context "remaining pages" %}')
             }
             else {
                 $('button[type=button]').addClass('disabled');

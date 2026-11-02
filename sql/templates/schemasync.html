@@ -1,44 +1,49 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    操作选项
+                    {% translate "操作选项" context "schemasync" %}
                 </div>
                 <div class="panel-body">
                     <div class="form-group">
+                        <label for="instance_name">{% translate "源实例" %}</label>
                         <select id="instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择源实例:"
-                                data-placeholder="请选择实例:" required>
+                                title="{% translate "请选择源实例:" %}"
+                                data-placeholder="{% translate "请选择实例:" %}" required>
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="db_name">{% translate "源数据库" %}</label>
                         <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
-                                title="请选择源数据库:"
-                                data-live-search="true" data-placeholder="请选择数据库:" required>
-                            <option value="all">全部</option>
+                                title="{% translate "请选择源数据库:" %}"
+                                data-live-search="true" data-placeholder="{% translate "请选择数据库:" %}" required>
+                            <option value="all">{% translate "全部" context "schemasync" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="target_instance_name">{% translate "目标实例" %}</label>
                         <select id="target_instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择目标实例:"
-                                data-placeholder="请选择目标实例:" required>
+                                title="{% translate "请选择目标实例:" %}"
+                                data-placeholder="{% translate "请选择目标实例:" %}" required>
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="target_db_name">{% translate "目标数据库" %}</label>
                         <select id="target_db_name" name="db_name"
                                 class="form-control selectpicker show-tick bs-select-hidden"
-                                title="请选择目标数据库:"
-                                data-live-search="true" data-placeholder="请选择对应数据库:" required>
-                            <option value="all">全部</option>
+                                title="{% translate "请选择目标数据库:" %}"
+                                data-live-search="true" data-placeholder="{% translate "请选择对应数据库:" %}" required>
+                            <option value="all">{% translate "全部" context "schemasync" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">DIFF选项：</h5>
+                        <h5 class="control-label text-bold">{% translate "DIFF选项：" context "schemasync" %}</h5>
                         <div class="form-group">
                             <div class="checkbox">
                                 <label>
@@ -55,7 +60,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <input id="btn-SchemaSync" type="button" class="btn btn-danger" value="Schema对比"
+                        <input id="btn-SchemaSync" type="button" class="btn btn-danger" value="{% translate "Schema对比" %}"
                                onclick="schemasync()"/>
                     </div>
                 </div>
@@ -64,14 +69,27 @@
         <div class="col-md-9 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL语句
+                    {% translate "SQL语句" context "schemasync" %}
                 </div>
                 <div class="panel-body">
                     <h5 class="control-label text-bold" style="color: red">
-                        <b>页面仅展示单库对比结果，生成的SQL文件会保存到项目downloads目录</b></h5>
+                        <b>{% translate "页面仅展示单库对比结果，生成的SQL文件会保存到项目downloads目录" %}</b></h5>
                     <br>
-                    <div id="schemadiff-result" style="display:none;" class="row clearfix">
-                        <div id="schemadiff-result-col" class="col-md-12"></div>
+                    <div id="schemadiff-result" class="row clearfix">
+                        <div id="schemadiff-result-col" class="col-md-12">
+                            <table class="table schema-comparison-result">
+                                <thead><tr><th>{% translate "差异日志" context "schemasync" %}</th></tr></thead>
+                                <tbody><tr><td><pre id="schema-diff-output" style="white-space:pre-wrap;overflow-wrap:anywhere;">{% translate "尚无对比结果" %}</pre></td></tr></tbody>
+                            </table>
+                            <table class="table schema-comparison-result">
+                                <thead><tr><th>{% translate "变更SQL" context "schemasync" %}</th></tr></thead>
+                                <tbody><tr><td><pre id="schema-patch-output" style="white-space:pre-wrap;overflow-wrap:anywhere;">{% translate "尚无对比结果" %}</pre></td></tr></tbody>
+                            </table>
+                            <table class="table schema-comparison-result">
+                                <thead><tr><th>{% translate "回滚SQL" context "schemasync" %}</th></tr></thead>
+                                <tbody><tr><td><pre id="schema-revert-output" style="white-space:pre-wrap;overflow-wrap:anywhere;">{% translate "尚无对比结果" %}</pre></td></tr></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -112,7 +130,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    schemaSyncLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
@@ -138,7 +156,7 @@
                             var name = "<option>" + result[i] + "</option>";
                             $("#db_name").append(name);
                         }
-                        $("#db_name").prepend("<option value=\"all\">全部</option>");
+                        $("#db_name").prepend("<option value=\"all\">{% translate "全部"|escapejs context "schemasync" %}</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                     } else {
@@ -146,7 +164,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    schemaSyncLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
@@ -172,7 +190,7 @@
                             var name = "<option>" + result[i] + "</option>";
                             $("#target_db_name").append(name);
                         }
-                        $("#target_db_name").prepend("<option value=\"all\">全部</option>");
+                        $("#target_db_name").prepend("<option value=\"all\">{% translate "全部"|escapejs context "schemasync" %}</option>");
                         $('#target_db_name').selectpicker('render');
                         $('#target_db_name').selectpicker('refresh');
                     } else {
@@ -180,10 +198,25 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    schemaSyncLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
+    </script>
+    <script>
+        function renderSchemaSyncResults(result) {
+            const emptyOutput = '{% translate "无输出"|escapejs %}';
+            $('#schema-diff-output').text(result.diff_stdout || emptyOutput);
+            $('#schema-patch-output').text(result.patch_stdout || emptyOutput);
+            $('#schema-revert-output').text(result.revert_stdout || emptyOutput);
+            $('#schemadiff-result').show();
+        }
+        function schemaSyncLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
     </script>
     <!-- 执行对比 -->
     <script>
@@ -196,7 +229,7 @@
                 $('#btn-SchemaSync').addClass('disabled');
                 $('#btn-SchemaSync').prop('disabled', true);
                 $("#schemadiff-result").hide();
-                alert('请耐心等待对比结果，可在对应目录获取生成的SQL文件');
+                alert('{% translate "请耐心等待对比结果，可在对应目录获取生成的SQL文件"|escapejs %}');
                 $.ajax({
                     type: "post",
                     url: "/instance/schemasync/",
@@ -216,47 +249,17 @@
                     success: function (data) {
                         var result = data.data;
                         if (data.status === 0) {
-                            var diff_stdout = result['diff_stdout'].replace(/\n/g, '<br>');
-                            var patch_stdout = result['patch_stdout'].replace(/\n/g, '<br>');
-                            var revert_stdout = result['revert_stdout'].replace(/\n/g, '<br>');
-                            alertStyle = "alert-success";
-                            finalHtml = "<table class='table' width='100%' style='table-layout:fixed;'> " +
-                                "<thead><tr><th>DIFFLOG</th></tr></thead>" +
-                                "</table>";
-                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
-                                "<table class='' width='100%' style='table-layout:fixed;'> " +
-                                "<tbody><tr>" +
-                                "<td>" + diff_stdout + "</td>" +
-                                "</tr> </tbody></table> </div>";
-                            finalHtml += "<table class='table' width='100%' style='table-layout:fixed;'> " +
-                                "<thead><tr><th>PATCHSQL</th></tr></thead>" +
-                                "</table>";
-                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
-                                "<table class='' width='100%' style='table-layout:fixed;'> " +
-                                "<tbody><tr>" +
-                                "<td>" + patch_stdout + "</td>" +
-                                "</tr> </tbody></table> </div>";
-                            finalHtml += "<table class='table' width='100%' style='table-layout:fixed;'> " +
-                                "<thead><tr><th>REVERTSQL</th></tr></thead>" +
-                                "</table>";
-                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
-                                "<table class='' width='100%' style='table-layout:fixed;'> " +
-                                "<tbody><tr>" +
-                                "<td>" + revert_stdout + "</td>" +
-                                "</tr> </tbody></table> </div>";
-                            $("#schemadiff-result-col").html(finalHtml);
-                            //填充内容后展现出来
-                            $("#schemadiff-result").show();
+                            renderSchemaSyncResults(result);
                         } else {
                             alert(data.msg);
                         }
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
-                        alert(errorThrown);
+                        schemaSyncLoadError(XMLHttpRequest.status, XMLHttpRequest);
                     }
                 });
             } else {
-                alert('请选择完整！')
+                alert('{% translate "请选择完整！"|escapejs %}')
             }
         }
     </script>

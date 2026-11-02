@@ -1,10 +1,10 @@
 var onLoadErrorCallback = function (status, jqXHR) {
     if (status === 403) {
-        alert("权限错误，您没有权限查看该数据！");
+        alert(gettext("权限错误，您没有权限查看该数据！"));
     } else if (jqXHR.statusText === "abort" || jqXHR.statusText === "canceled"){
         return 0
     } else {
-        alert("未知错误，请联系管理员处理！");
+        alert(gettext("未知错误，请联系管理员处理！"));
     }
 };
 
@@ -70,18 +70,18 @@ let countdown = 60, clock, btn_captcha;
 function init_countdown(obj) {
     btn_captcha = obj;
     btn_captcha.disabled = true;
-    btn_captcha.innerText = countdown + ' 秒后重试';
+    btn_captcha.innerText = interpolate(gettext('%s 秒后重试'), [countdown]);
     clock = setInterval(countdown_loop, 1000);
 }
 
 function countdown_loop() {
     countdown--;
     if(countdown > 0){
-        btn_captcha.innerText = countdown + ' 秒后重试';
+        btn_captcha.innerText = interpolate(gettext('%s 秒后重试'), [countdown]);
     } else {
         clearInterval(clock);
         btn_captcha.disabled = false;
-        btn_captcha.innerText = '获取验证码';
+        btn_captcha.innerText = gettext('获取验证码');
         countdown = 60;
     }
 }

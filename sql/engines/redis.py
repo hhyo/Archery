@@ -12,6 +12,7 @@ import shlex
 
 import redis
 from redis.cluster import RedisCluster
+from django.utils.translation import gettext as _
 import logging
 import traceback
 
@@ -352,7 +353,7 @@ class RedisEngine(EngineBase):
                     break
 
         if result["bad_query"]:
-            result["msg"] = "禁止执行该命令！"
+            result["msg"] = _("禁止执行该命令！")
         return result
 
     def processlist(self, command_type, **kwargs):

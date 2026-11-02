@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from django.utils.translation import gettext as _
 
 import datetime
 
@@ -67,7 +68,7 @@ def update_favorite(user, query_log_id, star, alias):
         query_set = query_set.filter(username=user.username)
 
     if not query_set.exists():
-        return {"status": 1, "msg": "查询记录不存在或无权限"}
+        return {"status": 1, "msg": _("查询记录不存在或无权限")}
 
     query_set.update(favorite=star, alias=alias)
     return {"status": 0, "msg": "ok"}

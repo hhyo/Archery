@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import permission_required
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
+from django.utils.translation import gettext as _
 from django.shortcuts import render
 from django_q.tasks import async_task
 
@@ -84,9 +85,9 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
                 ):
                     # 没有库表查询权限时的staus为2
                     result["status"] = 2
-                    result["msg"] = (
-                        f"你无{table['schema']}.{table['name']}表的查询权限！请先到查询权限管理进行申请"
-                    )
+                    result["msg"] = _(
+                        "你无%(database)s.%(table)s表的查询权限！请先到查询权限管理进行申请"
+                    ) % {"database": table["schema"], "table": table["name"]}
                     return result
             # 获取查询涉及库/表权限的最小limit限制，和前端传参作对比，取最小值
             for table in table_ref:
@@ -100,7 +101,9 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
                 f"无法校验查询语句权限，{instance.instance_name}，{sql_content}，{traceback.format_exc()}"
             )
             result["status"] = 1
-            result["msg"] = f"无法校验查询语句权限，请联系管理员，错误信息：{msg}"
+            result["msg"] = _(
+                "无法校验查询语句权限，请联系管理员，错误信息：%(error)s"
+            ) % {"error": msg}
     # 其他类型实例仅校验库权限
     else:
         # 先获取查询语句涉及的库，redis、mssql、pgsql/gaussdb特殊处理，仅校验当前选择的库
@@ -122,9 +125,9 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             if not _db_priv(user, instance, db_name):
                 # 没有库表查询权限时的staus为2
                 result["status"] = 2
-                result["msg"] = (
-                    f"你无{db_name}数据库的查询权限！请先到查询权限管理进行申请"
-                )
+                result["msg"] = _(
+                    "你无%(database)s数据库的查询权限！请先到查询权限管理进行申请"
+                ) % {"database": db_name}
                 return result
         # 有所有库权限则获取最小limit值
         for db_name in dbs:
@@ -228,7 +231,7 @@ def query_priv_apply(request):
     if int(priv_type) == 1:
         if not (title and instance_name and db_list and valid_date and limit_num):
             result["status"] = 1
-            result["msg"] = "请填写完整"
+            result["msg"] = _("请填写完整")
             return HttpResponse(json.dumps(result), content_type="application/json")
     elif int(priv_type) == 2:
         if not (
@@ -240,7 +243,7 @@ def query_priv_apply(request):
             and limit_num
         ):
             result["status"] = 1
-            result["msg"] = "请填写完整"
+            result["msg"] = _("请填写完整")
             return HttpResponse(json.dumps(result), content_type="application/json")
     try:
         user_instances(request.user, tag_codes=["can_read"]).get(
@@ -248,14 +251,14 @@ def query_priv_apply(request):
         )
     except Instance.DoesNotExist:
         result["status"] = 1
-        result["msg"] = "你所在组未关联该实例！"
+        result["msg"] = _("你所在组未关联该实例！")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 库权限
     ins = Instance.objects.get(instance_name=instance_name)
     if int(priv_type) == 2 and ins.db_type != "mysql":
         result["status"] = 1
-        result["msg"] = "仅 MySQL 支持表级查询权限申请"
+        result["msg"] = _("仅 MySQL 支持表级查询权限申请")
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     if int(priv_type) == 1:
@@ -314,7 +317,7 @@ def query_priv_apply(request):
     except AuditException as e:
         logger.info("新建审批流失败, reason=%s", e)
         result["status"] = 1
-        result["msg"] = "新建审批流失败, 请联系管理员"
+        result["msg"] = _("新建审批流失败, 请联系管理员")
         return HttpResponse(json.dumps(result), content_type="application/json")
     _query_apply_audit_call_back(
         audit_handler.workflow.apply_id, audit_handler.audit.current_status
@@ -416,24 +419,24 @@ def query_priv_modify(request):
         try:
             id_list = [int(i) for i in privilege_ids_str.split(",") if i.strip()]
         except ValueError:
-            result["msg"] = "privilege_ids 参数格式错误"
+            result["msg"] = _("privilege_ids 参数格式错误")
             result["status"] = 1
             return HttpResponse(json.dumps(result), content_type="application/json")
     elif privilege_id:
         try:
             id_list = [int(privilege_id)]
         except ValueError:
-            result["msg"] = "privilege_id 参数格式错误"
+            result["msg"] = _("privilege_id 参数格式错误")
             result["status"] = 1
             return HttpResponse(json.dumps(result), content_type="application/json")
     else:
-        result["msg"] = "请传入 privilege_id 或 privilege_ids"
+        result["msg"] = _("请传入 privilege_id 或 privilege_ids")
         result["status"] = 1
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     privileges = QueryPrivileges.objects.filter(privilege_id__in=id_list)
     if not privileges.exists():
-        result["msg"] = "待操作权限不存在"
+        result["msg"] = _("待操作权限不存在")
         result["status"] = 1
         return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -463,7 +466,9 @@ def query_priv_audit(request):
         audit_status = WorkflowAction(int(request.POST["audit_status"]))
     except ValueError as e:
         return render(
-            request, "error.html", {"errMsg": f"audit_status 参数错误, {str(e)}"}
+            request,
+            "error.html",
+            {"errMsg": _("audit_status 参数错误, %(error)s") % {"error": str(e)}},
         )
     audit_remark = request.POST.get("audit_remark")
 
@@ -473,7 +478,7 @@ def query_priv_audit(request):
     try:
         sql_query_apply = QueryPrivilegesApply.objects.get(apply_id=apply_id)
     except QueryPrivilegesApply.DoesNotExist:
-        return render(request, "error.html", {"errMsg": "工单不存在"})
+        return render(request, "error.html", {"errMsg": _("工单不存在")})
     auditor = get_auditor(workflow=sql_query_apply)
     # 使用事务保持数据一致性
     with transaction.atomic():
@@ -482,7 +487,11 @@ def query_priv_audit(request):
                 audit_status, request.user, audit_remark
             )
         except AuditException as e:
-            return render(request, "error.html", {"errMsg": f"审核失败: {e}"})
+            return render(
+                request,
+                "error.html",
+                {"errMsg": _("审核失败: %(error)s") % {"error": str(e)}},
+            )
         # 统一 call back, 内部做授权和更新数据库内容
         _query_apply_audit_call_back(
             auditor.audit.workflow_id, auditor.audit.current_status

@@ -52,3 +52,251 @@ msgstr "Rejected"
 #: .\sql\models.py:118
 msgid "workflow_exception"
 msgstr "Exceptions during execution"
+
+msgid "workflow_finish_manual"
+msgstr "Manually completed"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "数据库"
+msgstr "Database"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "状态"
+msgstr "State"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "阻塞PID"
+msgstr "Blocking PID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "完整INFO"
+msgstr "Full SQL text"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "用户"
+msgstr "User"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "应用名称"
+msgstr "Application name"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "客户端地址"
+msgstr "Client address"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "耗时(秒)"
+msgstr "Elapsed time (s)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "耗时"
+msgstr "Elapsed time"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "查询语句"
+msgstr "Query"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待事件类型"
+msgstr "Wait event type"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "等待事件"
+msgstr "Wait event"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "查询开始时间"
+msgstr "Query start"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "后端开始时间"
+msgstr "Backend start"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "父PID"
+msgstr "Parent PID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "客户端主机名"
+msgstr "Client hostname"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "客户端端口"
+msgstr "Client port"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "事务开始时间"
+msgstr "Transaction start"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "状态变更时间"
+msgstr "State changed at"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "后端XID"
+msgstr "Backend XID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "后端XMIN"
+msgstr "Backend XMIN"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "后端类型"
+msgstr "Backend type"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "完整command"
+msgstr "Full command"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "远程地址"
+msgstr "Remote address"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "本地地址"
+msgstr "Local address"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "客户端名称"
+msgstr "Client name"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "连接耗时(秒)"
+msgstr "Connection age (s)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "空闲时间(秒)"
+msgstr "Idle time (s)"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "命令"
+msgstr "Command"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "总内存"
+msgstr "Total memory"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "输出内存"
+msgstr "Output memory"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "标志"
+msgstr "Flags"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "文件描述符"
+msgstr "File descriptor"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "订阅数"
+msgstr "Subscriptions"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "模式订阅数"
+msgstr "Pattern subscriptions"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "MULTI 队列长度"
+msgstr "MULTI queue length"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "查询缓冲区"
+msgstr "Query buffer"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "查询缓冲区空闲"
+msgstr "Free query buffer"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "参数内存"
+msgstr "Argument memory"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "输出缓冲区长度"
+msgstr "Output buffer length"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "输出链长度"
+msgstr "Output list length"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "事件文件"
+msgstr "File events"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "重定向"
+msgstr "Redirect"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "查询ID"
+msgstr "Query ID"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "端口"
+msgstr "Port"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "库名"
+msgstr "Database"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "总行数(预估)"
+msgstr "Estimated total rows"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "分配内存"
+msgstr "Allocated memory"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "类型"
+msgstr "Type"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "语句"
+msgstr "Statement"
+
+#: sql/templates/dbdiagnostic.html common/static/dbdiagnostic/js/db_info.js sql/db_diagnostic.py
+msgid "完整语句"
+msgstr "Full statement"
+msgid "复制Markdown"
+msgstr "Copy Markdown"
+
+msgid "下载"
+msgstr "Download"
+
+msgid "查询权限申请"
+msgstr "Query access request"
+
+msgid "SQL上线申请"
+msgstr "SQL deployment request"
+
+msgid "数据归档申请"
+msgstr "Data archival request"
+
+msgid "待审核"
+msgstr "Pending review"
+
+msgid "审核通过"
+msgstr "Approved"
+
+msgid "审核不通过"
+msgstr "Rejected"
+
+msgid "审核取消"
+msgstr "Canceled"
+
+msgid "未知状态"
+msgstr "Unknown status"
+
+msgid "权限错误，您没有权限查看该数据！"
+msgstr "Permission denied. You cannot view this data"
+
+msgid "未知错误，请联系管理员处理！"
+msgstr "Unknown error. Contact an administrator"
+
+msgid "%s 秒后重试"
+msgstr "Retry in %s seconds"
+
+msgid "获取验证码"
+msgstr "Get verification code"

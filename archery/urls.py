@@ -1,9 +1,11 @@
 from django.urls import include, path
 from django.contrib import admin
 from common import views
+from common.language import set_language
 from django.conf import settings
 
 urlpatterns = [
+    path("i18n/setlang/", set_language, name="set_language"),
     path("admin/", admin.site.urls),
     path("api/", include(("sql_api.urls", "sql_api"), namespace="sql_api")),
     path("", include(("sql.urls", "sql"), namespace="sql")),

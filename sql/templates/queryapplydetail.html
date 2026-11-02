@@ -1,54 +1,56 @@
 {% extends "base.html" %}
-{% load format_tags %}
+{% load format_tags i18n %}
 {% block title %}{{ workflow_detail.title }}-{{ block.super }}{% endblock %}
 {% block content %}
-    <h4 style="display: inline;">工单名称：<span>{{ workflow_detail.title }}</span></h4>
+    {% get_current_language as LANGUAGE_CODE %}
+    <h4 style="display: inline;">{% translate "工单名称：" %} <span>{{ workflow_detail.title }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <!--只允许发起人提交其他实例-->
     {% if user.username == workflow_detail.engineer %}
-        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
+        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">{% translate "上线其他实例" %}</a>
     {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sql_content }}"/>
     <hr>
     <h4>
-        审批流
+        {% translate "审批流" %}
     </h4>
-    <h5>
-    {% include "workflow_display.html" %}
+    <div>
+        {% include "workflow_display.html" %}
+    </div>
     <h4>
-        其他信息
+        {% translate "其他信息" context "query access" %}
     </h4>
     <table data-toggle="table" class="table table-striped table-hover"
            style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         <thead>
         <tr>
             <th>
-                申请人
+                {% translate "申请人" %}
             </th>
             <th>
-                实例
+                {% translate "实例" %}
             </th>
             <th>
-                权限级别
+                {% translate "权限级别" %}
             </th>
             <th>
-                数据库
+                {% translate "数据库" %}
             </th>
             <th>
-                结果集
+                {% translate "结果集" %}
             </th>
             <th>
-                有效时间
+                {% translate "有效时间" %}
             </th>
             <th>
-                申请时间
+                {% translate "申请时间" %}
             </th>
             <th>
-                当前状态
+                {% translate "当前状态" %}
             </th>
             <th>
-                组
+                {% translate "组" %}
             </th>
         </tr>
         </thead>
@@ -77,13 +79,13 @@
             </td>
             <td>
                 {% if workflow_detail.status == 0 %}
-                    <b style="color: red">待审核</b>
+                    <b style="color: red">{% translate "待审核" %}</b>
                 {% elif workflow_detail.status == 1 %}
-                    <b style="color: green">审核通过</b>
+                    <b style="color: green">{% translate "审核通过" %}</b>
                 {% elif workflow_detail.status == 2 %}
-                    <b style="color: red">审核不通过</b>
+                    <b style="color: red">{% translate "审核不通过" %}</b>
                 {% elif workflow_detail.status == 3 %}
-                    <b style="color: red">审核取消</b>
+                    <b style="color: red">{% translate "审核取消" %}</b>
                 {% endif %}
             </td>
             <td>
@@ -96,9 +98,9 @@
     <div class="panel panel-default">
         <div class="panel-heading">
             {% if workflow_detail.priv_type == 1 %}
-                数据库清单
+                {% translate "数据库清单" %}
             {% elif workflow_detail.priv_type == 2 %}
-                表清单
+                {% translate "表清单" %}
             {% endif %}
         </div>
         <div class="panel-body">
@@ -115,7 +117,7 @@
             <thead>
             <tr>
                 <th>
-                    操作信息
+                    {% translate "操作信息" %}
                 </th>
             </tr>
             </thead>
@@ -131,14 +133,14 @@
     {% endif %}
     {% if workflow_detail.status == 0 %}
         {% if is_can_review %}
-            <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
-                      placeholder="请填写审核备注" rows=3></textarea>
+            <textarea id="remark" name="remark" class="form-control" data-name="{% translate '审核备注' %}"
+                      placeholder="{% translate '请填写审核备注' %}" rows=3></textarea>
             <br>
             <form action="/query/privaudit/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="apply_id" value="{{ workflow_detail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="1">
-                <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="审核通过"/>
+                <input type="submit" id="btnPass" onclick="loading(this)" data-loading-text="{% translate '处理中...' %}" class="btn btn-success" value="{% translate '审核通过' context 'workflow action' %}"/>
             </form>
 
             <form id="form-cancel" action="/query/privaudit/" method="post" style="display:inline-block;">
@@ -146,14 +148,60 @@
                 <input type="hidden" name="apply_id" value="{{ workflow_detail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="2">
                 <input type="hidden" id="audit_remark" name="audit_remark" value="">
-                <input type="button" id="btnReject" class="btn btn-default" value="终止流程"/>
+                <input type="button" id="btnReject" class="btn btn-default" data-loading-text="{% translate '处理中...' %}" value="{% translate '终止流程' context 'query access action' %}"/>
             </form>
         {% endif %}
     {% endif %}
+    <div class="panel panel-default">
+        <div class="panel-heading">{% translate "操作日志" %}</div>
+        <div class="panel-body table-responsive">
+            <table id="query-access-logs" class="table table-striped table-hover"></table>
+        </div>
+    </div>
 {% endblock content %}
 
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
     <script>
+        function queryAccessLogAction(value) {
+            const labels = {
+                '提交': '{% translate "提交"|escapejs %}',
+                '审核通过': '{% translate "审核通过"|escapejs %}',
+                '审核不通过': '{% translate "审核不通过"|escapejs %}',
+                '审核取消': '{% translate "审核取消"|escapejs %}',
+                '审批不通过': '{% translate "审核不通过"|escapejs %}',
+                '审批取消': '{% translate "审核取消"|escapejs %}'
+            };
+            return Object.prototype.hasOwnProperty.call(labels, value) ? labels[value] : value;
+        }
+        $(function () {
+            $('#query-access-logs').bootstrapTable({
+                escape: true,
+                method: 'post',
+                contentType: 'application/x-www-form-urlencoded',
+                url: '/workflow/log/',
+                queryParams: function () {
+                    return {workflow_id: '{{ workflow_detail.apply_id }}', workflow_type: 1};
+                },
+                pagination: true,
+                sidePagination: 'client',
+                pageSize: 20,
+                search: true,
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',
+                columns: [
+                    {title: '{% translate "操作"|escapejs %}', field: 'operation_type_desc', formatter: queryAccessLogAction},
+                    {title: '{% translate "操作人"|escapejs %}', field: 'operator_display'},
+                    {title: '{% translate "操作时间"|escapejs %}', field: 'operation_time'},
+                    {title: '{% translate "操作信息"|escapejs %}', field: 'operation_info'}
+                ],
+                onLoadError: function (status, xhr) {
+                    if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+                    alert(status === 403
+                        ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                        : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+                }
+            });
+        });
         // 按钮禁用
         function loading(obj) {
             $(obj).button('loading').delay(2500).queue(function () {
@@ -174,7 +222,7 @@
                 });
                 formCancel.submit();
             } else {
-                alert('请填写审核备注')
+                alert('{% translate "请填写审核备注"|escapejs %}')
             }
         })
     </script>

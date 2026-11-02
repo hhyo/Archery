@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+
 # -*- coding: UTF-8 -*-
 # https://stackoverflow.com/questions/7942520/relationship-between-catalog-schema-user-and-database-instance
 import logging
@@ -662,14 +664,14 @@ class OracleEngine(EngineBase):
             sql_lower = sql.lower()
         except IndexError:
             result["bad_query"] = True
-            result["msg"] = "没有有效的SQL语句"
+            result["msg"] = _("没有有效的SQL语句")
             return result
         if re.match(r"^select|^with|^explain", sql_lower) is None:
             result["bad_query"] = True
-            result["msg"] = "不支持语法!"
+            result["msg"] = _("不支持语法!")
             return result
         if re.search(star_patter, sql_lower) is not None:
-            keyword_warning += "禁止使用 * 关键词\n"
+            keyword_warning += _("禁止使用 * 关键词\n")
             result["has_star"] = True
         if result.get("bad_query") or result.get("has_star"):
             result["msg"] = keyword_warning

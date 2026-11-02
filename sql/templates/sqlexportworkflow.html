@@ -1,20 +1,21 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="navStatus" class="form-control selectpicker">
-                <option value="" selected="selected">状态</option>
+                <option value="" selected="selected">{% translate "状态" %}</option>
                 {% for status, status_display in status_list %}
-                    <option value="{{ status }}">{{ status_display }}</option>
+                    <option value="{{ status }}">{% translate status %}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="form-group">
             <select id="instance_id" class="form-control selectpicker"
                     data-live-search="true">
-                <option value="" selected="selected">实例</option>
+                <option value="" selected="selected">{% translate "实例" %}</option>
                 {% for ins in instance %}
                     <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
                 {% endfor %}
@@ -23,7 +24,7 @@
         <div class="form-group">
             <select id="group_id" class="form-control selectpicker"
                     data-live-search="true">
-                <option value="" selected="selected">组</option>
+                <option value="" selected="selected">{% translate "组" %}</option>
                 {% for rgp in resource_group %}
                     <option value="{{ rgp.group_id }}">{{ rgp.group_name }}</option>
                 {% endfor %}
@@ -41,7 +42,7 @@
                 {% if can_offline_download == 1 %}
                     <button id="btn_exportsubmit" type="button" class="btn btn-default" onclick="window.location.href='/sqlexportsubmit/'">
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                        提交导出工单
+                        {% translate "提交导出工单" %}
                     </button>
                 {% endif %}
             {% endif %}
@@ -59,7 +60,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
-                    <h4 class="modal-title text-danger">工单日志</h4>
+                    <h4 class="modal-title text-danger">{% translate "工单日志" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
@@ -75,6 +76,7 @@
     </div>
 {% endblock content %}
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
     {% load static %}
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
@@ -82,6 +84,12 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        function exportListLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         // 初始化时间控件
         $(function () {
             let start = moment().subtract(29, 'days');
@@ -91,7 +99,7 @@
                 if (start.isValid() && end.isValid() && start.dayOfYear()!=1) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
-                    $('#reservation span').html('全部数据');
+                    $('#reservation span').html('{% translate "全部数据"|escapejs %}');
                 }
             }
 
@@ -103,23 +111,23 @@
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
                     // 中文化
-                    applyLabel: "确定",
-                    cancelLabel: "取消",
-                    fromLabel: "开始",
-                    toLabel: "结束",
-                    customRangeLabel: "自定义",
-                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    applyLabel: "{% translate "确定"|escapejs %}",
+                    cancelLabel: "{% translate "取消"|escapejs %}",
+                    fromLabel: "{% translate "开始"|escapejs %}",
+                    toLabel: "{% translate "结束"|escapejs %}",
+                    customRangeLabel: "{% translate "自定义"|escapejs %}",
+                    daysOfWeek: ["{% translate "日"|escapejs %}", "{% translate "一"|escapejs %}", "{% translate "二"|escapejs %}", "{% translate "三"|escapejs %}", "{% translate "四"|escapejs %}", "{% translate "五"|escapejs %}", "{% translate "六"|escapejs %}"],
+                    monthNames: ["{% translate "一月"|escapejs %}", "{% translate "二月"|escapejs %}", "{% translate "三月"|escapejs %}", "{% translate "四月"|escapejs %}", "{% translate "五月"|escapejs %}", "{% translate "六月"|escapejs %}", "{% translate "七月"|escapejs %}", "{% translate "八月"|escapejs %}", "{% translate "九月"|escapejs %}", "{% translate "十月"|escapejs %}", "{% translate "十一月"|escapejs %}", "{% translate "十二月"|escapejs %}"],
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [moment({ year: 1970 }),moment()],
-                    "今日": [moment().startOf('day'), moment()],
-                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                    "最近7日": [moment().subtract('days', 6), moment()],
-                    "最近30日": [moment().subtract('days', 29), moment()],
-                    "本月": [moment().startOf("month"), moment().endOf("month")],
-                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    "{% translate "全部"|escapejs %}": [moment({ year: 1970 }),moment()],
+                    "{% translate "今日"|escapejs %}": [moment().startOf('day'), moment()],
+                    "{% translate "昨日"|escapejs %}": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    "{% translate "最近7日"|escapejs %}": [moment().subtract('days', 6), moment()],
+                    "{% translate "最近30日"|escapejs %}": [moment().subtract('days', 29), moment()],
+                    "{% translate "本月"|escapejs %}": [moment().startOf("month"), moment().endOf("month")],
+                    "{% translate "上个月"|escapejs %}": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
                 get_workflow_list()
@@ -177,7 +185,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -207,7 +215,7 @@
                         return filterParams;
                     },
                 columns: [{
-                    title: '工单名称',
+                    title: '{% translate "工单名称"|escapejs %}',
                     field: 'workflow_name',
                     formatter: function (value, row, index) {
                         var span = document.createElement('span');
@@ -222,69 +230,55 @@
                         return span.outerHTML;
                     }
                 }, {
-                    title: '工单完整名称',
+                    title: '{% translate "工单完整名称"|escapejs %}',
                     field: 'workflow_name',
                     visible: false // 默认不显示
                 }, {
-                    title: '类型',
+                    title: '{% translate "类型"|escapejs %}',
                     field: 'syntax_type',
                     formatter: function (value, row, index) {
                         if (String(value) === '0') {
-                            return '其他'
+                            return '{% translate "其他"|escapejs %}'
                         } else if (String(value) === '1') {
                             return 'DDL'
                         } else if (String(value) === '2') {
                             return 'DML'
                         } else if (String(value) === '3') {
-                            if (String(row.export_format) === 'csv') {
-                                row.export_format = 'CSV'
-                            } else if (String(row.export_format) === 'xlsx') {
-                                row.export_format = 'Excel'
-                            } else if (String(row.export_format) === 'sql') {
-                                row.export_format = 'SQL'
-                            } else if (String(row.export_format) === 'json') {
-                                row.export_format = 'JSON'
-                            } else if (String(row.export_format) === 'xml') {
-                                row.export_format = 'XML'
-                            }
-                            return '数据导出: ' + row.export_format
+                            const formats = {csv: 'CSV', xlsx: 'Excel', sql: 'SQL', json: 'JSON', xml: 'XML'};
+                            return '{% translate "数据导出: "|escapejs %}' + (formats[row.export_format] || row.export_format);
                         }
                     }
                 }, {
-                    title: '发起人',
+                    title: '{% translate "发起人"|escapejs %}',
                     field: 'engineer_display'
                 }, {
-                    title: '工单状态',
+                    title: '{% translate "工单状态"|escapejs %}',
                     field: 'status',
                     formatter: function (value, row, index) {
                         return sqlworkflowStatus_formatter(value)
                     }
                 }, {
-                    title: '发起时间',
+                    title: '{% translate "发起时间"|escapejs %}',
                     field: 'create_time'
                 }, {
-                    title: '目标实例',
+                    title: '{% translate "目标实例"|escapejs %}',
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: '{% translate "数据库"|escapejs %}',
                     field: 'db_name'
                 }, {
-                    title: '组',
+                    title: '{% translate "组"|escapejs %}',
                     field: 'group_name'
                 }, {
-                    title: '操作',
+                    title: '{% translate "操作"|escapejs %}',
                     field: 'operation',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-info btn-xs\" audit_id=\"" + row.audit_id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                        return "<button class=\"btn btn-info btn-xs\" audit_id=\"" + row.audit_id + "\"\n" + "onclick=\"getLog(this)\" >{% translate "操作日志"|escapejs %}\n" + "</button>"
                     }
                 }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: onLoadErrorCallback,
-                onSearch: function (e) {
-                    //传搜索参数给服务器
-                    queryParams(e)
-                },
+                onLoadError: exportListLoadError,
                 responseHandler: function (res) {
                     //在ajax获取到数据，渲染表格之前，修改数据源
                     return res;
@@ -326,24 +320,24 @@
                         showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
                         cardView: false,                    //是否显示详细视图
                         detailView: false,                  //是否显示父子表
-                        locale: 'zh-CN',                    //本地化
+                        locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                         data: data.rows,
                         columns: [{
-                            title: '操作',
+                            title: '{% translate "操作"|escapejs %}',
                             field: 'operation_type_desc'
                         }, {
-                            title: '操作人',
+                            title: '{% translate "操作人"|escapejs %}',
                             field: 'operator_display'
                         }, {
-                            title: '操作时间',
+                            title: '{% translate "操作时间"|escapejs %}',
                             field: 'operation_time'
                         }, {
-                            title: '操作信息',
+                            title: '{% translate "操作信息"|escapejs %}',
                             field: 'operation_info'
                         }],
                         onLoadSuccess: function () {
                         },
-                        onLoadError: onLoadErrorCallback
+                        onLoadError: exportListLoadError
                     });
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {

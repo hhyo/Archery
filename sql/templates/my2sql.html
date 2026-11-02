@@ -1,19 +1,20 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    操作选项
+                    {% translate "操作选项" context "my2sql" %}
                 </div>
                 <div class="panel-body">
                     <div class="form-group">
-                        <h5 class="control-label text-bold">选择实例：</h5>
+                        <h5 class="control-label text-bold">{% translate "选择实例：" %}</h5>
                         <div class="form-group">
                             <select id="instance_name" name="instance_name"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    title="请选择实例:"
+                                    title="{% translate "请选择实例:" %}"
                                     data-live-search="true" required>
                             </select>
                         </div>
@@ -23,13 +24,13 @@
                             <div class="checkbox">
                                 <label>
                                     <input id="save_sql" type="checkbox">
-                                    是否保存到文件(异步操作)
+                                    {% translate "是否保存到文件(异步操作)" %}
                                 </label>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">解析模式：</h5>
+                        <h5 class="control-label text-bold">{% translate "解析模式：" %}</h5>
                         <div class="form-group">
                             <div class="checkbox">
                                 <label>
@@ -70,69 +71,69 @@
                         </div>
                     </div>
                     <div class="form-group">
-                    <h5 class="control-label text-bold">解析线程数：</h5>
+                    <h5 class="control-label text-bold">{% translate "解析线程数：" %}</h5>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="threads" placeholder="默认4"
+                            <input type="number" class="form-control" id="threads" placeholder="{% translate "默认4" %}"
 
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">解析范围控制：</h5>
+                        <h5 class="control-label text-bold">{% translate "解析范围控制：" %}</h5>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="num" placeholder="页面解析行数，默认30"
+                            <input type="number" class="form-control" id="num" placeholder="{% translate "页面解析行数，默认30" %}"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
                             <select id="start_file" class="selectpicker form-control"
                                     data-live-search="true"
-                                    title="起始解析文件:"
+                                    title="{% translate "起始解析文件:" %}"
                                     required>
                             </select>
                         </div>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="start_pos" placeholder="起始解析位置(可选)"
+                            <input type="number" class="form-control" id="start_pos" placeholder="{% translate "起始解析位置(可选)" %}"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
                             <select id="end_file" class="selectpicker form-control"
                                     data-live-search="true"
-                                    title="终止解析文件(可选):"
+                                    title="{% translate "终止解析文件(可选):" %}"
                                     required>
                             </select>
                         </div>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="end_pos" placeholder="终止解析位置(可选)"
+                            <input type="number" class="form-control" id="end_pos" placeholder="{% translate "终止解析位置(可选)" %}"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
                             <input type="text" class="form-control form_datetime" id="start_time"
-                                   placeholder="起始解析时间(不建议)">
+                                   placeholder="{% translate "起始解析时间(不建议)" %}">
                         </div>
                         <div class="form-group">
                             <input type="text" class="form-control form_datetime" id="stop_time"
-                                   placeholder="终止解析时间(可选)">
+                                   placeholder="{% translate "终止解析时间(可选)" %}">
                         </div>
                     </div>
                     <div class="form-group">
-                        <h5 class="control-label text-bold">对象过滤：</h5>
+                        <h5 class="control-label text-bold">{% translate "对象过滤：" %}</h5>
                         <div class="form-group">
                             <select id="only_schemas" class="selectpicker form-control "
                                     data-live-search="true"
-                                    title="数据库过滤(可选):"
+                                    title="{% translate "数据库过滤(可选):" %}"
                                     required>
                             </select>
                         </div>
                         <div class="form-group">
                             <select id="only_tables" class="selectpicker form-control "
                                     data-live-search="true"
-                                    title="表过滤(可选):"
+                                    title="{% translate "表过滤(可选):" %}"
                                     multiple="multiple" required>
                             </select>
                         </div>
                         <select id="sql_type" class="selectpicker form-control "
                                 data-live-search="true"
-                                title="类型过滤(可选):"
+                                title="{% translate "类型过滤(可选):" %}"
                                 multiple="multiple" required>
                             <option value="insert">INSERT</option>
                             <option value="update">UPDATE</option>
@@ -140,8 +141,8 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <button id="my2sql" class="btn btn-danger">获取SQL</button>
-                        <button id="btn-submit-my2sql-workflow" class="btn btn-success disabled" disabled>提交工单</button>
+                        <button id="my2sql" class="btn btn-danger">{% translate "获取SQL" %}</button>
+                        <button id="btn-submit-my2sql-workflow" class="btn btn-success disabled" disabled>{% translate "提交工单" %}</button>
                     </div>
                 </div>
             </div>
@@ -149,12 +150,11 @@
         <div class="col-md-9 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    SQL语句
+                    {% translate "SQL语句" %}
                 </div>
                 <div class="panel-body">
                     <h5 class="control-label text-bold" style="color: red">
-                        <b>前端展示数量由解析范围参数控制，如果勾选了保存到文件，则会异步获取完整的SQL文件，
-                            保存到项目downloads目录，在开启消息通知后，执行结束会发送通知给操作人</b>
+                        <b>{% translate "前端展示数量由解析范围参数控制，如果勾选了保存到文件，则会异步获取完整的SQL文件，保存到项目downloads目录，在开启消息通知后，执行结束会发送通知给操作人" %}</b>
                     </h5>
                     <br>
                     <table id="tb-my2sql" data-toggle="table" class="table table-condensed"
@@ -167,6 +167,7 @@
 
 {% block js %}
     {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
     <link href="{% static 'datetimepicker/css/bootstrap-datetimepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
@@ -174,8 +175,100 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
-        $(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii:ss', language: 'zh-CN', autoclose: true});
+        $(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii:ss', language: '{% if LANGUAGE_CODE == "en" %}en{% else %}zh-CN{% endif %}', autoclose: true});
         var hasGeneratedMy2sqlRows = false;
+        function my2sqlLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
+
+        function renderMy2sqlTable(rows) {
+            $('#tb-my2sql').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 100,                       //每页的记录行数（*）
+                pageList: [100, 500, 1000],   //可供选择的每页的行数（*）
+                search: false,                       //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: false,                  //是否显示刷新按钮
+                showExport: true,
+                exportDataType: "all",
+                minimumCountColumns: 1,             //最少允许的列数
+                clickToSelect: false,                //是否启用点击选中行
+                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
+                detailView: true,                   //是否显示父子表
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'extra_info' && value) {
+                            html.push('<span>' + value + '</span><br>');
+                        }
+                        if (key === 'sql') {
+                            var sql = window.sqlFormatter.format(value);
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
+                data: rows,
+                columns: [{
+                    title: 'SQL',
+                    field: 'sql',
+                    formatter: function (value, row, index) {
+                        if (value.length > 200) {
+                            var sql = row.sql.substr(0, 150) + '...';
+                            return sql;
+                        } else {
+                            return value
+                        }
+                    }
+                }, {
+                    title: '{% translate "ExtraInfo"|escapejs %}',
+                    field: 'extra_info',
+                    formatter: function (value, row, index) {
+                        if (!value) {
+                            return '';
+                        }
+                        if (value.length > 200) {
+                            return value.substr(0, 150) + '...';
+                        }
+                        return value;
+                    }
+                }, {
+                    title: '{% translate "完整SQL"|escapejs %}',
+                    field: 'sql',
+                    visible: false // 默认不显示
+                }, {
+                    title: '{% translate "完整ExtraInfo"|escapejs %}',
+                    field: 'extra_info',
+                    visible: false // 默认不显示
+                }],
+                onLoadSuccess: function () {
+                    refreshSubmitWorkflowButton();
+                },
+                onLoadError: function (status, xhr) {
+                    my2sqlLoadError(status, xhr);
+                    refreshSubmitWorkflowButton();
+                },
+            });
+        }
 
         function getMy2sqlTableData() {
             try {
@@ -196,14 +289,14 @@
         function clearMy2sqlTable() {
             hasGeneratedMy2sqlRows = false;
             try {
-                $('#tb-my2sql').bootstrapTable('destroy');
+                renderMy2sqlTable([]);
             } catch (e) {
             }
             refreshSubmitWorkflowButton();
         }
 
         function buildMy2sqlWorkflowName() {
-            var workflowName = "My2SQL回滚-" + $("#instance_name").val() + "-" + $("#only_schemas").val();
+            var workflowName = "{% translate "My2SQL回滚-"|escapejs %}" + $("#instance_name").val() + "-" + $("#only_schemas").val();
             return workflowName.length >= 50 ? workflowName.substr(0, 49) : workflowName;
         }
 
@@ -211,6 +304,7 @@
 
         //获取用户实例列表
         $(function () {
+            renderMy2sqlTable([]);
             $.ajax({
                 type: "get",
                 url: "/api/v1/sqlquery/instances/",
@@ -235,7 +329,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    my2sqlLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
@@ -337,7 +431,7 @@
                             var name = "<option>" + result[i] + "</option>";
                             $("#only_tables").append(name);
                         }
-                        $("#only_tables").prepend("<option value=\"is-empty\" disabled=\"\">表过滤(可选):</option>");
+                        $("#only_tables").prepend("<option value=\"is-empty\" disabled=\"\">{% translate "表过滤(可选):"|escapejs %}</option>");
                         $('#only_tables').selectpicker('render');
                         $('#only_tables').selectpicker('refresh');
                     } else {
@@ -361,7 +455,7 @@
                 return;
             }
             if (rows.length > 2000) {
-                alert('SQL语句超过2000行，不支持提交工单，请使用异步导出文件的方式！');
+                alert('{% translate "SQL语句超过2000行，不支持提交工单，请使用异步导出文件的方式！"|escapejs %}');
                 return;
             }
             var sqlContent = $.map(rows, function (row) {
@@ -424,89 +518,7 @@
                     success: function (data) {
                         if (data.status === 0) {
                             hasGeneratedMy2sqlRows = data.data && data.data.length > 0;
-                            $('#tb-my2sql').bootstrapTable('destroy').bootstrapTable({
-                                escape: true,
-                                striped: true,                      //是否显示行间隔色
-                                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-                                pagination: true,                   //是否显示分页（*）
-                                sortable: true,                     //是否启用排序
-                                sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-                                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                                pageSize: 100,                       //每页的记录行数（*）
-                                pageList: [100, 500, 1000],   //可供选择的每页的行数（*）
-                                search: false,                       //是否显示表格搜索
-                                strictSearch: false,                //是否全匹配搜索
-                                showColumns: true,                  //是否显示所有的列（选择显示的列）
-                                showRefresh: false,                  //是否显示刷新按钮
-                                showExport: true,
-                                exportDataType: "all",
-                                minimumCountColumns: 1,             //最少允许的列数
-                                clickToSelect: false,                //是否启用点击选中行
-                                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-                                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
-                                cardView: false,                    //是否显示详细视图
-                                locale: 'zh-CN',                    //本地化
-                                detailView: true,                   //是否显示父子表
-                                //格式化详情
-                                detailFormatter: function (index, row) {
-                                    var html = [];
-                                    $.each(row, function (key, value) {
-                                        if (key === 'extra_info' && value) {
-                                            html.push('<span>' + value + '</span><br>');
-                                        }
-                                        if (key === 'sql') {
-                                            var sql = window.sqlFormatter.format(value);
-                                            //替换所有的换行符
-                                            sql = sql.replace(/\r\n/g, "<br>");
-                                            sql = sql.replace(/\n/g, "<br>");
-                                            //替换所有的空格
-                                            sql = sql.replace(/\s/g, "&nbsp;");
-                                            html.push('<span>' + sql + '</span>');
-                                        }
-                                    });
-                                    return html.join('');
-                                },
-                                data: data.data,
-                                columns: [{
-                                    title: 'SQL',
-                                    field: 'sql',
-                                    formatter: function (value, row, index) {
-                                        if (value.length > 200) {
-                                            var sql = row.sql.substr(0, 150) + '...';
-                                            return sql;
-                                        } else {
-                                            return value
-                                        }
-                                    }
-                                }, {
-                                    title: 'ExtraInfo',
-                                    field: 'extra_info',
-                                    formatter: function (value, row, index) {
-                                        if (!value) {
-                                            return '';
-                                        }
-                                        if (value.length > 200) {
-                                            return value.substr(0, 150) + '...';
-                                        }
-                                        return value;
-                                    }
-                                }, {
-                                    title: '完整SQL',
-                                    field: 'sql',
-                                    visible: false // 默认不显示
-                                }, {
-                                    title: '完整ExtraInfo',
-                                    field: 'extra_info',
-                                    visible: false // 默认不显示
-                                }],
-                                onLoadSuccess: function () {
-                                    refreshSubmitWorkflowButton();
-                                },
-                                onLoadError: function () {
-                                    onLoadErrorCallback();
-                                    refreshSubmitWorkflowButton();
-                                },
-                            });
+                            renderMy2sqlTable(data.data || []);
                             refreshSubmitWorkflowButton();
                         } else {
                             alert(data.msg);
@@ -515,7 +527,7 @@
                     }
                 });
             } else {
-                alert("请选择实例和起始解析文件！")
+                alert("{% translate "请选择实例和起始解析文件！"|escapejs %}")
             }
 
         })
