@@ -166,6 +166,12 @@ class LanguagePreferenceTests(SimpleTestCase):
                     self.assertIn('action="/i18n/setlang/"', html)
                     self.assertIn(f'value="{language}" selected', html)
                     self.assertIn('value="/login/?next=/index/"', html)
+                    self.assertIn('class="form-inline language-form"', html)
+        # The login page's document-wide Enter handler must skip the language form.
+        login_source = (
+            Path(settings.BASE_DIR) / "common/templates/login.html"
+        ).read_text()
+        self.assertIn('closest(".language-form")', login_source)
 
     def test_login_and_navigation_translations(self):
         request = RequestFactory().get("/login/")

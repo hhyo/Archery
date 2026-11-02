@@ -1,7 +1,7 @@
 {% load i18n %}
 {% get_current_language as current_language %}
 {% get_available_languages as available_languages %}
-<form action="{% url 'set_language' %}" method="post" class="form-inline" style="padding: 10px 15px;">
+<form action="{% url 'set_language' %}" method="post" class="form-inline language-form" style="padding: 10px 15px;">
     {% csrf_token %}
     <input name="next" type="hidden" value="{{ request.get_full_path }}">
     <label for="language-selector">{% translate "语言" %}</label>

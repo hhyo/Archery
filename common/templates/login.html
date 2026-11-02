@@ -168,6 +168,10 @@
         $(document).keydown(function (event) {
             //keycode==13为回车键
             console.log($("#sign-up").css("display"))
+            // Enter in the language form switches language only; it must not submit the login.
+            if ($(event.target).closest(".language-form").length) {
+                return;
+            }
             if (event.keyCode === 13 && $("#sign-up").css("display") === 'none') {
                 $('#btnLogin').addClass('disabled');
                 $('#btnLogin').prop('disabled', true);
