@@ -1,8 +1,57 @@
 from pytest_mock import MockFixture
 from unittest.mock import Mock
+import pytest
 
 from sql.engines.doris import DorisEngine
 from sql.engines.models import ResultSet
+
+
+@pytest.mark.parametrize(
+    "version_string, expected",
+    [
+        ("tencent-cdw-doris-3.0.9-f635ac3-2604131", (3, 0, 9)),
+        ("doris-2.1.11-rc01-97b77e6cda", (2, 1, 11)),
+        ("doris-10.20.30-beta", (10, 20, 30)),
+        ("3.0.9", (3, 0, 9)),
+        ("doris-3.0.9+build123", (3, 0, 9)),
+    ],
+)
+@pytest.mark.parametrize("columns", [["Version", "Status"], None])
+def test_doris_cloud_version_no_db(mocker, version_string, expected, columns):
+    # Only exercise metadata parsing; bypass configuration and connection setup.
+    engine = object.__new__(DorisEngine)
+    query = mocker.patch.object(
+        engine,
+        "query",
+        return_value=ResultSet(rows=[(version_string, "Yes")], column_list=columns),
+    )
+
+    assert engine.server_version == expected
+    query.assert_called_once_with(sql="show frontends")
+
+
+@pytest.mark.parametrize(
+    "version_string",
+    ["", "Yes", "doris-cdw", "doris-3.0", "doris-3.x.9", "doris-3.0.9oops"],
+)
+def test_doris_invalid_version_no_db(mocker, version_string):
+    engine = object.__new__(DorisEngine)
+    mocker.patch.object(
+        engine,
+        "query",
+        return_value=ResultSet(rows=[(version_string,)], column_list=["Version"]),
+    )
+
+    with pytest.raises(ValueError, match="Unexpected version format"):
+        _ = engine.server_version
+
+
+def test_doris_empty_frontends_no_db(mocker):
+    engine = object.__new__(DorisEngine)
+    mocker.patch.object(engine, "query", return_value=ResultSet(rows=[]))
+
+    with pytest.raises(ValueError, match="No frontend information returned"):
+        _ = engine.server_version
 
 
 def test_doris_server_info(db_instance, mocker: MockFixture):

@@ -45,13 +45,16 @@ class DorisEngine(MysqlEngine):
         # Extract version string: "doris-2.1.11-rc01-97b77e6cda"
         version_string = result.rows[0][version_col_index]
 
-        # Parse version: "doris-2.1.11-..." -> "2.1.11"
-        parts = version_string.split("-")
-        if len(parts) < 2:
+        # Vendor prefixes may contain multiple hyphen-separated components,
+        # e.g. "tencent-cdw-doris-3.0.9-...". Locate the numeric release instead
+        # of assuming it is the second component.
+        version_match = re.search(
+            r"(?:^|-)(\d+)\.(\d+)\.(\d+)(?:$|[-+])", version_string
+        )
+        if version_match is None:
             raise ValueError(f"Unexpected version format: '{version_string}'")
 
-        version_numbers = parts[1]  # Get "2.1.11" from "doris-2.1.11-..."
-        return tuple([int(n) for n in version_numbers.split(".")[:3]])
+        return tuple(int(n) for n in version_match.groups())
 
     forbidden_databases = [
         "__internal_schema",
