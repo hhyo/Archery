@@ -377,6 +377,61 @@ class LanguagePreferenceTests(SimpleTestCase):
             (Path(settings.BASE_DIR) / "common/templates/2fa.html").read_text(),
         )
 
+    def test_translation_catalog_loads_before_login(self):
+        # The 2FA page is shown before the session is authenticated and its scripts call gettext.
+        response = self.client.get("/jsi18n/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("javascript", response.headers["Content-Type"])
+        self.assertContains(response, "django.gettext")
+
+    def test_workflow_status_labels_follow_request_language(self):
+        from sql.models import SQL_WORKFLOW_CHOICES, SqlWorkflow
+
+        workflow = SqlWorkflow(status="workflow_finish")
+        for language, label in [("en", "Workflow finished"), ("zh-hans", "已正常结束")]:
+            with self.subTest(language=language), override(language):
+                self.assertEqual(workflow.get_status_display(), label)
+                self.assertEqual(
+                    str(dict(SQL_WORKFLOW_CHOICES)["workflow_finish"]), label
+                )
+                html = render_to_string(
+                    "audit_sqlworkflow.html",
+                    {"status_list": SQL_WORKFLOW_CHOICES},
+                    request=RequestFactory().get("/"),
+                )
+                self.assertIn(f'<option value="workflow_finish">{label}</option>', html)
+
+    def test_date_range_pickers_list_twelve_months(self):
+        months = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ]
+        context = {"LANGUAGE_CODE": "en", "audit_id": 0, "status_list": []}
+        for name in [
+            "audit.html",
+            "audit_sqlquery.html",
+            "audit_sqlworkflow.html",
+            "dashboard.html",
+            "sqlworkflow.html",
+        ]:
+            with self.subTest(page=name), override("en"):
+                html = render_to_string(
+                    name, context, request=RequestFactory().get("/")
+                )
+                found = re.search(r'monthNames"?\s*:\s*\[(.*?)\]', html, re.S)
+                self.assertIsNotNone(found)
+                self.assertEqual(re.findall(r'"([^"]+)"', found.group(1)), months)
+
     def test_query_access_application_admin_preserves_privileges_and_status(self):
         from django.contrib.admin import AdminSite
         from django.contrib.admin.utils import label_for_field
