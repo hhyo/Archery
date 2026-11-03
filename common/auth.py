@@ -10,10 +10,12 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
+from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
 
 from django.conf import settings
 from common.config import SysConfig
 from common.utils.ding_api import get_ding_user_id
+from common.utils.sendmsg import MsgSender
 from sql.models import Users, ResourceGroup, TwoFactorAuthConfig
 
 logger = logging.getLogger("default")
@@ -80,7 +82,7 @@ class ArcheryAuth(object):
                     "msg": "用户名或密码错误，请重新输入！",
                     "data": "",
                 }
-        except:
+        except Exception as e:
             logger.error("验证用户密码时报错")
             logger.error(traceback.format_exc())
             return {"status": 1, "msg": f"服务异常，请联系管理员处理", "data": ""}
@@ -186,18 +188,59 @@ def sign_up(request):
     elif not display:
         result["status"] = 1
         result["msg"] = "请填写中文名"
+    elif not email:
+        result["status"] = 1
+        result["msg"] = "请填写邮箱"
     else:
         # 验证密码
         try:
             validate_password(password)
+
+            signer = TimestampSigner()
+            token = signer.sign(username)
+            import urllib.parse
+
+            token_encoded = urllib.parse.quote(token)
+            base_url = (
+                SysConfig().get("archery_base_url", "http://127.0.0.1:9123").rstrip("/")
+            )
+            verify_link = f"{base_url}/verify_email/?token={token_encoded}"
+
+            html_content = f"""
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h3>Archery 注册邮箱验证</h3>
+                <p>请点击下方链接完成邮箱激活（24小时内有效）：</p>
+                <p><a href="{verify_link}" style="color: #337ab7; text-decoration: none; word-break: break-all;">{verify_link}</a></p>
+                <p style="color: #999; font-size: 12px; margin-top: 30px;">如果上述链接无法点击，请完整复制该链接并粘贴至浏览器地址栏中访问。</p>
+            </div>
+            """
+
+            try:
+                send_result = MsgSender().send_email(
+                    "Archery 注册邮箱验证", html_content, [email], content_type="html"
+                )
+                if send_result != "success":
+                    logger.error(f"注册发送邮件失败: {send_result}")
+                    result["status"] = 1
+                    result["msg"] = "发送验证邮件失败, 请联系管理员检查邮件配置"
+                    return HttpResponse(
+                        json.dumps(result), content_type="application/json"
+                    )
+            except Exception as e:
+                logger.error(f"注册发送邮件失败: {traceback.format_exc()}")
+                result["status"] = 1
+                result["msg"] = "发送验证邮件失败, 请联系管理员检查邮件配置"
+                return HttpResponse(json.dumps(result), content_type="application/json")
+
             Users.objects.create_user(
                 username=username,
                 password=password,
                 display=display,
                 email=email,
-                is_active=1,
+                is_active=0,
                 is_staff=True,
             )
+            result["msg"] = "注册成功，请前往邮箱点击激活链接"
         except ValidationError as msg:
             result["status"] = 1
             result["msg"] = str(msg)
@@ -214,3 +257,73 @@ def sign_out(request):
             redirect_to="https://login.dingtalk.com/oauth2/logout"
         )
     return HttpResponseRedirect(reverse("sql:login"))
+
+
+def verify_email(request):
+    token = request.GET.get("token")
+    if not token:
+        return HttpResponse("缺少 token 参数", status=400)
+
+    # 强制清理当前浏览器的登录状态，避免激活后直接带着上一个账号的 Session 登录
+    logout(request)
+
+    signer = TimestampSigner()
+    try:
+        # 24小时有效期
+        username = signer.unsign(token, max_age=86400)
+
+        from django.core.cache import cache
+
+        cache_key = f"email_activated_{token}"
+        if cache.get(cache_key):
+            return HttpResponse("激活链接已失效", status=400)
+
+        user = Users.objects.get(username=username)
+        user.is_active = 1
+        user.save()
+
+        cache.set(cache_key, True, timeout=86400)
+
+        from django.utils.html import escape
+
+        escaped_username = escape(username)
+
+        success_html = f"""
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>邮箱激活成功</title>
+            <meta http-equiv="refresh" content="3;url=/login/" />
+            <style>
+                body {{ font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; text-align: center; padding-top: 100px; background-color: #f7f7f7; }}
+                .msg-box {{ background-color: #fff; padding: 40px; border-radius: 8px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+                h2 {{ color: #5cb85c; }}
+                p {{ color: #666; margin-top: 20px; font-size: 16px; }}
+                a {{ color: #337ab7; text-decoration: none; }}
+                a:hover {{ text-decoration: underline; }}
+            </style>
+        </head>
+        <body>
+            <div class="msg-box">
+                <h2>✓ 邮箱激活成功！</h2>
+                <p>您的账号 <b>{escaped_username}</b> 已成功激活并可正常登录。</p>
+                <p>3秒后将自动跳转到<a href="/login/">登录页面</a>...</p>
+            </div>
+        </body>
+        </html>
+        """
+        return HttpResponse(success_html)
+    except SignatureExpired:
+        try:
+            expired_username = signer.unsign(token)
+            Users.objects.filter(username=expired_username, is_active=0).delete()
+        except Exception as e:
+            logger.error(f"清理过期未激活用户失败: {e}")
+        return HttpResponse("激活链接已过期，请重新注册", status=400)
+    except BadSignature:
+        return HttpResponse("激活链接无效", status=400)
+    except Users.DoesNotExist:
+        return HttpResponse("用户不存在", status=404)
+    except Exception:
+        logger.error(f"激活邮箱异常: {traceback.format_exc()}")
+        return HttpResponse("系统异常", status=500)
