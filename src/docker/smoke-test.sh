@@ -2,7 +2,7 @@
 # Import native drivers and inspect client binaries without opening connections.
 set -euo pipefail
 source /etc/os-release
-test "$VERSION_CODENAME" = bookworm
+test "$VERSION_CODENAME" = "${EXPECTED_DEBIAN_CODENAME:?Set the expected Debian codename}"
 source /opt/venv4archery/bin/activate
 python - <<'PY'
 import MySQLdb

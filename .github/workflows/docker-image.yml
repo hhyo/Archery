@@ -59,5 +59,19 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           docker run --rm --network none --entrypoint bash \
+            -e EXPECTED_DEBIAN_CODENAME=bullseye \
             "${{ steps.build.outputs.imageid }}" \
             /opt/archery/src/docker/smoke-test.sh
+
+      - name: Validate the next Debian base without publishing it
+        if: github.event_name == 'pull_request'
+        run: |
+          docker build --platform linux/amd64 \
+            -f src/docker/Dockerfile-base -t archery-base:bookworm-ci .
+          docker build --platform linux/amd64 \
+            -f src/docker/Dockerfile \
+            --build-arg BASE_IMAGE=archery-base:bookworm-ci \
+            -t archery:bookworm-ci .
+          docker run --rm --network none --entrypoint bash \
+            -e EXPECTED_DEBIAN_CODENAME=bookworm \
+            archery:bookworm-ci /opt/archery/src/docker/smoke-test.sh

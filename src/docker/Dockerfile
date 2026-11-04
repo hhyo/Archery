@@ -1,13 +1,5 @@
-# Build the base from this checkout unless an external base is explicitly supplied.
-ARG PYTHON_BASE_IMAGE=library/python:3.11-bookworm
-ARG BASE_IMAGE=archery-base
-FROM ${PYTHON_BASE_IMAGE} AS archery-base
-ENV SOAR_VERSION=0.11.0 TZ=Asia/Shanghai
-WORKDIR /opt
-COPY src/docker/setup.sh /opt/setup.sh
-RUN chmod +x /opt/setup.sh && /opt/setup.sh && rm -f /opt/setup.sh
-
-FROM ${BASE_IMAGE} AS runtime
+ARG BASE_IMAGE="hhyo/archery-base:sha-d8159f4"
+FROM ${BASE_IMAGE}
 SHELL ["/bin/bash", "-c"]
 COPY . /opt/archery/
 
@@ -17,7 +9,17 @@ RUN useradd nginx
 # archery
 # cx-Orable 安装需要低一点的 setuptools 版本，同时需要 --no-build-isolation 参数，否则会安装失败
 # 后续可能需要重新设计 engine 和相关依赖, 防止依赖过于复杂
-RUN apt-get update \
+# Debian 11's package repositories are archived after the end of LTS.
+# Keep signature verification enabled and leave newer base images unchanged.
+RUN if [ "$(. /etc/os-release && printf '%s' "$VERSION_CODENAME")" = "bullseye" ]; then \
+        find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
+            -exec sed -i \
+                -e 's|http[s]*://deb.debian.org/debian-security|https://archive.debian.org/debian-security|g' \
+                -e 's|http[s]*://security.debian.org/debian-security|https://archive.debian.org/debian-security|g' \
+                -e 's|http[s]*://deb.debian.org/debian|https://archive.debian.org/debian|g' {} +; \
+    fi \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get update \
     && apt-get install -yq --no-install-recommends nginx mariadb-client \
     && source venv4archery/bin/activate \
     && pip install --no-cache-dir "setuptools<82" wheel \
