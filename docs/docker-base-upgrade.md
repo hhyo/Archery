@@ -47,7 +47,7 @@ docker build --platform linux/amd64 -f src/docker/Dockerfile-base -t archery-bas
 docker build --platform linux/amd64 -f src/docker/Dockerfile --build-arg BASE_IMAGE=archery-base:bookworm-ci -t archery:bookworm-ci .
 docker run --rm --network none --entrypoint bash \
   -e EXPECTED_DEBIAN_CODENAME=bookworm -e EXPECTED_PYTHON_VERSION=3.14 \
-  -e SECRET_KEY=isolated-image-smoke-check-only \
+  -e SECRET_KEY=isolated-image-smoke-check-only-never-production \
   archery:bookworm-ci /opt/archery/src/docker/smoke-test.sh
 ```
 
