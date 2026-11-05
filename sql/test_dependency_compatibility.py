@@ -136,3 +136,33 @@ def test_invalid_ssh_key_does_not_leave_an_uninitialized_server():
         )
     assert connection.server is None
     connection.__del__()
+
+
+def test_started_ssh_forwarder_is_closed_once_on_finalization(mocker):
+    from sql.utils.ssh_tunnel import SSHConnection
+
+    forwarder = mocker.Mock(is_alive=False, local_bind_port=12345)
+    forwarder.start.side_effect = lambda: setattr(forwarder, "is_alive", True)
+    forwarder.close.side_effect = lambda: setattr(forwarder, "is_alive", False)
+    mocker.patch("sql.utils.ssh_tunnel.SSHTunnelForwarder", return_value=forwarder)
+
+    connection = SSHConnection(
+        "127.0.0.1",
+        3306,
+        "127.0.0.1",
+        22,
+        "test-only",
+        "test-only",
+        "",
+        "",
+    )
+    forwarder.start.assert_called_once_with()
+    assert connection.get_ssh() == ("127.0.0.1", 12345)
+
+    connection.__del__()
+    forwarder.close.assert_called_once_with()
+    assert not forwarder.is_alive
+
+    # Repeated cleanup must not try to stop a server that is already stopped.
+    connection.__del__()
+    forwarder.close.assert_called_once_with()
