@@ -4,7 +4,7 @@ import traceback
 import MySQLdb
 import MySQLdb.cursors
 import MySQLdb.converters
-import pymysql
+from pymysql.converters import escape_string
 import re
 import regex as safe_regex
 from enum import Enum
@@ -195,7 +195,7 @@ class MysqlEngine(EngineBase):
         value = str(value)
         if "\x00" in value:
             raise ValueError("参数值不合法")
-        return f"'{pymysql.escape_string(value)}'"
+        return f"'{escape_string(value)}'"
 
     @staticmethod
     def _quote_account_part(value):
@@ -361,7 +361,7 @@ class MysqlEngine(EngineBase):
 
     def escape_string(self, value: str) -> str:
         """字符串参数转义"""
-        return pymysql.escape_string(value)
+        return escape_string(value)
 
     @property
     def auto_backup(self):

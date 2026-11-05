@@ -7,7 +7,6 @@ from common.config import SysConfig
 from MySQLdb.constants import FIELD_TYPE
 import traceback
 import MySQLdb
-import pymysql
 import sqlparse
 import logging
 import re
