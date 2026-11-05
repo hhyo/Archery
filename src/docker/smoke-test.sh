@@ -5,6 +5,7 @@ source /etc/os-release
 test "$VERSION_CODENAME" = "${EXPECTED_DEBIAN_CODENAME:?Set the expected Debian codename}"
 source /opt/venv4archery/bin/activate
 cd /opt/archery
+python -m pip check
 python - <<'PY'
 import os
 import sys
