@@ -5,7 +5,7 @@ from sql.utils.sql_utils import get_syntax_type
 from common.utils.timer import FuncTimer
 from common.config import SysConfig
 from . import EngineBase
-from pymysql import escape_string
+from pymysql.converters import escape_string
 import sqlparse
 import logging
 import re

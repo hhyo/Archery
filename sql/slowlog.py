@@ -2,7 +2,7 @@
 import MySQLdb
 import simplejson as json
 import datetime
-import pymysql
+from pymysql.converters import escape_string
 from django.contrib.auth.decorators import permission_required
 from django.db.models import F, Sum, Value as V, Max
 from django.db.models.functions import Concat
@@ -353,7 +353,7 @@ def slowquery_review_history(request):
 def report(request):
     """返回慢SQL历史趋势"""
     checksum = request.GET.get("checksum")
-    checksum = pymysql.escape_string(checksum)
+    checksum = escape_string(checksum)
     instance_name = request.GET.get("instance_name")
     # 判断是否为Redis实例
     is_redis = False
