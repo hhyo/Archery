@@ -60,6 +60,8 @@ jobs:
         run: |
           docker run --rm --network none --entrypoint bash \
             -e EXPECTED_DEBIAN_CODENAME=bullseye \
+            -e EXPECTED_PYTHON_VERSION=3.11 \
+            -e SECRET_KEY=isolated-image-smoke-check-only \
             "${{ steps.build.outputs.imageid }}" \
             /opt/archery/src/docker/smoke-test.sh
 
@@ -74,4 +76,6 @@ jobs:
             -t archery:bookworm-ci .
           docker run --rm --network none --entrypoint bash \
             -e EXPECTED_DEBIAN_CODENAME=bookworm \
+            -e EXPECTED_PYTHON_VERSION=3.14 \
+            -e SECRET_KEY=isolated-image-smoke-check-only \
             archery:bookworm-ci /opt/archery/src/docker/smoke-test.sh

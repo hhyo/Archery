@@ -4,7 +4,29 @@ set -euo pipefail
 source /etc/os-release
 test "$VERSION_CODENAME" = "${EXPECTED_DEBIAN_CODENAME:?Set the expected Debian codename}"
 source /opt/venv4archery/bin/activate
+cd /opt/archery
 python - <<'PY'
+import os
+import sys
+from copy import copy
+
+if expected := os.environ.get("EXPECTED_PYTHON_VERSION"):
+    assert f"{sys.version_info.major}.{sys.version_info.minor}" == expected
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "archery.settings")
+import django
+
+django.setup()
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.core.files.storage import storages
+from django.template import Context, Template
+from common.storage import ForgivingManifestStaticFilesStorage
+
+assert isinstance(staticfiles_storage, ForgivingManifestStaticFilesStorage)
+assert storages["default"].__class__.__name__ == "FileSystemStorage"
+assert Template("{{ value }}").render(copy(Context({"value": "ok"}))) == "ok"
+print(f"Python {sys.version.split()[0]}, Django {django.get_version()}: setup, templates and storage passed")
+
 import MySQLdb
 import ldap
 import oracledb

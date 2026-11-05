@@ -1609,6 +1609,14 @@ class TestDataDictionary(TestCase):
         测试获取表信息
         :return:
         """
+        # Return actual metadata rather than serializing unconfigured MagicMocks.
+        metadata = {"column_list": ["field"], "rows": [["value"]]}
+        for method in (
+            "get_table_meta_data",
+            "get_table_desc_data",
+            "get_table_index_data",
+        ):
+            getattr(_get_engine.return_value, method).return_value = metadata
         _get_engine.return_value.query.return_value = ResultSet(
             rows=(("test1", "测试表1"), ("test2", "测试表2"))
         )
@@ -1624,6 +1632,10 @@ class TestDataDictionary(TestCase):
             list(json.loads(r.content)["data"].keys()),
             ["meta_data", "desc", "index", "create_sql"],
         )
+        payload = json.loads(r.content)
+        self.assertEqual(payload["status"], 0)
+        for key in ("meta_data", "desc", "index"):
+            self.assertEqual(payload["data"][key], metadata)
 
     def test_table_info_not_param(self):
         """
