@@ -73,3 +73,66 @@ def test_binlog_reader_imports_with_current_pymysql():
     from pymysqlreplication import BinLogStreamReader
 
     assert callable(BinLogStreamReader)
+
+
+def test_failed_ssh_start_does_not_hang_during_finalization():
+    import subprocess
+    import sys
+    import textwrap
+
+    # Set up a real local forwarder, but never connect to a gateway.
+    # A subprocess timeout catches socketserver.shutdown() deadlocks.
+    code = textwrap.dedent("""
+        import gc
+        import sshtunnel
+        from types import SimpleNamespace
+        from sql.utils import ssh_tunnel
+        original = sshtunnel.SSHTunnelForwarder
+        original._connect_to_gateway = lambda self: setattr(
+            self, "_transport", SimpleNamespace(is_active=lambda: False)
+        )
+
+        def local_forwarder(**kwargs):
+            kwargs.update(
+                allow_agent=False, host_pkey_directories=[],
+                ssh_config_file=None, local_bind_address=('127.0.0.1', 0),
+            )
+            return original(**kwargs)
+
+        ssh_tunnel.SSHTunnelForwarder = local_forwarder
+        try:
+            ssh_tunnel.SSHConnection(
+                '127.0.0.1', 3306, '127.0.0.1', 1,
+                'test-only', 'test-only', '', '',
+            )
+        except sshtunnel.BaseSSHTunnelForwarderError:
+            pass
+        else:
+            raise AssertionError('Expected gateway failure')
+        gc.collect()
+        print('finalization completed')
+        """)
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=5
+    )
+    assert result.returncode == 0, result.stderr
+    assert "finalization completed" in result.stdout
+
+
+def test_invalid_ssh_key_does_not_leave_an_uninitialized_server():
+    from sql.utils.ssh_tunnel import SSHConnection
+
+    connection = object.__new__(SSHConnection)
+    with pytest.raises(paramiko.SSHException):
+        connection.__init__(
+            "127.0.0.1",
+            3306,
+            "127.0.0.1",
+            1,
+            "test-only",
+            "",
+            "invalid test key",
+            "",
+        )
+    assert connection.server is None
+    connection.__del__()

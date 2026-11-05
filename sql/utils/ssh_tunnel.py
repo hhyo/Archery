@@ -27,6 +27,7 @@ class SSHConnection(object):
         pkey,
         pkey_password,
     ):
+        self.server = None
         self.host = host
         self.port = int(port)
         self.tun_host = tun_host
@@ -57,7 +58,11 @@ class SSHConnection(object):
         self.server.start()
 
     def __del__(self):
-        self.server.close()
+        server = getattr(self, "server", None)
+        # A failed start can leave bound servers without serve_forever threads.
+        # Closing those through sshtunnel blocks in socketserver.shutdown().
+        if server is not None and server.is_alive:
+            server.close()
 
     def get_ssh(self):
         """

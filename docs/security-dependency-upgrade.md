@@ -32,6 +32,12 @@ now declared explicitly because Archery imports its RSA-key API directly.
 - The binlog-reader dependency is upgraded with PyMySQL because version 0.22
   imports the removed `pymysql.util` module. Reader import is covered without
   starting replication or contacting a server.
+  Consumers of `BinLogStreamReader` using `binlog_row_metadata=MINIMAL` must
+  explicitly pass `use_column_name_cache=True` to retain named row fields;
+  otherwise the updated library returns `UNKNOWN_COL*` keys. With `FULL`
+  metadata, the stream supplies the column names directly. Check out-of-tree
+  binlog tools before adopting this upgrade; Archery has no direct reader
+  construction call site to update. No server setting is changed automatically.
 - SSH password/RSA initialization is exercised against the real dependencies
   without starting a tunnel or contacting a server. Production SSH policies and
   database authentication still require integration validation before rollout.
@@ -48,3 +54,22 @@ References:
 - https://github.com/mongodb/mongo-python-driver/security/advisories
 - https://www.mongodb.com/docs/languages/python/pymongo-driver/current/reference/upgrade/
 - https://pypi.org/project/sshtunnel/0.5.1/
+
+## Isolated protocol validation
+
+Python 3.11 checks with the selected dependencies exercised Archery's actual
+`SSHConnection` wrapper against an in-process, loopback-only Paramiko server:
+password and encrypted RSA authentication, a 122880-byte round trip, wrapper
+cleanup, duplicate cleanup and rejected-password finalization. Failed startup
+previously deadlocked in `socketserver.shutdown()` during destruction; the
+wrapper now only closes servers whose forwarding threads were started and
+handles private-key parse failures safely. The regression uses a timed child
+process and fails on the previous wrapper.
+
+A disposable MySQL 8.0.46 service with row logging also verified real MySQL
+authentication, binlog streaming with checksum verification, INSERT/UPDATE/DELETE
+values, Unicode and DECIMAL data, and resume without duplicate rows. Both FULL
+metadata and MINIMAL metadata with explicit column-name caching were tested.
+Default MINIMAL behavior was checked separately and yields unnamed row keys as
+noted above. These checks do not establish compatibility with all MySQL/MariaDB
+versions or production SSH/authentication policies.
