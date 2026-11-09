@@ -1,32 +1,54 @@
-name: Validate Docker image
+name: Publish Docker image
 
-# Stage 1 publishes the base separately. Restore application publishing when
-# the follow-up pins the published Bookworm base.
 on:
+  push:
+    branches:
+      - 'master'
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - 'master'
 
 jobs:
-  validate:
-    name: Build and smoke-test Bookworm application image
+  push_to_registries:
+    name: Build and push Docker images
     runs-on: ubuntu-latest
     permissions:
+      packages: write
       contents: read
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
 
-      - name: Validate the next Debian base without publishing it
-        run: |
-          docker build --platform linux/amd64 \
-            -f src/docker/Dockerfile-base -t archery-base:bookworm-ci .
-          docker build --platform linux/amd64 \
-            -f src/docker/Dockerfile \
-            --build-arg BASE_IMAGE=archery-base:bookworm-ci \
-            -t archery:bookworm-ci .
-          docker run --rm --network none --entrypoint bash \
-            -e EXPECTED_DEBIAN_CODENAME=bookworm \
-            -e EXPECTED_PYTHON_VERSION=3.14 \
-            -e SECRET_KEY=isolated-image-smoke-check-only-never-production \
-            archery:bookworm-ci /opt/archery/src/docker/smoke-test.sh
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Log in to the Container registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            hhyo/archery
+            ghcr.io/${{ github.repository }}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: src/docker/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

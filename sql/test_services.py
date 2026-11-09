@@ -426,9 +426,7 @@ def test_execute_sql_query_success_and_querylog_created(monkeypatch):
         "create",
         lambda **kwargs: created.update(kwargs),
     )
-    monkeypatch.setattr(
-        sqlquery_service, "connection", SimpleNamespace(connection=None)
-    )
+    monkeypatch.setattr(sqlquery_service.connection, "connection", None)
 
     result = sqlquery_service.execute_sql_query(
         user=SimpleNamespace(username="u", display="U"),
