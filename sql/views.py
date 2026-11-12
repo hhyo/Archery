@@ -412,6 +412,19 @@ def queryapplylist(request):
 
 def _queryapplydetail_context(request, apply_id):
     workflow_detail = QueryPrivilegesApply.objects.get(apply_id=apply_id)
+    # 在构建详情前校验对象权限，同时保护详情页和审批详情入口。
+    user = request.user
+    if not (
+        user.is_superuser
+        or user.has_perm("sql.audit_user")
+        or workflow_detail.user_name == user.username
+        or (
+            user.has_perm("sql.query_review")
+            and workflow_detail.group_id
+            in [group.group_id for group in user_groups(user)]
+        )
+    ):
+        raise PermissionDenied
     # 获取当前审批和审批流程
     audit_handler = AuditV2(workflow=workflow_detail)
     review_info = audit_handler.get_review_info()
@@ -556,6 +569,19 @@ def archive(request):
 
 def _archive_detail_context(request, id):
     archive_config = ArchiveConfig.objects.get(pk=id)
+    # 在构建详情前校验对象权限，同时保护详情页和审批详情入口。
+    user = request.user
+    if not (
+        user.is_superuser
+        or user.has_perm("sql.audit_user")
+        or archive_config.user_name == user.username
+        or (
+            user.has_perm("sql.archive_review")
+            and archive_config.resource_group_id
+            in [group.group_id for group in user_groups(user)]
+        )
+    ):
+        raise PermissionDenied
     # 获取当前审批和审批流程、是否可审核
     audit_handler = AuditV2(
         workflow=archive_config, resource_group=archive_config.resource_group
