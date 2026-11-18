@@ -102,6 +102,22 @@ class OffLineDownLoad(EngineBase):
                 )
                 if results.error:
                     raise Exception(results.error)
+
+                # 开启数据脱敏时，对导出结果集执行与在线查询一致的脱敏。
+                # 导出会落地为可下载的文件，因此脱敏失败时必须阻断导出
+                # （fail-closed），避免生成包含明文敏感数据的文件。
+                if config.get("data_masking"):
+                    masking_sql = sql.rstrip().rstrip(";") + ";"
+                    results = check_engine.query_masking(
+                        db_name=workflow.db_name,
+                        sql=masking_sql,
+                        resultset=results,
+                    )
+                    if results.error:
+                        raise Exception(
+                            f"数据脱敏失败，已阻止本次导出：{results.error}"
+                        )
+
                 if results:
                     columns = results.column_list
                     result = results.rows
