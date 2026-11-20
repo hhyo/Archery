@@ -22,14 +22,13 @@ from sql.notify import notify_for_audit, notify_for_execute
 from sql.utils.resource_group import user_groups
 from sql.utils.sql_review import (
     can_cancel,
-    can_execute,
     can_rollback,
     can_timingtask,
     can_view,
     on_correct_time_period,
 )
 from sql.utils.tasks import add_sql_schedule, del_schedule
-from sql.utils.workflow_audit import Audit, AuditException, get_auditor
+from sql.utils.workflow_audit import Audit, AuditV2, AuditException, get_auditor
 from .permissions import IsWorkflowListPageUser, IsWorkflowPageUser
 from .serializers import (
     SqlWorkflowDetailSerializer,
@@ -481,10 +480,8 @@ class WorkflowExecutionView(WorkflowOperationAPIView):
         data = self.validated_data(WorkflowExecutionSerializer, request)
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
-        if not (
-            request.user.has_perm("sql.sql_execute")
-            or request.user.has_perm("sql.sql_execute_for_resource_group")
-        ) or not can_execute(request.user, workflow_id):
+        audit_handler = AuditV2(workflow=workflow, audit=audit)
+        if not audit_handler.can_execute(request.user):
             raise PermissionDenied("你无权执行当前工单！")
         if not on_correct_time_period(workflow_id):
             raise ValidationError(
