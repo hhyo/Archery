@@ -1609,9 +1609,16 @@ class TestDataDictionary(TestCase):
         测试获取表信息
         :return:
         """
-        _get_engine.return_value.query.return_value = ResultSet(
-            rows=(("test1", "测试表1"), ("test2", "测试表2"))
-        )
+        engine = _get_engine.return_value
+        engine.escape_string.side_effect = lambda value: value
+        meta_data = {"column_list": ["table_name"], "rows": ["sql_instance"]}
+        desc_data = {"column_list": ["列名", "列类型"], "rows": [["id", "bigint"]]}
+        index_data = {"column_list": ["列名", "索引名"], "rows": [["id", "PRIMARY"]]}
+        create_sql = [["sql_instance", "CREATE TABLE `sql_instance` (`id` bigint)"]]
+        engine.get_table_meta_data.return_value = meta_data
+        engine.get_table_desc_data.return_value = desc_data
+        engine.get_table_index_data.return_value = index_data
+        engine.query.return_value = ResultSet(rows=create_sql)
         data = {
             "instance_name": self.ins.instance_name,
             "db_name": self.db_name,
@@ -1620,9 +1627,26 @@ class TestDataDictionary(TestCase):
         }
         r = self.client.get(path="/data_dictionary/table_info/", data=data)
         self.assertEqual(r.status_code, 200)
-        self.assertListEqual(
-            list(json.loads(r.content)["data"].keys()),
-            ["meta_data", "desc", "index", "create_sql"],
+        self.assertDictEqual(
+            json.loads(r.content),
+            {
+                "status": 0,
+                "data": {
+                    "meta_data": meta_data,
+                    "desc": desc_data,
+                    "index": index_data,
+                    "create_sql": create_sql,
+                },
+            },
+        )
+        for method in (
+            engine.get_table_meta_data,
+            engine.get_table_desc_data,
+            engine.get_table_index_data,
+        ):
+            method.assert_called_once_with(db_name=self.db_name, tb_name="sql_instance")
+        engine.query.assert_called_once_with(
+            self.db_name, "show create table `sql_instance`;"
         )
 
     def test_table_info_not_param(self):
