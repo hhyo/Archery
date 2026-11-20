@@ -658,7 +658,9 @@ def test_auto_execution_queues_task_and_removes_schedule_after_commit(
     normal_user.has_perm = mocker.Mock(return_value=True)
     workflow = mocker.Mock(id=8)
     audit = mocker.Mock(audit_id=3)
-    mocker.patch.object(api_workflow_operations, "can_execute", return_value=True)
+    mocker.patch.object(
+        api_workflow_operations, "AuditV2"
+    ).return_value.can_execute.return_value = True
     mocker.patch.object(
         api_workflow_operations, "on_correct_time_period", return_value=True
     )
@@ -694,7 +696,9 @@ def test_auto_execution_queues_task_when_schedule_cleanup_fails(
     normal_user.has_perm = mocker.Mock(return_value=True)
     workflow = mocker.Mock(id=8)
     audit = mocker.Mock(audit_id=3)
-    mocker.patch.object(api_workflow_operations, "can_execute", return_value=True)
+    mocker.patch.object(
+        api_workflow_operations, "AuditV2"
+    ).return_value.can_execute.return_value = True
     mocker.patch.object(
         api_workflow_operations, "on_correct_time_period", return_value=True
     )

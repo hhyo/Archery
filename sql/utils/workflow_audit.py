@@ -413,6 +413,20 @@ class AuditV2:
         audit_log.save()
         return "工单已正常提交"
 
+    def can_execute(self, actor: Users) -> bool:
+        """SQL 工单审核通过或定时执行时，提交人或资源组内有权限的用户可执行。"""
+        if self.workflow_type != WorkflowType.SQL_REVIEW:
+            return False
+        if self.workflow.status not in ("workflow_review_pass", "workflow_timingtask"):
+            return False
+        if self.workflow.engineer == actor.username and actor.has_perm(
+            "sql.sql_execute"
+        ):
+            return True
+        return actor.has_perm("sql.sql_execute_for_resource_group") and any(
+            group.group_id == self.resource_group_id for group in user_groups(actor)
+        )
+
     def can_operate(self, action: WorkflowAction, actor: Users):
         """检查用户是否有权限做相关操作, 如有权限问题, raise AuditException, 无问题返回 True"""
         # 首先检查工单状态和相关操作是否匹配, 如已通过的工单不能再通过
