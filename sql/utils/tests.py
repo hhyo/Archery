@@ -16,6 +16,7 @@ from django.test import TestCase, Client
 from django_q.models import Schedule
 
 from common.config import SysConfig
+from common.utils.const import WorkflowStatus
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import (
     Users,
@@ -23,6 +24,7 @@ from sql.models import (
     SqlWorkflowContent,
     Instance,
     ResourceGroup,
+    WorkflowAudit,
     WorkflowLog,
     DataMaskingRules,
     DataMaskingColumns,
@@ -79,6 +81,12 @@ class TestSQLReview(TestCase):
             instance=self.master,
             db_name="db_name",
             syntax_type=1,
+        )
+        self.audit = WorkflowAudit.objects.create(
+            workflow_id=self.wf1.pk,
+            workflow_type=self.wf1.workflow_type,
+            group_id=self.group.pk,
+            current_status=WorkflowStatus.PASSED,
         )
         self.wfc1 = SqlWorkflowContent.objects.create(
             workflow=self.wf1, sql_content="some_sql", execute_result=""
@@ -188,6 +196,19 @@ class TestSQLReview(TestCase):
         self.user.user_permissions.add(sql_execute)
         r = AuditV2(workflow=self.wf1).can_execute(self.user)
         self.assertFalse(r)
+
+    def test_can_execute_requires_passed_audit(self):
+        handler = AuditV2(workflow=self.wf1)
+        self.assertTrue(handler.can_execute(self.superuser))
+        for status in (
+            WorkflowStatus.WAITING,
+            WorkflowStatus.REJECTED,
+            WorkflowStatus.ABORTED,
+        ):
+            handler.audit.current_status = status
+            self.assertFalse(handler.can_execute(self.superuser))
+        self.audit.delete()
+        self.assertFalse(AuditV2(workflow=self.wf1).can_execute(self.superuser))
 
     def test_can_timingtask_true(
         self,
