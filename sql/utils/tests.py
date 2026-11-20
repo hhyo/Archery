@@ -30,12 +30,12 @@ from sql.models import (
 )
 from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 from sql.utils.sql_review import (
-    can_execute,
     can_timingtask,
     can_cancel,
     on_correct_time_period,
 )
 from sql.utils.sql_utils import *
+from sql.utils.workflow_audit import AuditV2
 from sql.utils.execute_sql import execute, execute_callback
 from sql.utils.tasks import add_sql_schedule, del_schedule, task_info
 from sql.utils.data_masking import data_masking, brute_mask, simple_column_mask
@@ -107,7 +107,7 @@ class TestSQLReview(TestCase):
         )
         self.user.user_permissions.add(sql_execute_for_resource_group)
         self.user.resource_group.add(self.group)
-        r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
+        r = AuditV2(workflow=self.wf1).can_execute(self.user)
         self.assertTrue(r)
 
     def test_can_execute_true(
@@ -123,7 +123,7 @@ class TestSQLReview(TestCase):
         self.wf1.save(update_fields=("status", "engineer"))
         sql_execute = Permission.objects.get(codename="sql_execute")
         self.user.user_permissions.add(sql_execute)
-        r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
+        r = AuditV2(workflow=self.wf1).can_execute(self.user)
         self.assertTrue(r)
 
     def test_can_execute_workflow_timing_task(
@@ -139,7 +139,7 @@ class TestSQLReview(TestCase):
         self.wf1.save(update_fields=("status", "engineer"))
         sql_execute = Permission.objects.get(codename="sql_execute")
         self.user.user_permissions.add(sql_execute)
-        r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
+        r = AuditV2(workflow=self.wf1).can_execute(self.user)
         self.assertTrue(r)
 
     def test_can_execute_false_no_permission(
@@ -153,7 +153,7 @@ class TestSQLReview(TestCase):
         self.wf1.status = "workflow_timingtask"
         self.wf1.engineer = self.user.username
         self.wf1.save(update_fields=("status", "engineer"))
-        r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
+        r = AuditV2(workflow=self.wf1).can_execute(self.user)
         self.assertFalse(r)
 
     def test_can_execute_false_not_in_group(
@@ -170,7 +170,7 @@ class TestSQLReview(TestCase):
             codename="sql_execute_for_resource_group"
         )
         self.user.user_permissions.add(sql_execute_for_resource_group)
-        r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
+        r = AuditV2(workflow=self.wf1).can_execute(self.user)
         self.assertFalse(r)
 
     def test_can_execute_false_wrong_status(
@@ -186,7 +186,7 @@ class TestSQLReview(TestCase):
         self.wf1.save(update_fields=("status", "engineer"))
         sql_execute = Permission.objects.get(codename="sql_execute")
         self.user.user_permissions.add(sql_execute)
-        r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
+        r = AuditV2(workflow=self.wf1).can_execute(self.user)
         self.assertFalse(r)
 
     def test_can_timingtask_true(
@@ -249,7 +249,7 @@ class TestSQLReview(TestCase):
         r = can_cancel(user=self.user, workflow_id=self.wfc1.workflow_id)
         self.assertTrue(r)
 
-    @patch("sql.utils.sql_review.can_execute")
+    @patch.object(AuditV2, "can_execute")
     def test_can_cancel_true_for_execute_user(self, _can_execute):
         """
         测试是否能取消，审核通过但未执行的工单，有执行权限的用户终止
@@ -263,7 +263,7 @@ class TestSQLReview(TestCase):
         r = can_cancel(user=self.user, workflow_id=self.wfc1.workflow_id)
         self.assertTrue(r)
 
-    @patch("sql.utils.sql_review.can_execute")
+    @patch.object(AuditV2, "can_execute")
     def test_can_cancel_true_for_submit_user(self, _can_execute):
         """
         测试是否能取消，审核通过但未执行的工单，提交人可终止
