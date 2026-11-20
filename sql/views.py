@@ -813,6 +813,9 @@ def sqlexport_pre_check(request):
     result["data"] = {
         "error_count": check_result.error_count,
         "warning_count": check_result.warning_count,
+        "affected_rows": (
+            check_result.rows[0].affected_rows if check_result.rows else 0
+        ),
         "rows": check_result.to_dict(),
     }
     if check_result.error_count:
