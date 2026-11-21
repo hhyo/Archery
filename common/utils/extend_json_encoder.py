@@ -116,7 +116,7 @@ class ExtendJSONEncoderBytes(json.JSONEncoder):
             # 不是utf-8格式的bytes格式需要先进行base64编码转换
             if isinstance(obj, bytes):
                 try:
-                    return o.decode("utf-8")
+                    return obj.decode("utf-8")
                 except:
                     return base64.b64encode(obj).decode("utf-8")
             else:
