@@ -113,16 +113,17 @@ def user_logged_in_callback(sender, request, user, **kwargs):
 
 @receiver(user_logged_out)
 def user_logged_out_callback(sender, request, user, **kwargs):
-    ip = get_client_ip(request)
-    now = timezone.now()
-    AuditEntry.objects.create(
-        action="登出",
-        extra_info=ip,
-        user_id=user.id,
-        user_name=user.username,
-        user_display=user.display,
-        action_time=now,
-    )
+    if user:
+        ip = get_client_ip(request)
+        now = timezone.now()
+        AuditEntry.objects.create(
+            action="登出",
+            extra_info=ip,
+            user_id=user.id,
+            user_name=user.username,
+            user_display=user.display,
+            action_time=now,
+        )
 
 
 @receiver(user_login_failed)
