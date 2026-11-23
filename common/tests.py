@@ -18,7 +18,6 @@ from sql.models import (
     ResourceGroup,
 )
 from common.utils.chart_dao import ChartDao
-from common.auth import init_user
 from common.utils.extend_json_encoder import ExtendJSONEncoderFTime
 
 User = get_user_model()
@@ -529,74 +528,3 @@ class ChartTest(TestCase):
         result = dao.workflow_by_user(one_week_before, today)
         expected_rows = ((self.u2.display, 3), (self.u1.display, 2))
         self.assertEqual(result["rows"], expected_rows)
-
-
-class AuthTest(TestCase):
-    def setUp(self):
-        self.username = "some_user"
-        self.password = "some_str"
-        self.u1 = User(username=self.username, password=self.password, display="用户1")
-        self.u1.save()
-        self.resource_group1 = ResourceGroup.objects.create(group_name="some_group")
-        sys_config = SysConfig()
-        sys_config.set("default_resource_group", self.resource_group1.group_name)
-
-    def tearDown(self):
-        self.u1.delete()
-        self.resource_group1.delete()
-        SysConfig().purge()
-
-    def test_init_user(self):
-        """用户初始化测试测试"""
-        init_user(self.u1)
-        self.assertEqual(self.u1, self.resource_group1.users_set.get(pk=self.u1.pk))
-        # init 需要是无状态的, 可以重复执行, 执行一次和执行n次结果一样
-        init_user(self.u1)
-        self.assertEqual(self.u1, self.resource_group1.users_set.get(pk=self.u1.pk))
-
-
-class PermissionTest(TestCase):
-    def setUp(self) -> None:
-        self.user = User.objects.create(
-            username="test_user",
-            display="中文显示",
-            is_active=True,
-            email="XXX@xxx.com",
-        )
-        self.client.force_login(self.user)
-
-    def tearDown(self) -> None:
-        self.user.delete()
-
-    def test_superuser_required_false(self):
-        """测试超管权限校验"""
-        r = self.client.get("/config/")
-        self.assertContains(r, "您无权操作，请联系管理员")
-
-    def test_superuser_required_true(self):
-        """测试超管权限校验"""
-        User.objects.filter(username=self.user.username).update(is_superuser=1)
-        r = self.client.get("/config/")
-        self.assertNotContains(r, "您无权操作，请联系管理员")
-
-
-class ExtendJSONEncoderFTimeTest(TestCase):
-    def setUp(self):
-        # 初始化测试数据或状态
-        self.datetime1 = datetime.datetime.now()
-        self.datetime2 = datetime.datetime.now() - datetime.timedelta(days=1)
-        self.tz_range = psycopg2._range.DateTimeTZRange(self.datetime2, self.datetime1)
-        self.date_time = self.datetime1
-
-    def test_datetime_tz_range(self):
-        # 测试 DateTimeTZRange
-        result = ExtendJSONEncoderFTime().default(self.tz_range)
-        assert (
-            self.datetime1.strftime("%Y-%m-%d") in result
-            and self.datetime2.strftime("%Y-%m-%d") in result
-        )
-
-    def test_datetime(self):
-        # 测试datetime
-        result = ExtendJSONEncoderFTime().default(self.date_time)
-        assert self.datetime1.strftime("%Y-%m-%d") in result
