@@ -7,6 +7,7 @@ django-auth-ldap==4.1.0
 python-dateutil>=2.8.2
 pymongo==4.6.3
 psycopg2-binary==2.*
+ksycopg2==2.9.2
 pymysql==0.9.3
 mysql-replication==0.22
 django-q2==1.9.0

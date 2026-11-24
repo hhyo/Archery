@@ -28,3 +28,5 @@ archery_custom
 static/
 local_settings.py
 nohup.out
+# 本地验收构建脚本（不入库）
+.local/

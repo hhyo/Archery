@@ -103,8 +103,8 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             result["msg"] = f"无法校验查询语句权限，请联系管理员，错误信息：{msg}"
     # 其他类型实例仅校验库权限
     else:
-        # 先获取查询语句涉及的库，redis、mssql、pgsql/gaussdb特殊处理，仅校验当前选择的库
-        if instance.db_type in ["redis", "mssql", "pgsql", "gaussdb"]:
+        # 先获取查询语句涉及的库，redis、mssql、pgsql/gaussdb/kingbase 特殊处理，仅校验当前选择的库
+        if instance.db_type in ["redis", "mssql", "pgsql", "gaussdb", "kingbase"]:
             dbs = [db_name]
         else:
             dbs = [

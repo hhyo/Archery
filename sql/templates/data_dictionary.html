@@ -15,6 +15,7 @@
                         <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                         <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
                         <optgroup id="optgroup-gaussdb" label="GaussDB"></optgroup>
+                        <optgroup id="optgroup-kingbase" label="KingbaseES"></optgroup>
                     </select>
                 </div>
                 <div class="form-group">
@@ -618,7 +619,7 @@
                     url: "/api/v1/sqlquery/instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql', 'mssql', 'oracle', 'clickhouse', 'gaussdb']
+                        db_type: ['mysql', 'mssql', 'oracle', 'clickhouse', 'gaussdb', 'kingbase']
                     },
                     complete: function () {
                         if ($('#instance_name').val()) {
@@ -635,6 +636,7 @@
                             $("#optgroup-oracle").empty();
                             $("#optgroup-clickhouse").empty();
                             $("#optgroup-gaussdb").empty();
+                            $("#optgroup-kingbase").empty();
                             console.log(instance_result);
                             for (let i = 0; i < result.length; i++) {
                                 let instance_name = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
@@ -648,6 +650,8 @@
                                     $("#optgroup-clickhouse").append(instance_name);
                                 } else if (result[i]['db_type'] === 'gaussdb') {
                                     $("#optgroup-gaussdb").append(instance_name);
+                                } else if (result[i]['db_type'] === 'kingbase') {
+                                    $("#optgroup-kingbase").append(instance_name);
                                 }
                             }
                             $('#instance_name').selectpicker('render');
@@ -670,9 +674,9 @@
             var _ins_name = $("#instance_name").val();
             var _ind = instance_result.findIndex((value)=>value.instance_name==_ins_name);
             var _db_type = _ind >= 0 ? instance_result[_ind]['db_type'] : '';
-            if (_db_type === 'mysql' || _db_type === 'gaussdb') {
+            if (_db_type === 'mysql' || _db_type === 'gaussdb' || _db_type === 'kingbase') {
                 $('#obj_type option').prop('disabled', false);
-                if (_db_type === 'gaussdb') {
+                if (_db_type === 'gaussdb' || _db_type === 'kingbase') {
                     $('#obj_type option[value="event"]').prop('disabled', true);
                     if ($('#obj_type').val() === 'event') {
                         $('#obj_type').val('table');
@@ -751,8 +755,8 @@
             if (
                 db_type
                 && (
-                    (db_type !== 'mysql' && db_type !== 'gaussdb' && obj_type !== 'table')
-                    || (db_type === 'gaussdb' && obj_type === 'event')
+                    (db_type !== 'mysql' && db_type !== 'gaussdb' && db_type !== 'kingbase' && obj_type !== 'table')
+                    || ((db_type === 'gaussdb' || db_type === 'kingbase') && obj_type === 'event')
                 )
             ) {
                 $('#obj_type').val('table');
@@ -852,8 +856,8 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
-                        var tableRenderType = inst_db_type === 'gaussdb' ? 'mysql' : inst_db_type;
-                        if (inst_db_type === 'mysql' || inst_db_type === 'gaussdb') {
+                        var tableRenderType = (inst_db_type === 'gaussdb' || inst_db_type === 'kingbase') ? 'mysql' : inst_db_type;
+                        if (inst_db_type === 'mysql' || inst_db_type === 'gaussdb' || inst_db_type === 'kingbase') {
                             showModalBody('mysql');
 
                             $("#create-table-sql").bootstrapTable('destroy').bootstrapTable({

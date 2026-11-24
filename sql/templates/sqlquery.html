@@ -1196,7 +1196,7 @@
                 else if (sql === 'show create table') {
                     sqlContent = "desc " + $("#table_name").val() + ";"
                 }
-            } else if (optgroup === "MySQL" || optgroup === "PgSQL" || optgroup === "GaussDB") {
+            } else if (optgroup === "MySQL" || optgroup === "PgSQL" || optgroup === "GaussDB" || optgroup === "KingbaseES") {
                 //查看执行计划
                 if (sql === 'explain') {
                     sqlContent = 'explain ' + sqlContent
@@ -1511,7 +1511,7 @@
             // PgSQL/GaussDB需要选择模式再获取表
             var optgroup = $('#instance_name :selected').parent().attr('label');
             var resource_type = "table";
-            if (optgroup === "PgSQL" || optgroup === "GaussDB") {
+            if (optgroup === "PgSQL" || optgroup === "GaussDB" || optgroup === "KingbaseES") {
                 //获取schema
                 resource_type = "schema"
             }
@@ -1525,7 +1525,7 @@
                     resource_type: resource_type
                 },
                 complete: function () {
-                    if (optgroup === "PgSQL" || optgroup === "GaussDB") {
+                    if (optgroup === "PgSQL" || optgroup === "GaussDB" || optgroup === "KingbaseES") {
                         //获取schema
                         $("#div-schema_name").show();
                         $("#schema_name").selectpicker('val', db_name);

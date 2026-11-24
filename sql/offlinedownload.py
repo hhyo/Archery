@@ -33,6 +33,7 @@ SQL_COUNT_ENGINES = {
     "mssql",
     "pgsql",
     "gaussdb",
+    "kingbase",
     "oracle",
     "phoenix",
     "odps",

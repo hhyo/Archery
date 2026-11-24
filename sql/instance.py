@@ -73,12 +73,304 @@ GAUSSDB_PARAM_TEMPLATES = [
     },
 ]
 
+# KES parameter templates, derived from KEMCC.
+KES_PARAM_TEMPLATES = [
+    {
+        "variable_name": "track_counts",
+        "default_value": "on",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否收集表和索引的访问统计信息。",
+    },
+    {
+        "variable_name": "track_sql",
+        "default_value": "off",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否开启 SQL 语句级的时间、等待、IO 统计。",
+    },
+    {
+        "variable_name": "track_instance",
+        "default_value": "off",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否开启实例级 IO、关键活动、锁统计。",
+    },
+    {
+        "variable_name": "track_wait_timing",
+        "default_value": "on",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否累积记录等待事件的等待时间。",
+    },
+    {
+        "variable_name": "track_io_timing",
+        "default_value": "off",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否统计 IO 调用耗时，开启会有额外开销。",
+    },
+    {
+        "variable_name": "track_functions",
+        "default_value": "none",
+        "editable": True,
+        "valid_values": "none / pl / all",
+        "description": "统计函数调用的方式。",
+    },
+    {
+        "variable_name": "sys_kwr.enable",
+        "default_value": "on",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否启用 KWR 性能报告自动采集。",
+    },
+    {
+        "variable_name": "sys_stat_statements.max",
+        "default_value": "5000",
+        "editable": True,
+        "valid_values": "[100-2147483647]",
+        "description": "sys_stat_statements 记录的最大语句数。",
+    },
+    {
+        "variable_name": "sys_stat_statements.track",
+        "default_value": "top",
+        "editable": True,
+        "valid_values": "none / top / all",
+        "description": "sys_stat_statements 的跟踪级别。",
+    },
+    {
+        "variable_name": "max_connections",
+        "default_value": "100",
+        "editable": False,
+        "valid_values": "[1-262143]，需重启生效",
+        "description": "数据库允许的最大并发连接数。",
+    },
+    {
+        "variable_name": "shared_buffers",
+        "default_value": "128MB",
+        "editable": False,
+        "valid_values": "需重启生效",
+        "description": "数据库共享缓冲区大小。",
+    },
+    {
+        "variable_name": "work_mem",
+        "default_value": "4MB",
+        "editable": True,
+        "valid_values": "内存大小，例如 4MB、64MB",
+        "description": "排序、哈希等操作可使用的工作内存。",
+    },
+    {
+        "variable_name": "maintenance_work_mem",
+        "default_value": "64MB",
+        "editable": True,
+        "valid_values": "内存大小，例如 64MB、256MB",
+        "description": "维护操作（VACUUM、CREATE INDEX 等）可使用的内存。",
+    },
+    {
+        "variable_name": "temp_buffers",
+        "default_value": "8MB",
+        "editable": True,
+        "valid_values": "内存大小，例如 8MB、32MB",
+        "description": "每个会话可用的临时缓冲区大小。",
+    },
+    {
+        "variable_name": "effective_cache_size",
+        "default_value": "4GB",
+        "editable": True,
+        "valid_values": "内存大小估算值",
+        "description": "规划器对操作系统缓存的估算，仅影响代价计算。",
+    },
+    {
+        "variable_name": "huge_pages",
+        "default_value": "try",
+        "editable": False,
+        "valid_values": "try / on / off，需重启生效",
+        "description": "是否使用大页内存。",
+    },
+    {
+        "variable_name": "temp_file_limit",
+        "default_value": "-1",
+        "editable": True,
+        "valid_values": "[-1-2147483647]，单位 kB",
+        "description": "单个进程可用的临时文件空间上限，-1 不限制。",
+    },
+    {
+        "variable_name": "statement_timeout",
+        "default_value": "0",
+        "editable": True,
+        "valid_values": "[0-2147483647]，单位毫秒",
+        "description": "单条语句最大执行时间，0 表示不限制。",
+    },
+    {
+        "variable_name": "lock_timeout",
+        "default_value": "0",
+        "editable": True,
+        "valid_values": "[0-2147483647]，单位毫秒",
+        "description": "等待锁的最长时间，0 表示不限制。",
+    },
+    {
+        "variable_name": "idle_in_transaction_session_timeout",
+        "default_value": "0",
+        "editable": True,
+        "valid_values": "[0-2147483647]，单位毫秒",
+        "description": "事务空闲超时，超时后断开连接。",
+    },
+    {
+        "variable_name": "deadlock_timeout",
+        "default_value": "1s",
+        "editable": True,
+        "valid_values": "时间值，例如 1s、2s",
+        "description": "死锁检测前的等待时间。",
+    },
+    {
+        "variable_name": "max_locks_per_transaction",
+        "default_value": "64",
+        "editable": False,
+        "valid_values": "[10-2147483647]，需重启生效",
+        "description": "每个事务可持有的锁数量上限。",
+    },
+    {
+        "variable_name": "log_min_duration_statement",
+        "default_value": "-1",
+        "editable": True,
+        "valid_values": "[-1-2147483647]，单位毫秒",
+        "description": "慢 SQL 记录阈值，-1 不记录，0 记录全部。",
+    },
+    {
+        "variable_name": "log_statement",
+        "default_value": "none",
+        "editable": True,
+        "valid_values": "none / ddl / mod / all",
+        "description": "记录哪些 SQL 语句。",
+    },
+    {
+        "variable_name": "log_checkpoints",
+        "default_value": "on",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否记录检查点活动。",
+    },
+    {
+        "variable_name": "log_lock_waits",
+        "default_value": "off",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否记录锁等待超过 deadlock_timeout 的事件。",
+    },
+    {
+        "variable_name": "log_temp_files",
+        "default_value": "-1",
+        "editable": True,
+        "valid_values": "[-1-2147483647]，单位 kB",
+        "description": "记录超过指定大小的临时文件使用。",
+    },
+    {
+        "variable_name": "log_autovacuum_min_duration",
+        "default_value": "-1",
+        "editable": True,
+        "valid_values": "[-1-2147483647]，单位毫秒",
+        "description": "记录超过指定时长的 autovacuum 操作。",
+    },
+    {
+        "variable_name": "enable_seqscan",
+        "default_value": "on",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否允许规划器使用顺序扫描。",
+    },
+    {
+        "variable_name": "enable_indexscan",
+        "default_value": "on",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否允许规划器使用索引扫描。",
+    },
+    {
+        "variable_name": "random_page_cost",
+        "default_value": "4",
+        "editable": True,
+        "valid_values": "浮点数，默认 4",
+        "description": "随机磁盘页的代价估算。",
+    },
+    {
+        "variable_name": "default_statistics_target",
+        "default_value": "100",
+        "editable": True,
+        "valid_values": "[1-10000]",
+        "description": "ANALYZE 采样的统计目标值。",
+    },
+    {
+        "variable_name": "wal_level",
+        "default_value": "replica",
+        "editable": False,
+        "valid_values": "minimal / replica / logical，需重启生效",
+        "description": "WAL 记录的详细程度。",
+    },
+    {
+        "variable_name": "wal_buffers",
+        "default_value": "16MB",
+        "editable": False,
+        "valid_values": "需重启生效",
+        "description": "WAL 缓冲区大小。",
+    },
+    {
+        "variable_name": "wal_compression",
+        "default_value": "off",
+        "editable": True,
+        "valid_values": "on / off",
+        "description": "是否压缩 WAL 中的全页写。",
+    },
+    {
+        "variable_name": "synchronous_commit",
+        "default_value": "on",
+        "editable": True,
+        "valid_values": "on / off / local / remote_write / remote_apply",
+        "description": "事务提交的同步级别。",
+    },
+    {
+        "variable_name": "checkpoint_timeout",
+        "default_value": "5min",
+        "editable": True,
+        "valid_values": "时间值，例如 5min、20min",
+        "description": "两次检查点之间的最长间隔。",
+    },
+    {
+        "variable_name": "checkpoint_completion_target",
+        "default_value": "0.9",
+        "editable": True,
+        "valid_values": "[0-1]",
+        "description": "检查点写盘的平滑系数。",
+    },
+    {
+        "variable_name": "max_wal_size",
+        "default_value": "1GB",
+        "editable": True,
+        "valid_values": "内存/容量值，例如 1GB、64GB",
+        "description": "触发检查点的 WAL 最大容量。",
+    },
+    {
+        "variable_name": "min_wal_size",
+        "default_value": "80MB",
+        "editable": True,
+        "valid_values": "内存/容量值",
+        "description": "WAL 文件保留的最小容量。",
+    },
+    {
+        "variable_name": "fsync",
+        "default_value": "on",
+        "editable": False,
+        "valid_values": "on / off，需重启生效",
+        "description": "是否强制将数据刷写到磁盘。",
+    },
+]
+
 
 def ensure_builtin_param_templates(db_type):
     """补齐内置参数模板，避免新引擎在参数页没有可展示项。"""
-    if db_type != "gaussdb":
+    if db_type not in ("gaussdb", "kingbase"):
         return
-    for param in GAUSSDB_PARAM_TEMPLATES:
+    templates = GAUSSDB_PARAM_TEMPLATES if db_type == "gaussdb" else KES_PARAM_TEMPLATES
+    for param in templates:
         ParamTemplate.objects.get_or_create(
             db_type=db_type,
             variable_name=param["variable_name"],
@@ -341,8 +633,8 @@ def param_compare(request):
         }
         return HttpResponse(json.dumps(result), content_type="application/json")
 
-    # 校验引擎支持参数对比（mysql / goinception / gaussdb 实现了 get_variables）
-    _variable_supported_db_types = {"mysql", "goinception", "gaussdb"}
+    # 校验引擎支持参数对比（mysql / goinception / gaussdb / kingbase 实现了 get_variables）
+    _variable_supported_db_types = {"mysql", "goinception", "gaussdb", "kingbase"}
     if ins1.db_type not in _variable_supported_db_types:
         result = {
             "status": 1,
