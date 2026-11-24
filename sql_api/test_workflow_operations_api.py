@@ -5,6 +5,7 @@ cannot be proven by service-level unit tests.
 """
 
 import pytest
+from django.utils import timezone
 from sql.engines.models import ResultSet
 from sql.models import SqlWorkflow, WorkflowLog
 
@@ -660,7 +661,8 @@ def test_retry_failed_workflow(
 ):
     workflow, _, audit = workflow_api_data
     workflow.status = "workflow_exception"
-    workflow.save(update_fields=["status"])
+    workflow.finish_time = timezone.now()
+    workflow.save(update_fields=["status", "finish_time"])
     url = f"/api/v1/sql-workflows/{audit.pk}/execution/"
     queue = mocker.patch.object(api_workflow_operations, "submit_auto_execution")
 
@@ -675,6 +677,7 @@ def test_retry_failed_workflow(
         assert execute().status_code == 200
         workflow.refresh_from_db()
         assert workflow.status == "workflow_queuing"
+        assert workflow.finish_time is None
         assert execute().status_code == 403
     queue.assert_called_once_with(workflow.pk, normal_user)
 

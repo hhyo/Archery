@@ -490,7 +490,8 @@ class WorkflowExecutionView(WorkflowOperationAPIView):
         with transaction.atomic():
             if data["mode"] == "auto":
                 workflow.status = "workflow_queuing"
-                workflow.save(update_fields=["status"])
+                workflow.finish_time = None
+                workflow.save(update_fields=["status", "finish_time"])
                 Audit.add_log(
                     audit_id,
                     5,

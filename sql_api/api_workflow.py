@@ -348,10 +348,10 @@ class ExecuteWorkflow(views.APIView):
 
             # 交由系统执行
             if mode == "auto":
-                # 修改工单状态为排队中
-                SqlWorkflow(id=workflow_id, status="workflow_queuing").save(
-                    update_fields=["status"]
-                )
+                # 修改工单状态为排队中, 并清空上次执行的完成时间
+                SqlWorkflow(
+                    id=workflow_id, status="workflow_queuing", finish_time=None
+                ).save(update_fields=["status", "finish_time"])
                 # 删除定时执行任务
                 schedule_name = f"sqlreview-timing-{workflow_id}"
                 del_schedule(schedule_name)
