@@ -511,6 +511,7 @@ def archive_log(request):
     count = archive_logs.count()
     lists = archive_logs.order_by("-id")[offset:limit].values(
         "cmd",
+        "statistics",
         "info",
         "condition",
         "mode",

@@ -169,7 +169,7 @@ class LanguagePreferenceTests(SimpleTestCase):
                             r"<!--.*?-->|<script.*?</script>|<style.*?</style>",
                             "",
                             html,
-                            flags=re.S,
+                            flags=re.S | re.I,
                         )
                         visible_text = re.sub(r"<[^>]+>", "", html).replace(
                             "简体中文", ""
@@ -328,7 +328,10 @@ class LanguagePreferenceTests(SimpleTestCase):
                         self.assertIn(labels[language != "en"], html)
                         if name == "dashboard.html":
                             visible = re.sub(
-                                r"<script.*?</script>|<!--.*?-->", "", html, flags=re.S
+                                r"<script.*?</script>|<!--.*?-->",
+                                "",
+                                html,
+                                flags=re.S | re.I,
                             )
                             self.assertIn(labels[language != "en"], visible)
                             self.assertNotIn(labels[language == "en"], visible)
