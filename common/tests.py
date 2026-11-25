@@ -19,7 +19,10 @@ from sql.models import (
 )
 from common.utils.chart_dao import ChartDao
 from common.auth import init_user
-from common.utils.extend_json_encoder import ExtendJSONEncoderFTime
+from common.utils.extend_json_encoder import (
+    ExtendJSONEncoderBytes,
+    ExtendJSONEncoderFTime,
+)
 
 User = get_user_model()
 
@@ -600,3 +603,13 @@ class ExtendJSONEncoderFTimeTest(TestCase):
         # 测试datetime
         result = ExtendJSONEncoderFTime().default(self.date_time)
         assert self.datetime1.strftime("%Y-%m-%d") in result
+
+
+class ExtendJSONEncoderBytesTest(TestCase):
+    def test_utf8_bytes_are_decoded(self):
+        result = ExtendJSONEncoderBytes().default("中文 text".encode("utf-8"))
+        self.assertEqual(result, "中文 text")
+
+    def test_other_bytes_are_base64_encoded(self):
+        result = ExtendJSONEncoderBytes().default(b"\xff\xfe")
+        self.assertEqual(result, "//4=")
