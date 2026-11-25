@@ -1,34 +1,35 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
         <li id="param_tab" class="active">
-            <a href="#param_table" role="tab" data-toggle="tab">可修改参数</a>
+            <a href="#param_table" role="tab" data-toggle="tab">{% translate "可修改参数" %}</a>
         </li>
         <li id="history_tab">
-            <a href="#history_table" role="tab" data-toggle="tab">修改历史</a>
+            <a href="#history_table" role="tab" data-toggle="tab">{% translate "修改历史" %}</a>
         </li>
         <div class="form-inline pull-right">
             <div class="form-group ">
                 <button id="btn_add_param" type="button" class="btn btn-default"
                         onclick="window.open('/admin/sql/paramtemplate/add/')">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    添加参数
+                    {% translate "添加参数" %}
                 </button>
             </div>
             <div id="editable-div" style="display: none" class="form-group">
                 <select id=editable class="form-control selectpicker" data-live-search="true">
-                    <option value="is-empty" disabled="">允许修改</option>
-                    <option value="true" selected="selected">是</option>
-                    <option value=''>否</option>
+                    <option value="is-empty" disabled="">{% translate "允许修改" %}</option>
+                    <option value="true" selected="selected">{% translate "是" %}</option>
+                    <option value=''>{% translate "否" %}</option>
                 </select>
             </div>
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
-                        title="请选择实例"
+                        title="{% translate '请选择实例' %}"
                         data-live-search="true">
-                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
+                    <option value="is-empty" disabled="" selected="selected">{% translate "请选择实例" %}</option>
                 </select>
             </div>
         </div>
@@ -47,6 +48,7 @@
 {% endblock content %}
 
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
     {% load static %}
     <link href="{% static 'bootstrap-editable/css/bootstrap-editable.css' %}" rel="stylesheet">
     <script src="{% static 'bootstrap-table/extensions/editable/bootstrap-table-editable.js' %}"></script>
@@ -55,6 +57,15 @@
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
     <script>
+        $.fn.editableform.buttons =
+            '<button type="submit" class="btn btn-primary btn-sm editable-submit" title="{% translate "保存"|escapejs %}" aria-label="{% translate "保存"|escapejs %}"><i class="glyphicon glyphicon-ok"></i></button>' +
+            '<button type="button" class="btn btn-default btn-sm editable-cancel" title="{% translate "取消"|escapejs %}" aria-label="{% translate "取消"|escapejs %}"><i class="glyphicon glyphicon-remove"></i></button>';
+        function parameterLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         function get_param_list() {
             $("#editable-div").show();
             if ($("#instance").val()) {
@@ -88,7 +99,7 @@
                     detailFormatter: function (index, row) {
                         return row.description
                     },
-                    locale: 'zh-CN',                     //本地化
+                    locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                     //本地化
                     toolbar: "#process-toolbar",         //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -120,12 +131,12 @@
                                 }
                             });
                         } else {
-                            alert('请先在参数模板中配置该参数！');
+                            alert('{% translate "请先在参数模板中配置该参数！"|escapejs %}');
                             get_param_list()
                         }
                     },
                     columns: [{
-                        title: '参数名',
+                        title: '{% translate "参数名"|escapejs %}',
                         field: 'variable_name',
                         formatter: function (value, row, index) {
                             if (row.id) {
@@ -135,31 +146,31 @@
                             }
                         }
                     }, {
-                        title: '运行参数值',
+                        title: '{% translate "运行参数值"|escapejs %}',
                         field: 'runtime_value',
                         editable: {
                             type: 'text',
-                            title: '修改参数值',
+                            title: '{% translate "修改参数值"|escapejs %}',
                             placement: 'bottom',
                             emptytext: '-',
                             validate: function (v) {
-                                if (!v) return '参数值不能为空';
+                                if (!v) return '{% translate "参数值不能为空"|escapejs %}';
                             }
                         }
                     }, {
-                        title: '默认参数值',
+                        title: '{% translate "默认参数值"|escapejs %}',
                         field: 'default_value'
                     }, {
-                        title: '可修改参数值',
+                        title: '{% translate "可修改参数值"|escapejs %}',
                         field: 'valid_values'
                     }, {
-                        title: '参数描述',
+                        title: '{% translate "参数描述"|escapejs %}',
                         field: 'description',
                         visible: false // 默认不显示
                     }],
                     onLoadSuccess: function () {
                     },
-                    onLoadError: onLoadErrorCallback,
+                    onLoadError: parameterLoadError,
                     onSearch: function (e) {
                         //传搜索参数给服务器
                         return {
@@ -201,7 +212,7 @@
                     exportDataType: "all",
                     cardView: false,                    //是否显示详细视图
                     detailView: false,                  //是否显示父子表
-                    locale: 'zh-CN',                    //本地化
+                    locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                     toolbar: "#toolbar",                //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
@@ -214,27 +225,27 @@
                         }
                     },
                     columns: [{
-                        title: '实例名称',
+                        title: '{% translate "实例名称"|escapejs %}',
                         field: 'instance__instance_name'
                     }, {
-                        title: '参数名',
+                        title: '{% translate "参数名"|escapejs %}',
                         field: 'variable_name'
                     }, {
-                        title: '变更前的参数值',
+                        title: '{% translate "变更前的参数值"|escapejs %}',
                         field: 'old_var'
                     }, {
-                        title: '变更后的参数值',
+                        title: '{% translate "变更后的参数值"|escapejs %}',
                         field: 'new_var'
                     }, {
-                        title: '修改人',
+                        title: '{% translate "修改人"|escapejs %}',
                         field: 'user_display'
                     }, {
-                        title: '修改时间',
+                        title: '{% translate "修改时间"|escapejs %}',
                         field: 'create_time'
                     }],
                     onLoadSuccess: function () {
                     },
-                    onLoadError: onLoadErrorCallback,
+                    onLoadError: parameterLoadError,
                     onSearch: function (e) {
                         //传搜索参数给服务器
                         return {

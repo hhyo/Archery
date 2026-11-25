@@ -1,17 +1,18 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    操作选项
+                    {% translate "操作选项" %}
                 </div>
                 <div class="panel-body">
                     <div class="form-group">
                         <select id="db_type" name="db_type"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                title="请选择数据库类型:"
+                                title="{% translate '请选择数据库类型:' %}"
                                 required>
                             <option value="mysql">MySQL</option>
                             <option value="goinception">goInception</option>
@@ -22,27 +23,27 @@
                     <div class="form-group">
                         <select id="instance_id1" name="instance_id1"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择源实例:"
-                                data-placeholder="请选择源实例:" required>
+                                title="{% translate '请选择源实例:' %}"
+                                data-placeholder="{% translate '请选择源实例:' %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="instance_id2" name="instance_id2"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                title="请选择目标实例:"
-                                data-placeholder="请选择目标实例:" required>
+                                title="{% translate '请选择目标实例:' %}"
+                                data-placeholder="{% translate '请选择目标实例:' %}" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <div class="checkbox">
                             <label>
                                 <input id="diff_only" type="checkbox" checked>
-                                仅显示差异项
+                                {% translate "仅显示差异项" %}
                             </label>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input id="btn-compare" type="button" class="btn btn-danger" value="开始对比"
+                        <input id="btn-compare" type="button" class="btn btn-danger" value="{% translate '开始对比' %}"
                                onclick="compare_params()"/>
                     </div>
                 </div>
@@ -51,13 +52,13 @@
         <div class="col-md-9 column">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    对比结果
+                    {% translate "对比结果" %}
                 </div>
                 <div class="panel-body">
                     <div id="compare-stats" style="display:none;" class="row clearfix" style="margin-bottom:10px;">
                         <div class="col-md-4">
                             <div class="panel panel-primary">
-                                <div class="panel-heading">一致参数</div>
+                                <div class="panel-heading">{% translate "一致参数" %}</div>
                                 <div class="panel-body text-center">
                                     <h3 id="same-count">0</h3>
                                 </div>
@@ -65,7 +66,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="panel panel-danger">
-                                <div class="panel-heading">差异参数</div>
+                                <div class="panel-heading">{% translate "差异参数" %}</div>
                                 <div class="panel-body text-center">
                                     <h3 id="diff-count">0</h3>
                                 </div>
@@ -73,7 +74,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="panel panel-default">
-                                <div class="panel-heading">总参数数</div>
+                                <div class="panel-heading">{% translate "总参数数" %}</div>
                                 <div class="panel-body text-center">
                                     <h3 id="total-count">0</h3>
                                 </div>
@@ -90,6 +91,7 @@
     </div>
 {% endblock content %}
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
     {% load static %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
@@ -160,11 +162,11 @@
             var diff_only = document.getElementById("diff_only").checked;
 
             if (!instance_id1 || !instance_id2) {
-                alert('请选择源实例和目标实例！');
+                alert('{% translate "请选择源实例和目标实例！"|escapejs %}');
                 return;
             }
             if (instance_id1 === instance_id2) {
-                alert('源实例和目标实例不能相同！');
+                alert('{% translate "源实例和目标实例不能相同！"|escapejs %}');
                 return;
             }
 
@@ -224,15 +226,15 @@
                                 if (row.description) {
                                     return escapeHtml(row.description);
                                 }
-                                return '暂无描述';
+                                return '{% translate "暂无描述"|escapejs %}';
                             },
-                            locale: 'zh-CN',
+                            locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',
                             columns: [{
-                                title: '参数名',
+                                title: '{% translate "参数名"|escapejs %}',
                                 field: 'variable_name',
                                 sortable: true
                             }, {
-                                title: '源实例参数值 (' + result.instance1_name + ')',
+                                title: '{% translate "源实例参数值"|escapejs %} (' + escapeHtml(result.instance1_name) + ')',
                                 field: 'instance1_value',
                                 sortable: true,
                                 formatter: function (value, row, index) {
@@ -242,7 +244,7 @@
                                     return escapeHtml(value);
                                 }
                             }, {
-                                title: '目标实例参数值 (' + result.instance2_name + ')',
+                                title: '{% translate "目标实例参数值"|escapejs %} (' + escapeHtml(result.instance2_name) + ')',
                                 field: 'instance2_value',
                                 sortable: true,
                                 formatter: function (value, row, index) {
@@ -252,26 +254,26 @@
                                     return escapeHtml(value);
                                 }
                             }, {
-                                title: '差异类型',
+                                title: '{% translate "差异类型"|escapejs %}',
                                 field: 'diff_type',
                                 sortable: true,
                                 formatter: function (value, row, index) {
                                     if (value === '值不同') {
-                                        return "<span class='label label-danger'>值不同</span>";
+                                        return "<span class='label label-danger'>{% translate "值不同"|escapejs %}</span>";
                                     } else if (value === '仅源实例存在') {
-                                        return "<span class='label label-warning'>仅源实例存在</span>";
+                                        return "<span class='label label-warning'>{% translate "仅源实例存在"|escapejs %}</span>";
                                     } else if (value === '仅目标实例存在') {
-                                        return "<span class='label label-info'>仅目标实例存在</span>";
+                                        return "<span class='label label-info'>{% translate "仅目标实例存在"|escapejs %}</span>";
                                     }
-                                    return "<span class='label label-success'>一致</span>";
+                                    return "<span class='label label-success'>{% translate "一致"|escapejs %}</span>";
                                 }
                             }, {
-                                title: '默认参数值',
+                                title: '{% translate "默认参数值"|escapejs %}',
                                 field: 'default_value',
                                 sortable: true,
                                 visible: false
                             }, {
-                                title: '参数描述',
+                                title: '{% translate "参数描述"|escapejs %}',
                                 field: 'description',
                                 visible: false
                             }]

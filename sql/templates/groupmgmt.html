@@ -1,23 +1,24 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
     <ul class="breadcrumb">
-        <li><a href="/group/">资源组</a></li>
-        <li class="active">关联对象</li>
+        <li><a href="/group/">{% translate "资源组" %}</a></li>
+        <li class="active">{% translate "关联对象" %}</li>
     </ul>
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline">
         <div class="form-group">
             <select id="type" class="form-control selectpicker">
-                <option value="" selected="selected">全部</option>
-                <option value=0>用户</option>
-                <option value=1>实例</option>
+                <option value="" selected="selected">{% translate "全部" context "resource group" %}</option>
+                <option value=0>{% translate "用户" %}</option>
+                <option value=1>{% translate "实例" %}</option>
             </select>
         </div>
         <div class="form-group ">
             <button id="btn_add" type="button" class="btn btn-default" data-toggle="modal" data-target="#add">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                新增关联对象
+                {% translate "新增关联对象" %}
             </button>
         </div>
     </div>
@@ -34,32 +35,32 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">新增关联对象</h4>
+                    <h4 class="modal-title" id="myModalLabel">{% translate "新增关联对象" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <input type="text" class="form-control" id="group_name" value="{{ group.group_name }}" disabled
-                               placeholder="组">
+                               placeholder="{% translate "组" %}">
                     </div>
                     <div class="form-group">
                         <select id="object_type" name="object_type"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                data-name="关联对象类型" data-placeholder="请选择关联对象类型:" data-live-search="true" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择关联对象类型:</option>
-                            <option value=0>用户</option>
-                            <option value=1>实例</option>
+                                data-name="{% translate "关联对象类型" %}" data-placeholder="{% translate "请选择关联对象类型:" %}" data-live-search="true" required>
+                            <option value="is-empty" disabled="" selected="selected">{% translate "请选择关联对象类型:" %}</option>
+                            <option value=0>{% translate "用户" %}</option>
+                            <option value=1>{% translate "实例" %}</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="object_info" name="object_info" data-live-search="true" multiple="multiple"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择关联对象:</option>
+                            <option value="is-empty" disabled="" selected="selected">{% translate "请选择关联对象:" %}</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-success" onclick="addRelation()">提交</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-success" onclick="addRelation()">{% translate "提交" context "resource group action" %}</button>
                 </div>
             </div>
         </div>
@@ -67,9 +68,16 @@
 {% endblock content %}
 {% block js %}
     {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        function resourceGroupLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         //获取列表
         function groupmgmt() {
             //采取异步请求
@@ -102,7 +110,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
@@ -117,7 +125,7 @@
                         }
                     },
                 columns: [{
-                    title: '关联对象描述',
+                    title: '{% translate "关联对象描述"|escapejs %}',
                     field: 'object_name',
                     formatter: function (value, row, index) {
                         switch (row.object_type) {
@@ -128,36 +136,32 @@
                                 return "<a href=\"/admin/sql/instance/" + row.object_id + "/change/\">" + row.object_name + "</a>";
                                 break;
                             default:
-                                return "未知"
+                                return "{% translate "未知"|escapejs %}"
                         }
                     }
                 }, {
-                    title: '关联对象类型',
+                    title: '{% translate "关联对象类型"|escapejs %}',
                     field: 'object_type',
                     formatter: function (value, row, index) {
-                        switch (value) {
+                        switch (Number(value)) {
                             case 0:
-                                return "用户";
+                                return "{% translate "用户"|escapejs %}";
                                 break;
                             case 1:
-                                return "实例";
+                                return "{% translate "实例"|escapejs %}";
                                 break;
                             default:
-                                return "未知"
+                                return "{% translate "未知"|escapejs %}"
                         }
                     }
                 }, {
-                    title: '资源组',
+                    title: '{% translate "资源组"|escapejs %}',
                     field: 'group_name'
                 }
                 ],
                 onLoadSuccess: function () {
                 },
-                onLoadError: onLoadErrorCallback,
-                onSearch: function (e) {
-                    //传搜索参数给服务器
-                    queryParams(e)
-                }
+                onLoadError: resourceGroupLoadError
             });
 
         }
@@ -165,7 +169,7 @@
         //选择控件初始化
         $("#object_info").selectpicker({
             actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-            countSelectedText: "已选中{0}项",
+            countSelectedText: "{% translate "已选中{0}项"|escapejs %}",
             selectedTextFormat: "count > 5"
         });
 
@@ -198,7 +202,7 @@
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    resourceGroupLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
         });
@@ -231,11 +235,11 @@
                         }
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
-                        alert(errorThrown);
+                        resourceGroupLoadError(XMLHttpRequest.status, XMLHttpRequest);
                     }
                 });
             } else {
-                alert('请填写完整！')
+                alert('{% translate "请填写完整！"|escapejs %}')
             }
 
         }

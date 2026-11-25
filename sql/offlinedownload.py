@@ -17,6 +17,7 @@ import gc
 import simplejson as json
 import pandas as pd
 from django.http import JsonResponse, FileResponse
+from django.utils.translation import gettext as _
 
 
 from sql.models import SqlWorkflow, AuditEntry
@@ -189,7 +190,7 @@ class OffLineDownLoad(EngineBase):
                 stage="自动审核失败",
                 errlevel=2,
                 stagestatus="检查未通过！",
-                errormessage=parse_error or "没有有效的查询语句",
+                errormessage=parse_error or _("没有有效的查询语句"),
                 affected_rows=0,
                 sql=full_sql,
             )
@@ -201,7 +202,7 @@ class OffLineDownLoad(EngineBase):
                 stage="自动审核失败",
                 errlevel=2,
                 stagestatus="检查未通过！",
-                errormessage="检测到多个查询语句，只能提交一个导出查询。",
+                errormessage=_("检测到多个查询语句，只能提交一个导出查询。"),
                 affected_rows=0,
                 sql=full_sql,
             )
@@ -236,7 +237,7 @@ class OffLineDownLoad(EngineBase):
                 stage="自动审核失败",
                 errlevel=2,
                 stagestatus="检查未通过！",
-                errormessage=query_check_info.get("msg") or "不支持的查询语法类型!",
+                errormessage=query_check_info.get("msg") or _("不支持的查询语法类型!"),
                 affected_rows=0,
                 sql=sql,
             )
@@ -309,7 +310,8 @@ class OffLineDownLoad(EngineBase):
             result = ReviewResult(
                 errlevel=2,
                 stagestatus="检查未通过！",
-                errormessage=f"导出数据行数({actual_rows_check})超过阈值({max_export_rows})。",
+                errormessage=_("导出数据行数(%(rows)s)超过阈值(%(limit)s)。")
+                % {"rows": actual_rows_check, "limit": max_export_rows},
                 affected_rows=actual_rows_check,
                 sql=sql,
             )
@@ -515,18 +517,18 @@ def offline_file_download(request):
     """
     workflow_id = request.GET.get("workflow_id", " ")
     if not str(workflow_id).isdigit():
-        return JsonResponse({"error": "参数错误，workflow_id必须为数字"}, status=400)
+        return JsonResponse({"error": _("参数错误，workflow_id必须为数字")}, status=400)
 
     try:
         workflow = SqlWorkflow.objects.get(id=workflow_id)
         file_name = workflow.file_name
         if not file_name:
-            return JsonResponse({"error": "该工单未生成下载文件"}, status=404)
+            return JsonResponse({"error": _("该工单未生成下载文件")}, status=404)
     except SqlWorkflow.DoesNotExist:
-        return JsonResponse({"error": "工单不存在"}, status=404)
+        return JsonResponse({"error": _("工单不存在")}, status=404)
 
     if ".." in file_name or "/" in file_name or "\\" in file_name:
-        return JsonResponse({"error": "非法的文件名"}, status=400)
+        return JsonResponse({"error": _("非法的文件名")}, status=400)
 
     action = "离线下载"
     extra_info = f"工单id：{workflow_id}，文件：{file_name}"
@@ -537,7 +539,7 @@ def offline_file_download(request):
     try:
         if not storage.exists(file_name):
             extra_info = extra_info + f"，error:文件不存在。"
-            return JsonResponse({"error": "文件不存在"}, status=404)
+            return JsonResponse({"error": _("文件不存在")}, status=404)
         elif storage.exists(file_name):
             if storage_type in ["sftp", "local"]:
                 # SFTP/LOCAL处理 - 直接提供文件流
@@ -555,7 +557,7 @@ def offline_file_download(request):
                     extra_info = extra_info + f"，error:{str(e)}"
                     logger.error(extra_info)
                     return JsonResponse(
-                        {"error": f"文件下载失败：请联系管理员。"}, status=500
+                        {"error": _("文件下载失败：请联系管理员。")}, status=500
                     )
 
             elif storage_type in ["s3c", "azure"]:
@@ -567,13 +569,13 @@ def offline_file_download(request):
                     extra_info = extra_info + f"，error:{str(e)}"
                     logger.error(extra_info)
                     return JsonResponse(
-                        {"error": f"文件下载失败：请联系管理员。"}, status=500
+                        {"error": _("文件下载失败：请联系管理员。")}, status=500
                     )
 
     except Exception as e:
         extra_info = extra_info + f"，error:{str(e)}"
         logger.error(extra_info)
-        return JsonResponse({"error": "内部错误，请联系管理员。"}, status=500)
+        return JsonResponse({"error": _("内部错误，请联系管理员。")}, status=500)
 
     finally:
         if request.method != "HEAD":

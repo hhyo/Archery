@@ -1,19 +1,23 @@
 {% extends "base.html" %}
-{% load format_tags %}
+{% load format_tags i18n %}
 {% block content %}
+    <style>
+        .archive-request-info th .th-inner { white-space: normal; text-overflow: clip; }
+        .archive-instance-info .control-label { clear: left; }
+    </style>
     <!--有管理权限的用户可以直接编辑-->
     <div class="form-inline">
-        <h4 style="display: inline;">工单名称：<span>{{ archive_config.title }}</span></h4>&nbsp;&nbsp;&nbsp;
+        <h4 style="display: inline;">{% translate "工单名称：" %} <span>{{ archive_config.title }}</span></h4>&nbsp;&nbsp;&nbsp;
         {% if perms.sql.archive_mgt %}
             <a type='button' id="btnEditArchiveConfig" class='btn btn-info'
-               href="/admin/sql/archiveconfig/{{ archive_config.id }}/change/">修改归档配置</a>
+               href="/admin/sql/archiveconfig/{{ archive_config.id }}/change/">{% translate "修改归档配置" %}</a>
         {% endif %}
         <!--单次调用-->
         {% if archive_config.status == 1 and perms.sql.archive_mgt %}
             <div class="form-group">
                 <button id="btn_archive_once" type="button" class="btn btn-warning">
                     <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>立即归档
+                    <span aria-hidden="true"></span>{% translate "立即归档" %}
                 </button>
             </div>
         {% endif %}
@@ -22,43 +26,44 @@
     <input type="hidden" id="editSqlContent" value="{{ archive_config.sql_content }}"/>
     <hr>
     <h4>
-        审批流
+        {% translate "审批流" %}
     </h4>
     <h5>
     {% include "workflow_display.html" %}
+    </h5>
     <h4>
-        其他信息
+        {% translate "其他信息" context "archive request" %}
     </h4>
-    <table data-toggle="table" class="table table-striped table-hover"
-           style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+    <table data-toggle="table" class="table table-striped table-hover archive-request-info"
+           style="table-layout:fixed;white-space:normal;overflow-wrap:anywhere;">
         <thead>
         <tr>
             <th>
-                申请人
+                {% translate "申请人" %}
             </th>
             <th>
-                实例
+                {% translate "实例" %}
             </th>
             <th>
-                数据库
+                {% translate "数据库" %}
             </th>
             <th>
-                表
+                {% translate "表" %}
             </th>
             <th>
-                归档模式
+                {% translate "归档模式" %}
             </th>
             <th>
-                申请时间
+                {% translate "申请时间" %}
             </th>
             <th>
-                最近归档时间
+                {% translate "最近归档时间" %}
             </th>
             <th>
-                当前状态
+                {% translate "当前状态" %}
             </th>
             <th>
-                组
+                {% translate "组" %}
             </th>
         </tr>
         </thead>
@@ -77,23 +82,23 @@
                 {{ archive_config.src_table_name }}
             </td>
             <td>
-                {{ archive_config.mode }}
+                {% if archive_config.mode == 'file' %}{% translate "归档到文件" %}{% elif archive_config.mode == 'dest' %}{% translate "归档到其他实例" %}{% elif archive_config.mode == 'purge' %}{% translate "直接删除" %}{% else %}{{ archive_config.mode }}{% endif %}
             </td>
             <td>
                 {{ archive_config.create_time }}
             </td>
             <td>
-                {{ archive_config.last_archive_time }}
+                {{ archive_config.last_archive_time|default_if_none:"—" }}
             </td>
             <td>
                 {% if archive_config.status == 0 %}
-                    <b style="color: red">待审核</b>
+                    <b style="color: red">{% translate "待审核" %}</b>
                 {% elif archive_config.status == 1 %}
-                    <b style="color: green">审核通过</b>
+                    <b style="color: green">{% translate "审核通过" %}</b>
                 {% elif archive_config.status == 2 %}
-                    <b style="color: red">审核不通过</b>
+                    <b style="color: red">{% translate "审核不通过" %}</b>
                 {% elif archive_config.status == 3 %}
-                    <b style="color: red">审核取消</b>
+                    <b style="color: red">{% translate "审核取消" %}</b>
                 {% endif %}
             </td>
             <td>
@@ -106,10 +111,10 @@
     <!-- Nav tabs -->
     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
         <li id="detail_tab" class="active">
-            <a href="#detail" role="tab" data-toggle="tab">归档配置信息</a>
+            <a href="#detail" role="tab" data-toggle="tab">{% translate "归档配置信息" %}</a>
         </li>
         <li id="logs_tab">
-            <a href="#logs" role="tab" data-toggle="tab">归档日志</a>
+            <a href="#logs" role="tab" data-toggle="tab">{% translate "归档日志" %}</a>
         </li>
     </ul>
     <!-- Tab panes -->
@@ -117,13 +122,16 @@
         <!-- 归档配置信息-->
         <div id="detail" role="tabpanel" class="panel-body tab-pane fade in active form-group">
             {% if archive_config.status == 1 and perms.sql.archive_mgt %}
-                <h4><b>是否启用</b></h4>
+                <h4><b>{% translate "是否启用" context "archive state" %}</b></h4>
                 <hr/>
                 <div class="form-group">
                     <div class="left">
                         <div class="switch switch-small">
                             <label>
-                                <input id="state"
+                                <input id="archive_enabled"
+                                       aria-label="{% translate "是否启用归档" %}"
+                                       data-on-text="{% translate "启用" context "archive state" %}"
+                                       data-off-text="{% translate "关闭" context "archive state" %}"
                                        key="state"
                                        value="{{ archive_config.state }}"
                                        type="checkbox">
@@ -132,44 +140,44 @@
                     </div>
                 </div>
             {% endif %}
-            <h4><b>归档信息</b></h4>
+            <h4><b>{% translate "归档信息" %}</b></h4>
             <hr/>
             <div class="form-horizontal">
                 <div class="form-group form-inline">
-                    <label class="col-sm-2 control-label">归档模式</label>
+                    <label class="col-sm-2 control-label">{% translate "归档模式" %}</label>
                     <div class="col-sm-10">
-                        <p class="form-control-static">{% if archive_config.mode == 'file' %}归档到文件(file)
-                        {% elif archive_config.mode == 'dest' %}归档到其他实例(dest)
-                        {% elif archive_config.mode == 'purge' %}直接删除(purge)
+                        <p class="form-control-static">{% if archive_config.mode == 'file' %}{% translate "归档到文件(file)" %}
+                        {% elif archive_config.mode == 'dest' %}{% translate "归档到其他实例(dest)" %}
+                        {% elif archive_config.mode == 'purge' %}{% translate "直接删除(purge)" %}
                         {% endif %}</p>
                     </div>
-                    <label class="col-sm-2 control-label">源数据</label>
+                    <label class="col-sm-2 control-label">{% translate "源数据" %}</label>
                     <div class="col-sm-10">
-                        <p class="form-control-static">{% if archive_config.no_delete %}保留{% else %}删除{% endif %}</p>
+                        <p class="form-control-static">{% if archive_config.no_delete %}{% translate "保留" %}{% else %}{% translate "删除" %}{% endif %}</p>
                     </div>
-                    <label class="col-sm-2 control-label">休眠(秒)</label>
+                    <label class="col-sm-2 control-label">{% translate "休眠(秒)" %}</label>
                     <div class="col-sm-10">
                         <p class="form-control-static">{{ archive_config.sleep }}</p>
                     </div>
                 </div>
             </div>
-            <h4><b>实例信息</b></h4>
+            <h4><b>{% translate "实例信息" %}</b></h4>
             <hr/>
-            <div class="form-horizontal col-sm-12">
+            <div class="form-horizontal col-sm-12 archive-instance-info">
                 <div class="col-sm-6 left">
-                    <h5 style="color: darkgrey"><b>源信息</b></h5>
+                    <h5 style="color: darkgrey"><b>{% translate "源信息" %}</b></h5>
                     <hr/>
                     <div class="form-horizontal">
                         <div class="form-group">
-                            <label class="col-sm-3 control-label">源实例</label>
+                            <label class="col-sm-3 control-label">{% translate "源实例" %}</label>
                             <div class="col-sm-9">
                                 <p class="form-control-static">{{ archive_config.src_instance }}</p>
                             </div>
-                            <label class="col-sm-3 control-label">源数据库</label>
+                            <label class="col-sm-3 control-label">{% translate "源数据库" %}</label>
                             <div class="col-sm-9">
                                 <p class="form-control-static">{{ archive_config.src_db_name }}</p>
                             </div>
-                            <label class="col-sm-3 control-label">源表</label>
+                            <label class="col-sm-3 control-label">{% translate "源表" %}</label>
                             <div class="col-sm-9">
                                 <p class="form-control-static">{{ archive_config.src_table_name }}</p>
                             </div>
@@ -177,27 +185,27 @@
                     </div>
                 </div>
                 <div class="col-sm-6 right">
-                    <h5 style="color: darkgrey"><b>目标信息</b></h5>
+                    <h5 style="color: darkgrey"><b>{% translate "目标信息" %}</b></h5>
                     <hr/>
                     <div class="form-horizontal">
                         <div class="form-group">
-                            <label class="col-sm-3 control-label">目标实例</label>
+                            <label class="col-sm-3 control-label">{% translate "目标实例" %}</label>
                             <div class="col-sm-9">
-                                <p class="form-control-static">{{ archive_config.dest_instance }}</p>
+                                <p class="form-control-static">{{ archive_config.dest_instance|default_if_none:"—" }}</p>
                             </div>
-                            <label class="col-sm-3 control-label">目标数据库</label>
+                            <label class="col-sm-3 control-label">{% translate "目标数据库" %}</label>
                             <div class="col-sm-9">
-                                <p class="form-control-static">{{ archive_config.dest_db_name }}</p>
+                                <p class="form-control-static">{{ archive_config.dest_db_name|default:"—" }}</p>
                             </div>
-                            <label class="col-sm-3 control-label">目标表</label>
+                            <label class="col-sm-3 control-label">{% translate "目标表" %}</label>
                             <div class="col-sm-9">
-                                <p class="form-control-static">{{ archive_config.dest_table_name }}</p>
+                                <p class="form-control-static">{{ archive_config.dest_table_name|default:"—" }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <h4><b>归档条件</b></h4>
+            <h4><b>{% translate "归档条件" %}</b></h4>
             <hr/>
             <div class="form-horizontal  col-sm-12">
                 <div class="form-group">
@@ -221,7 +229,7 @@
             <thead>
             <tr>
                 <th>
-                    操作信息
+                    {% translate "操作信息" %}
                 </th>
             </tr>
             </thead>
@@ -237,14 +245,14 @@
     {% endif %}
     {% if archive_config.status == 0 %}
         {% if can_review %}
-            <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
-                      placeholder="请填写审核备注" rows=3></textarea>
+            <textarea id="remark" name="remark" class="form-control" data-name="{% translate "审核备注" %}"
+                      placeholder="{% translate "请填写审核备注" %}" rows=3></textarea>
             <br>
             <form action="/archive/audit/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="archive_id" value="{{ archive_config.id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="1">
-                <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="审核通过"/>
+                <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="{% translate "审核通过" context "workflow action" %}"/>
             </form>
 
             <form id="form-cancel" action="/archive/audit/" method="post" style="display:inline-block;">
@@ -252,7 +260,7 @@
                 <input type="hidden" name="archive_id" value="{{ archive_config.id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="2">
                 <input type="hidden" id="audit_remark" name="audit_remark" value="">
-                <input type="button" id="btnReject" class="btn btn-default" value="终止流程"/>
+                <input type="button" id="btnReject" class="btn btn-default" value="{% translate "终止流程" context "archive action" %}"/>
             </form>
         {% endif %}
     {% endif %}
@@ -260,18 +268,25 @@
 
 {% block js %}
     {% load static %}
+    {% get_current_language as LANGUAGE_CODE %}
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
     <script>
+        function archiveDetailLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         // 系统设置checkbox事件
-        $('input[type="checkbox"]').each(function (i) {
+        $('#archive_enabled').each(function (i) {
             if ($(this).val() === 'True') {
                 $(this).bootstrapSwitch('state', true);
             } else {
                 $(this).bootstrapSwitch('state', false);
             }
         });
-        $('input[type="checkbox"]').on('switchChange.bootstrapSwitch', function (event, state) {
+        $('#archive_enabled').on('switchChange.bootstrapSwitch', function (event, state) {
             // 修改状态
             $.ajax({
                 type: "post",
@@ -287,17 +302,17 @@
                     if (data.status === 0) {
                         if (state) {
                             $(this).val(true);
-                            alert('已开启归档任务');
+                            alert('{% translate "已开启归档任务"|escapejs %}');
                         } else {
                             $(this).val(false);
-                            alert('已关闭归档任务');
+                            alert('{% translate "已关闭归档任务"|escapejs %}');
                         }
                     } else {
                         alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
+                    archiveDetailLoadError(XMLHttpRequest.status, XMLHttpRequest);
                 }
             });
 
@@ -305,7 +320,7 @@
 
         // 单次归档
         $("#btn_archive_once").click(function () {
-            let isContinue = confirm("请确认是否立即进行归档？");
+            let isContinue = confirm("{% translate "请确认是否立即进行归档？"|escapejs %}");
             if (isContinue) {
                 $.ajax({
                     type: "get",
@@ -318,13 +333,13 @@
                     },
                     success: function (data) {
                         if (data.status === 0) {
-                            alert('归档任务提交成功！请稍后查看归档日志获取结果');
+                            alert('{% translate "归档任务提交成功！请稍后查看归档日志获取结果"|escapejs %}');
                         } else {
                             alert(data.msg);
                         }
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
-                        alert(errorThrown);
+                        archiveDetailLoadError(XMLHttpRequest.status, XMLHttpRequest);
                     }
                 });
             }
@@ -389,60 +404,71 @@
                             search: params.search
                         }
                     },
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 columns: [{
-                    title: '归档命令',
+                    title: '{% translate "归档命令"|escapejs %}',
                     field: 'cmd',
                     visible: false // 默认不显示
                 }, {
-                    title: '归档模式',
-                    field: 'mode'
+                    title: '{% translate "归档模式"|escapejs %}',
+                    field: 'mode',
+                    formatter: function (value) {
+                        const labels = {
+                            file: '{% translate "归档到文件"|escapejs %}',
+                            dest: '{% translate "归档到其他实例"|escapejs %}',
+                            purge: '{% translate "直接删除"|escapejs %}'
+                        };
+                        return labels[value] || value;
+                    }
                 }, {
-                    title: '归档条件',
+                    title: '{% translate "归档条件"|escapejs %}',
                     field: 'condition'
                 }, {
-                    title: '源数据',
+                    title: '{% translate "源数据"|escapejs %}',
                     field: 'no_delete',
                     formatter: function (value, row, index) {
                         if (String(value) === 'true') {
-                            return '保留'
+                            return '{% translate "保留"|escapejs %}'
                         } else {
-                            return '删除'
+                            return '{% translate "删除"|escapejs %}'
                         }
                     }
                 }, {
-                    title: '状态',
+                    title: '{% translate "状态"|escapejs %}',
                     field: 'success',
                     formatter: function (value, row, index) {
                         if (String(value) === 'true') {
-                            return "<span class=\"label label-success\">" + '成功' + "</span>"
+                            return "<span class=\"label label-success\">" + '{% translate "成功"|escapejs %}' + "</span>"
                         } else {
-                            return "<span class=\"label label-danger\">" + '失败' + "</span>"
+                            return "<span class=\"label label-danger\">" + '{% translate "失败"|escapejs %}' + "</span>"
                         }
                     }
                 }, {
-                    title: '查询',
+                    title: '{% translate "错误信息"|escapejs %}',
+                    field: 'error_info'
+                }, {
+                    title: '{% translate "查询"|escapejs %}',
                     field: 'select_cnt'
                 }, {
-                    title: '插入',
+                    title: '{% translate "插入"|escapejs %}',
                     field: 'insert_cnt'
                 }, {
-                    title: '删除',
+                    title: '{% translate "删除"|escapejs context "archive execution log" %}',
                     field: 'delete_cnt'
                 }, {
-                    title: '开始时间',
+                    title: '{% translate "开始时间"|escapejs %}',
                     field: 'start_time'
                 }, {
-                    title: '结束时间',
+                    title: '{% translate "结束时间"|escapejs %}',
                     field: 'end_time'
                 }, {
-                    title: '统计日志',
+                    title: '{% translate "统计日志"|escapejs %}',
                     field: 'statistics',
                     visible: false // 默认不显示
                 }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: onLoadErrorCallback,
+                onLoadError: archiveDetailLoadError,
             });
         }
 
@@ -466,7 +492,7 @@
                 });
                 formCancel.submit();
             } else {
-                alert('请填写审核备注')
+                alert('{% translate "请填写审核备注"|escapejs %}')
             }
         })
     </script>

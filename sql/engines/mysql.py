@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from django.utils.translation import gettext as _
 import logging
 import traceback
 import MySQLdb
@@ -1246,18 +1247,18 @@ class MysqlEngine(EngineBase):
             result["filtered_sql"] = sql.strip()
         except IndexError:
             result["bad_query"] = True
-            result["msg"] = "没有有效的SQL语句"
+            result["msg"] = _("没有有效的SQL语句")
         if re.match(r"^select|^show|^explain", sql, re.I) is None:
             result["bad_query"] = True
-            result["msg"] = "不支持的查询语法类型!"
+            result["msg"] = _("不支持的查询语法类型!")
         if "*" in sql:
             result["has_star"] = True
-            result["msg"] = "SQL语句中含有 * "
+            result["msg"] = _("SQL语句中含有 * ")
         if self._sql_is_forbidden_account_statement(
             sql
         ) or self._sql_references_forbidden_privilege_object(db_name, sql):
             result["bad_query"] = True
-            result["msg"] = "您无权查看该表"
+            result["msg"] = _("您无权查看该表")
             return result
         # select语句先使用Explain判断语法是否正确
         if re.match(r"^select", sql, re.I):

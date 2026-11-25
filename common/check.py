@@ -5,6 +5,7 @@ import traceback
 import MySQLdb
 import simplejson as json
 from django.http import HttpResponse
+from django.utils.translation import gettext as _
 
 from common.utils.permission import superuser_required
 from sql.engines import get_engine
@@ -43,7 +44,7 @@ def go_inception(request):
     except Exception as e:
         logger.error(traceback.format_exc())
         result["status"] = 1
-        result["msg"] = "无法连接goInception\n{}".format(str(e))
+        result["msg"] = _("无法连接goInception\n%(error)s") % {"error": str(e)}
         return HttpResponse(json.dumps(result), content_type="application/json")
     else:
         cur.close()
@@ -62,7 +63,7 @@ def go_inception(request):
     except Exception as e:
         logger.error(traceback.format_exc())
         result["status"] = 1
-        result["msg"] = "无法连接goInception备份库\n{}".format(str(e))
+        result["msg"] = _("无法连接goInception备份库\n%(error)s") % {"error": str(e)}
     else:
         cur.close()
         conn.close()
@@ -83,7 +84,7 @@ def email(request):
     mail_smtp_password = request.POST.get("mail_smtp_password", "")
     if not mail:
         result["status"] = 1
-        result["msg"] = "请先开启邮件通知！"
+        result["msg"] = _("请先开启邮件通知！")
         # 返回结果
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
@@ -92,11 +93,11 @@ def email(request):
             raise ValueError
     except ValueError:
         result["status"] = 1
-        result["msg"] = "端口号只能为正整数"
+        result["msg"] = _("端口号只能为正整数")
         return HttpResponse(json.dumps(result), content_type="application/json")
     if not request.user.email:
         result["status"] = 1
-        result["msg"] = "请先完善当前用户邮箱信息！"
+        result["msg"] = _("请先完善当前用户邮箱信息！")
         return HttpResponse(json.dumps(result), content_type="application/json")
     bd = "Archery 邮件发送测试..."
     subj = "Archery 邮件发送测试"
@@ -126,10 +127,12 @@ def instance(request):
         test_result = engine.test_connection()
         if test_result.error:
             result["status"] = 1
-            result["msg"] = "无法连接实例,\n{}".format(test_result.error)
+            result["msg"] = _("无法连接实例，\n%(error)s") % {
+                "error": test_result.error
+            }
     except Exception as e:
         result["status"] = 1
-        result["msg"] = "无法连接实例,\n{}".format(str(e))
+        result["msg"] = _("无法连接实例，\n%(error)s") % {"error": str(e)}
     # 返回结果
     return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -144,10 +147,10 @@ def file_storage_connect(request):
     max_export_rows = max_export_rows if max_export_rows else "10000"
     try:
         if not max_export_rows.isdigit():
-            raise TypeError("max_export_rows 必须是整数")
+            raise TypeError(_("max_export_rows 必须是整数"))
     except TypeError as e:
         result["status"] = 1
-        result["msg"] = f"参数类型错误: {str(e)}"
+        result["msg"] = _("参数类型错误: %(error)s") % {"error": str(e)}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 根据存储类型获取对应的自定义参数
@@ -159,7 +162,7 @@ def file_storage_connect(request):
             custom_params = json.loads(custom_params_str)
         except json.JSONDecodeError:
             result["status"] = 1
-            result["msg"] = "自定义参数格式错误，请输入有效的JSON格式"
+            result["msg"] = _("自定义参数格式错误，请输入有效的JSON格式")
             return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 构建配置字典
@@ -192,7 +195,7 @@ def file_storage_connect(request):
 
         if not success:
             result["status"] = 1
-            result["msg"] = "存储连接测试失败"
+            result["msg"] = _("存储连接测试失败")
             # 记录详细错误信息到日志
             logging.error(f"存储连接测试失败")
             # logging.error(f"存储连接测试失败: {message}")
@@ -203,7 +206,7 @@ def file_storage_connect(request):
 
     except Exception as e:
         result["status"] = 1
-        result["msg"] = "存储连接测试异常"
+        result["msg"] = _("存储连接测试异常")
         error_msg = f"连接测试异常: {str(e)}"
         logging.error(error_msg, exc_info=True)
 

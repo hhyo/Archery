@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 
 
@@ -8,7 +9,7 @@
         <div id="toolbar" class="form-inline pull-left" style="position: absolute;top: 10px">
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
-                        title="请选择实例"
+                        title="{% translate '请选择实例' %}"
                         data-live-search="true">
                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
@@ -16,16 +17,16 @@
             </div>
             <div class="form-group">
                 <select id="saved" class="form-control selectpicker"
-                        title="全部">
-                    <option value="" selected="selected">全部</option>
-                    <option value="true">已录入</option>
+                        title="{% translate '全部' context 'query filter' %}">
+                    <option value="" selected="selected">{% translate "全部" context "query filter" %}</option>
+                    <option value="true">{% translate "已录入" %}</option>
                 </select>
             </div>
             <div class="form-group ">
                 <button id="btn-create-account" type="button" class="btn btn-default" disabled="disabled"
                         data-toggle="modal" onclick="show_create_modal()">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    创建账号
+                    {% translate "创建账号" %}
                 </button>
             </div>
         </div>
@@ -43,79 +44,79 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">创建账号</h4>
-                    <h6 style="color:red">注：新创建的账号无权限，需要使用授权功能授予相关权限</h6>
+                    <h4 class="modal-title">{% translate "创建账号" %}</h4>
+                    <h6 style="color:red">{% translate "注：新创建的账号无权限，需要使用授权功能授予相关权限" %}</h6>
                 </div>
                 <div class="modal-body form-group">
                     <!-- 数据库名称 -->
                     <div class="form-group row" id="db-name1-row">
                         <label for="db_name1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库</label>
+                            <span style="color:red">*</span>{% translate "数据库" %}</label>
                         <div class="col-sm-9">
                             <select id="db_name1" class="form-control selectpicker" name="db_name1"
-                                    title="请选择数据库"
+                                    title="{% translate '请选择数据库' %}"
                                     data-live-search="true">
                             </select>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="user" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库账号</label>
+                            <span style="color:red">*</span>{% translate "数据库账号" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="user" class="form-control" autocomplete="off"
                                    aria-describedby="userHelpBlock"
-                                   placeholder="请输入账号名称">
+                                   placeholder="{% translate '请输入账号名称' %}">
                             <small id="userHelpBlock" class="form-text text-muted">
-                                帐号名需要1-16个字符，由字母、数字和特殊字符组成；
+                                {% translate "帐号名需要1-16个字符，由字母、数字和特殊字符组成；" %}
                             </small>
                         </div>
                     </div>
                     <div class="form-group row" id="host-row">
                         <label for="host" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>主机</label>
+                            <span style="color:red">*</span>{% translate "主机" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="host" class="form-control" autocomplete="new-password"
                                    aria-describedby="hostHelpBlock"
-                                   placeholder="请输入主机">
+                                   placeholder="{% translate '请输入主机' %}">
                             <small id="hostHelpBlock" class="form-text text-muted">
-                                1. IP形式，支持填入% <br>
-                                2. 多个主机以|分隔符分隔
+                                {% translate "1. IP形式，支持填入%" %} <br>
+                                {% translate "2. 多个主机以|分隔符分隔" %}
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>密码</label>
+                            <span style="color:red">*</span>{% translate "密码" %}</label>
                         <div class="col-sm-9">
                             <input type="password" id="password1" class="form-control" autocomplete="new-password"
                                    aria-describedby="passwordHelpBlock"
-                                   placeholder="请输入密码">
+                                   placeholder="{% translate '请输入密码' %}">
                             <small id="passwordHelpBlock" class="form-text text-muted">
-                                密码需要8-32个字符，至少包含英文、数字和特殊符号
+                                {% translate "密码需要8-32个字符，至少包含英文、数字和特殊符号" %}
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password2" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>确认密码</label>
+                            <span style="color:red">*</span>{% translate "确认密码" %}</label>
                         <div class="col-sm-9">
                             <input type="password" id="password2" class="form-control"
                                    autocomplete="new-password"
-                                   placeholder="请再次输入密码">
+                                   placeholder="{% translate '请再次输入密码' %}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="remark" class="col-sm-3 col-form-label">备注</label>
+                        <label for="remark" class="col-sm-3 col-form-label">{% translate "备注" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="请输入备注">
+                                   placeholder="{% translate '请输入备注' %}">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" onclick="create_account()">创建</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-primary" onclick="create_account()">{% translate "创建" %}</button>
                 </div>
             </div>
         </div>
@@ -127,59 +128,59 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">修改/录入账号 </h4>
-                    <h6 style="color:red">注：此操作不会修改账号密码，仅将相关信息录入平台进行管理，如需修改密码请使用改密功能</h6>
+                    <h4 class="modal-title">{% translate "修改/录入账号" %} </h4>
+                    <h6 style="color:red">{% translate "注：此操作不会修改账号密码，仅将相关信息录入平台进行管理，如需修改密码请使用改密功能" %}</h6>
                 </div>
                 <div class="modal-body form-group">
                     <!-- 数据库名称 -->
                     <div class="form-group row" id="edit-db-name1-row">
                         <label for="edit-db-name1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库</label>
+                            <span style="color:red">*</span>{% translate "数据库" %}</label>
                         <div class="col-sm-9">
                             <select id="edit-db-name1" class="form-control selectpicker" name="edit_db_name1"
-                                    title="请选择数据库" disabled
+                                    title="{% translate '请选择数据库' %}" disabled
                                     data-live-search="true">
                             </select>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="edit-user" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>数据库账号</label>
+                            <span style="color:red">*</span>{% translate "数据库账号" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit-user" class="form-control" autocomplete="off"
                                    readonly="readonly"
-                                   placeholder="请输入账号名称">
+                                   placeholder="{% translate '请输入账号名称' %}">
                         </div>
                     </div>
                     <div class="form-group row" id="edit-host-row">
                         <label for="edit-host" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>主机</label>
+                            <span style="color:red">*</span>{% translate "主机" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit-host" class="form-control" autocomplete="off"
                                    readonly="readonly"
-                                   placeholder="请输入主机">
+                                   placeholder="{% translate '请输入主机' %}">
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="edit-password1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>密码</label>
+                            <span style="color:red">*</span>{% translate "密码" %}</label>
                         <div class="col-sm-9">
                             <input type="password" id="edit-password" class="form-control" autocomplete="new-password"
-                                   placeholder="请输入密码，留空则不修改录入信息">
+                                   placeholder="{% translate '请输入密码，留空则不修改录入信息' %}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="edit-remark" class="col-sm-3 col-form-label">备注</label>
+                        <label for="edit-remark" class="col-sm-3 col-form-label">{% translate "备注" %}</label>
                         <div class="col-sm-9">
                             <input type="text" id="edit-remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="请输入备注">
+                                   placeholder="{% translate '请输入备注' %}">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="resetEditBtn">修改/录入</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-primary" id="resetEditBtn">{% translate "修改/录入" %}</button>
                 </div>
             </div>
         </div>
@@ -191,70 +192,70 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">授权变更
-                        实例: <span id="modify-instance" style="color: red"></span>
-                        账号: <span id="modify-user" style="color: red"></span></h4>
+                    <h4 class="modal-title">{% translate "授权变更" %}
+                        {% translate "实例:" %} <span id="modify-instance" style="color: red"></span>
+                        {% translate "账号:" %} <span id="modify-user" style="color: red"></span></h4>
                 </div>
                 <div class="modal-body">
                     <div id="mysql-grant-content" class="row">
                         <div class="col-md-3">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    对象选择
+                                    {% translate "对象选择" %}
                                 </div>
                                 <div class="panel-body">
                                     <div class="form-group">
-                                        <h5 class="control-label text-bold">选择操作类型：</h5>
+                                        <h5 class="control-label text-bold">{% translate "选择操作类型：" %}</h5>
                                         <div class="form-group">
                                             <select id="op-type" name="op-type"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="操作类型" title="请选择操作类型" required>
-                                                <option value="0" selected="selected">赋权</option>
-                                                <option value="1">回收</option>
+                                                    data-name="{% translate '操作类型' %}" title="{% translate '请选择操作类型' %}" required>
+                                                <option value="0" selected="selected">{% translate "赋权" %}</option>
+                                                <option value="1">{% translate "回收" %}</option>
                                             </select>
                                         </div>
-                                        <h5 class="control-label text-bold">选择权限类型：</h5>
+                                        <h5 class="control-label text-bold">{% translate "选择权限类型：" %}</h5>
                                         <div class="form-group">
                                             <select id="priv-type" name="priv-type"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="配置项" title="请选择配置项" required>
-                                                <option value="0" selected="selected">全局权限</option>
-                                                <option value="1">库权限</option>
-                                                <option value="2">表权限</option>
-                                                <option value="3">列权限</option>
+                                                    data-name="{% translate '配置项' %}" title="{% translate '请选择配置项' %}" required>
+                                                <option value="0" selected="selected">{% translate "全局权限" %}</option>
+                                                <option value="1">{% translate "库权限" %}</option>
+                                                <option value="2">{% translate "表权限" %}</option>
+                                                <option value="3">{% translate "列权限" %}</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="div-db" class="form-group" style="display: none">
-                                        <h5 class="control-label text-bold">请选择数据库：</h5>
+                                        <h5 class="control-label text-bold">{% translate "请选择数据库：" %}</h5>
                                         <div class="form-group">
                                             <select id="db_name" name="db_name"
                                                     data-live-search="true"
-                                                    data-none-selected-text="请选择数据库"
+                                                    data-none-selected-text="{% translate '请选择数据库' %}"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="数据库" required>
+                                                    data-name="{% translate '数据库' %}" required>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="div-tb" class="form-group" style="display: none">
-                                        <h5 class="control-label text-bold">请选择表：</h5>
+                                        <h5 class="control-label text-bold">{% translate "请选择表：" %}</h5>
                                         <div class="form-group">
                                             <select id="tb_name" name="tb_name"
                                                     data-live-search="true"
-                                                    data-none-selected-text="请选择表"
+                                                    data-none-selected-text="{% translate '请选择表' %}"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="表" required>
+                                                    data-name="{% translate '表' %}" required>
                                             </select>
                                         </div>
                                     </div>
                                     <div id="div-col" class="form-group" style="display: none">
-                                        <h5 class="control-label text-bold">请选择列：</h5>
+                                        <h5 class="control-label text-bold">{% translate "请选择列：" %}</h5>
                                         <div class="form-group">
                                             <select id="col_name" name="col_name"
                                                     data-live-search="true"
-                                                    data-none-selected-text="请选择列"
+                                                    data-none-selected-text="{% translate '请选择列' %}"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                                    data-name="表" required>
+                                                    data-name="{% translate '表' %}" required>
                                             </select>
                                         </div>
                                     </div>
@@ -265,13 +266,13 @@
                         <div class="col-md-9">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    权限选择
+                                    {% translate "权限选择" %}
                                 </div>
                                 <div class="panel-body" id="div-global-priv">
                                     <div class="col-sm-3">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_数据_priv">数据</label>
+                                                <label for="checkall_数据_priv">{% translate "数据" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="SELECT" id="checkbox_Select_priv">
@@ -318,7 +319,7 @@
                                     <div class="col-sm-5">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_结构_priv">结构</label>
+                                                <label for="checkall_结构_priv">{% translate "结构" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="CREATE" id="checkbox_Create_priv">
@@ -426,7 +427,7 @@
                                     <div class="col-sm-4">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_管理_priv">管理</label>
+                                                <label for="checkall_管理_priv">{% translate "管理" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="GRANT" id="checkbox_Grant_priv">
@@ -528,7 +529,7 @@
                                     <div class="col-sm-3">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_数据_priv">数据</label>
+                                                <label for="checkall_数据_priv">{% translate "数据" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="SELECT"
@@ -571,7 +572,7 @@
                                     <div class="col-sm-5">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_结构_priv">结构</label>
+                                                <label for="checkall_结构_priv">{% translate "结构" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="CREATE"
@@ -686,7 +687,7 @@
                                     <div class="col-sm-4">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_管理_priv">管理</label>
+                                                <label for="checkall_管理_priv">{% translate "管理" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="GRANT"
@@ -722,7 +723,7 @@
                                     <div class="col-sm-3">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_数据_priv">数据</label>
+                                                <label for="checkall_数据_priv">{% translate "数据" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="SELECT"
@@ -835,7 +836,7 @@
                                     <div class="col-sm-4">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_管理_priv">管理</label>
+                                                <label for="checkall_管理_priv">{% translate "管理" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="GRANT"
@@ -862,7 +863,7 @@
                                     <div class="col-sm-3">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_数据_priv">数据</label>
+                                                <label for="checkall_数据_priv">{% translate "数据" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="SELECT"
@@ -896,7 +897,7 @@
                                     <div class="col-sm-4">
                                         <fieldset>
                                             <legend>
-                                                <label for="checkall_管理_priv">管理</label>
+                                                <label for="checkall_管理_priv">{% translate "管理" %}</label>
                                             </legend>
                                             <div>
                                                 <input type="checkbox" name="REFERENCES"
@@ -916,10 +917,10 @@
                     <div id="mongo-grant-content" class="form-group">
                         <div class="form-group row">
                             <label for="db-roles" class="col-sm-3 col-form-label">
-                                <span style="color:red">*</span>数据库角色</label>
+                                <span style="color:red">*</span>{% translate "数据库角色" %}</label>
                             <div class="col-sm-9">
                                 <select id="db-roles" class="form-control selectpicker" name="db_roles"
-                                        title="请选择数据库角色"
+                                        title="{% translate '请选择数据库角色' %}"
                                         multiple
                                         data-live-search="true">
                                     <option value="read">read</option>
@@ -942,8 +943,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="grantsBtn">执行
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-primary" id="grantsBtn">{% translate "执行" %}
                     </button>
                 </div>
             </div>
@@ -956,37 +957,37 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">修改密码
-                        实例: <span id="reset-instance" style="color: red"></span>
-                        账号: <span id="reset-user" style="color: red"></span></h4>
-                    <h6 style="color:red">注：此操作会修改账号密码，同时变更平台录入信息，请谨慎操作</h6>
+                    <h4 class="modal-title">{% translate "修改密码" %}
+                        {% translate "实例:" %} <span id="reset-instance" style="color: red"></span>
+                        {% translate "账号:" %} <span id="reset-user" style="color: red"></span></h4>
+                    <h6 style="color:red">{% translate "注：此操作会修改账号密码，同时变更平台录入信息，请谨慎操作" %}</h6>
                 </div>
                 <div class="modal-body form-group">
                     <div class="form-group row">
                         <label for="password1" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>密码</label>
+                            <span style="color:red">*</span>{% translate "密码" %}</label>
                         <div class="col-sm-9">
                             <input type="password" id="reset-pwd1" class="form-control" autocomplete="new-password"
                                    aria-describedby="resetpwdHelpBlock"
-                                   placeholder="请输入密码">
+                                   placeholder="{% translate '请输入密码' %}">
                             <small id="resetpwdHelpBlock" class="form-text text-muted">
-                                密码需要8-32个字符，至少包含英文、数字和特殊符号
+                                {% translate "密码需要8-32个字符，至少包含英文、数字和特殊符号" %}
                             </small>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="password2" class="col-sm-3 col-form-label">
-                            <span style="color:red">*</span>确认密码</label>
+                            <span style="color:red">*</span>{% translate "确认密码" %}</label>
                         <div class="col-sm-9">
                             <input type="password" id="reset-pwd2" class="form-control"
                                    autocomplete="new-password"
-                                   placeholder="请再次输入密码">
+                                   placeholder="{% translate '请再次输入密码' %}">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" id="resetPwdBtn">修改</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-danger" id="resetPwdBtn">{% translate "修改" %}</button>
                 </div>
             </div>
         </div>
@@ -998,18 +999,18 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title"><span id="lock-title">锁定账号</span>
-                        实例: <span id="lock-instance" style="color: red"></span>
-                        账号: <span id="lock-user" style="color: red"></span></h4>
+                    <h4 class="modal-title"><span id="lock-title">{% translate "锁定账号" %}</span>
+                        {% translate "实例:" %} <span id="lock-instance" style="color: red"></span>
+                        {% translate "账号:" %} <span id="lock-user" style="color: red"></span></h4>
                 </div>
                 <div class="modal-body form-group">
                     <span id="lock-text" style="color: red">
-                        确认锁定该账号？
+                        {% translate "确认锁定该账号？" %}
                     </span>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" id="lockBtn">确定</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-danger" id="lockBtn">{% translate "确定" %}</button>
                 </div>
             </div>
         </div>
@@ -1021,28 +1022,35 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">删除账号
-                        实例: <span id="delete-instance" style="color: red"></span>
-                        账号: <span id="delete-user" style="color: red"></span></h4>
+                    <h4 class="modal-title">{% translate "删除账号" %}
+                        {% translate "实例:" %} <span id="delete-instance" style="color: red"></span>
+                        {% translate "账号:" %} <span id="delete-user" style="color: red"></span></h4>
                 </div>
                 <div class="modal-body form-group">
                     <span style="color: red">
-                        确认删除该账号？请预先统计该账号近期的连接和访问情况，做好风险防范措施！
+                        {% translate "确认删除该账号？请预先统计该账号近期的连接和访问情况，做好风险防范措施！" %}
                     </span>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger" id="deleteBtn">确定</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% translate "取消" %}</button>
+                    <button type="button" class="btn btn-danger" id="deleteBtn">{% translate "确定" %}</button>
                 </div>
             </div>
         </div>
     </div>
 {% endblock content %}
 {% block js %}
+    {% get_current_language as LANGUAGE_CODE %}
     {% load static %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        function accountLoadError(status, xhr) {
+            if (xhr && (xhr.statusText === 'abort' || xhr.statusText === 'canceled')) return;
+            alert(status === 403
+                ? '{% translate "权限错误，您没有权限查看该数据！"|escapejs %}'
+                : '{% translate "未知错误，请联系管理员处理！"|escapejs %}');
+        }
         function get_db_type() {
             // 获取选中的数据库实例的类型
             let db_type = "";
@@ -1094,7 +1102,7 @@
                 db_name.val('');
                 db_name.selectpicker({
                     actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-                    countSelectedText: "已选中{0}项",
+                    countSelectedText: "{% translate "已选中{0}项"|escapejs %}",
                     selectedTextFormat: "count > 3"
                 }, 'refresh');
             } else if (priv_type === '2') {
@@ -1116,7 +1124,7 @@
                 tb_name.val('');
                 tb_name.selectpicker({
                     actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-                    countSelectedText: "已选中{0}项",
+                    countSelectedText: "{% translate "已选中{0}项"|escapejs %}",
                     selectedTextFormat: "count > 3"
                 }, 'refresh');
             } else if (priv_type === '3') {
@@ -1143,7 +1151,7 @@
                 col_name.val('');
                 col_name.selectpicker({
                     actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-                    countSelectedText: "已选中{0}项",
+                    countSelectedText: "{% translate "已选中{0}项"|escapejs %}",
                     selectedTextFormat: "count > 3"
                 }, 'refresh');
             }
@@ -1155,7 +1163,7 @@
                 case 'mysql':
                     return [
                         {
-                            title: '账号',
+                            title: '{% translate "账号"|escapejs %}',
                             field: 'user_host',
                             formatter: function (value, row, index) {
                                 if (row.saved) {
@@ -1165,15 +1173,15 @@
                                 }
                             }
                         }, {
-                            title: '帐号名',
+                            title: '{% translate "帐号名"|escapejs %}',
                             field: 'user',
                             visible: false
                         }, {
-                            title: '主机',
+                            title: '{% translate "主机"|escapejs %}',
                             field: 'host',
                             visible: false
                         }, {
-                            title: '权限',
+                            title: '{% translate "权限"|escapejs %}',
                             field: 'privileges',
                             formatter: function (value, row, index) {
                                 var priv = '';
@@ -1185,21 +1193,21 @@
                             width: "60",
                             widthUnit: "%",
                         }, {
-                            title: '备注',
+                            title: '{% translate "备注"|escapejs %}',
                             field: 'remark'
                         }, {
-                            title: '操作',
+                            title: '{% translate "操作"|escapejs %}',
                             field: '',
                             formatter: function (value, row, index) {
-                                let btn_edit = "<button class=\"btn btn-info btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";
-                                let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_grants_modal(this)" + "\">授权</button>\n";
-                                let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this)" + "\">改密</button>\n";
-                                let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this)" + "\">删除</button>\n";
+                                let btn_edit = "<button class=\"btn btn-info btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_edit_modal(this)" + "\">{% translate "编辑"|escapejs %}</button>\n";
+                                let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_grants_modal(this)" + "\">{% translate "授权"|escapejs %}</button>\n";
+                                let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this)" + "\">{% translate "改密"|escapejs %}</button>\n";
+                                let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this)" + "\">{% translate "删除"|escapejs %}</button>\n";
                                 let btn_lock_account = "";
                                 if (row.is_locked === 'N') {
-                                    btn_lock_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\" onclick=\"show_lock_modal(this)" + "\">锁定</button>\n";
+                                    btn_lock_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\" onclick=\"show_lock_modal(this)" + "\">{% translate "锁定"|escapejs %}</button>\n";
                                 } else if (row.is_locked === 'Y') {
-                                    btn_lock_account = "<button class=\"btn btn-success btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\"  onclick=\"show_lock_modal(this)" + "\">解锁</button>\n";
+                                    btn_lock_account = "<button class=\"btn btn-success btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\"  onclick=\"show_lock_modal(this)" + "\">{% translate "解锁"|escapejs %}</button>\n";
                                 }
                                 return btn_edit + btn_modify_grants + btn_reset_passwd + btn_lock_account + btn_del_account
                             }
@@ -1207,10 +1215,10 @@
                 case 'mongo':
                     return [
                         {
-                            title: '数据库名',
+                            title: '{% translate "数据库名"|escapejs %}',
                             field: 'db_name'
                         }, {
-                            title: '账号',
+                            title: '{% translate "账号"|escapejs %}',
                             field: 'user',
                             formatter: function (value, row, index) {
                                 if (row.saved) {
@@ -1220,22 +1228,22 @@
                                 }
                             }
                         }, {
-                            title: '角色',
+                            title: '{% translate "角色"|escapejs %}',
                             field: 'roles',
                             formatter: function (value, row, index) {
                                 return value.join(',')
                             }
                         }, {
-                            title: '备注',
+                            title: '{% translate "备注"|escapejs %}',
                             field: 'remark'
                         }, {
-                            title: '操作',
+                            title: '{% translate "操作"|escapejs %}',
                             field: '',
                             formatter: function (value, row, index) {
-                                let btn_edit = "<button class=\"btn btn-info btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";
-                                let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_grants_modal(this)" + "\">授权</button>\n";
-                                let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_reset_modal(this)" + "\">改密</button>\n";
-                                let btn_del_account = "<button class=\"btn btn-danger btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_delete_modal(this)" + "\">删除</button>\n";
+                                let btn_edit = "<button class=\"btn btn-info btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_edit_modal(this)" + "\">{% translate "编辑"|escapejs %}</button>\n";
+                                let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_grants_modal(this)" + "\">{% translate "授权"|escapejs %}</button>\n";
+                                let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_reset_modal(this)" + "\">{% translate "改密"|escapejs %}</button>\n";
+                                let btn_del_account = "<button class=\"btn btn-danger btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_delete_modal(this)" + "\">{% translate "删除"|escapejs %}</button>\n";
                                 return btn_edit + btn_modify_grants + btn_reset_passwd + btn_del_account
                             }
                         }
@@ -1244,7 +1252,7 @@
                 case 'pgsql':
                     return [
                         {
-                            title: '账号',
+                            title: '{% translate "账号"|escapejs %}',
                             field: 'user_host',
                             formatter: function (value, row, index) {
                                 if (row.saved) {
@@ -1254,35 +1262,35 @@
                                 }
                             }
                         }, {
-                            title: '帐号名',
+                            title: '{% translate "帐号名"|escapejs %}',
                             field: 'user',
                             visible: false
                         }, {
-                            title: '主机',
+                            title: '{% translate "主机"|escapejs %}',
                             field: 'host',
                             visible: false
                         }, {
-                            title: '超级用户',
+                            title: '{% translate "超级用户"|escapejs %}',
                             field: 'is_superuser',
                             formatter: function (value, row, index) {
-                                return value ? '是' : '否'
+                                return value ? '{% translate "是"|escapejs %}' : '{% translate "否"|escapejs %}'
                             }
                         }, {
-                            title: '可建库',
+                            title: '{% translate "可建库"|escapejs %}',
                             field: 'can_create_db',
                             formatter: function (value, row, index) {
-                                return value ? '是' : '否'
+                                return value ? '{% translate "是"|escapejs %}' : '{% translate "否"|escapejs %}'
                             }
                         }, {
-                            title: '备注',
+                            title: '{% translate "备注"|escapejs %}',
                             field: 'remark'
                         }, {
-                            title: '操作',
+                            title: '{% translate "操作"|escapejs %}',
                             field: '',
                             formatter: function (value, row, index) {
-                                let btn_edit = "<button class=\"btn btn-info btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";
-                                let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this)" + "\">改密</button>\n";
-                                let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this)" + "\">删除</button>\n";
+                                let btn_edit = "<button class=\"btn btn-info btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_edit_modal(this)" + "\">{% translate "编辑"|escapejs %}</button>\n";
+                                let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this)" + "\">{% translate "改密"|escapejs %}</button>\n";
+                                let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this)" + "\">{% translate "删除"|escapejs %}</button>\n";
                                 return btn_edit + btn_reset_passwd + btn_del_account
                             }
                         }]
@@ -1331,7 +1339,7 @@
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
-                locale: 'zh-CN',                    //本地化
+                locale: '{% if LANGUAGE_CODE == "en" %}en-US{% else %}zh-CN{% endif %}',                    //本地化
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
                 queryParams:
@@ -1347,7 +1355,7 @@
                 columns: get_db_columns(db_type),
                 onLoadSuccess: function (data) {
                     if (data.status !== 0) {
-                        alert("数据加载失败！" + data.msg);
+                        alert("{% translate "数据加载失败！"|escapejs %}" + data.msg);
                         $('#btn-create-account').addClass('disabled');
                         $('#btn-create-account').prop('disabled', true);
                     } else if ($("#instance").val()) {
@@ -1356,11 +1364,7 @@
 
                     }
                 },
-                onLoadError: onLoadErrorCallback,
-                onSearch: function (e) {
-                    //传搜索参数给服务器
-                    queryParams(e)
-                }
+                onLoadError: accountLoadError
             });
 
         }
@@ -1522,7 +1526,7 @@
         //创建账号
         function create_account() {
             if (!$("#instance").val()) {
-                alert("请选择实例！");
+                alert("{% translate "请选择实例！"|escapejs %}");
             } else {
                 $.ajax({
                     type: "post",
@@ -1788,10 +1792,10 @@
         function show_lock_modal(obj) {
             let user_host = $(obj).attr("user_host");
             let is_locked = $(obj).attr("is_locked");
-            let operation = $(obj).text();
+            const unlocking = is_locked === 'Y';
             $("#lock-user").text(user_host);
-            $("#lock-title").text(operation + "账号")
-            $("#lock-text").text("确认" + operation + "该账号？")
+            $("#lock-title").text(unlocking ? '{% translate "解锁账号"|escapejs %}' : '{% translate "锁定账号"|escapejs %}')
+            $("#lock-text").text(unlocking ? '{% translate "确认解锁该账号？"|escapejs %}' : '{% translate "确认锁定该账号？"|escapejs %}')
             $("#lock-account").modal('show');
 
             $("#lockBtn").unbind("click").click(function () {

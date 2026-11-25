@@ -1,3 +1,5 @@
+from django.utils.translation import pgettext_lazy
+from django.utils.translation import gettext as _
 import logging
 
 from drf_spectacular.utils import extend_schema
@@ -35,7 +37,9 @@ def _get_list_values(params, key):
 class SQLQueryInstancesView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(summary="SQLQuery 可访问实例列表")
+    @extend_schema(
+        summary=pgettext_lazy("API documentation", "SQLQuery 可访问实例列表")
+    )
     def get(self, request):
         payload = {
             "db_type": _get_list_values(request.query_params, "db_type"),
@@ -58,7 +62,7 @@ class SQLQueryInstancesView(views.APIView):
 class SQLQueryResourcesView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(summary="SQLQuery 实例资源列表")
+    @extend_schema(summary=pgettext_lazy("API documentation", "SQLQuery 实例资源列表"))
     def get(self, request):
         serializer = SqlQueryResourceQuerySerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
@@ -69,7 +73,7 @@ class SQLQueryResourcesView(views.APIView):
 class SQLQueryDescribeTableView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(summary="SQLQuery 表结构")
+    @extend_schema(summary=pgettext_lazy("API documentation", "SQLQuery 表结构"))
     def post(self, request):
         serializer = SqlQueryDescribeTableSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -81,10 +85,10 @@ class SQLQueryExecuteView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
     renderer_classes = [SimpleJSONRenderer]
 
-    @extend_schema(summary="SQLQuery 执行查询")
+    @extend_schema(summary=pgettext_lazy("API documentation", "SQLQuery 执行查询"))
     def post(self, request):
         if not (request.user.is_superuser or request.user.has_perm("sql.query_submit")):
-            return Response({"status": 1, "msg": "无执行查询权限", "data": {}})
+            return Response({"status": 1, "msg": _("无执行查询权限"), "data": {}})
         serializer = SqlQueryExecuteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = execute_sql_query(user=request.user, **serializer.validated_data)
@@ -94,7 +98,7 @@ class SQLQueryExecuteView(views.APIView):
 class SQLQueryLogsView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(summary="SQLQuery 历史查询记录")
+    @extend_schema(summary=pgettext_lazy("API documentation", "SQLQuery 历史查询记录"))
     def get(self, request):
         if not (
             request.user.is_superuser
@@ -112,12 +116,12 @@ class SQLQueryLogsView(views.APIView):
 class SQLQueryFavoritesView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(summary="SQLQuery 收藏/取消收藏")
+    @extend_schema(summary=pgettext_lazy("API documentation", "SQLQuery 收藏/取消收藏"))
     def post(self, request):
         if not (
             request.user.is_superuser or request.user.has_perm("sql.menu_sqlquery")
         ):
-            return Response({"status": 1, "msg": "无收藏操作权限"})
+            return Response({"status": 1, "msg": _("无收藏操作权限")})
         serializer = SqlQueryFavoriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = update_favorite(user=request.user, **serializer.validated_data)

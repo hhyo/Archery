@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+    {{ md|json_script:"principles-markdown" }}
     <div class="row clearfix">
         <div id="principles" class="col-md-12">
         </div>
@@ -26,6 +27,6 @@
         rendererMD.table = function (header, body) {
             return '<div class="table-responsive"><table class="table table-condensed">' + header + body + '</table></div>'
         };
-        document.getElementById('principles').innerHTML = marked("{{ md|safe }}");
+        document.getElementById('principles').innerHTML = marked(JSON.parse(document.getElementById("principles-markdown").textContent));
     </script>
 {% endblock %}

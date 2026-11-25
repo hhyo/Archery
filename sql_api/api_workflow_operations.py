@@ -6,6 +6,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django_q.tasks import async_task
 from drf_spectacular.utils import extend_schema
 from rest_framework import views
@@ -54,20 +55,20 @@ def get_workflow(workflow_id):
     try:
         return SqlWorkflow.objects.get(id=workflow_id)
     except SqlWorkflow.DoesNotExist as exc:
-        raise NotFound("工单不存在") from exc
+        raise NotFound(_("工单不存在")) from exc
 
 
 def get_sql_workflow_by_audit_id(audit_id):
     try:
         audit = WorkflowAudit.objects.get(audit_id=audit_id)
     except WorkflowAudit.DoesNotExist as exc:
-        raise NotFound("工单不存在") from exc
+        raise NotFound(_("工单不存在")) from exc
     if audit.workflow_type != WorkflowType.SQL_REVIEW:
-        raise NotFound("工单不存在")
+        raise NotFound(_("工单不存在"))
     try:
         workflow = SqlWorkflow.objects.get(id=audit.workflow_id)
     except SqlWorkflow.DoesNotExist as exc:
-        raise NotFound("工单不存在") from exc
+        raise NotFound(_("工单不存在")) from exc
     return audit, workflow
 
 
@@ -112,7 +113,7 @@ def submit_auto_execution(workflow_id, user):
 
 def ensure_viewable(user, workflow_id):
     if not can_view(user, workflow_id):
-        raise PermissionDenied("你无权查看当前工单！")
+        raise PermissionDenied(_("你无权查看当前工单！"))
 
 
 def ensure_log_viewable(user, workflow_id):
@@ -134,7 +135,7 @@ def can_execute_workflow(user, workflow):
 
 def ensure_workflow_executable(user, workflow):
     if not can_execute_workflow(user, workflow):
-        raise PermissionDenied("你无权执行当前工单！")
+        raise PermissionDenied(_("你无权执行当前工单！"))
 
 
 class WorkflowOperationAPIView(views.APIView):
@@ -250,7 +251,7 @@ class SqlWorkflowSubmitView(WorkflowOperationAPIView):
             )
         return Response(
             mutation_response(
-                workflow.id, "提交成功", audit.audit_id if audit else None
+                workflow.id, _("提交成功"), audit.audit_id if audit else None
             ),
             status=201,
         )
@@ -259,7 +260,7 @@ class SqlWorkflowSubmitView(WorkflowOperationAPIView):
 class WorkflowAuditListView(WorkflowOperationAPIView):
     def post(self, request):
         if not request.user.has_perm("sql.audit_user"):
-            raise PermissionDenied("你无权查看审核工单列表！")
+            raise PermissionDenied(_("你无权查看审核工单列表！"))
         data = self.validated_data(WorkflowListRequestSerializer, request)
         filters = {}
         syntax_type = data.get("syntax_type", [])
@@ -355,7 +356,9 @@ class WorkflowContentView(WorkflowOperationAPIView):
                     ReviewResult(
                         id=1,
                         sql=content.sql_content,
-                        errormessage="Json decode failed.执行结果Json解析失败, 请联系管理员",
+                        errormessage=_(
+                            "Json decode failed.执行结果Json解析失败, 请联系管理员"
+                        ),
                     )
                 ]
             ).json()
@@ -367,14 +370,14 @@ class WorkflowRollbackView(WorkflowOperationAPIView):
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
         if not can_rollback(request.user, workflow_id):
-            raise PermissionDenied("你无权查看当前工单的回滚语句！")
+            raise PermissionDenied(_("你无权查看当前工单的回滚语句！"))
         try:
             rows = get_engine(instance=workflow.instance).get_rollback(
                 workflow=workflow
             )
         except Exception:
             logger.exception("获取工单回滚语句失败，audit_id=%s", audit_id)
-            return Response({"status": 1, "msg": "获取回滚语句失败", "rows": []})
+            return Response({"status": 1, "msg": _("获取回滚语句失败"), "rows": []})
         return Response({"status": 0, "msg": "", "rows": rows})
 
 
@@ -386,12 +389,12 @@ class WorkflowExecutionWindowView(WorkflowOperationAPIView):
         if not request.user.has_perm("sql.sql_review") or not Audit.can_review(
             request.user, workflow_id, WorkflowType.SQL_REVIEW
         ):
-            raise PermissionDenied("你无权操作当前工单！")
+            raise PermissionDenied(_("你无权操作当前工单！"))
         workflow.run_date_start, workflow.run_date_end = data.get(
             "run_date_start"
         ), data.get("run_date_end")
         workflow.save(update_fields=["run_date_start", "run_date_end"])
-        return Response(mutation_response(workflow_id, "可执行时间已更新", audit_id))
+        return Response(mutation_response(workflow_id, _("可执行时间已更新"), audit_id))
 
     post = patch
 
@@ -405,7 +408,7 @@ class WorkflowApprovalView(WorkflowOperationAPIView):
     def post(self, request, audit_id):
         data = self.validated_data(WorkflowRemarkSerializer, request)
         if not request.user.has_perm("sql.sql_review"):
-            raise PermissionDenied("你无权操作当前工单！")
+            raise PermissionDenied(_("你无权操作当前工单！"))
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
         config = SysConfig()
@@ -417,7 +420,9 @@ class WorkflowApprovalView(WorkflowOperationAPIView):
                 )
             except AuditException as e:
                 logger.info("审核工单失败，audit_id=%s, reason=%s", audit_id, e)
-                raise ValidationError({"detail": f"审核工单失败, 失败原因: {e}"})
+                raise ValidationError(
+                    {"detail": _("审核工单失败, 失败原因: %(error)s") % {"error": e}}
+                )
             if auditor.audit.current_status == WorkflowStatus.PASSED:
                 auditor.workflow.status = "workflow_review_pass"
                 auditor.workflow.save(update_fields=["status"])
@@ -431,14 +436,14 @@ class WorkflowApprovalView(WorkflowOperationAPIView):
                         task_name=f"sqlreview-pass-{workflow_id}",
                     )
                 )
-        return Response(mutation_response(workflow_id, "审核通过", audit_id))
+        return Response(mutation_response(workflow_id, _("审核通过"), audit_id))
 
 
 class WorkflowRejectionView(WorkflowOperationAPIView):
     def post(self, request, audit_id):
         data = self.validated_data(WorkflowRejectionSerializer, request)
         if not request.user.has_perm("sql.sql_review"):
-            raise PermissionDenied("你无权操作当前工单！")
+            raise PermissionDenied(_("你无权操作当前工单！"))
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
         config, was_scheduled = SysConfig(), workflow.status == "workflow_timingtask"
@@ -450,7 +455,9 @@ class WorkflowRejectionView(WorkflowOperationAPIView):
                 )
             except AuditException as e:
                 logger.info("拒绝工单失败，audit_id=%s, reason=%s", audit_id, e)
-                raise ValidationError({"detail": f"拒绝工单失败, 失败原因: {e}"})
+                raise ValidationError(
+                    {"detail": _("拒绝工单失败, 失败原因: %(error)s") % {"error": e}}
+                )
             workflow.status = "workflow_abort"
             workflow.save(update_fields=["status"])
             if was_scheduled:
@@ -467,7 +474,7 @@ class WorkflowRejectionView(WorkflowOperationAPIView):
                         task_name=f"sqlreview-reject-{workflow_id}",
                     )
                 )
-        return Response(mutation_response(workflow_id, "工单已拒绝", audit_id))
+        return Response(mutation_response(workflow_id, _("工单已拒绝"), audit_id))
 
 
 class WorkflowExecutionView(WorkflowOperationAPIView):
@@ -482,10 +489,14 @@ class WorkflowExecutionView(WorkflowOperationAPIView):
         workflow_id = workflow.id
         audit_handler = AuditV2(workflow=workflow, audit=audit)
         if not audit_handler.can_execute(request.user):
-            raise PermissionDenied("你无权执行当前工单！")
+            raise PermissionDenied(_("你无权执行当前工单！"))
         if not on_correct_time_period(workflow_id):
             raise ValidationError(
-                {"detail": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"}
+                {
+                    "detail": _(
+                        "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+                    )
+                }
             )
         with transaction.atomic():
             if data["mode"] == "auto":
@@ -503,7 +514,7 @@ class WorkflowExecutionView(WorkflowOperationAPIView):
                 transaction.on_commit(
                     lambda: submit_auto_execution(workflow_id, request.user)
                 )
-                message = "工单执行排队中"
+                message = _("工单执行排队中")
             else:
                 workflow.status, workflow.finish_time = (
                     "workflow_finish",
@@ -520,7 +531,7 @@ class WorkflowExecutionView(WorkflowOperationAPIView):
                 )
                 if should_notify(SysConfig(), "Execute"):
                     transaction.on_commit(lambda: notify_for_execute(workflow=workflow))
-                message = "已确认手工执行结束"
+                message = _("已确认手工执行结束")
         return Response(mutation_response(workflow_id, message, audit_id))
 
 
@@ -533,16 +544,18 @@ class WorkflowScheduleView(WorkflowOperationAPIView):
         if timezone.is_naive(run_date) and timezone.is_aware(timezone.now()):
             run_date = timezone.make_aware(run_date)
         if run_date <= timezone.now():
-            raise ValidationError({"run_date": "时间不能小于当前时间"})
+            raise ValidationError({"run_date": _("时间不能小于当前时间")})
         if not (
             request.user.has_perm("sql.sql_execute")
             or request.user.has_perm("sql.sql_execute_for_resource_group")
         ) or not can_timingtask(request.user, workflow_id):
-            raise PermissionDenied("你无权操作当前工单！")
+            raise PermissionDenied(_("你无权操作当前工单！"))
         if not on_correct_time_period(workflow_id, run_date):
             raise ValidationError(
                 {
-                    "run_date": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+                    "run_date": _(
+                        "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+                    )
                 }
             )
         with transaction.atomic():
@@ -561,7 +574,7 @@ class WorkflowScheduleView(WorkflowOperationAPIView):
                     f"sqlreview-timing-{workflow_id}", run_date, workflow_id
                 )
             )
-        return Response(mutation_response(workflow_id, "定时执行已设置", audit_id))
+        return Response(mutation_response(workflow_id, _("定时执行已设置"), audit_id))
 
 
 class WorkflowTerminationView(WorkflowOperationAPIView):
@@ -570,7 +583,7 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
         audit, workflow = self.get_audit_workflow(audit_id)
         workflow_id = workflow.id
         if not can_cancel(request.user, workflow_id):
-            raise PermissionDenied("你无权操作当前工单！")
+            raise PermissionDenied(_("你无权操作当前工单！"))
         action = (
             WorkflowAction.ABORT
             if request.user.username == workflow.engineer
@@ -579,7 +592,7 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
         if action == WorkflowAction.REJECT and not request.user.has_perm(
             "sql.sql_review"
         ):
-            raise PermissionDenied("你无权操作当前工单！")
+            raise PermissionDenied(_("你无权操作当前工单！"))
         config, was_scheduled = SysConfig(), workflow.status == "workflow_timingtask"
         with transaction.atomic():
             auditor = get_auditor(workflow=workflow, sys_config=config)
@@ -587,7 +600,9 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
                 detail = auditor.operate(action, request.user, data["cancel_remark"])
             except AuditException as e:
                 logger.info("取消工单失败，audit_id=%s, reason=%s", audit_id, e)
-                raise ValidationError({"detail": f"终止工单失败, 失败原因: {e}"})
+                raise ValidationError(
+                    {"detail": _("终止工单失败, 失败原因: %(error)s") % {"error": e}}
+                )
             workflow.status = "workflow_abort"
             workflow.save(update_fields=["status"])
             if was_scheduled:
@@ -604,7 +619,7 @@ class WorkflowTerminationView(WorkflowOperationAPIView):
                         task_name=f"sqlreview-cancel-{workflow_id}",
                     )
                 )
-        return Response(mutation_response(workflow_id, "工单已终止", audit_id))
+        return Response(mutation_response(workflow_id, _("工单已终止"), audit_id))
 
 
 class WorkflowStatusView(WorkflowOperationAPIView):
@@ -637,7 +652,7 @@ class WorkflowOscView(WorkflowOperationAPIView):
             rows, error = result.to_dict(), result.error
         except Exception:
             logger.exception("控制 OSC 执行失败，audit_id=%s", audit_id)
-            rows, error = [], "OSC 操作失败"
+            rows, error = [], _("OSC 操作失败")
         return Response({"total": len(rows), "rows": rows, "msg": error})
 
 
@@ -659,6 +674,24 @@ class WorkflowLogView(WorkflowOperationAPIView):
                 "operation_time",
             )
         )
+        # Translate known action labels without rewriting stored or user-entered log text.
+        action_labels = {
+            "提交": _("提交"),
+            "审核通过": _("审核通过"),
+            "审核不通过": _("审核不通过"),
+            "审核取消": _("审核取消"),
+            "设置定时执行": _("设置定时执行"),
+            "开始执行": _("开始执行"),
+            "执行结束": _("执行结束"),
+            "审批不通过": _("审批不通过"),
+            "审批取消": _("审批取消"),
+            "执行工单": _("执行工单"),
+            "手工工单": _("手工工单"),
+        }
+        for row in rows:
+            row["operation_type_desc"] = action_labels.get(
+                row["operation_type_desc"], row["operation_type_desc"]
+            )
         serializer = WorkflowLogListResponseSerializer(
             {"total": len(rows), "rows": rows}
         )

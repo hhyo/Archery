@@ -4,8 +4,10 @@ from django.http import HttpResponseRedirect
 from django.utils.deprecation import MiddlewareMixin
 
 IGNORE_URL = [
+    "/i18n/setlang/",
     "/login/",
     "/login/2fa/",
+    "/jsi18n/",
     "/authenticate/",
     "/signup/",
     "/api/info",

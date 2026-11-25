@@ -1,3 +1,5 @@
+from django.utils.translation import pgettext_lazy
+from django.utils.translation import gettext as _
 import logging
 
 from rest_framework import views, generics, status, serializers, permissions
@@ -48,10 +50,10 @@ class InstanceList(generics.ListAPIView):
     queryset = Instance.objects.all().order_by("id")
 
     @extend_schema(
-        summary="实例清单",
+        summary=pgettext_lazy("API documentation", "实例清单"),
         request=InstanceSerializer,
         responses={200: InstanceSerializer},
-        description="列出所有实例（过滤，分页）",
+        description=pgettext_lazy("API documentation", "列出所有实例（过滤，分页）"),
     )
     def get(self, request):
         instances = self.filter_queryset(self.queryset)
@@ -61,10 +63,10 @@ class InstanceList(generics.ListAPIView):
         return self.get_paginated_response(data)
 
     @extend_schema(
-        summary="创建实例",
+        summary=pgettext_lazy("API documentation", "创建实例"),
         request=InstanceSerializer,
         responses={201: InstanceSerializer},
-        description="创建一个实例配置",
+        description=pgettext_lazy("API documentation", "创建一个实例配置"),
     )
     def post(self, request):
         serializer = InstanceSerializer(data=request.data)
@@ -93,21 +95,23 @@ class InstanceDetail(views.APIView):
             raise Http404
 
     @extend_schema(
-        summary="实例详情",
+        summary=pgettext_lazy("API documentation", "实例详情"),
         responses={200: PublicInstanceSerializer},
-        description="获取当前登录用户有提交或查询权限的实例公开详情",
+        description=pgettext_lazy(
+            "API documentation", "获取当前登录用户有提交或查询权限的实例公开详情"
+        ),
     )
     def get(self, request, pk):
         instance = self.get_object(pk)
         if not can_read_public_instance(request.user, instance):
-            raise PermissionDenied("你无权查看该实例！")
+            raise PermissionDenied(_("你无权查看该实例！"))
         return Response(PublicInstanceSerializer(instance).data)
 
     @extend_schema(
-        summary="更新实例",
+        summary=pgettext_lazy("API documentation", "更新实例"),
         request=InstanceDetailSerializer,
         responses={200: InstanceDetailSerializer},
-        description="更新一个实例配置",
+        description=pgettext_lazy("API documentation", "更新一个实例配置"),
     )
     def put(self, request, pk):
         instance = self.get_object(pk)
@@ -117,7 +121,10 @@ class InstanceDetail(views.APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(summary="删除实例", description="删除一个实例配置")
+    @extend_schema(
+        summary=pgettext_lazy("API documentation", "删除实例"),
+        description=pgettext_lazy("API documentation", "删除一个实例配置"),
+    )
     def delete(self, request, pk):
         instance = self.get_object(pk)
         instance.delete()
@@ -134,10 +141,10 @@ class TunnelList(generics.ListAPIView):
     queryset = Tunnel.objects.all().order_by("id")
 
     @extend_schema(
-        summary="隧道清单",
+        summary=pgettext_lazy("API documentation", "隧道清单"),
         request=TunnelSerializer,
         responses={200: TunnelSerializer},
-        description="列出所有隧道（过滤，分页）",
+        description=pgettext_lazy("API documentation", "列出所有隧道（过滤，分页）"),
     )
     def get(self, request):
         tunnels = self.filter_queryset(self.queryset)
@@ -147,10 +154,10 @@ class TunnelList(generics.ListAPIView):
         return self.get_paginated_response(data)
 
     @extend_schema(
-        summary="创建隧道",
+        summary=pgettext_lazy("API documentation", "创建隧道"),
         request=TunnelSerializer,
         responses={201: TunnelSerializer},
-        description="创建一个隧道配置",
+        description=pgettext_lazy("API documentation", "创建一个隧道配置"),
     )
     def post(self, request):
         serializer = TunnelSerializer(data=request.data)
@@ -170,10 +177,12 @@ class AliyunRdsList(generics.ListAPIView):
     queryset = AliyunRdsConfig.objects.all().select_related("ak").order_by("id")
 
     @extend_schema(
-        summary="AliyunRDS清单",
+        summary=pgettext_lazy("API documentation", "AliyunRDS清单"),
         request=AliyunRdsSerializer,
         responses={200: AliyunRdsSerializer},
-        description="列出所有AliyunRDS（过滤，分页）",
+        description=pgettext_lazy(
+            "API documentation", "列出所有AliyunRDS（过滤，分页）"
+        ),
     )
     def get(self, request):
         aliyunrds = self.filter_queryset(self.queryset)
@@ -183,10 +192,12 @@ class AliyunRdsList(generics.ListAPIView):
         return self.get_paginated_response(data)
 
     @extend_schema(
-        summary="创建AliyunRDS",
+        summary=pgettext_lazy("API documentation", "创建AliyunRDS"),
         request=AliyunRdsSerializer,
         responses={201: AliyunRdsSerializer},
-        description="创建一个AliyunRDS配置（包含一个CloudAccessKey）",
+        description=pgettext_lazy(
+            "API documentation", "创建一个AliyunRDS配置（包含一个CloudAccessKey）"
+        ),
     )
     def post(self, request):
         serializer = AliyunRdsSerializer(data=request.data)
@@ -202,10 +213,10 @@ class InstanceResource(views.APIView):
     """
 
     @extend_schema(
-        summary="实例资源",
+        summary=pgettext_lazy("API documentation", "实例资源"),
         request=InstanceResourceSerializer,
         responses={200: InstanceResourceListSerializer},
-        description="获取实例内的资源信息",
+        description=pgettext_lazy("API documentation", "获取实例内的资源信息"),
     )
     def post(self, request):
         # 参数验证
@@ -262,7 +273,7 @@ class InstanceResource(views.APIView):
                 resource = DummyResource()
             else:
                 raise serializers.ValidationError(
-                    {"errors": "不支持的资源类型或者参数不完整！"}
+                    {"errors": _("不支持的资源类型或者参数不完整！")}
                 )
         except Exception as msg:
             raise serializers.ValidationError({"errors": msg})
@@ -281,18 +292,23 @@ class TableInstanceLookup(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
-        summary="按表名查询所属实例",
+        summary=pgettext_lazy("API documentation", "按表名查询所属实例"),
         request=TableInstanceLookupSerializer,
         responses={200: TableInstanceLookupResponseSerializer},
-        description="输入table名，返回包含该表的实例列表（固定返回status/msg/count/data）。",
+        description=pgettext_lazy(
+            "API documentation",
+            "输入table名，返回包含该表的实例列表（固定返回status/msg/count/data）。",
+        ),
     )
     def post(self, request):
         serializer = TableInstanceLookupSerializer(data=request.data)
         if not serializer.is_valid():
             errors = serializer.errors
-            msg = "参数校验失败"
+            msg = _("参数校验失败")
             if "table_name" in errors:
-                msg = f"参数table_name错误: {errors['table_name'][0]}"
+                msg = _("参数table_name错误: %(error)s") % {
+                    "error": errors["table_name"][0]
+                }
             return Response({"status": 1, "msg": msg, "count": 0, "data": []})
 
         table_name = serializer.validated_data["table_name"]
@@ -309,7 +325,7 @@ class TableInstanceLookup(views.APIView):
             return Response(
                 {
                     "status": 1,
-                    "msg": "查询失败: 未知错误, 请联系管理员",
+                    "msg": _("查询失败: 未知错误, 请联系管理员"),
                     "count": 0,
                     "data": [],
                 }
@@ -318,7 +334,7 @@ class TableInstanceLookup(views.APIView):
         return Response(
             {
                 "status": 0,
-                "msg": "查询成功",
+                "msg": _("查询成功"),
                 "count": len(data),
                 "data": data,
             }

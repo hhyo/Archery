@@ -12,6 +12,8 @@ import re
 import traceback
 import time
 
+from django.utils.translation import gettext as _
+
 import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
@@ -155,10 +157,10 @@ def archive_apply(request):
         )
         or no_delete is None
     ):
-        return JsonResponse({"status": 1, "msg": "请填写完整！", "data": {}})
+        return JsonResponse({"status": 1, "msg": _("请填写完整！"), "data": {}})
     if mode == "dest" and not all([dest_instance_name, dest_db_name, dest_table_name]):
         return JsonResponse(
-            {"status": 1, "msg": "归档到实例时目标实例信息必选！", "data": {}}
+            {"status": 1, "msg": _("归档到实例时目标实例信息必选！"), "data": {}}
         )
 
     # 获取源实例信息
@@ -167,7 +169,9 @@ def archive_apply(request):
             instance_name=src_instance_name
         )
     except Instance.DoesNotExist:
-        return JsonResponse({"status": 1, "msg": "你所在组未关联该实例！", "data": {}})
+        return JsonResponse(
+            {"status": 1, "msg": _("你所在组未关联该实例！"), "data": {}}
+        )
 
     # 获取目标实例信息
     if mode == "dest":
@@ -177,7 +181,7 @@ def archive_apply(request):
             )
         except Instance.DoesNotExist:
             return JsonResponse(
-                {"status": 1, "msg": "你所在组未关联该实例！", "data": {}}
+                {"status": 1, "msg": _("你所在组未关联该实例！"), "data": {}}
             )
     else:
         d_ins = None
@@ -217,7 +221,7 @@ def archive_apply(request):
         except AuditException as e:
             logger.info("新建审批流失败, reason=%s", e)
             return JsonResponse(
-                {"status": 1, "msg": "新建审批流失败, 请联系管理员", "data": {}}
+                {"status": 1, "msg": _("新建审批流失败, 请联系管理员"), "data": {}}
             )
         audit_handler.workflow.status = audit_handler.audit.current_status
         if audit_handler.audit.current_status == WorkflowStatus.PASSED:
@@ -257,7 +261,12 @@ def archive_audit(request):
         return render(
             request,
             "error.html",
-            {"errMsg": f"数据错误, 不允许的操作, 请检查 audit_status, error: {str(e)}"},
+            {
+                "errMsg": _(
+                    "数据错误, 不允许的操作, 请检查 audit_status, error: %(error)s"
+                )
+                % {"error": str(e)}
+            },
         )
     audit_remark = request.POST.get("audit_remark")
 
@@ -266,7 +275,7 @@ def archive_audit(request):
     try:
         archive_workflow = ArchiveConfig.objects.get(id=archive_id)
     except ArchiveConfig.DoesNotExist:
-        return render(request, "error.html", {"errMsg": "工单不存在"})
+        return render(request, "error.html", {"errMsg": _("工单不存在")})
 
     resource_group = archive_workflow.resource_group
     auditor = get_auditor(workflow=archive_workflow, resource_group=resource_group)
@@ -278,7 +287,11 @@ def archive_audit(request):
                 audit_status, request.user, audit_remark
             )
         except AuditException as e:
-            return render(request, "error.html", {"errMsg": f"审核失败: {e}"})
+            return render(
+                request,
+                "error.html",
+                {"errMsg": _("审核失败: %(error)s") % {"error": e}},
+            )
         auditor.workflow.status = auditor.audit.current_status
         if auditor.audit.current_status == WorkflowStatus.PASSED:
             auditor.workflow.state = True
@@ -498,6 +511,7 @@ def archive_log(request):
     count = archive_logs.count()
     lists = archive_logs.order_by("-id")[offset:limit].values(
         "cmd",
+        "statistics",
         "info",
         "condition",
         "mode",

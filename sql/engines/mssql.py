@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+
 # -*- coding: UTF-8 -*-
 import logging
 import traceback
@@ -393,7 +395,9 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
                     actual_sql_lower = actual_sql.lower()
                     if re.match(whitelist_pattern, actual_sql_lower) is None:
                         result["bad_query"] = True
-                        result["msg"] = "仅支持{}语法!".format(",".join(sql_whitelist))
+                        result["msg"] = _("仅支持%(syntax)s语法!") % {
+                            "syntax": ",".join(sql_whitelist)
+                        }
                         return result
                     # 返回完整的执行计划 SQL（包含 SET SHOWPLAN_ALL ON）
                     result["filtered_sql"] = sql.strip()
@@ -401,7 +405,7 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
                 else:
                     # 如果没有找到实际 SQL，返回错误
                     result["bad_query"] = True
-                    result["msg"] = "执行计划查询中未找到有效的SQL语句"
+                    result["msg"] = _("执行计划查询中未找到有效的SQL语句")
                     return result
             else:
                 # 普通查询：使用第一个 SQL 语句
@@ -410,21 +414,25 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
                 sql_lower = sql.lower()
         except IndexError:
             result["bad_query"] = True
-            result["msg"] = "没有有效的SQL语句"
+            result["msg"] = _("没有有效的SQL语句")
             return result
 
         # 对于普通查询，检查白名单
         if not is_showplan and re.match(whitelist_pattern, sql_lower) is None:
             result["bad_query"] = True
-            result["msg"] = "仅支持{}语法!".format(",".join(sql_whitelist))
+            result["msg"] = _("仅支持%(syntax)s语法!") % {
+                "syntax": ",".join(sql_whitelist)
+            }
             return result
         if re.search(star_patter, sql_lower) is not None:
-            keyword_warning += "禁止使用 * 关键词\n"
+            keyword_warning += _("禁止使用 * 关键词\n")
             result["has_star"] = True
         for keyword in banned_keywords:
             pattern = r"(^|,| |=){}( |\(|$)".format(keyword)
             if re.search(pattern, sql_lower) is not None:
-                keyword_warning += "禁止使用 {} 关键词\n".format(keyword)
+                keyword_warning += _("禁止使用 %(keyword)s 关键词\n") % {
+                    "keyword": keyword
+                }
                 result["bad_query"] = True
         if result.get("bad_query") or result.get("has_star"):
             result["msg"] = keyword_warning

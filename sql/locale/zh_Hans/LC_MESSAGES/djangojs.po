@@ -52,3 +52,6 @@ msgstr "自动审核不通过"
 #: .\sql\models.py:118
 msgid "workflow_exception"
 msgstr "执行有异常"
+
+msgid "workflow_finish_manual"
+msgstr "已手动完成"
