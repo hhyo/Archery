@@ -3327,12 +3327,12 @@ class ApiDocumentationLanguageTests(SimpleTestCase):
                 with override(language), patch.object(
                     api, "ExecuteWorkflowSerializer"
                 ) as serializer, patch.object(
-                    api.Users.objects,
-                    "get",
-                    return_value=SimpleNamespace(has_perm=lambda code: permitted),
+                    api.Users.objects, "get", return_value=SimpleNamespace()
                 ), patch.object(
-                    api, "can_execute", return_value=True
+                    api.SqlWorkflow.objects, "get", return_value=SimpleNamespace()
                 ), patch.object(
+                    api, "AuditV2"
+                ) as audit, patch.object(
                     api, "on_correct_time_period", return_value=False
                 ), patch.object(
                     api, "get_engine"
@@ -3340,6 +3340,7 @@ class ApiDocumentationLanguageTests(SimpleTestCase):
                     api, "async_task"
                 ) as task:
                     serializer.return_value.is_valid.return_value = True
+                    audit.return_value.can_execute.return_value = permitted
                     with self.assertRaises(ValidationError) as error:
                         api.ExecuteWorkflow().post(request)
                     self.assertEqual(
