@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="hhyo/archery-base:sha-d8159f4"
+ARG BASE_IMAGE="hhyo/archery-base:sha-ba0d014"
 FROM ${BASE_IMAGE}
 SHELL ["/bin/bash", "-c"]
 COPY . /opt/archery/

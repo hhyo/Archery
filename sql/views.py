@@ -34,7 +34,6 @@ from .models import (
 )
 from sql.utils.workflow_audit import Audit, AuditV2, AuditException
 from sql.utils.sql_review import (
-    can_execute,
     can_timingtask,
     can_cancel,
     can_view,
@@ -253,8 +252,8 @@ def _sqlworkflow_detail_context(request, workflow_id):
     if workflow_detail.status != "workflow_autoreviewwrong":
         # 是否可审核
         is_can_review = Audit.can_review(request.user, workflow_id, 2)
-        # 是否可执行 TODO 这几个判断方法入参都修改为workflow对象，可减少多次数据库交互
-        is_can_execute = can_execute(request.user, workflow_id)
+        # 是否可执行
+        is_can_execute = audit_handler.can_execute(request.user)
         # 是否可定时执行
         is_can_timingtask = can_timingtask(request.user, workflow_id)
         # 是否可取消

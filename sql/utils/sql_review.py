@@ -1,44 +1,13 @@
 import datetime
 import json
 import re
-from django.db import transaction
 
 from sql.engines.models import ReviewResult
 from sql.models import SqlWorkflow
 from common.config import SysConfig
 from sql.utils.resource_group import user_groups
 from sql.utils.sql_utils import remove_comments
-
-
-def can_execute(user, workflow_id):
-    """
-    判断用户当前是否可执行，两种情况下用户有执行权限
-    1.登录用户有资源组粒度执行权限，并且为组内用户
-    2.当前登录用户为提交人，并且有执行权限
-    :param user:
-    :param workflow_id:
-    :return:
-    """
-    result = False
-    # 保证工单当前是可执行状态
-    with transaction.atomic():
-        workflow_detail = SqlWorkflow.objects.select_for_update().get(id=workflow_id)
-        # 只有审核通过和定时执行的数据才可以立即执行
-        if workflow_detail.status not in [
-            "workflow_review_pass",
-            "workflow_timingtask",
-        ]:
-            return False
-    # 当前登录用户有资源组粒度执行权限，并且为组内用户
-    group_ids = [group.group_id for group in user_groups(user)]
-    if workflow_detail.group_id in group_ids and user.has_perm(
-        "sql.sql_execute_for_resource_group"
-    ):
-        result = True
-    # 当前登录用户为提交人，并且有执行权限
-    if workflow_detail.engineer == user.username and user.has_perm("sql.sql_execute"):
-        result = True
-    return result
+from sql.utils.workflow_audit import AuditV2
 
 
 def on_correct_time_period(workflow_id, run_date=None):
@@ -107,7 +76,10 @@ def can_cancel(user, workflow_id):
         )
     elif workflow_detail.status in ["workflow_review_pass", "workflow_timingtask"]:
         return any(
-            [can_execute(user, workflow_id), user.username == workflow_detail.engineer]
+            [
+                AuditV2(workflow=workflow_detail).can_execute(user),
+                user.username == workflow_detail.engineer,
+            ]
         )
     return result
 

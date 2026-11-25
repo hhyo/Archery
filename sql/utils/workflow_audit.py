@@ -5,6 +5,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import partialmethod
 from typing import Union, Optional, List
 import logging
 
@@ -413,8 +414,25 @@ class AuditV2:
         audit_log.save()
         return "工单已正常提交"
 
-    def can_operate(self, action: WorkflowAction, actor: Users):
-        """检查用户是否有权限做相关操作, 如有权限问题, raise AuditException, 无问题返回 True"""
+    def can_operate(
+        self, action: WorkflowAction, actor: Users, *, raise_exception: bool = True
+    ) -> bool:
+        """校验操作；默认抛出拒绝原因，权限查询可选择返回 False。"""
+        try:
+            self._validate_operation(action, actor)
+        except AuditException:
+            if raise_exception:
+                raise
+            return False
+        return True
+
+    can_execute = partialmethod(
+        can_operate, WorkflowAction.EXECUTE_START, raise_exception=False
+    )
+
+    def _validate_operation(self, action: WorkflowAction, actor: Users) -> None:
+        if not self.audit:
+            raise AuditException("给定工单未绑定审批信息, 无法进行操作")
         # 首先检查工单状态和相关操作是否匹配, 如已通过的工单不能再通过
         allowed_actions = SUPPORTED_OPERATION_GRID.get(self.audit.current_status)
         if not allowed_actions:
@@ -437,12 +455,12 @@ class AuditV2:
         if action == WorkflowAction.ABORT:
             if actor.username != self.audit.create_user:
                 raise AuditException(f"只有工单提交者可以撤回工单")
-            return True
+            return
         if action in [WorkflowAction.PASS, WorkflowAction.REJECT]:
             # 需要检查权限
             # 超级用户可以审批所有工单
             if actor.is_superuser:
-                return True
+                return
             # 看是否本人审核
             if actor.username == self.audit.create_user and self.sys_config.get(
                 "ban_self_audit"
@@ -463,14 +481,31 @@ class AuditV2:
                 raise AuditException("用户不在流程相关资源组内, 无权限审核")
             if not actor.groups.filter(id=self.audit.current_audit).exists():
                 raise AuditException("用户不在当前节点的审核组内, 无权限审核")
-            return True
+            return
+        if action == WorkflowAction.EXECUTE_START:
+            if self.workflow_type != WorkflowType.SQL_REVIEW:
+                raise AuditException("只有 SQL 上线工单支持开始执行")
+            if self.workflow.status not in (
+                "workflow_review_pass",
+                "workflow_timingtask",
+                "workflow_exception",
+            ):
+                raise AuditException("当前 SQL 工单状态不允许执行")
+            if self.workflow.engineer == actor.username and actor.has_perm(
+                "sql.sql_execute"
+            ):
+                return
+            if actor.has_perm("sql.sql_execute_for_resource_group") and any(
+                group.group_id == self.resource_group_id for group in user_groups(actor)
+            ):
+                return
+            raise AuditException("用户无权执行当前 SQL 工单")
         if action in [
-            WorkflowAction.EXECUTE_START,
             WorkflowAction.EXECUTE_END,
             WorkflowAction.EXECUTE_SET_TIME,
         ]:
             # 一般是系统自动流转, 自动通过
-            return True
+            return
 
         raise AuditException(f"不支持的操作, 无法判断权限")
 
@@ -478,8 +513,6 @@ class AuditV2:
         self, action: WorkflowAction, actor: Users, remark: str
     ) -> WorkflowAuditDetail:
         """操作已提交的工单"""
-        if not self.audit:
-            raise AuditException(f"给定工单未绑定审批信息, 无法进行操作")
         self.can_operate(action, actor)
 
         if action == WorkflowAction.PASS:

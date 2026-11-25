@@ -5,6 +5,7 @@ cannot be proven by service-level unit tests.
 """
 
 import pytest
+from django.utils import timezone
 from sql.engines.models import ResultSet
 from sql.models import SqlWorkflow, WorkflowLog
 
@@ -651,6 +652,37 @@ def test_rejection_view_returns_audit_exception_message(
 
 
 @pytest.mark.django_db
+def test_retry_failed_workflow(
+    authenticated_api_client,
+    normal_user,
+    workflow_api_data,
+    mocker,
+    django_capture_on_commit_callbacks,
+):
+    workflow, _, audit = workflow_api_data
+    workflow.status = "workflow_exception"
+    workflow.finish_time = timezone.now()
+    workflow.save(update_fields=["status", "finish_time"])
+    url = f"/api/v1/sql-workflows/{audit.pk}/execution/"
+    queue = mocker.patch.object(api_workflow_operations, "submit_auto_execution")
+
+    def execute():
+        return authenticated_api_client.post(url, {"mode": "auto"}, format="json")
+
+    assert execute().status_code == 403
+    normal_user.has_perm = mocker.Mock(
+        side_effect=lambda perm: perm == "sql.sql_execute"
+    )
+    with django_capture_on_commit_callbacks(execute=True):
+        assert execute().status_code == 200
+        workflow.refresh_from_db()
+        assert workflow.status == "workflow_queuing"
+        assert workflow.finish_time is None
+        assert execute().status_code == 403
+    queue.assert_called_once_with(workflow.pk, normal_user)
+
+
+@pytest.mark.django_db
 def test_auto_execution_queues_task_and_removes_schedule_after_commit(
     authenticated_api_client, normal_user, mocker
 ):
@@ -658,7 +690,9 @@ def test_auto_execution_queues_task_and_removes_schedule_after_commit(
     normal_user.has_perm = mocker.Mock(return_value=True)
     workflow = mocker.Mock(id=8)
     audit = mocker.Mock(audit_id=3)
-    mocker.patch.object(api_workflow_operations, "can_execute", return_value=True)
+    mocker.patch.object(
+        api_workflow_operations, "AuditV2"
+    ).return_value.can_execute.return_value = True
     mocker.patch.object(
         api_workflow_operations, "on_correct_time_period", return_value=True
     )
@@ -694,7 +728,9 @@ def test_auto_execution_queues_task_when_schedule_cleanup_fails(
     normal_user.has_perm = mocker.Mock(return_value=True)
     workflow = mocker.Mock(id=8)
     audit = mocker.Mock(audit_id=3)
-    mocker.patch.object(api_workflow_operations, "can_execute", return_value=True)
+    mocker.patch.object(
+        api_workflow_operations, "AuditV2"
+    ).return_value.can_execute.return_value = True
     mocker.patch.object(
         api_workflow_operations, "on_correct_time_period", return_value=True
     )
