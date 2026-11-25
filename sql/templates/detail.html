@@ -505,7 +505,7 @@
         // 执行确认
         $("#btnExecuteOnly").click(function () {
             if ("{{ workflow_detail.status }}" === "workflow_exception") {
-                var isContinue = confirm("重新执行将整单重跑，并覆盖数据库中已保存的历史执行结果与错误信息（不可恢复）。\n若工单因系统原因从未执行，可重新执行；若已有部分成功，建议重新提交新工单，以免丢失信息。确认重试？");
+                var isContinue = confirm("{% translate "重新执行将整单重跑，并覆盖数据库中已保存的历史执行结果与错误信息（不可恢复）。"|escapejs %}\n{% translate "若工单因系统原因从未执行，可重新执行；若已有部分成功，建议重新提交新工单，以免丢失信息。确认重试？"|escapejs %}");
             } else if ("{{ workflow_detail.is_backup }}" === 'False' &&
             "{{workflow_detail.is_offline_export}}" === 0) {
                 var isContinue = confirm("{% translate "该工单未选择备份，将不会自动备份数据，请确认是否立即执行？"|escapejs %}");

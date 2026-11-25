@@ -486,6 +486,18 @@ msgid "请确认是否立即执行？"
 msgstr "Execute this workflow now?"
 
 #: sql/templates/detail.html
+msgid "重新执行"
+msgstr "Re-execute"
+
+#: sql/templates/detail.html
+msgid "重新执行将整单重跑，并覆盖数据库中已保存的历史执行结果与错误信息（不可恢复）。"
+msgstr "Re-executing reruns the entire workflow and overwrites the saved execution results and error messages in the database (this cannot be undone)."
+
+#: sql/templates/detail.html
+msgid "若工单因系统原因从未执行，可重新执行；若已有部分成功，建议重新提交新工单，以免丢失信息。确认重试？"
+msgstr "If the workflow never ran because of a system error, re-execute it. If part of it already succeeded, submit a new workflow instead so no information is lost. Retry now?"
+
+#: sql/templates/detail.html
 msgid "请确认是否已经手工执行结束？"
 msgstr "Has manual execution been completed?"
 
