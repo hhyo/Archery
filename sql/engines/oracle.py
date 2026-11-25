@@ -1120,15 +1120,40 @@ class OracleEngine(EngineBase):
 
         line = 1
         statement = None
+        use_scn_backup = False
+        start_scn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
             conn.current_schema = workflow.db_name
-            # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
             cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
-            cursor.execute(f"select sysdate from dual")
-            rows = cursor.fetchone()
-            begin_time = rows[0]
+            # Oracle 从 19c 起移除了 CONTINUOUS_MINE，备份改用 SCN 界定工单范围。
+            use_scn_backup = (
+                workflow.is_backup and int(conn.version.split(".", 1)[0]) >= 19
+            )
+            if use_scn_backup:
+                try:
+                    cursor.execute("""select current_scn, supplemental_log_data_min,
+                            to_number(sys_context('USERENV', 'CON_ID'))
+                            from sys.v_$database""")
+                    current_scn, supplemental_logging, container_id = cursor.fetchone()
+                    if container_id > 1:
+                        raise ValueError(
+                            "注册 Oracle redo 日志需要连接 CDB 根容器或非 CDB 实例"
+                        )
+                    if supplemental_logging == "NO":
+                        raise ValueError("Oracle 未开启数据库级最小补充日志")
+                    start_scn = current_scn
+                except Exception:
+                    # 备份初始化失败时单独记录日志，工单仍按原流程执行 SQL。
+                    logger.warning(
+                        "Oracle 工单 %s 无法初始化备份", workflow.id, exc_info=True
+                    )
+            else:
+                # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
+                cursor.execute(f"select sysdate from dual")
+                rows = cursor.fetchone()
+                begin_time = rows[0]
             # 逐条执行切分语句，追加到执行结果中
             for sqlitem in sqlitemList:
                 statement = sqlitem.statement
@@ -1235,15 +1260,21 @@ class OracleEngine(EngineBase):
             # 备份
             if workflow.is_backup:
                 try:
-                    cursor.execute(f"select sysdate from dual")
-                    rows = cursor.fetchone()
-                    end_time = rows[0]
-                    self.backup(
-                        workflow,
-                        cursor=cursor,
-                        begin_time=begin_time,
-                        end_time=end_time,
-                    )
+                    if not use_scn_backup:
+                        cursor.execute(f"select sysdate from dual")
+                        rows = cursor.fetchone()
+                        end_time = rows[0]
+                        self.backup(
+                            workflow,
+                            cursor=cursor,
+                            begin_time=begin_time,
+                            end_time=end_time,
+                        )
+                    elif start_scn is not None:
+                        # 在工单提交之后取结束边界，使 LogMiner 能读到提交记录。
+                        cursor.execute("select current_scn from sys.v_$database")
+                        (end_scn,) = cursor.fetchone()
+                        self._backup_by_scn(workflow, cursor, start_scn, end_scn)
                 except Exception as e:
                     logger.error(
                         f"Oracle工单备份异常，工单id：{workflow.id}， 错误信息：{traceback.format_exc()}"
@@ -1251,6 +1282,115 @@ class OracleEngine(EngineBase):
             if close_conn:
                 self.close()
         return execute_result
+
+    def _mine_scn_rollback(self, cursor, start_scn, end_scn):
+        """读取工单 SCN 范围内的重做与回滚 SQL，按回滚顺序返回。"""
+        scns = {"start_scn": start_scn, "end_scn": end_scn}
+        # 同一日志可能同时存在归档和联机副本，按线程和序列去重，优先选择归档文件。
+        cursor.execute(
+            """select filename from (
+            select filename, thread#, sequence#,
+                row_number() over (partition by thread#, sequence# order by priority, filename) as copy_no
+            from (
+                select name as filename, thread#, sequence#, 1 as priority
+                from sys.v_$archived_log
+                where name is not null and status = 'A' and deleted = 'NO' and standby_dest = 'NO'
+                    and resetlogs_change# = (select resetlogs_change# from sys.v_$database)
+                    and first_change# <= :end_scn and next_change# > :start_scn
+                union all
+                select f.member, l.thread#, l.sequence#, 2
+                from sys.v_$log l join sys.v_$logfile f on f.group# = l.group#
+                where f.type = 'ONLINE' and f.status is null
+                    and l.status in ('CURRENT', 'ACTIVE', 'INACTIVE')
+                    and l.first_change# <= :end_scn and l.next_change# > :start_scn
+            )
+        ) where copy_no = 1 order by thread#, sequence#""",
+            scns,
+        )
+        log_files = cursor.fetchall()
+        if not log_files:
+            raise ValueError("未找到覆盖 Oracle 工单 SCN 范围的 redo 日志")
+
+        registered = False
+        try:
+            for (filename,) in log_files:
+                option = "ADDFILE" if registered else "NEW"
+                cursor.execute(
+                    f"""begin sys.dbms_logmnr.add_logfile(
+                    logfilename=>:filename, options=>sys.dbms_logmnr.{option}); end;""",
+                    filename=filename,
+                )
+                registered = True
+
+            cursor.execute(
+                """begin sys.dbms_logmnr.start_logmnr(
+                startscn=>:start_scn, endscn=>:end_scn,
+                options=>sys.dbms_logmnr.dict_from_online_catalog + sys.dbms_logmnr.committed_data_only);
+                end;""",
+                scns,
+            )
+            # 同一个 SCN 区间可能有其他会话的变更，按会话、redo 线程和容器限定来源。
+            # 保留 MISSING_SCN（操作码 34），让缺失日志的备份在写入前失败。
+            cursor.execute("""select sql_redo, sql_undo, csf, status
+                from sys.v_$logmnr_contents
+                where operation_code = 34 or (
+                    seg_owner <> 'SYS' and operation_code in (1, 2, 3) and rollback = 0
+                    and session# = to_number(sys_context('USERENV', 'SID'))
+                    and serial# = (select serial# from sys.v_$session
+                        where sid = to_number(sys_context('USERENV', 'SID')))
+                    and thread# = (select thread# from sys.v_$instance)
+                    and nvl(src_con_id, 0) = to_number(sys_context('USERENV', 'CON_ID'))
+                )
+                order by scn, rs_id, ssn, rownum""")
+            rows = []
+            redo_parts = []
+            undo_parts = []
+            # CSF 为 1 表示语句还有后续片段，须拼接完整语句后再反转回滚顺序。
+            for redo, undo, continued, status in cursor:
+                if status != 0:
+                    raise ValueError(
+                        f"Oracle LogMiner 返回不可执行的回滚 SQL (STATUS={status})"
+                    )
+                redo_parts.append(redo or "")
+                undo_parts.append(undo or "")
+                if not continued:
+                    rows.append(("".join(redo_parts), "".join(undo_parts) or " "))
+                    redo_parts.clear()
+                    undo_parts.clear()
+            if redo_parts:
+                raise ValueError("Oracle LogMiner 返回了不完整的回滚 SQL")
+            return list(reversed(rows))
+        finally:
+            if registered:
+                # 查询或注册后续文件失败时也要结束挖掘会话，释放 Oracle 资源。
+                cursor.execute("begin sys.dbms_logmnr.end_logmnr; end;")
+
+    def _backup_by_scn(self, workflow, cursor, start_scn, end_scn):
+        """将按 SCN 生成的 Oracle 回滚语句保存到备份库。"""
+        conn = self.get_backup_connection()
+        try:
+            backup_cursor = conn.cursor()
+            backup_cursor.execute("create database if not exists ora_backup;")
+            backup_cursor.execute("use ora_backup;")
+            backup_cursor.execute("""CREATE TABLE if not exists `sql_rollback` (
+                `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                `redo_sql` mediumtext,
+                `undo_sql` mediumtext,
+                `workflow_id` bigint(20) NOT NULL,
+                PRIMARY KEY (`id`),
+                key `idx_sql_rollback_01` (`workflow_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;""")
+            rows = self._mine_scn_rollback(cursor, start_scn, end_scn)
+            if rows:
+                # 批量插入可能拆成多条 SQL，使用事务保证这一批回滚语句一起写入。
+                backup_cursor.execute("START TRANSACTION")
+                backup_cursor.executemany(
+                    "insert into sql_rollback(redo_sql,undo_sql,workflow_id) values (%s,%s,%s)",
+                    [(redo, undo, workflow.id) for redo, undo in rows],
+                )
+                conn.commit()
+        finally:
+            conn.close()
 
     def backup(self, workflow, cursor, begin_time, end_time):
         """

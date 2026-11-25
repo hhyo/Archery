@@ -1,13 +1,171 @@
 from datetime import datetime, timedelta
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, call, patch
 
 import sqlparse
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from common.config import SysConfig
 from sql.engines.models import ResultSet, ReviewResult, ReviewSet
 from sql.engines.oracle import OracleEngine
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
+
+
+class TestOracleLogMiner(SimpleTestCase):
+    def _run_workflow(self, version, query_rows, *, is_backup=True):
+        sql = "update accounts set enabled = 1 where id = 7"
+        review = ReviewResult(
+            sql=sql, stmt_type="SQL", object_owner="", object_type="", object_name=""
+        )
+        workflow = SimpleNamespace(
+            id=7,
+            db_name="APP",
+            syntax_type=2,
+            is_backup=is_backup,
+            sqlworkflowcontent=SimpleNamespace(
+                review_content=ReviewSet(rows=[review]).json(), sql_content=sql
+            ),
+        )
+        conn = MagicMock(version=version)
+        cursor = conn.cursor.return_value
+        cursor.fetchone.side_effect = query_rows
+        engine = OracleEngine()
+        engine.conn = conn
+
+        with patch.object(engine, "_backup_by_scn") as scn_backup, patch.object(
+            engine, "backup"
+        ) as legacy_backup:
+            result = engine.execute_workflow(workflow)
+
+        self.assertFalse(result.error)
+        conn.commit.assert_called_once()
+        return workflow, cursor, scn_backup, legacy_backup
+
+    def test_19c_and_later_workflows_pass_scn_range_to_backup(self):
+        versions = (
+            ("19.29.0.0.0", 0),
+            ("21.0.0.0.0", 1),
+            ("23.0.0.0.0", 1),
+            ("23.26.0.0.0", 1),
+        )
+        for version, container_id in versions:
+            with self.subTest(version=version):
+                workflow, cursor, scn_backup, legacy_backup = self._run_workflow(
+                    version, [(420, "YES", container_id), (435,)]
+                )
+                scn_backup.assert_called_once_with(workflow, cursor, 420, 435)
+                legacy_backup.assert_not_called()
+
+    def test_pdb_workflow_executes_sql_without_explicit_redo_registration(self):
+        _, _, scn_backup, legacy_backup = self._run_workflow(
+            "19.29.0.0.0", [(420, "YES", 3)]
+        )
+        scn_backup.assert_not_called()
+        legacy_backup.assert_not_called()
+
+    def test_pre_19c_versions_use_original_timestamp_backup(self):
+        begin_time = datetime(2026, 1, 1, 10)
+        end_time = begin_time + timedelta(seconds=5)
+
+        for version in ("11.2.0.4.0", "12.2.0.1.0", "18.0.0.0.0"):
+            with self.subTest(version=version):
+                workflow, cursor, scn_backup, legacy_backup = self._run_workflow(
+                    version, [(begin_time,), (end_time,)]
+                )
+                self.assertEqual(
+                    cursor.execute.call_args_list,
+                    [
+                        call(
+                            "alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'"
+                        ),
+                        call("select sysdate from dual"),
+                        call(workflow.sqlworkflowcontent.sql_content),
+                        call("select sysdate from dual"),
+                    ],
+                )
+                legacy_backup.assert_called_once_with(
+                    workflow, cursor=cursor, begin_time=begin_time, end_time=end_time
+                )
+                scn_backup.assert_not_called()
+
+    def test_workflow_without_backup_still_reads_start_time(self):
+        _, cursor, scn_backup, legacy_backup = self._run_workflow(
+            "11.2.0.4.0", [(datetime(2026, 1, 1, 10),)], is_backup=False
+        )
+        self.assertEqual(
+            cursor.execute.call_args_list[1], call("select sysdate from dual")
+        )
+        cursor.fetchone.assert_called_once()
+        legacy_backup.assert_not_called()
+        scn_backup.assert_not_called()
+
+    def test_scn_backup_registers_logs_and_stores_undo_in_reverse_order(self):
+        cursor = MagicMock()
+        cursor.fetchall.return_value = [("archived.log",), ("online.log",)]
+        # 第二条回滚 SQL 跨两行，且包含需要原样保留的字符。
+        cursor.__iter__.return_value = [
+            ("first redo", "first undo", 0, 0),
+            ("second redo", "second undo with '<&", 1, 0),
+            (None, " and a quote''';", 0, 0),
+        ]
+        backup_conn = MagicMock()
+        engine = OracleEngine()
+
+        with patch.object(engine, "get_backup_connection", return_value=backup_conn):
+            engine._backup_by_scn(SimpleNamespace(id=7), cursor, 420, 435)
+
+        select_logs, add_first, add_next, start, _, end = cursor.execute.call_args_list
+        self.assertIn("sys.v_$archived_log", select_logs.args[0])
+        self.assertIn("sys.v_$logfile", select_logs.args[0])
+        self.assertIn(".NEW", add_first.args[0])
+        self.assertEqual(add_first.kwargs, {"filename": "archived.log"})
+        self.assertIn(".ADDFILE", add_next.args[0])
+        self.assertEqual(add_next.kwargs, {"filename": "online.log"})
+        self.assertEqual(start.args[1], {"start_scn": 420, "end_scn": 435})
+        self.assertNotIn("continuous_mine", start.args[0])
+        self.assertIn("end_logmnr", end.args[0])
+        write = backup_conn.cursor.return_value.executemany
+        write.assert_called_once()
+        self.assertEqual(
+            write.call_args.args[1],
+            [
+                ("second redo", "second undo with '<& and a quote''';", 7),
+                ("first redo", "first undo", 7),
+            ],
+        )
+        backup_conn.commit.assert_called_once()
+
+    def test_scn_backup_ends_logminer_when_read_fails(self):
+        cursor = MagicMock()
+        cursor.fetchall.return_value = [("online.log",)]
+        cursor.execute.side_effect = [
+            None,
+            None,
+            None,
+            RuntimeError("read failed"),
+            None,
+        ]
+
+        with self.assertRaisesRegex(RuntimeError, "read failed"):
+            OracleEngine()._mine_scn_rollback(cursor, 420, 435)
+
+        self.assertIn("end_logmnr", cursor.execute.call_args.args[0])
+
+    def test_scn_backup_rejects_incomplete_redo_before_storing_rows(self):
+        cursor = MagicMock()
+        cursor.fetchall.return_value = [("online.log",)]
+        # LogMiner 在正常 DML 后报告 redo 缺口时，已读取的语句也不能写入备份库。
+        cursor.__iter__.return_value = [("redo", "undo", 0, 0), (None, None, 0, 1291)]
+        backup_conn = MagicMock()
+        engine = OracleEngine()
+
+        with patch.object(engine, "get_backup_connection", return_value=backup_conn):
+            with self.assertRaisesRegex(ValueError, "STATUS=1291"):
+                engine._backup_by_scn(SimpleNamespace(id=7), cursor, 420, 435)
+
+        self.assertIn("operation_code = 34", cursor.execute.call_args_list[-2].args[0])
+        self.assertIn("end_logmnr", cursor.execute.call_args.args[0])
+        backup_conn.cursor.return_value.executemany.assert_not_called()
 
 
 class TestOracle(TestCase):
