@@ -511,6 +511,107 @@ class TestOfflineDownload(TestCase):
         self.assertEqual(result.rows[0].stagestatus, "异常终止")
         self.assertEqual(result.rows[0].errormessage, "Database error")
 
+    @patch("sql.offlinedownload.get_engine")
+    @patch("sql.offlinedownload.DynamicStorage")
+    @patch("sql.offlinedownload.save_to_format_file")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_execute_offline_download_applies_data_masking(
+        self, mock_open_file, mock_save_format, mock_storage, mock_get_engine
+    ):
+        """
+        测试execute_offline_download方法 - 开启数据脱敏时对导出结果集脱敏
+        """
+        Config.objects.create(item="data_masking", value="true")
+
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.error = None
+        mock_result_set.column_list = ["id", "phone"]
+        mock_result_set.rows = [(1, "138****0000"), (2, "139****1111")]
+        mock_result_set.affected_rows = 2
+        mock_engine.query.return_value = mock_result_set
+        # query_masking 返回脱敏后的同一结果集
+        mock_engine.query_masking.return_value = mock_result_set
+        mock_get_engine.return_value = mock_engine
+
+        mock_save_format.return_value = "masked_file.csv"
+        mock_storage.return_value = MagicMock()
+        mock_open_file.return_value = MagicMock()
+
+        result = OffLineDownLoad().execute_offline_download(self.workflow)
+
+        self.assertEqual(result.error, None)
+        # 脱敏入口必须被调用，且交给语法解析的SQL带分号
+        mock_engine.query_masking.assert_called_once_with(
+            db_name="test_db",
+            sql="SELECT * FROM test_table;",
+            resultset=mock_result_set,
+        )
+        # 落盘保存的是脱敏后的结果集
+        saved_rows = mock_save_format.call_args[0][1]
+        self.assertEqual(saved_rows, [(1, "138****0000"), (2, "139****1111")])
+
+    @patch("sql.offlinedownload.get_engine")
+    @patch("sql.offlinedownload.DynamicStorage")
+    @patch("sql.offlinedownload.save_to_format_file")
+    def test_execute_offline_download_blocks_export_when_masking_error(
+        self, mock_save_format, mock_storage, mock_get_engine
+    ):
+        """
+        测试execute_offline_download方法 - 脱敏失败时阻断导出（fail-closed）
+        """
+        Config.objects.create(item="data_masking", value="true")
+
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.error = None
+        mock_engine.query.return_value = mock_result_set
+        # 模拟脱敏链路报错（如 goInception 语法解析失败）
+        mock_masked_set = MagicMock()
+        mock_masked_set.error = "Inception Error: syntax error"
+        mock_engine.query_masking.return_value = mock_masked_set
+        mock_get_engine.return_value = mock_engine
+
+        mock_storage.return_value = MagicMock()
+
+        result = OffLineDownLoad().execute_offline_download(self.workflow)
+
+        self.assertIsNotNone(result.error)
+        self.assertEqual(result.rows[0].stagestatus, "异常终止")
+        self.assertIn("数据脱敏失败", result.rows[0].errormessage)
+        # 脱敏失败时不得生成/保存任何文件
+        mock_save_format.assert_not_called()
+        updated_workflow = SqlWorkflow.objects.get(id=self.workflow.id)
+        self.assertIsNone(updated_workflow.file_name)
+
+    @patch("sql.offlinedownload.get_engine")
+    @patch("sql.offlinedownload.DynamicStorage")
+    @patch("sql.offlinedownload.save_to_format_file")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_execute_offline_download_skips_masking_when_disabled(
+        self, mock_open_file, mock_save_format, mock_storage, mock_get_engine
+    ):
+        """
+        测试execute_offline_download方法 - 未开启脱敏时不调用脱敏链路
+        """
+        mock_engine = MagicMock()
+        mock_result_set = MagicMock()
+        mock_result_set.error = None
+        mock_result_set.column_list = ["id", "name"]
+        mock_result_set.rows = [(1, "test1")]
+        mock_result_set.affected_rows = 1
+        mock_engine.query.return_value = mock_result_set
+        mock_get_engine.return_value = mock_engine
+
+        mock_save_format.return_value = "plain_file.csv"
+        mock_storage.return_value = MagicMock()
+        mock_open_file.return_value = MagicMock()
+
+        result = OffLineDownLoad().execute_offline_download(self.workflow)
+
+        self.assertEqual(result.error, None)
+        mock_engine.query_masking.assert_not_called()
+
     def test_save_csv(self):
         """
         测试save_csv方法
