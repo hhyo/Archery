@@ -4,7 +4,7 @@ import simplejson as json
 import psycopg2
 
 from decimal import Decimal
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, time, timedelta
 from functools import singledispatch
 from ipaddress import IPv4Address, IPv6Address
 from uuid import UUID
@@ -27,6 +27,11 @@ def _(o):
 @convert.register(date)
 def _(o):
     return o.strftime("%Y-%m-%d")
+
+
+@convert.register(time)
+def _(o):
+    return o.isoformat()
 
 
 @convert.register(timedelta)
