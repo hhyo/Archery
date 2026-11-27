@@ -730,7 +730,6 @@ def test_can_operate_abort_by_others(
 @pytest.mark.parametrize(
     "action",
     [
-        WorkflowAction.EXECUTE_START,
         WorkflowAction.EXECUTE_END,
         WorkflowAction.EXECUTE_SET_TIME,
     ],
@@ -747,6 +746,9 @@ def test_can_operate_execute_actions(
     audit.audit.current_status = WorkflowStatus.PASSED
     audit.audit.save()
     assert audit.can_operate(action, super_user) is True
+    assert not audit.can_execute(super_user)
+    with pytest.raises(AuditException, match="SQL 上线工单"):
+        audit.can_operate(WorkflowAction.EXECUTE_START, super_user)
 
 
 def test_can_operate_no_permission(

@@ -26,9 +26,9 @@ from sql.models import (
 from sql.notify import notify_for_audit, notify_for_execute
 from sql.query_privileges import _query_apply_audit_call_back
 from sql.utils.resource_group import user_groups
-from sql.utils.sql_review import can_cancel, can_execute, on_correct_time_period
+from sql.utils.sql_review import can_cancel, on_correct_time_period
 from sql.utils.tasks import del_schedule
-from sql.utils.workflow_audit import Audit, get_auditor, AuditException
+from sql.utils.workflow_audit import Audit, AuditV2, get_auditor, AuditException
 from .filters import WorkflowFilter, WorkflowAuditFilter
 from .pagination import CustomizedPagination
 from .serializers import (
@@ -328,14 +328,9 @@ class ExecuteWorkflow(views.APIView):
             engineer = request.data["engineer"]
             user = Users.objects.get(username=engineer)
 
-            # 校验多个权限
-            if not (
-                user.has_perm("sql.sql_execute")
-                or user.has_perm("sql.sql_execute_for_resource_group")
-            ):
-                raise serializers.ValidationError({"errors": "你无权执行当前工单！"})
-
-            if can_execute(user, workflow_id) is False:
+            workflow = SqlWorkflow.objects.get(pk=workflow_id)
+            audit_handler = AuditV2(workflow=workflow)
+            if not audit_handler.can_execute(user):
                 raise serializers.ValidationError({"errors": "你无权执行当前工单！"})
 
             if on_correct_time_period(workflow_id) is False:
@@ -353,10 +348,10 @@ class ExecuteWorkflow(views.APIView):
 
             # 交由系统执行
             if mode == "auto":
-                # 修改工单状态为排队中
-                SqlWorkflow(id=workflow_id, status="workflow_queuing").save(
-                    update_fields=["status"]
-                )
+                # 修改工单状态为排队中, 并清空上次执行的完成时间
+                SqlWorkflow(
+                    id=workflow_id, status="workflow_queuing", finish_time=None
+                ).save(update_fields=["status", "finish_time"])
                 # 删除定时执行任务
                 schedule_name = f"sqlreview-timing-{workflow_id}"
                 del_schedule(schedule_name)
