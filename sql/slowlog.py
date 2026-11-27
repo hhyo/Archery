@@ -97,7 +97,7 @@ def slowquery_review(request):
             SlowLog["DurationPct95"] = round(pct, 2) if pct else 0
             sql_slow_log.append(SlowLog)
         result = {"total": slow_sql_count, "rows": sql_slow_log}
-    elif instance_info.db_type == "gaussdb":
+    elif instance_info.db_type in ("gaussdb", "kingbase"):
         query_engine = get_engine(instance=instance_info)
         result = query_engine.slowquery_review(
             start_time=start_time,
@@ -258,7 +258,7 @@ def slowquery_review_history(request):
             SlowRecord["QueryTimes"] = round(total / 1000000, 6) if total else 0
             sql_slow_record.append(SlowRecord)
         result = {"total": slow_sql_record_count, "rows": sql_slow_record}
-    elif instance_info.db_type == "gaussdb":
+    elif instance_info.db_type in ("gaussdb", "kingbase"):
         query_engine = get_engine(instance=instance_info)
         result = query_engine.slowquery_review_history(
             start_time=start_time,

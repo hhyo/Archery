@@ -66,6 +66,7 @@ def remove_comments(sql, db_type="mysql"):
     sql_comments_re = {
         "oracle": [r"(?:--)[^\n]*\n", r"(?:\W|^)(?:remark|rem)\s+[^\n]*\n"],
         "mysql": [r"(?:#|--\s)[^\n]*\n"],
+        "kingbase": [r"(?:--)[^\n]*\n"],
     }
     specific_comment_re = sql_comments_re[db_type]
     additional_patterns = "|"

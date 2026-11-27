@@ -30,7 +30,7 @@ def databases(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mongo", "gaussdb"]
+            request.user, db_type=["mysql", "mongo", "gaussdb", "kingbase"]
         ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
@@ -82,7 +82,7 @@ def create(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mongo", "gaussdb"]
+            request.user, db_type=["mysql", "mongo", "gaussdb", "kingbase"]
         ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
@@ -150,7 +150,7 @@ def edit(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mongo", "gaussdb"]
+            request.user, db_type=["mysql", "mongo", "gaussdb", "kingbase"]
         ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})

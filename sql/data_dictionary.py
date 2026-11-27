@@ -71,7 +71,7 @@ def table_info(request):
             )
 
             # mysql、clickhouse 和 gaussdb 数据库可以获取创建表格的SQL语句
-            if instance.db_type in ("mysql", "clickhouse", "gaussdb"):
+            if instance.db_type in ("mysql", "clickhouse", "gaussdb", "kingbase"):
                 quote = "`" if instance.db_type in ("mysql", "clickhouse") else ""
                 _create_sql = query_engine.query(
                     db_name, f"show create table {quote}{tb_name}{quote};"
@@ -94,7 +94,9 @@ def table_info(request):
 def view_list(request):
     """数据字典获取视图列表"""
     return _dict_list(
-        request, db_type_required=("mysql", "gaussdb"), engine_method="get_views_list"
+        request,
+        db_type_required=("mysql", "gaussdb", "kingbase"),
+        engine_method="get_views_list",
     )
 
 
@@ -103,7 +105,7 @@ def view_info(request):
     """数据字典获取视图详情"""
     return _dict_detail(
         request,
-        db_type_required=("mysql", "gaussdb"),
+        db_type_required=("mysql", "gaussdb", "kingbase"),
         engine_method="get_view_detail",
         name_param="view_name",
         engine_kwarg="view_name",
@@ -115,7 +117,7 @@ def trigger_list(request):
     """数据字典获取触发器列表"""
     return _dict_list(
         request,
-        db_type_required=("mysql", "gaussdb"),
+        db_type_required=("mysql", "gaussdb", "kingbase"),
         engine_method="get_triggers_list",
     )
 
@@ -125,7 +127,7 @@ def trigger_info(request):
     """数据字典获取触发器详情"""
     return _dict_detail(
         request,
-        db_type_required=("mysql", "gaussdb"),
+        db_type_required=("mysql", "gaussdb", "kingbase"),
         engine_method="get_trigger_detail",
         name_param="trigger_name",
         engine_kwarg="trigger_name",
@@ -137,7 +139,7 @@ def procedure_list(request):
     """数据字典获取存储过程列表"""
     return _dict_list(
         request,
-        db_type_required=("mysql", "gaussdb"),
+        db_type_required=("mysql", "gaussdb", "kingbase"),
         engine_method="get_procedures_list",
     )
 
@@ -147,7 +149,7 @@ def procedure_info(request):
     """数据字典获取存储过程详情"""
     return _dict_detail(
         request,
-        db_type_required=("mysql", "gaussdb"),
+        db_type_required=("mysql", "gaussdb", "kingbase"),
         engine_method="get_procedure_detail",
         name_param="proc_name",
         engine_kwarg="proc_name",
@@ -159,7 +161,7 @@ def function_list(request):
     """数据字典获取函数列表"""
     return _dict_list(
         request,
-        db_type_required=("mysql", "gaussdb"),
+        db_type_required=("mysql", "gaussdb", "kingbase"),
         engine_method="get_functions_list",
     )
 
@@ -169,7 +171,7 @@ def function_info(request):
     """数据字典获取函数详情"""
     return _dict_detail(
         request,
-        db_type_required=("mysql", "gaussdb"),
+        db_type_required=("mysql", "gaussdb", "kingbase"),
         engine_method="get_function_detail",
         name_param="func_name",
         engine_kwarg="func_name",
@@ -294,7 +296,8 @@ def export(request):
 
     try:
         instance = user_instances(
-            request.user, db_type=["mysql", "mssql", "oracle", "clickhouse", "gaussdb"]
+            request.user,
+            db_type=["mysql", "mssql", "oracle", "clickhouse", "gaussdb", "kingbase"],
         ).get(instance_name=instance_name)
         query_engine = get_engine(instance=instance)
     except Instance.DoesNotExist:

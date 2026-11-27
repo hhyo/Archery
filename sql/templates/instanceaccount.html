@@ -12,6 +12,7 @@
                         data-live-search="true">
                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
+                    <optgroup id="optgroup-kingbase" label="KingbaseES"></optgroup>
                 </select>
             </div>
             <div class="form-group">
@@ -1241,6 +1242,7 @@
                         }
                     ]
                 case 'gaussdb':
+                case 'kingbase':
                 case 'pgsql':
                     return [
                         {
@@ -1299,7 +1301,7 @@
                 uniqueId = 'user_host';
             } else if (db_type === 'mongo') {
                 uniqueId = 'db_name_user';
-            } else if (db_type === 'gaussdb' || db_type === 'pgsql') {
+            } else if (db_type === 'gaussdb' || db_type === 'pgsql' || db_type === 'kingbase') {
                 uniqueId = 'user_host';
             }
             //初始化table
@@ -1567,9 +1569,15 @@
                 row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
                 $("#edit-db-name1-row").hide();
                 $("#edit-host-row").show();
-            } else {
+            } else if (db_type === 'mongo') {
                 db_name_user = $(obj).attr("db_name_user");
                 row_data = $('#user-list').bootstrapTable('getRowByUniqueId', db_name_user);
+                $("#edit-db-name1-row").show();
+                $("#edit-host-row").hide();
+            } else {
+                // pgsql/gaussdb/kingbase：按钮只带 user_host，与 uniqueId 一致
+                user_host = $(obj).attr("user_host");
+                row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
                 $("#edit-db-name1-row").show();
                 $("#edit-host-row").hide();
             }
@@ -1746,10 +1754,15 @@
                 user_host = $(obj).attr("user_host");
                 row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
                 $("#reset-user").text(user_host);
-            } else {
+            } else if (db_type === 'mongo') {
                 db_name_user = $(obj).attr("db_name_user");
                 row_data = $('#user-list').bootstrapTable('getRowByUniqueId', db_name_user);
                 $("#reset-user").text(db_name_user);
+            } else {
+                // pgsql/gaussdb/kingbase：按钮只带 user_host，与 uniqueId 一致
+                user_host = $(obj).attr("user_host");
+                row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+                $("#reset-user").text(user_host);
             }
 
             $("#reset-pwd").modal('show');
@@ -1831,10 +1844,15 @@
                 user_host = $(obj).attr("user_host");
                 row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
                 $("#delete-user").text(user_host);
-            } else {
+            } else if (db_type === 'mongo') {
                 db_name_user = $(obj).attr("db_name_user");
                 row_data = $('#user-list').bootstrapTable('getRowByUniqueId', db_name_user);
                 $("#delete-user").text(db_name_user);
+            } else {
+                // pgsql/gaussdb/kingbase：按钮只带 user_host，与 uniqueId 一致
+                user_host = $(obj).attr("user_host");
+                row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+                $("#delete-user").text(user_host);
             }
 
             $("#delete-account").modal('show');
@@ -1877,7 +1895,7 @@
                     url: "/api/v1/sqlquery/instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql', 'mongo']
+                        db_type: ['mysql', 'mongo', 'kingbase']
                     },
                     complete: function () {
                     },
@@ -1885,7 +1903,7 @@
                         if (data.status === 0) {
                             let result = data['data'];
                             $("optgroup[id^='optgroup']").empty();
-                            const supportDb = ['mysql', 'mongo']
+                            const supportDb = ['mysql', 'mongo', 'kingbase']
                             for (let i of result) {
                                 let instance = "<option value=\"" + i.id + "\" instance-id=" + i.id + " instance-type=" + i.db_type + ">" + i.instance_name + "</option>";
                                 if (supportDb.indexOf(i.db_type) !== -1) {

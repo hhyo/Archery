@@ -198,7 +198,7 @@
                     url: "/api/v1/sqlquery/instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql', 'redis', 'gaussdb']
+                        db_type: ['mysql', 'redis', 'gaussdb', 'kingbase']
                     },
                     complete: function () {
                         //保留如果已选择instance_name，进入页面自动加载
@@ -293,7 +293,8 @@
             var db_type = sessionStorage.getItem('slow_query_db_type') || 'mysql';
             if (instance_name) {
                 var is_redis = db_type === 'redis';
-                var is_gaussdb = db_type === 'gaussdb';
+                // pgsql 兼容系：慢日志取自 sys_stat_statements，与 MySQL 的慢日志表不同
+                var is_pg_like = db_type === 'gaussdb' || db_type === 'kingbase';
                 var sortName = is_redis ? "TotalExecutionCounts" : "MySQLTotalExecutionCounts";
                 var columns = is_redis ? [{
                         title: '日志统计时间',
@@ -467,7 +468,7 @@
                                 }
                             }
                         });
-                        if (!is_redis && !is_gaussdb) {
+                        if (!is_redis && !is_pg_like) {
                         var report_params = {checksum: row.SQLId};
                         if (is_redis) {
                             report_params.instance_name = $("#instance_name").val();
@@ -512,8 +513,9 @@
         function slowquery_review_history() {
             var db_type = sessionStorage.getItem('slow_query_db_type') || 'mysql';
             var is_redis = db_type === 'redis';
-            var is_gaussdb = db_type === 'gaussdb';
-            if (is_redis || is_gaussdb) {
+            // pgsql 兼容系：慢日志取自 sys_stat_statements，与 MySQL 的慢日志表不同
+            var is_pg_like = db_type === 'gaussdb' || db_type === 'kingbase';
+            if (is_redis || is_pg_like) {
                 $("#sqladvisor-toolbar").hide();
             } else {
                 $("#sqladvisor-toolbar").show();

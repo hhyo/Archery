@@ -30,6 +30,7 @@
                         <optgroup id="optgroup-redis" label="Redis"></optgroup>
                         <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                         <optgroup id="optgroup-gaussdb" label="GaussDB"></optgroup>
+                        <optgroup id="optgroup-kingbase" label="KingbaseES"></optgroup>
                         <optgroup id="optgroup-doris" label="Doris"></optgroup>
                         <optgroup id="optgroup-tdengine" label="TDengine"></optgroup>
                         <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
@@ -114,6 +115,10 @@
 
         if (typeof pgsqlDiagnosticInfo !== "undefined" && Array.isArray(pgsqlDiagnosticInfo.fieldsProcesslist)) {
             processListTableInfos.push(pgsqlDiagnosticInfo?.fieldsProcesslist);
+            // KingbaseES 的 processlist 同样读 sys_stat_activity，字段与 pgsql 一致
+            processListTableInfos.push(
+                ['kingbase', ...pgsqlDiagnosticInfo.fieldsProcesslist.slice(1)]
+            );
         }
         // GaussDB diagnostic info not yet defined in db_info.js
         // if (typeof gaussdbDiagnosticInfo !== "undefined" && Array.isArray(gaussdbDiagnosticInfo.fieldsProcesslist)) {
@@ -266,6 +271,8 @@
         tablespaceListTableInfos.push(dorisTableInfo)
         let gaussdbTableInfo = ['gaussdb',tablespaceListTableInfos[0][1]]
         tablespaceListTableInfos.push(gaussdbTableInfo)
+        let kingbaseTableInfo = ['kingbase',tablespaceListTableInfos[0][1]]
+        tablespaceListTableInfos.push(kingbaseTableInfo)
         let clickhouseTableInfo = ['clickhouse',
             [{
                 title: '数据库',
@@ -702,6 +709,12 @@
             }
         ])
 
+        lockListTableInfos.push([
+            'kingbase',
+            lockListTableInfos[lockListTableInfos.length - 1][1],
+            lockListTableInfos[lockListTableInfos.length - 1][2]
+        ])
+
         // 问题诊断--锁等待列表
         function get_trxandlocks_list() {
             $("#command-div").hide();
@@ -777,7 +790,9 @@
                             AllSelectionIds.push([AllSelections[i]['SID'],AllSelections[i]['SERIAL#']])  // oracle
                         } else if (AllSelections[i]['kill_id']) {
                             AllSelectionIds.push(AllSelections[i]['kill_id'])  // tdengine
-                        }  else if (AllSelections[i]['query_id']) {
+                        } else if (AllSelections[i]['pid']) {
+                            AllSelectionIds.push(AllSelections[i]['pid']) // kingbase
+                        } else if (AllSelections[i]['query_id']) {
                             AllSelectionIds.push(AllSelections[i]['query_id']) // clickhouse
                         }
                     }
@@ -830,6 +845,8 @@
                         AllSelectionIds.push([AllSelections[i]['SID'],AllSelections[i]['SERIAL#']])  // oracle
                     } else if (AllSelections[i]['kill_id']) {
                         AllSelectionIds.push(AllSelections[i]['kill_id'])    // tdengine
+                    } else if (AllSelections[i]['pid']) {
+                        AllSelectionIds.push(AllSelections[i]['pid']) // kingbase
                     } else if (AllSelections[i]['query_id']) {
                         AllSelectionIds.push(AllSelections[i]['query_id']) // clickhouse
                     }
@@ -871,7 +888,7 @@
                 //获取用户实例列表
                 $(function () {
                     // 会话管理-支持的数据库类型 (GaussDB diagnostic JS not yet defined)
-                    supportedDbType = ['mysql', 'mongo', 'oracle', 'redis', 'pgsql', 'doris', 'tdengine', 'clickhouse']
+                    supportedDbType = ['mysql', 'mongo', 'oracle', 'redis', 'pgsql', 'kingbase', 'doris', 'tdengine', 'clickhouse']
                     $.ajax({
                         type: "get",
                         url: "/api/v1/sqlquery/instances/",

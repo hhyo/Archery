@@ -85,9 +85,12 @@ def create(request):
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
     if (
-        instance.db_type == "mysql" and not all([user, host, password1, password2])
-    ) or (
-        instance.db_type == "mongo" and not all([db_name, user, password1, password2])
+        (instance.db_type == "mysql" and not all([user, host, password1, password2]))
+        or (
+            instance.db_type == "mongo"
+            and not all([db_name, user, password1, password2])
+        )
+        or (instance.db_type == "kingbase" and not all([user, password1, password2]))
     ):
         return JsonResponse(
             {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
@@ -136,8 +139,10 @@ def edit(request):
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
-    if (instance.db_type == "mysql" and not all([user, host])) or (
-        instance.db_type == "mongo" and not all([db_name, user])
+    if (
+        (instance.db_type == "mysql" and not all([user, host]))
+        or (instance.db_type == "mongo" and not all([db_name, user]))
+        or (instance.db_type == "kingbase" and not all([user]))
     ):
         return JsonResponse(
             {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
@@ -238,9 +243,12 @@ def reset_pwd(request):
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
     if (
-        instance.db_type == "mysql" and not all([user, host, reset_pwd1, reset_pwd2])
-    ) or (
-        instance.db_type == "mongo" and not all([db_name, user, reset_pwd1, reset_pwd2])
+        (instance.db_type == "mysql" and not all([user, host, reset_pwd1, reset_pwd2]))
+        or (
+            instance.db_type == "mongo"
+            and not all([db_name, user, reset_pwd1, reset_pwd2])
+        )
+        or (instance.db_type == "kingbase" and not all([user, reset_pwd1, reset_pwd2]))
     ):
         return JsonResponse(
             {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
@@ -321,8 +329,10 @@ def delete(request):
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
-    if (instance.db_type == "mysql" and not all([user_host])) or (
-        instance.db_type == "mongo" and not all([db_name_user])
+    if (
+        (instance.db_type == "mysql" and not all([user_host]))
+        or (instance.db_type == "mongo" and not all([db_name_user]))
+        or (instance.db_type == "kingbase" and not all([user]))
     ):
         return JsonResponse(
             {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}

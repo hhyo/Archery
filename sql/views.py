@@ -625,6 +625,7 @@ def config(request):
         "redis",
         "doris",
         "tdengine",
+        "kingbase",
     ]
     # 获取所有配置项
     all_config = Config.objects.all().values("item", "value")
